@@ -1,0 +1,14 @@
+
+GETTING STARTED:
+
+Requirements:
+	* C++11 basic development toolset:
+		* GNU gcc preferred
+		* libstdc++
+
+	* libircclient >= 1.8
+	* Boost (Tokenizer)
+
+
+Compile:
+	1. type `make`
