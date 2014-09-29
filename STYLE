@@ -1,0 +1,41 @@
+Rules:
+
+1. Policy is the enemy of prudence.
+	- That means use your judgment above all else.
+	- Whatever you do, be consistent about it. Random badness is harder to fix with a script.
+
+2. No circular dependencies. Ever. (hint: Break it down).
+	- No header include guards except on some header exposed to an end-user.
+
+3. Use complete const correctness, everywhere.
+
+
+
+Style:
+
+
+A. Allman brace style.
+	- You can use " } else { "
+
+
+B. Always be covered by RAII, it's your alibi.
+	- Use exceptions liberally. For an IRC project, the relative overhead of a catch is trivial...
+		  ex: User sends !command with 2 out of 3 required arguments: don't tango with tabs and 
+		  if() the number of arguments, just let the bad access throw, etc.
+
+		- Avoid try/catch blocks in a function. Should always use function try.
+
+
+C. Order everything by dependency.
+	- In class declarations this means if foo() calls bar(), foo() is listed BELOW bar().
+		- Proper (RAII) use of the initializer list reflects why this is the proper layout of a class.
+		- The ideal class has one "public:" label somewhere in the middle, and no other labels.
+		  (this is obviously not a rule...)
+		
+	- In class definitions the order is the REVERSE OF THE CLASS DECLARATION.
+		- The definition file should open to the constructor at the top.
+
+
+D. Function definitions have two newlines between them.
+   Class declarations have two newlines between them.
+   Use whitespace liberally, but not more than 1 blank line for most else.
