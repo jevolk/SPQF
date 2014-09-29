@@ -34,7 +34,7 @@ class Chan
 
 	const User &get_user(const std::string &nick) const;
 	const Mode &get_mode(const User &user) const;
-	bool has(const User &user) const                   { return users.count(user.get_name());       }
+	bool has(const User &user) const                   { return users.count(user.get_nick());       }
 	size_t num_users() const                           { return users.size();                       }
 	bool is_op() const;
 
@@ -138,7 +138,7 @@ inline
 void Chan::kick(const User &user,
                 const std::string &reason)
 {
-	const std::string &targ = user.get_name();
+	const std::string &targ = user.get_nick();
 	sess.call(irc_cmd_kick,targ.c_str(),get_name().c_str(),reason.c_str());
 }
 
@@ -173,7 +173,7 @@ try
 	Userval val = users.at(old_nick);
 	users.erase(old_nick);
 
-	const std::string &new_nick = user.get_name();
+	const std::string &new_nick = user.get_nick();
 	const auto iit = users.emplace(new_nick,val);
 	return iit.second;
 }
@@ -186,7 +186,7 @@ catch(const std::out_of_range &e)
 inline
 bool Chan::del(User &user)
 {
-	const std::string &nick = user.get_name();
+	const std::string &nick = user.get_nick();
 	const bool ret = users.erase(nick);
 
 	if(ret)
@@ -200,7 +200,7 @@ inline
 bool Chan::add(User &user,
                const Mode &mode)
 {
-	const std::string &nick = user.get_name();
+	const std::string &nick = user.get_nick();
 	const auto iit = users.emplace(std::piecewise_construct,
 	                               std::forward_as_tuple(nick),
 	                               std::forward_as_tuple(&user,mode));
@@ -226,7 +226,7 @@ bool Chan::is_op() const
 inline
 Mode &Chan::get_mode(const User &user)
 {
-	const std::string &nick = user.get_name();
+	const std::string &nick = user.get_nick();
 	Userval &val = users.at(nick);
 	return std::get<1>(val);
 }
@@ -244,7 +244,7 @@ inline
 const Mode &Chan::get_mode(const User &user)
 const
 {
-	const std::string &nick = user.get_name();
+	const std::string &nick = user.get_nick();
 	const Userval &val = users.at(nick);
 	return std::get<1>(val);
 }

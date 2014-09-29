@@ -38,7 +38,7 @@ sess(sess)
 inline
 bool Users::del(const User &user)
 {
-	const std::string &nick = user.get_name();
+	const std::string &nick = user.get_nick();
 	return users.erase(nick);
 }
 

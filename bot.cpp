@@ -143,7 +143,7 @@ void Bot::handle_nick(const Msg &msg)
 	log_handle(msg,"NICK");
 
 	const std::string old_nick = msg.get_nick();
-	const std::string &new_nick = msg[0];
+	const std::string &new_nick = msg[NICK::NICKNAME];
 
 	if(my_nick(old_nick))
 	{
@@ -168,7 +168,7 @@ void Bot::handle_quit(const Msg &msg)
 	log_handle(msg,"QUIT");
 
 	const std::string nick = msg.get_nick();
-	const std::string &reason = msg.num_params() > 0? msg[0] : "";
+	const std::string &reason = msg[QUIT::REASON];
 
 	if(my_nick(nick))
 	{
@@ -186,8 +186,6 @@ void Bot::handle_quit(const Msg &msg)
 	{
 		chan.del(user);
 	});
-
-	std::cout << (*this) << std::endl;
 }
 
 
@@ -196,7 +194,7 @@ void Bot::handle_join(const Msg &msg)
 	log_handle(msg,"JOIN");
 
 	const std::string nick = msg.get_nick();
-	const std::string &chan = msg[0];
+	const std::string &chan = msg[JOIN::CHANNAME];
 
 	Users &users = get_users();
 	User &u = users.add(nick);
@@ -215,22 +213,13 @@ void Bot::handle_join(const Msg &msg)
 }
 
 
-void Bot::handle_join(const Msg &msg,
-                      Chan &chan,
-                      User &user)
-{
-	std::cout << chan << std::endl;
-	std::cout << user << std::endl;
-}
-
-
 void Bot::handle_part(const Msg &msg)
 {
 	log_handle(msg,"PART");
 
 	const std::string nick = msg.get_nick();
-	const std::string &chan = msg[0];
-	const std::string &reason = msg.num_params() > 1? msg[1] : "";
+	const std::string &chan = msg[PART::CHANNAME];
+	const std::string &reason = msg[PART::REASON];
 
 	Users &users = get_users();
 	Chans &chans = get_chans();
@@ -255,15 +244,6 @@ void Bot::handle_part(const Msg &msg)
 }
 
 
-void Bot::handle_part(const Msg &msg,
-                      Chan &chan,
-                      User &user)
-{
-	std::cout << chan << std::endl;
-	std::cout << user << std::endl;
-}
-
-
 void Bot::handle_mode(const Msg &msg)
 {
 	log_handle(msg,"MODE");
@@ -277,8 +257,8 @@ void Bot::handle_mode(const Msg &msg)
 		return;
 	}
 
-	const std::string &chan = msg[0];
-	const std::string &mode = msg[1];
+	const std::string &chan = msg[MODE::CHANNAME];
+	const std::string &mode = msg[MODE::DELTASTR];
 
 	Chans &chans = get_chans();
 	Chan &c = chans.get(chan);
@@ -313,28 +293,12 @@ void Bot::handle_mode(const Msg &msg)
 }
 
 
-void Bot::handle_mode(const Msg &msg,
-                      Chan &chan)
-{
-	std::cout << chan << std::endl;
-}
-
-
-void Bot::handle_mode(const Msg &msg,
-                      Chan &chan,
-                      User &user)
-{
-	std::cout << chan << std::endl;
-	std::cout << user << std::endl;
-}
-
-
 void Bot::handle_umode(const Msg &msg)
 {
 	log_handle(msg,"UMODE");
 
 	const std::string nick = msg.get_nick();
-	const std::string &mode = msg[0];
+	const std::string &mode = msg[UMODE::DELTASTR];
 
 	if(!my_nick(nick))
 		throw Exception("Server sent us umode for a different nickname");
@@ -349,8 +313,8 @@ void Bot::handle_umodeis(const Msg &msg)
 	log_handle(msg,"UMODEIS");
 
 	const std::string server = msg.get_host();
-	const std::string &nick = msg[0];
-	const std::string &mode = msg[1];
+	const std::string &nick = msg[UMODEIS::NICKNAME];
+	const std::string &mode = msg[UMODEIS::DELTASTR];
 
 	if(!my_nick(nick))
 		throw Exception("Server sent us umodeis for a different nickname");
@@ -364,9 +328,9 @@ void Bot::handle_channelmodeis(const Msg &msg)
 {
 	log_handle(msg,"CHANNELMODEIS");
 
-	const std::string &self = msg[0];
-	const std::string &chan = msg[1];
-	const std::string &mode = msg[2];
+	const std::string &self = msg[CHANNELMODEIS::NICKNAME];
+	const std::string &chan = msg[CHANNELMODEIS::CHANNAME];
+	const std::string &mode = msg[CHANNELMODEIS::DELTASTR];
 
 	Chans &chans = get_chans();
 	Chan &c = chans.get(chan);
@@ -386,9 +350,9 @@ void Bot::handle_kick(const Msg &msg)
 	log_handle(msg,"KICK");
 
 	const std::string kicker = msg.get_nick();
-	const std::string &chan = msg[0];
-	const std::string &kickee = msg.num_params() > 1? msg[1] : kicker;
-	const std::string &reason = msg.num_params() > 2? msg[2] : "";
+	const std::string &chan = msg[KICK::CHANNAME];
+	const std::string &kickee = msg.num_params() > 1? msg[KICK::TARGET] : kicker;
+	const std::string &reason = msg[KICK::REASON];
 
 	Chans &chans = get_chans();
 
@@ -415,21 +379,13 @@ void Bot::handle_kick(const Msg &msg)
 }
 
 
-void Bot::handle_kick(const Msg &msg,
-                      Chan &chan,
-                      User &user)
-{
-	std::cout << chan << std::endl;
-}
-
-
 void Bot::handle_chanmsg(const Msg &msg)
 {
 	log_handle(msg,"CHANMSG");
 
 	const std::string &nick = msg.get_nick();
-	const std::string &chan = msg[0];
-	const std::string &txt = msg.num_params() > 1? msg[1] : "";
+	const std::string &chan = msg[CHANMSG::CHANNAME];
+	const std::string &txt = msg[CHANMSG::TEXT];
 
 	Chans &chans = get_chans();
 	Users &users = get_users();
@@ -441,22 +397,13 @@ void Bot::handle_chanmsg(const Msg &msg)
 }
 
 
-void Bot::handle_chanmsg(const Msg &msg,
-                         Chan &chan,
-                         User &user)
-{
-	std::cout << chan << std::endl;
-	std::cout << user << std::endl;
-}
-
-
 void Bot::handle_cnotice(const Msg &msg)
 {
 	log_handle(msg,"CHANNEL NOTICE");
 
 	const std::string &nick = msg.get_nick();
-	const std::string &chan = msg[0];
-	const std::string &txt = msg.num_params() > 1? msg[1] : "";
+	const std::string &chan = msg[CNOTICE::CHANNAME];
+	const std::string &txt = msg[CNOTICE::TEXT];
 
 	Chans &chans = get_chans();
 	Users &users = get_users();
@@ -468,33 +415,17 @@ void Bot::handle_cnotice(const Msg &msg)
 }
 
 
-void Bot::handle_cnotice(const Msg &msg,
-                         Chan &chan,
-                         User &user)
-{
-	std::cout << chan << std::endl;
-	std::cout << user << std::endl;
-}
-
-
 void Bot::handle_privmsg(const Msg &msg)
 {
 	log_handle(msg,"PRIVMSG");
 
 	const std::string &nick = msg.get_nick();
-	const std::string &self = msg[0];
-	const std::string &txt = msg.num_params() > 1? msg[1] : "";
+	const std::string &self = msg[PRIVMSG::NICKNAME];
+	const std::string &txt = msg[PRIVMSG::TEXT];
 
 	Users &users = get_users();
 	User &u = users.get(nick);
 	handle_privmsg(msg,u);
-}
-
-
-void Bot::handle_privmsg(const Msg &msg,
-                         User &user)
-{
-	std::cout << user << std::endl;
 }
 
 
@@ -506,19 +437,12 @@ void Bot::handle_notice(const Msg &msg)
 		return;
 
 	const std::string &nick = msg.get_nick();
-	const std::string &targ = msg[0];
-	const std::string &txt = msg.num_params() > 1? msg[1] : "";
+	const std::string &targ = msg[NOTICE::NICKNAME];
+	const std::string &txt = msg[NOTICE::TEXT];
 
 	Users &users = get_users();
 	User &u = users.get(targ);
 	handle_notice(msg,u);
-}
-
-
-void Bot::handle_notice(const Msg &msg,
-                        User &user)
-{
-	std::cout << user << std::endl;
 }
 
 
@@ -549,10 +473,10 @@ void Bot::handle_ctcp_act(const Msg &msg)
 void Bot::handle_namreply(const Msg &msg)
 {
 	log_handle(msg,"NAM REPLY");
-	const std::string &self = msg[0];
-	const std::string &type = msg[1];
-    const std::string &chan = msg[2];
-    const std::string &names = msg[3];
+	const std::string &self = msg[NAMREPLY::NICKNAME];
+	const std::string &type = msg[NAMREPLY::TYPE];
+	const std::string &chan = msg[NAMREPLY::CHANNAME];
+	const std::string &names = msg[NAMREPLY::NAMELIST];
 
 	if(!my_nick(self))
 		throw Exception("Server replied to the wrong nickname");

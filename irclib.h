@@ -13,4 +13,4 @@ struct Callbacks : irc_callbacks_t
 };
 
 
-extern Callbacks bot_cbs;       // callbase.cpp
+extern Callbacks bot_cbs;       // irclib.cpp

@@ -27,16 +27,16 @@ class Bot
 	Users &get_users()                                      { return users;                       }
 
 	// [RECV] Handlers for user
-	virtual void handle_privmsg(const Msg &m, User &u);
-	virtual void handle_notice(const Msg &m, User &u);
+	virtual void handle_privmsg(const Msg &m, User &u) {}
+	virtual void handle_notice(const Msg &m, User &u) {}
 
-	virtual void handle_chanmsg(const Msg &m, Chan &c, User &u);
-	virtual void handle_cnotice(const Msg &m, Chan &c, User &u);
-	virtual void handle_kick(const Msg &m, Chan &c, User &u);
-	virtual void handle_part(const Msg &m, Chan &c, User &u);
-	virtual void handle_join(const Msg &m, Chan &c, User &u);
-	virtual void handle_mode(const Msg &m, Chan &c, User &u);
-	virtual void handle_mode(const Msg &m, Chan &c);
+	virtual void handle_chanmsg(const Msg &m, Chan &c, User &u) {}
+	virtual void handle_cnotice(const Msg &m, Chan &c, User &u) {}
+	virtual void handle_kick(const Msg &m, Chan &c, User &u) {}
+	virtual void handle_part(const Msg &m, Chan &c, User &u) {}
+	virtual void handle_join(const Msg &m, Chan &c, User &u) {}
+	virtual void handle_mode(const Msg &m, Chan &c, User &u) {}
+	virtual void handle_mode(const Msg &m, Chan &c) {}
 
   private:
 	void log_handle(const Msg &m, const std::string &name,  const std::string &remarks = "") const;
@@ -77,9 +77,9 @@ class Bot
 	void operator()(const char *const &event, const char *const &origin, const char **const &params, const size_t &count);
 
 	// Run worker loop
-	void join(const std::string &chan)                      { get_chans().join(chan);     }
-	void quit()                                             { get_sess().quit();          }
-	void conn()                                             { get_sess().conn();          }
+	void join(const std::string &chan)                      { get_chans().join(chan);             }
+	void quit()                                             { get_sess().quit();                  }
+	void conn()                                             { get_sess().conn();                  }
 	void run();
 
 	Bot(void) = delete;

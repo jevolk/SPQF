@@ -9,14 +9,14 @@
 class User
 {
 	Sess &sess;
-	std::string name;
+	std::string nick;
 	size_t chans;
 
   public:
 	// Observers
 	const Sess &get_sess() const                       { return sess;                               }
-	const std::string &get_name() const                { return name;                               }
-	bool is_self() const                               { return sess.get_nick() == name;            }
+	const std::string &get_nick() const                { return nick;                               }
+	bool is_self() const                               { return sess.get_nick() == get_nick();      }
 
 	const size_t &num_chans() const                    { return chans;                              }
 	size_t dec_chans()                                 { return chans--;                            }
@@ -28,9 +28,9 @@ class User
 	void msg(const std::string &msg);                  // Message to user
 	void whois();                                      // Sends whois to server
 
-	User(Sess &sess, const std::string &name);
+	User(Sess &sess, const std::string &nick);
 
-	bool operator<(const User &o) const                { return name < o.name;                      }
+	bool operator<(const User &o) const                { return nick < o.nick;                      }
 
 	friend std::ostream &operator<<(std::ostream &s, const User &u);
 };
@@ -38,9 +38,9 @@ class User
 
 inline
 User::User(Sess &sess,
-           const std::string &name):
+           const std::string &nick):
 sess(sess),
-name(name),
+nick(nick),
 chans(0)
 {
 
@@ -51,21 +51,21 @@ chans(0)
 inline
 void User::whois()
 {
-	sess.call(irc_cmd_whois,get_name().c_str());
+	sess.call(irc_cmd_whois,get_nick().c_str());
 }
 
 
 inline
 void User::msg(const std::string &text)
 {
-	sess.call(irc_cmd_msg,get_name().c_str(),text.c_str());
+	sess.call(irc_cmd_msg,get_nick().c_str(),text.c_str());
 }
 
 
 inline
 void User::notice(const std::string &text)
 {
-	sess.call(irc_cmd_notice,get_name().c_str(),text.c_str());
+	sess.call(irc_cmd_notice,get_nick().c_str(),text.c_str());
 }
 
 
@@ -73,7 +73,7 @@ inline
 void User::kick(const std::string &chan,
                 const std::string &reason)
 {
-	sess.call(irc_cmd_kick,get_name().c_str(),chan.c_str(),reason.c_str());
+	sess.call(irc_cmd_kick,get_nick().c_str(),chan.c_str(),reason.c_str());
 }
 
 
@@ -81,6 +81,6 @@ inline
 std::ostream &operator<<(std::ostream &s,
                          const User &u)
 {
-	s << "nick: " << u.name << " chans: " << u.num_chans();
+	s << "nick: " << u.get_nick() << " chans: " << u.num_chans();
 	return s;
 }

@@ -6,9 +6,28 @@
  */
 
 
+inline namespace Fmts
+{
+	namespace NICK            { enum { NICKNAME    = 0                                                       }; }
+	namespace QUIT            { enum { REASON      = 0                                                       }; }
+	namespace JOIN            { enum { CHANNAME    = 0                                                       }; }
+	namespace PART            { enum { CHANNAME    = 0, REASON     = 1                                       }; }
+	namespace MODE            { enum { CHANNAME    = 0, DELTASTR   = 1                                       }; }
+	namespace UMODE           { enum { DELTASTR    = 0                                                       }; }
+	namespace UMODEIS         { enum { NICKNAME    = 0, DELTASTR   = 1                                       }; }
+	namespace CHANNELMODEIS   { enum { NICKNAME    = 0, CHANNAME   = 1, DELTASTR   = 2                       }; }
+	namespace KICK            { enum { CHANNAME    = 0, TARGET     = 1, REASON     = 2                       }; }
+	namespace CHANMSG         { enum { CHANNAME    = 0, TEXT       = 1                                       }; }
+	namespace CNOTICE         { enum { CHANNAME    = 0, TEXT       = 1                                       }; }
+	namespace PRIVMSG         { enum { NICKNAME    = 0, TEXT       = 1                                       }; }
+	namespace NOTICE          { enum { NICKNAME    = 0, TEXT       = 1                                       }; }
+	namespace NAMREPLY        { enum { NICKNAME    = 0, TYPE       = 1, CHANNAME    = 2, NAMELIST    = 3     }; }
+}
+
 
 class Msg
 {
+
 	using Params = std::vector<std::string>;
 
 	uint32_t code;
@@ -21,7 +40,7 @@ class Msg
 	const Params &get_params() const                        { return params;                    }
 
 	const std::string &get_param(const size_t &i) const     { return get_params().at(i);        }
-	const std::string &operator[](const size_t &i) const    { return get_param(i);              }
+	const std::string &operator[](const size_t &i) const;   // returns empty str for outofrange
 	size_t num_params() const                               { return get_params().size();       }
 
 	std::string get_nick() const;
@@ -79,6 +98,19 @@ const
 	char buf[128];
 	irc_target_get_host(get_origin().c_str(),buf,sizeof(buf));
 	return buf;
+}
+
+
+inline
+const std::string &Msg::operator[](const size_t &i)
+const try
+{
+	return get_param(i);
+}
+catch(const std::out_of_range &e)
+{
+	static const std::string empty;
+	return empty;
 }
 
 
