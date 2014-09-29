@@ -83,7 +83,7 @@ class Bot
 	void run();
 
 	Bot(void) = delete;
-	Bot(const Ident &ident, Callbacks &cbs);
+	Bot(const Ident &ident, irc_callbacks_t &cbs);
 	Bot(Bot &&) = delete;
 	Bot(const Bot &) = delete;
 	Bot &operator=(Bot &&) = delete;

@@ -36,6 +36,7 @@
 #include "chans.h"
 #include "bot.h"
 #include "respub.h"
+#include "irclib.h"
 
 
 // Pointer to instance for signals
@@ -71,7 +72,7 @@ try
 	for(int i = 4; i < argc; i++)
 		id.autojoin.emplace_back(argv[i]);
 
-	Callbacks &cbs = bot_cbs;                  // bot.cpp extern callbacks structure
+	Callbacks &cbs = bot_cbs;                  // irclib.cpp extern callbacks structure
 	ResPublica bot(id,cbs);                    // Create instance of the bot
 	::bot = &bot;                              // Set pointer for sighandlers
 	signal(SIGINT,&handle_sig);                // Register handler for ctrl-c

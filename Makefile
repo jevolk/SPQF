@@ -37,17 +37,20 @@ TARGET = respublica
 
 all: $(TARGET)
 
-$(TARGET): main.o respub.o bot.o
+$(TARGET): main.o respub.o irclib.o bot.o
 	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $^ $(LDFLAGS)
 
 
-main.o: main.cpp bot.h respub.h
+main.o: main.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
-respub.o: respub.cpp respub.h
+respub.o: respub.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
-bot.o: bot.cpp bot.h
+irclib.o: irclib.cpp irclib.h
+	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+
+bot.o: bot.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 

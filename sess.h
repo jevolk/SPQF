@@ -6,13 +6,6 @@
  */
 
 
-struct Callbacks : irc_callbacks_t
-{
-
-    Callbacks();
-};
-
-
 struct Ident
 {
 	std::string nick;
@@ -28,7 +21,7 @@ struct Ident
 class Sess
 {
 	Ident ident;
-	Callbacks *cbs;
+	irc_callbacks_t *cbs;
 	irc_session_t *sess;
 	std::string nick;
 	Mode mode;
@@ -44,7 +37,7 @@ class Sess
   public:
 	// State observers
 	const Ident &get_ident() const                     { return ident;                              }
-	const Callbacks *get_cbs() const                   { return cbs;                                }
+	const irc_callbacks_t *get_cbs() const             { return cbs;                                }
 	const irc_session_t *get() const                   { return sess;                               }
 	operator const irc_session_t *() const             { return get();                              }
 
@@ -68,20 +61,17 @@ class Sess
 	void disconn();
 	void conn();
 
-	Sess(const Ident &id, Callbacks &cbs, irc_session_t *const &sess);
-	Sess(const Ident &id, Callbacks &cbs);
+	Sess(const Ident &id, irc_callbacks_t &cbs, irc_session_t *const &sess);
+	Sess(const Ident &id, irc_callbacks_t &cbs);
 	~Sess() noexcept;
 
 	friend std::ostream &operator<<(std::ostream &s, const Sess &sess);
 };
 
 
-extern Callbacks bot_cbs;       // bot.cpp
-
-
 inline
 Sess::Sess(const Ident &ident,
-           Callbacks &cbs):
+           irc_callbacks_t &cbs):
 Sess(ident,cbs,irc_create_session(&cbs))
 {
 
@@ -90,7 +80,7 @@ Sess(ident,cbs,irc_create_session(&cbs))
 
 inline
 Sess::Sess(const Ident &ident,
-           Callbacks &cbs,
+           irc_callbacks_t &cbs,
            irc_session_t *const &sess):
 ident(ident),
 cbs(&cbs),
