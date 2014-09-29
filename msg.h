@@ -8,20 +8,21 @@
 
 inline namespace Fmts
 {
-	namespace NICK            { enum { NICKNAME    = 0                                                       }; }
-	namespace QUIT            { enum { REASON      = 0                                                       }; }
-	namespace JOIN            { enum { CHANNAME    = 0                                                       }; }
-	namespace PART            { enum { CHANNAME    = 0, REASON     = 1                                       }; }
-	namespace MODE            { enum { CHANNAME    = 0, DELTASTR   = 1                                       }; }
-	namespace UMODE           { enum { DELTASTR    = 0                                                       }; }
-	namespace UMODEIS         { enum { NICKNAME    = 0, DELTASTR   = 1                                       }; }
-	namespace CHANNELMODEIS   { enum { NICKNAME    = 0, CHANNAME   = 1, DELTASTR   = 2                       }; }
-	namespace KICK            { enum { CHANNAME    = 0, TARGET     = 1, REASON     = 2                       }; }
-	namespace CHANMSG         { enum { CHANNAME    = 0, TEXT       = 1                                       }; }
-	namespace CNOTICE         { enum { CHANNAME    = 0, TEXT       = 1                                       }; }
-	namespace PRIVMSG         { enum { NICKNAME    = 0, TEXT       = 1                                       }; }
-	namespace NOTICE          { enum { NICKNAME    = 0, TEXT       = 1                                       }; }
-	namespace NAMREPLY        { enum { NICKNAME    = 0, TYPE       = 1, CHANNAME    = 2, NAMELIST    = 3     }; }
+	namespace NICK            { enum { NICKNAME                                                                            }; }
+	namespace QUIT            { enum { REASON                                                                              }; }
+	namespace JOIN            { enum { CHANNAME                                                                            }; }
+	namespace PART            { enum { CHANNAME,  REASON                                                                   }; }
+	namespace MODE            { enum { CHANNAME,  DELTASTR                                                                 }; }
+	namespace UMODE           { enum { DELTASTR                                                                            }; }
+	namespace UMODEIS         { enum { NICKNAME,  DELTASTR                                                                 }; }
+	namespace CHANNELMODEIS   { enum { NICKNAME,  CHANNAME,  DELTASTR                                                      }; }
+	namespace KICK            { enum { CHANNAME,  TARGET,    REASON                                                        }; }
+	namespace CHANMSG         { enum { CHANNAME,  TEXT                                                                     }; }
+	namespace CNOTICE         { enum { CHANNAME,  TEXT                                                                     }; }
+	namespace PRIVMSG         { enum { NICKNAME,  TEXT                                                                     }; }
+	namespace NOTICE          { enum { NICKNAME,  TEXT                                                                     }; }
+	namespace NAMREPLY        { enum { NICKNAME,  TYPE,      CHANNAME,   NAMELIST                                          }; }
+	namespace WHOREPLY        { enum { SELFNAME,  CHANNAME,  USERNAME,   HOSTNAME,  SERVNAME,  NICKNAME,  FLAGS,   ADDL    }; }
 }
 
 

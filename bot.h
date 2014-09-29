@@ -46,7 +46,6 @@ class Bot
 	void handle_unhandled(const Msg &m, const std::string &name);
 	void handle_unhandled(const Msg &m);
 
-	void handle_erroneusnickname(const Msg &m);
 	void handle_bannedfromchan(const Msg &m);
 	void handle_channelmodeis(const Msg &m);
 	void handle_endofnames(const Msg &m);
@@ -62,6 +61,19 @@ class Bot
 	void handle_ctcp_act(const Msg &m);
 	void handle_ctcp_rep(const Msg &m);
 	void handle_ctcp_req(const Msg &m);
+
+	void handle_erroneusnickname(const Msg &m);
+	void handle_nosuchnick(const Msg &m);
+	void handle_whowasuser(const Msg &m);
+	void handle_endofwhois(const Msg &m);
+	void handle_whoischannels(const Msg &m);
+	void handle_whoisaccount(const Msg &m);
+	void handle_whoissecure(const Msg &m);
+	void handle_whoisserver(const Msg &m);
+	void handle_whoisidle(const Msg &m);
+	void handle_whoisuser(const Msg &m);
+	void handle_whospcrpl(const Msg &m);
+	void handle_whoreply(const Msg &m);
 	void handle_umodeis(const Msg &m);
 	void handle_notice(const Msg &m);
 	void handle_privmsg(const Msg &m);

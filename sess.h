@@ -46,7 +46,7 @@ class Sess
 	template<class F, class... A> bool call(std::nothrow_t, F&& f, A&&... a);
 
 	// [SEND] Raw send
-	template<class... VA_LIST> void quote(const char *const &fmt, VA_LIST&&... ap) __attribute__((format(printf,2,3)));
+	template<class... VA_LIST> void quote(const char *const &fmt, VA_LIST&&... ap);
 
 	// IRC Observers
 	const std::string &get_nick() const                { return nick;                               }

@@ -9,9 +9,11 @@
 class Chan
 {
   public:
-	using Userval = std::tuple<User *, Mode>;
-	using Users = std::unordered_map<std::string, Userval>;
 	enum Type {SECRET, PRIVATE, PUBLIC};
+	using UsersVal = std::tuple<User *, Mode>;
+	using Users = std::unordered_map<std::string, UsersVal>;
+	using ConstClosure = std::function<void (const UsersVal &)>;
+	using Closure = std::function<void (UsersVal &)>;
 
 	static char flag2mode(const char &flag);           // input = '@' then output = 'o' (or null)
 	static char nick_flag(const std::string &name);    // input = "@nickname" then output = '@' (or null)
@@ -30,7 +32,7 @@ class Chan
 	const std::string &get_name() const                { return name;                               }
 	const Mode &get_mode() const                       { return _mode;                              }
 	const Users &get_users() const                     { return users;                              }
-	bool is_joined() const                             { return joined;                             }
+	const bool &is_joined() const                      { return joined;                             }
 
 	const User &get_user(const std::string &nick) const;
 	const Mode &get_mode(const User &user) const;
@@ -38,19 +40,24 @@ class Chan
 	size_t num_users() const                           { return users.size();                       }
 	bool is_op() const;
 
+	void for_each(const ConstClosure &c) const;
+	void for_each(const Closure &c);
+
   private:
 	User &get_user(const std::string &nick);
 	Mode &get_mode(const User &user);
 
     // [RECV] Bot handler updates
 	friend class Bot;
-	bool del(User &user);
-	bool add(User &user, const Mode &mode = {});
-	bool rename(const User &user, const std::string &old_nick);
-	bool delta_mode(const User &user, const std::string &delta);
-
 	void set_joined(const bool &joined)                { this->joined = joined;                     }
 	void delta_mode(const std::string &delta)          { _mode.delta(delta);                        }
+	bool delta_mode(const User &user, const std::string &delta);
+	bool rename(const User &user, const std::string &old_nick);
+	bool add(User &user, const Mode &mode = {});
+	bool del(User &user);
+
+	// [SEND] bot handler supplies recipe
+	void who(const std::string &flags);                // raw who command
 
   public:
 	// [SEND] to channel
@@ -61,8 +68,8 @@ class Chan
 	void me(const std::string &msg);
 
 	// [SEND] Controls to channel
-	void mode();                                       // Update mode of channel (sets this->mode)
 	void names();                                      // Update users of channel (goes into this->users)
+	void mode();                                       // Update mode of channel (sets this->mode)
 	void part();                                       // Leave channel
 	void join();                                       // Enter channel
 
@@ -110,6 +117,13 @@ inline
 void Chan::names()
 {
 	sess.call(irc_cmd_names,get_name().c_str());
+}
+
+
+inline
+void Chan::who(const std::string &flags)
+{
+	sess.quote("who %s %s",get_name().c_str(),flags.c_str());
 }
 
 
@@ -170,7 +184,7 @@ bool Chan::rename(const User &user,
                   const std::string &old_nick)
 try
 {
-	Userval val = users.at(old_nick);
+	UsersVal val = users.at(old_nick);
 	users.erase(old_nick);
 
 	const std::string &new_nick = user.get_nick();
@@ -190,7 +204,7 @@ bool Chan::del(User &user)
 	const bool ret = users.erase(nick);
 
 	if(ret)
-		user.dec_chans();
+		user.chans--;
 
 	return ret;
 }
@@ -207,14 +221,15 @@ bool Chan::add(User &user,
 	const bool &ret = iit.second;
 
 	if(ret)
-		user.inc_chans();
+		user.chans++;
 
 	return ret;
 }
 
 
 inline
-bool Chan::is_op() const
+bool Chan::is_op()
+const
 {
 	const std::string &nick = sess.get_nick();
 	const User &user = get_user(nick);
@@ -224,10 +239,35 @@ bool Chan::is_op() const
 
 
 inline
+void Chan::for_each(const Closure &c)
+{
+	for(auto &pair : users)
+	{
+		const std::string &nick = pair.first;
+		UsersVal &val = pair.second;
+		c(val);
+	}
+}
+
+
+inline
+void Chan::for_each(const ConstClosure &c)
+const
+{
+	for(const auto &pair : users)
+	{
+		const std::string &nick = pair.first;
+		const UsersVal &val = pair.second;
+		c(val);
+	}
+}
+
+
+inline
 Mode &Chan::get_mode(const User &user)
 {
 	const std::string &nick = user.get_nick();
-	Userval &val = users.at(nick);
+	UsersVal &val = users.at(nick);
 	return std::get<1>(val);
 }
 
@@ -235,7 +275,7 @@ Mode &Chan::get_mode(const User &user)
 inline
 User &Chan::get_user(const std::string &nick)
 {
-	Userval &val = users.at(nick);
+	UsersVal &val = users.at(nick);
 	return *std::get<0>(val);
 }
 
@@ -245,7 +285,7 @@ const Mode &Chan::get_mode(const User &user)
 const
 {
 	const std::string &nick = user.get_nick();
-	const Userval &val = users.at(nick);
+	const UsersVal &val = users.at(nick);
 	return std::get<1>(val);
 }
 
@@ -254,7 +294,7 @@ inline
 const User &Chan::get_user(const std::string &nick)
 const
 {
-	const Userval &val = users.at(nick);
+	const UsersVal &val = users.at(nick);
 	return *std::get<0>(val);
 }
 
@@ -313,7 +353,7 @@ std::ostream &operator<<(std::ostream &s,
 	{
 		s << userp.first;
 
-		const Chan::Userval &val = userp.second;
+		const Chan::UsersVal &val = userp.second;
 		const Mode &mode = std::get<1>(val);
 		if(!mode.empty())
 			s << "(+" << mode << ")";

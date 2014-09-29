@@ -12,11 +12,11 @@ class Users
 	std::unordered_map<std::string, User> users;
 
   public:
-	const User &get(const std::string &nick) const     { return users.at(nick);                     }
+	const User &get(const std::string &nick) const;
 	bool has(const std::string &nick) const            { return users.count(nick);                  }
 	size_t num() const                                 { return users.size();                       }
 
-	User &get(const std::string &nick)                 { return users.at(nick);                     }
+	User &get(const std::string &nick);
 	User &add(const std::string &nick);
 	bool del(const User &user);
 
@@ -51,6 +51,30 @@ User &Users::add(const std::string &nick)
 	                                std::forward_as_tuple(sess,nick));
 	User &ret = iit.first->second;
 	return ret;
+}
+
+
+inline
+User &Users::get(const std::string &nick)
+try
+{
+	return users.at(nick);
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("User not found");
+}
+
+
+inline
+const User &Users::get(const std::string &nick)
+const try
+{
+	return users.at(nick);
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("User not found");
 }
 
 

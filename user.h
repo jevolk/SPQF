@@ -9,18 +9,29 @@
 class User
 {
 	Sess &sess;
+
+	// Handlers access
+	friend class Bot;
 	std::string nick;
+	std::string account;
+	bool secure;
+	time_t idle;
+
+	// Chan increments or decrements
+	friend class Chan;
 	size_t chans;
 
   public:
 	// Observers
 	const Sess &get_sess() const                       { return sess;                               }
 	const std::string &get_nick() const                { return nick;                               }
-	bool is_self() const                               { return sess.get_nick() == get_nick();      }
-
+	const std::string &get_account() const             { return account;                            }
+	const bool &is_secure() const                      { return secure;                             }
+	const time_t &get_idle() const                     { return idle;                               }
 	const size_t &num_chans() const                    { return chans;                              }
-	size_t dec_chans()                                 { return chans--;                            }
-	size_t inc_chans()                                 { return chans++;                            }
+
+	bool is_logged_in() const                          { return !get_account().empty();             }
+	bool is_myself() const                             { return sess.get_nick() == get_nick();      }
 
 	// [SEND] Controls
 	void kick(const std::string &chan, const std::string &reason = "");
@@ -41,6 +52,8 @@ User::User(Sess &sess,
            const std::string &nick):
 sess(sess),
 nick(nick),
+secure(false),
+idle(0),
 chans(0)
 {
 

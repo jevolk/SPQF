@@ -109,6 +109,15 @@ void Bot::operator()(const uint32_t &event,
 		case LIBIRC_RFC_RPL_NAMREPLY:             handle_namreply(msg);                break;
 		case LIBIRC_RFC_RPL_ENDOFNAMES:           handle_endofnames(msg);              break;
 		case LIBIRC_RFC_RPL_UMODEIS:              handle_umodeis(msg);                 break;
+		case LIBIRC_RFC_RPL_WHOREPLY:             handle_whoreply(msg);                break;
+		case 354: /* WHOSPCRPL */                 handle_whospcrpl(msg);               break;
+		case LIBIRC_RFC_RPL_WHOISUSER:            handle_whoisuser(msg);               break;
+		case LIBIRC_RFC_RPL_WHOISIDLE:            handle_whoisidle(msg);               break;
+		case LIBIRC_RFC_RPL_WHOISSERVER:          handle_whoisserver(msg);             break;
+		case 671: /* WHOISSECURE */               handle_whoissecure(msg);             break;
+		case 330: /* WHOISACCOUNT */              handle_whoisaccount(msg);            break;
+		case LIBIRC_RFC_RPL_ENDOFWHOIS:           handle_endofwhois(msg);              break;
+		case LIBIRC_RFC_RPL_WHOWASUSER:           handle_whowasuser(msg);              break;
 		case LIBIRC_RFC_RPL_CHANNELMODEIS:        handle_channelmodeis(msg);           break;
 
 		case LIBIRC_RFC_ERR_ERRONEUSNICKNAME:     handle_erroneusnickname(msg);        break;
@@ -207,6 +216,7 @@ void Bot::handle_join(const Msg &msg)
 	{
 		c.set_joined(true);
 		c.mode();
+		c.who("%tna,0");
 	}
 
 	handle_join(msg,c,u);
@@ -517,6 +527,112 @@ void Bot::handle_erroneusnickname(const Msg &msg)
 {
 	log_handle(msg,"ERRONEOUS NICKNAME");
 	quit();
+}
+
+
+void Bot::handle_whoreply(const Msg &msg)
+{
+	log_handle(msg,"WHO REPLY");
+
+	const std::string &selfserv = msg.get_nick();
+	const std::string &self = msg[WHOREPLY::SELFNAME];
+	const std::string &chan = msg[WHOREPLY::CHANNAME];
+	const std::string &user = msg[WHOREPLY::USERNAME];
+	const std::string &host = msg[WHOREPLY::HOSTNAME];
+	const std::string &serv = msg[WHOREPLY::SERVNAME];
+	const std::string &nick = msg[WHOREPLY::NICKNAME];
+	const std::string &flags = msg[WHOREPLY::FLAGS];
+	const std::string &addl = msg[WHOREPLY::ADDL];
+
+}
+
+
+void Bot::handle_whospcrpl(const Msg &msg)
+{
+	log_handle(msg,"WHO SPC RPL");
+
+	const std::string &server = msg.get_nick();
+	const std::string &self = msg[0];
+	const std::string &recipe = msg[1];
+	const std::string &nick = msg[2];
+	const std::string &acct = msg[3];
+
+	if(recipe != "0")
+		throw Exception("WHO SPECIAL recipe unrecognized");
+
+	Users &users = get_users();
+	User &user = users.get(nick);
+
+	if(acct != "0")
+		user.account = acct;
+}
+
+
+void Bot::handle_whoisuser(const Msg &msg)
+{
+	log_handle(msg,"WHOIS USER");
+
+}
+
+
+void Bot::handle_whoisidle(const Msg &msg)
+{
+	log_handle(msg,"WHOIS IDLE");
+
+}
+
+
+void Bot::handle_whoisserver(const Msg &msg)
+{
+	log_handle(msg,"WHOIS SERVER");
+
+}
+
+
+void Bot::handle_whoissecure(const Msg &msg)
+{
+	log_handle(msg,"WHOIS SECURE");
+
+}
+
+
+void Bot::handle_whoisaccount(const Msg &msg)
+{
+	log_handle(msg,"WHOIS ACCOUNT");
+
+	Users &users = get_users();
+	Chans &chans = get_chans();
+
+	User &u = users.get("jzk1");
+	Chan &c = chans.get("#SPQF");
+}
+
+
+void Bot::handle_whoischannels(const Msg &msg)
+{
+	log_handle(msg,"WHOIS CHANNELS");
+
+}
+
+
+void Bot::handle_endofwhois(const Msg &msg)
+{
+	log_handle(msg,"END OF WHOIS");
+
+}
+
+
+void Bot::handle_whowasuser(const Msg &msg)
+{
+	log_handle(msg,"WHOWAS USER");
+
+}
+
+
+void Bot::handle_nosuchnick(const Msg &msg)
+{
+	log_handle(msg,"NO SUCH NICK");
+
 }
 
 
