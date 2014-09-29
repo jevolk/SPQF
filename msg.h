@@ -6,23 +6,32 @@
  */
 
 
-inline namespace Fmts
+#define SPQF_FMT(type, fields...)  namespace type { enum { fields }; }
+
+
+inline namespace Fmt
 {
-	namespace NICK            { enum { NICKNAME                                                                            }; }
-	namespace QUIT            { enum { REASON                                                                              }; }
-	namespace JOIN            { enum { CHANNAME                                                                            }; }
-	namespace PART            { enum { CHANNAME,  REASON                                                                   }; }
-	namespace MODE            { enum { CHANNAME,  DELTASTR                                                                 }; }
-	namespace UMODE           { enum { DELTASTR                                                                            }; }
-	namespace UMODEIS         { enum { NICKNAME,  DELTASTR                                                                 }; }
-	namespace CHANNELMODEIS   { enum { NICKNAME,  CHANNAME,  DELTASTR                                                      }; }
-	namespace KICK            { enum { CHANNAME,  TARGET,    REASON                                                        }; }
-	namespace CHANMSG         { enum { CHANNAME,  TEXT                                                                     }; }
-	namespace CNOTICE         { enum { CHANNAME,  TEXT                                                                     }; }
-	namespace PRIVMSG         { enum { NICKNAME,  TEXT                                                                     }; }
-	namespace NOTICE          { enum { NICKNAME,  TEXT                                                                     }; }
-	namespace NAMREPLY        { enum { NICKNAME,  TYPE,      CHANNAME,   NAMELIST                                          }; }
-	namespace WHOREPLY        { enum { SELFNAME,  CHANNAME,  USERNAME,   HOSTNAME,  SERVNAME,  NICKNAME,  FLAGS,   ADDL    }; }
+SPQF_FMT( NICK,              NICKNAME                                                                        )
+SPQF_FMT( QUIT,              REASON                                                                          )
+SPQF_FMT( JOIN,              CHANNAME                                                                        )
+SPQF_FMT( PART,              CHANNAME, REASON                                                                )
+SPQF_FMT( MODE,              CHANNAME, DELTASTR                                                              )
+SPQF_FMT( UMODE,             DELTASTR                                                                        )
+SPQF_FMT( UMODEIS,           NICKNAME, DELTASTR                                                              )
+SPQF_FMT( CHANNELMODEIS,     NICKNAME, CHANNAME, DELTASTR                                                    )
+SPQF_FMT( KICK,              CHANNAME, TARGET,   REASON                                                      )
+SPQF_FMT( CHANMSG,           CHANNAME, TEXT                                                                  )
+SPQF_FMT( CNOTICE,           CHANNAME, TEXT                                                                  )
+SPQF_FMT( PRIVMSG,           NICKNAME, TEXT                                                                  )
+SPQF_FMT( NOTICE,            NICKNAME, TEXT                                                                  )
+SPQF_FMT( NAMREPLY,          NICKNAME, TYPE,     CHANNAME, NAMELIST                                          )
+SPQF_FMT( WHOREPLY,          SELFNAME, CHANNAME, USERNAME, HOSTNAME, SERVNAME, NICKNAME, FLAGS,    ADDL      )
+SPQF_FMT( WHOISIDLE,         SELFNAME, NICKNAME, SECONDS,  REMARKS                                           )
+SPQF_FMT( WHOISSECURE,       SELFNAME, NICKNAME, REMARKS,                                                    )
+SPQF_FMT( WHOISACCOUNT,      SELFNAME, NICKNAME, ACCOUNT,  REMARKS                                           )
+SPQF_FMT( CREATIONTIME,      SELFNAME, CHANNAME, TIME,                                                       )
+SPQF_FMT( BANLIST,           SELFNAME, CHANNAME, BANMASK,  OPERATOR, TIME,                                   )
+SPQF_FMT( QUIETLIST,         SELFNAME, CHANNAME, BANMASK,  OPERATOR, TIME,                                   )
 }
 
 
@@ -39,10 +48,12 @@ class Msg
 	const uint32_t &get_code() const                        { return code;                      }
 	const std::string &get_origin() const                   { return origin;                    }
 	const Params &get_params() const                        { return params;                    }
-
-	const std::string &get_param(const size_t &i) const     { return get_params().at(i);        }
-	const std::string &operator[](const size_t &i) const;   // returns empty str for outofrange
 	size_t num_params() const                               { return get_params().size();       }
+
+	const std::string &get(const size_t &i) const           { return get_params().at(i);        }
+	const std::string &operator[](const size_t &i) const;   // returns empty str for outofrange
+	template<class R> R get(const size_t &i) const;         // throws for range or bad cast
+	template<class R> R operator[](const size_t &i) const;  // throws for range or bad cast
 
 	std::string get_nick() const;
 	std::string get_host() const;
@@ -102,11 +113,28 @@ const
 }
 
 
+template<class R>
+R Msg::operator[](const size_t &i)
+const
+{
+	return get<R>(i);
+}
+
+
+template<class R>
+R Msg::get(const size_t &i)
+const
+{
+	const std::string &str = params.at(i);
+	return boost::lexical_cast<R>(str);
+}
+
+
 inline
 const std::string &Msg::operator[](const size_t &i)
 const try
 {
-	return get_param(i);
+	return get(i);
 }
 catch(const std::out_of_range &e)
 {
