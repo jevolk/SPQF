@@ -5,7 +5,6 @@ WFLAGS = -Wall                                 \
          -Wextra                               \
          -Wcomment                             \
          -Waddress                             \
-         -Winvalid-pch                         \
          -Winit-self                           \
          -Wuninitialized                       \
          -Wunreachable-code                    \
@@ -33,15 +32,24 @@ WFLAGS = -Wall                                 \
 CCFLAGS = -std=c++11
 LDFLAGS = -lircclient
 
-all: respublica TAGS
+TARGET = respublica
 
-respublica: respublica.o
-	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $< $(LDFLAGS)
 
-%.o: %.cpp
+all: $(TARGET)
+
+$(TARGET): main.o respub.o bot.o
+	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $^ $(LDFLAGS)
+
+
+main.o: main.cpp bot.h respub.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
-TAGS: *.cpp
+respub.o: respub.cpp respub.h
+	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+
+bot.o: bot.cpp bot.h
+	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+
 
 clean:
 	rm -f *.o respublica

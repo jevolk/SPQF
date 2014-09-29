@@ -1,0 +1,82 @@
+/**
+ *	COPYRIGHT 2014 (C) Jason Volk
+ *  COPYRIGHT 2014 (C) Svetlana Tkachenko
+ *
+ *	DISTRIBUTED UNDER THE GNU GENERAL PUBLIC LICENSE (GPL) (see: LICENSE)
+ */
+
+
+constexpr
+size_t hash(const char *const &str,
+            const size_t i = 0)
+{
+    return !str[i]? 5381ULL : (hash(str,i+1) * 33ULL) ^ str[i];
+}
+
+
+struct scope
+{
+	typedef std::function<void ()> Func;
+	const Func func;
+
+	scope(const Func &func): func(func) {}
+	~scope() { func(); }
+};
+
+
+class Exception : public std::runtime_error
+{
+	int c;
+
+  public:
+	const int &code() const  { return c; }
+
+	Exception(const int &c, const std::string &what = ""):
+	          std::runtime_error(what), c(c) {}
+
+	Exception(const std::string &what = ""):
+	          std::runtime_error(what), c(0) {}
+
+	friend std::ostream &operator<<(std::ostream &s, const Exception &e)
+	{
+		s << e.what();
+		return s;
+	}
+};
+
+
+template<int CODE_FOR_SUCCESS = 0,
+         class Exception = Exception,
+         class Function,
+         class... Args>
+auto irc_call(irc_session_t *const &sess,
+              Function&& func,
+              Args&&... args)
+-> decltype(func(sess,args...))
+{
+	const auto ret = func(sess,std::forward<Args>(args)...);
+
+	if(ret != CODE_FOR_SUCCESS)
+	{
+		const int errc = irc_errno(sess);
+		const char *const str = irc_strerror(errc);
+		std::stringstream s;
+		s << "libircclient: (" << errc << "): " << str;
+		throw Exception(errc,s.str());
+	}
+
+	return ret;
+}
+
+
+template<int CODE_FOR_SUCCESS = 0,
+         class Function,
+         class... Args>
+bool irc_call(std::nothrow_t,
+              irc_session_t *const &sess,
+              Function&& func,
+              Args&&... args)
+{
+	const auto ret = func(sess,std::forward<Args>(args)...);
+	return ret == CODE_FOR_SUCCESS;
+}
