@@ -107,9 +107,8 @@ void ResPublica::handle_chanmsg(const Msg &msg,
 	if(tokens.at(0) == "!accounttest")
 	{
 		c.for_each([&]
-		(const Chan::UsersVal &val)
+		(const User &user)
 		{
-			const User &user = *std::get<0>(val);
 			std::stringstream s;
 			s << user.get_nick() << " is" << (!user.is_logged_in()? " not " : " ") << "logged in";
 			if(user.get_nick() == u.get_nick())

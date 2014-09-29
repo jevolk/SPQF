@@ -12,8 +12,6 @@ class Chan
 	enum Type {SECRET, PRIVATE, PUBLIC};
 	using UsersVal = std::tuple<User *, Mode>;
 	using Users = std::unordered_map<std::string, UsersVal>;
-	using ConstClosure = std::function<void (const UsersVal &)>;
-	using Closure = std::function<void (UsersVal &)>;
 
 	static char flag2mode(const char &flag);           // input = '@' then output = 'o' (or null)
 	static char nick_flag(const std::string &name);    // input = "@nickname" then output = '@' (or null)
@@ -40,8 +38,15 @@ class Chan
 	size_t num_users() const                           { return users.size();                       }
 	bool is_op() const;
 
+	using ConstClosure = std::function<void (const UsersVal &)>;
+	using Closure = std::function<void (UsersVal &)>;
 	void for_each(const ConstClosure &c) const;
 	void for_each(const Closure &c);
+
+	using ConstUserClosure = std::function<void (const User &)>;
+	using UserClosure = std::function<void (User &)>;
+	void for_each(const ConstUserClosure &c) const;
+	void for_each(const UserClosure &c);
 
   private:
 	User &get_user(const std::string &nick);
@@ -235,6 +240,33 @@ const
 	const User &user = get_user(nick);
 	const Mode &mode = get_mode(user);
 	return mode.has('o');
+}
+
+
+inline
+void Chan::for_each(const UserClosure &c)
+{
+	for(auto &pair : users)
+	{
+		const std::string &nick = pair.first;
+		UsersVal &val = pair.second;
+		User &user = *std::get<0>(val);
+		c(user);
+	}
+}
+
+
+inline
+void Chan::for_each(const ConstUserClosure &c)
+const
+{
+	for(const auto &pair : users)
+	{
+		const std::string &nick = pair.first;
+		const UsersVal &val = pair.second;
+		const User &user = *std::get<0>(val);
+		c(user);
+	}
 }
 
 
