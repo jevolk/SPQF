@@ -111,7 +111,7 @@ void ResPublica::handle_chanmsg(const Msg &msg,
 		{
 			std::stringstream s;
 			s << user.get_nick() << " is" << (!user.is_logged_in()? " not " : " ") << "logged in";
-			if(user.get_nick() == u.get_nick())
+			if(user == u)
 				s << " and made this query.";
 
 			c.msg(s.str());

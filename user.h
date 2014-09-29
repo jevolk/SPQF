@@ -42,6 +42,7 @@ class User
 	User(Sess &sess, const std::string &nick);
 
 	bool operator<(const User &o) const                { return nick < o.nick;                      }
+	bool operator==(const User &o) const               { return nick == o.nick;                     }
 
 	friend std::ostream &operator<<(std::ostream &s, const User &u);
 };
