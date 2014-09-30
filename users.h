@@ -55,8 +55,12 @@ User &Users::add(const std::string &nick)
 	const auto &iit = users.emplace(std::piecewise_construct,
 	                                std::forward_as_tuple(nick),
 	                                std::forward_as_tuple(sess,nick));
-	User &ret = iit.first->second;
-	return ret;
+	User &user = iit.first->second;
+
+	if(iit.second)
+		user.who();
+
+	return user;
 }
 
 

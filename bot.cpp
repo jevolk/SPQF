@@ -213,11 +213,10 @@ void Bot::handle_join(const Msg &msg)
 	const std::string nick = msg.get_nick();
 	const std::string &chan = msg[JOIN::CHANNAME];
 
-	Users &users = get_users();
-	User &u = users.add(nick);
-
 	Chans &chans = get_chans();
+	Users &users = get_users();
 	Chan &c = chans.add(chan);
+	User &u = users.add(nick);
 	c.add(u);
 
 	if(my_nick(nick))
