@@ -12,9 +12,15 @@ class Users
 	std::unordered_map<std::string, User> users;
 
   public:
+	using ConstClosure = std::function<void (const User &)>;
+	using Closure = std::function<void (User &)>;
+
 	const User &get(const std::string &nick) const;
 	bool has(const std::string &nick) const            { return users.count(nick);                  }
 	size_t num() const                                 { return users.size();                       }
+
+	void for_each(const ConstClosure &c) const;
+	void for_each(const Closure &c);
 
 	User &get(const std::string &nick);
 	User &add(const std::string &nick);
@@ -75,6 +81,28 @@ const try
 catch(const std::out_of_range &e)
 {
 	throw Exception("User not found");
+}
+
+
+inline
+void Users::for_each(const Closure &closure)
+{
+	for(auto &userp : users)
+	{
+		User &user = userp.second;
+		closure(user);
+	}
+}
+
+
+inline
+void Users::for_each(const ConstClosure &closure) const
+{
+	for(const auto &userp : users)
+	{
+		const User &user = userp.second;
+		closure(user);
+	}
 }
 
 

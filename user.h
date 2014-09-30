@@ -36,9 +36,8 @@ class User
 	const time_t &get_idle() const                      { return idle;                               }
 	const size_t &num_chans() const                     { return chans;                              }
 
-	bool is_logged_in() const                           { return acct.size() && acct != "0";         }
 	bool is_myself() const                              { return get_nick() == sess.get_nick();      }
-
+	bool is_logged_in() const                           { return acct.size() && acct != "0";         }
 	Mask mask(const Mask::Type &t) const;               // Generate a mask from *this members
 
 	// [SEND] Controls
