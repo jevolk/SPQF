@@ -34,8 +34,4 @@ class Ban
 	}
 };
 
-
 using Quiet = Ban;
-
-using Bans = Masks<Ban>;
-using Quiets = Masks<Quiet>;

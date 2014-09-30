@@ -36,6 +36,7 @@
 #include "ban.h"
 #include "msg.h"
 #include "sess.h"
+#include "locutor.h"
 #include "user.h"
 #include "chan.h"
 #include "users.h"

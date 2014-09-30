@@ -6,62 +6,61 @@
  */
 
 
-class Chan
+class Chan : public Locutor
 {
   public:
+	// Channel type and utils
 	enum Type { SECRET, PRIVATE, PUBLIC };
 	static char flag2mode(const char &flag);                // input = '@' then output = 'o' (or null)
 	static char nick_flag(const std::string &name);         // input = "@nickname" then output = '@' (or null)
 	static Type chan_type(const char &c);
 
+	// Substructures
 	struct Topic : std::tuple<std::string, Mask, time_t>    { enum { TEXT, MASK, TIME };            };
+	using Quiets = Masks<Quiet>;
+	using Bans = Masks<Ban>;
 
   private:
 	using Userv = std::tuple<User *, Mode>;
 	using Users = std::unordered_map<std::string, Userv>;
 
-	Sess &sess;
-	std::string name;
 	Topic topic;
 	Mode _mode;
 	time_t creation;
 	Users users;
-	Bans quiets;
+	Quiets quiets;
 	Bans bans;
 	bool joined;                                            // State the server has sent us
 
   public:
 	// Observers
-	const Sess &get_sess() const                            { return sess;                          }
-	const std::string &get_name() const                     { return name;                          }
+	const std::string &get_name() const                     { return Locutor::get_target();         }
 	const Topic &get_topic() const                          { return topic;                         }
 	const Mode &get_mode() const                            { return _mode;                         }
 	const time_t &get_creation() const                      { return creation;                      }
 	const bool &is_joined() const                           { return joined;                        }
+	const Quiets &get_quiets() const                        { return quiets;                        }
+	const Bans &get_bans() const                            { return bans;                          }
 
 	const User &get_user(const std::string &nick) const;
 	const Mode &get_mode(const User &user) const;
-	bool has(const User &user) const                        { return users.count(user.get_nick());  }
+	bool has_nick(const std::string &nick) const            { return users.count(nick);             }
+	bool has(const User &user) const                        { return has_nick(user.get_nick());     }
 	size_t num_users() const                                { return users.size();                  }
 	bool is_op() const;
 
 	// Closures
-	using ConstClosure = std::function<void (const User &, const Mode &)>;
-	using Closure = std::function<void (User &, Mode &)>;
-	void for_each(const ConstClosure &c) const;
-	void for_each(const Closure &c);
-
-	using ConstUserClosure = std::function<void (const User &)>;
-	using UserClosure = std::function<void (User &)>;
-	void for_each(const ConstUserClosure &c) const;
-	void for_each(const UserClosure &c);
+	void for_each(const std::function<void (const User &, const Mode &)> &c) const;
+	void for_each(const std::function<void (const User &)> &c) const;
+	void for_each(const std::function<void (User &, Mode &)> &c);
+	void for_each(const std::function<void (User &)> &c);
 
   private:
 	User &get_user(const std::string &nick);
 	Mode &get_mode(const std::string &nick);
 	Mode &get_mode(const User &user);
 
-    // [RECV] Bot handler updates
+    // [RECV] Bot:: handler's call these to update state
 	friend class Bot;
 	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
 	bool delta_mode(const std::string &d, const Mask &m);
@@ -69,21 +68,16 @@ class Chan
 	bool add(User &user, const Mode &mode = {});
 	bool del(User &user);
 
-	// [SEND] raw interface to channel
+	// [SEND] raw interfaces to channel
 	void mode(const std::string &mode);                     // Raw mode command
 
   public:
 	// [SEND] State update interface
-	void who(const std::string &fl = User::WHO_FORMAT);     // Updates User state of channel (goes into Users->User)
+	void who(const std::string &fl = User::WHO_FORMAT);     // Updates state of users in channel (goes into Users->User)
 	void quietlist();                                       // Updates quietlist state of channel
 	void banlist();                                         // Updates banlist state of channel
 	void names();                                           // Update user list of channel (goes into this->users)
 	void mode();                                            // Update mode of channel (sets this->mode)
-
-	// [SEND] Locution interface to channel
-	void notice(const std::string &msg);                    // Notice to channel
-	void msg(const std::string &msg);                       // Message to channel
-	void me(const std::string &msg);
 
 	// [SEND] Control interface to channel
 	void kick(const User &user, const std::string &reason = "");
@@ -105,8 +99,7 @@ class Chan
 inline
 Chan::Chan(Sess &sess,
            const std::string &name):
-sess(sess),
-name(name),
+Locutor(sess,name),
 joined(false)
 {
 
@@ -160,27 +153,6 @@ inline
 void Chan::who(const std::string &flags)
 {
 	sess.quote("who %s %s",get_name().c_str(),flags.c_str());
-}
-
-
-inline
-void Chan::me(const std::string &msg)
-{
-	sess.call(irc_cmd_me,get_name().c_str(),msg.c_str());
-}
-
-
-inline
-void Chan::msg(const std::string &text)
-{
-	sess.call(irc_cmd_msg,get_name().c_str(),text.c_str());
-}
-
-
-inline
-void Chan::notice(const std::string &text)
-{
-	sess.call(irc_cmd_notice,get_name().c_str(),text.c_str());
 }
 
 
@@ -386,7 +358,7 @@ const
 
 
 inline
-void Chan::for_each(const UserClosure &c)
+void Chan::for_each(const std::function<void (User &)> &c)
 {
 	for(auto &pair : users)
 	{
@@ -399,7 +371,7 @@ void Chan::for_each(const UserClosure &c)
 
 
 inline
-void Chan::for_each(const ConstUserClosure &c)
+void Chan::for_each(const std::function<void (const User &)> &c)
 const
 {
 	for(const auto &pair : users)
@@ -413,7 +385,7 @@ const
 
 
 inline
-void Chan::for_each(const Closure &c)
+void Chan::for_each(const std::function<void (User &, Mode &)> &c)
 {
 	for(auto &pair : users)
 	{
@@ -427,7 +399,7 @@ void Chan::for_each(const Closure &c)
 
 
 inline
-void Chan::for_each(const ConstClosure &c)
+void Chan::for_each(const std::function<void (const User &, const Mode &)> &c)
 const
 {
 	for(const auto &pair : users)

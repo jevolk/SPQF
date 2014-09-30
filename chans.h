@@ -13,16 +13,16 @@ class Chans
 	std::map<std::string, Chan> chans;
 
   public:
-	using ConstClosure = std::function<void (const Chan &)>;
-	using Closure = std::function<void (Chan &)>;
-
+	// Observers
 	const Chan &get(const std::string &name) const     { return chans.at(name);                     }
 	bool has(const std::string &name) const            { return chans.count(name);                  }
 	size_t num() const                                 { return chans.size();                       }
 
-	void for_each(const ConstClosure &c) const;
-	void for_each(const Closure &c);
+	// Closures
+	void for_each(const std::function<void (const Chan &)> &c) const;
+	void for_each(const std::function<void (Chan &)> &c);
 
+	// Manipulators
 	Chan &get(const std::string &name);                // throws Exception
 	bool del(const std::string &name)                  { return chans.erase(name);                  }
 	Chan &add(const std::string &name);                // Add channel (w/o join) or return existing
@@ -79,7 +79,7 @@ Chan &Chans::add(const std::string &name)
 
 
 inline
-void Chans::for_each(const Closure &closure)
+void Chans::for_each(const std::function<void (Chan &)> &closure)
 {
 	for(auto &chanp : chans)
 	{
@@ -90,7 +90,8 @@ void Chans::for_each(const Closure &closure)
 
 
 inline
-void Chans::for_each(const ConstClosure &closure) const
+void Chans::for_each(const std::function<void (const Chan &)> &closure)
+const
 {
 	for(const auto &chanp : chans)
 	{

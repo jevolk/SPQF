@@ -12,16 +12,16 @@ class Users
 	std::unordered_map<std::string, User> users;
 
   public:
-	using ConstClosure = std::function<void (const User &)>;
-	using Closure = std::function<void (User &)>;
-
+	// Observers
 	const User &get(const std::string &nick) const;
 	bool has(const std::string &nick) const            { return users.count(nick);                  }
 	size_t num() const                                 { return users.size();                       }
 
-	void for_each(const ConstClosure &c) const;
-	void for_each(const Closure &c);
+	// Closures
+	void for_each(const std::function<void (const User &)> &c) const;
+	void for_each(const std::function<void (User &)> &c);
 
+	// Manipulators
 	User &get(const std::string &nick);
 	User &add(const std::string &nick);
 	bool del(const User &user);
@@ -89,7 +89,7 @@ catch(const std::out_of_range &e)
 
 
 inline
-void Users::for_each(const Closure &closure)
+void Users::for_each(const std::function<void (User &)> &closure)
 {
 	for(auto &userp : users)
 	{
@@ -100,7 +100,8 @@ void Users::for_each(const Closure &closure)
 
 
 inline
-void Users::for_each(const ConstClosure &closure) const
+void Users::for_each(const std::function<void (const User &)> &closure)
+const
 {
 	for(const auto &userp : users)
 	{

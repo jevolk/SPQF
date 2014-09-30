@@ -6,50 +6,47 @@
  */
 
 
-class User
+class User : public Locutor
 {
-	Sess &sess;
-
 	// Handlers access
 	friend class Bot;
-	std::string nick;                                   // who 'n'
-	std::string host;                                   // who 'h'
-	std::string acct;                                   // who 'a'
-	bool secure;                                        // WHOISSECURE
-	time_t idle;                                        // who 'l' or WHOISIDLE
+	// nick is Locutor::target                         // who 'n'
+	std::string host;                                  // who 'h'
+	std::string acct;                                  // who 'a'
+	bool secure;                                       // WHOISSECURE
+	time_t idle;                                       // who 'l' or WHOISIDLE
 
 	// Chan increments or decrements
 	friend class Chan;
 	size_t chans;
 
+	// Temp
+	friend class ResPublica;
+	int karma = 0;
+
   public:
-	// WHO recipe with expected format, fulfills our members
-	static constexpr int WHO_RECIPE = 0;
-	static constexpr const char *WHO_FORMAT = "%tnha,0";
+	static constexpr int WHO_RECIPE                    = 0;
+	static constexpr const char *const WHO_FORMAT      = "%tnha,0";       // ID must match WHO_RECIPE
 
 	// Observers
-	const Sess &get_sess() const                        { return sess;                               }
-	const std::string &get_nick() const                 { return nick;                               }
-	const std::string &get_host() const                 { return host;                               }
-	const std::string &get_acct() const                 { return acct;                               }
-	const bool &is_secure() const                       { return secure;                             }
-	const time_t &get_idle() const                      { return idle;                               }
-	const size_t &num_chans() const                     { return chans;                              }
+	const std::string &get_nick() const                { return Locutor::get_target();               }
+	const std::string &get_host() const                { return host;                                }
+	const std::string &get_acct() const                { return acct;                                }
+	const bool &is_secure() const                      { return secure;                              }
+	const time_t &get_idle() const                     { return idle;                                }
+	const size_t &num_chans() const                    { return chans;                               }
 
-	bool is_myself() const                              { return get_nick() == sess.get_nick();      }
-	bool is_logged_in() const                           { return acct.size() && acct != "0";         }
-	Mask mask(const Mask::Type &t) const;               // Generate a mask from *this members
+	bool is_myself() const                             { return get_nick() == get_sess().get_nick(); }
+	bool is_logged_in() const                          { return acct.size() && acct != "0";          }
+	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
 
 	// [SEND] Controls
-	void notice(const std::string &msg);                // Notice to user
-	void msg(const std::string &msg);                   // Message to user
-	void who(const std::string &flags = WHO_FORMAT);    // Requests who with flags we need by default
-	void whois();                                       // Requests full/multipart whois
+	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default
 
 	User(Sess &sess, const std::string &nick);
 
-	bool operator<(const User &o) const                 { return nick < o.nick;                      }
-	bool operator==(const User &o) const                { return nick == o.nick;                     }
+	bool operator<(const User &o) const                { return get_nick() < o.get_nick();           }
+	bool operator==(const User &o) const               { return get_nick() == o.get_nick();          }
 
 	friend std::ostream &operator<<(std::ostream &s, const User &u);
 };
@@ -58,8 +55,7 @@ class User
 inline
 User::User(Sess &sess,
            const std::string &nick):
-sess(sess),
-nick(nick),
+Locutor(sess,nick),
 secure(false),
 idle(0),
 chans(0)
@@ -70,30 +66,9 @@ chans(0)
 
 
 inline
-void User::whois()
-{
-	sess.call(irc_cmd_whois,get_nick().c_str());
-}
-
-
-inline
 void User::who(const std::string &flags)
 {
     sess.quote("who %s %s",get_nick().c_str(),flags.c_str());
-}
-
-
-inline
-void User::msg(const std::string &text)
-{
-	sess.call(irc_cmd_msg,get_nick().c_str(),text.c_str());
-}
-
-
-inline
-void User::notice(const std::string &text)
-{
-	sess.call(irc_cmd_notice,get_nick().c_str(),text.c_str());
 }
 
 
