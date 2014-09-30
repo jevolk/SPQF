@@ -14,12 +14,15 @@ class Chan
 	static char nick_flag(const std::string &name);         // input = "@nickname" then output = '@' (or null)
 	static Type chan_type(const char &c);
 
-	using UsersVal = std::tuple<User *, Mode>;
-	using Users = std::unordered_map<std::string, UsersVal>;
+	struct Topic : std::tuple<std::string, Mask, time_t>    { enum { TEXT, MASK, TIME };            };
 
   private:
+	using Userv = std::tuple<User *, Mode>;
+	using Users = std::unordered_map<std::string, Userv>;
+
 	Sess &sess;
 	std::string name;
+	Topic topic;
 	Mode _mode;
 	time_t creation;
 	Users users;
@@ -31,9 +34,9 @@ class Chan
 	// Observers
 	const Sess &get_sess() const                            { return sess;                          }
 	const std::string &get_name() const                     { return name;                          }
+	const Topic &get_topic() const                          { return topic;                         }
 	const Mode &get_mode() const                            { return _mode;                         }
 	const time_t &get_creation() const                      { return creation;                      }
-	const Users &get_users() const                          { return users;                         }
 	const bool &is_joined() const                           { return joined;                        }
 
 	const User &get_user(const std::string &nick) const;
@@ -328,7 +331,7 @@ bool Chan::rename(const User &user,
                   const std::string &old_nick)
 try
 {
-	UsersVal val = users.at(old_nick);
+	Userv val = users.at(old_nick);
 	users.erase(old_nick);
 
 	const std::string &new_nick = user.get_nick();
@@ -361,7 +364,7 @@ bool Chan::add(User &user,
 	const std::string &nick = user.get_nick();
 	const auto iit = users.emplace(std::piecewise_construct,
 	                               std::forward_as_tuple(nick),
-	                               std::forward_as_tuple(&user,mode));
+	                               std::forward_as_tuple(std::make_tuple(&user,mode)));
 	const bool &ret = iit.second;
 
 	if(ret)
@@ -388,7 +391,7 @@ void Chan::for_each(const UserClosure &c)
 	for(auto &pair : users)
 	{
 		const std::string &nick = pair.first;
-		UsersVal &val = pair.second;
+		Userv &val = pair.second;
 		User &user = *std::get<0>(val);
 		c(user);
 	}
@@ -402,7 +405,7 @@ const
 	for(const auto &pair : users)
 	{
 		const std::string &nick = pair.first;
-		const UsersVal &val = pair.second;
+		const Userv &val = pair.second;
 		const User &user = *std::get<0>(val);
 		c(user);
 	}
@@ -415,7 +418,7 @@ void Chan::for_each(const Closure &c)
 	for(auto &pair : users)
 	{
 		const std::string &nick = pair.first;
-		UsersVal &val = pair.second;
+		Userv &val = pair.second;
 		User &user = *std::get<0>(val);
 		Mode &mode = std::get<1>(val);
 		c(user,mode);
@@ -430,7 +433,7 @@ const
 	for(const auto &pair : users)
 	{
 		const std::string &nick = pair.first;
-		const UsersVal &val = pair.second;
+		const Userv &val = pair.second;
 		const User &user = *std::get<0>(val);
 		const Mode &mode = std::get<1>(val);
 		c(user,mode);
@@ -449,7 +452,7 @@ Mode &Chan::get_mode(const User &user)
 inline
 Mode &Chan::get_mode(const std::string &nick)
 {
-	UsersVal &val = users.at(nick);
+	Userv &val = users.at(nick);
 	return std::get<1>(val);
 }
 
@@ -458,7 +461,7 @@ inline
 User &Chan::get_user(const std::string &nick)
 try
 {
-	UsersVal &val = users.at(nick);
+	Userv &val = users.at(nick);
 	return *std::get<0>(val);
 }
 catch(const std::out_of_range &e)
@@ -472,7 +475,7 @@ const Mode &Chan::get_mode(const User &user)
 const
 {
 	const std::string &nick = user.get_nick();
-	const UsersVal &val = users.at(nick);
+	const Userv &val = users.at(nick);
 	return std::get<1>(val);
 }
 
@@ -481,7 +484,7 @@ inline
 const User &Chan::get_user(const std::string &nick)
 const try
 {
-	const UsersVal &val = users.at(nick);
+	const Userv &val = users.at(nick);
 	return *std::get<0>(val);
 }
 catch(const std::out_of_range &e)
@@ -540,12 +543,16 @@ std::ostream &operator<<(std::ostream &s,
 	s << "creation:   \t" << c.get_creation() << std::endl;
 	s << "joined:     \t" << std::boolalpha << c.is_joined() << std::endl;
 	s << "my privs:   \t" << (c.is_op()? "I am an operator." : "I am not an operator.") << std::endl;
+	s << "topic:      \t" << std::get<Chan::Topic::TEXT>(c.get_topic()) << std::endl;
+	s << "topic by:   \t" << std::get<Chan::Topic::MASK>(c.get_topic()) << std::endl;
+	s << "topic time: \t" << std::get<Chan::Topic::TIME>(c.get_topic()) << std::endl;
+
 	s << "users: " << c.num_users() << " -------" << std::endl;
 	for(const auto &userp : c.users)
 	{
 		s << userp.first;
 
-		const Chan::UsersVal &val = userp.second;
+		const auto &val = userp.second;
 		const Mode &mode = std::get<1>(val);
 		if(!mode.empty())
 			s << "(+" << mode << ")";

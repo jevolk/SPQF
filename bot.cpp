@@ -124,6 +124,8 @@ void Bot::operator()(const uint32_t &event,
 		case LIBIRC_RFC_RPL_ENDOFWHOIS:           handle_endofwhois(msg);              break;
 		case LIBIRC_RFC_RPL_WHOWASUSER:           handle_whowasuser(msg);              break;
 		case LIBIRC_RFC_RPL_CHANNELMODEIS:        handle_channelmodeis(msg);           break;
+		case LIBIRC_RFC_RPL_TOPIC:                handle_topic(msg);                   break;
+		case 333 /* RPL_TOPICWHOTIME */:          handle_topicwhotime(msg);            break;
 		case 329 /* RPL_CREATIONTIME */:          handle_creationtime(msg);            break;
 		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 break;
 		case 728 /* RPL_QUIETLIST */:             handle_quietlist(msg);               break;
@@ -380,6 +382,25 @@ void Bot::handle_creationtime(const Msg &msg)
 }
 
 
+void Bot::handle_topicwhotime(const Msg &msg)
+{
+	using namespace Fmt::TOPICWHOTIME;
+
+	log_handle(msg,"TOPIC WHO TIME");
+
+	const std::string &self = msg[SELFNAME];
+	const std::string &chan = msg[CHANNAME];
+	const std::string &mask = msg[MASK];
+	const time_t time = msg.get<time_t>(TIME);
+
+	Chans &chans = get_chans();
+	Chan &c = chans.get(chan);
+
+	std::get<Chan::Topic::MASK>(c.topic) = mask;
+	std::get<Chan::Topic::TIME>(c.topic) = time;
+}
+
+
 void Bot::handle_banlist(const Msg &msg)
 {
 	using namespace Fmt::BANLIST;
@@ -424,8 +445,18 @@ void Bot::handle_quietlist(const Msg &msg)
 
 void Bot::handle_topic(const Msg &msg)
 {
+	using namespace Fmt::TOPIC;
+
 	log_handle(msg,"TOPIC");
 
+	const std::string &self = msg[SELFNAME];
+	const std::string &chan = msg[CHANNAME];
+	const std::string &text = msg[TEXT];
+
+	Chans &chans = get_chans();
+	Chan &c = chans.get(chan);
+
+	std::get<Chan::Topic::TEXT>(c.topic) = text;
 }
 
 

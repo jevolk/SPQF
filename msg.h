@@ -18,6 +18,7 @@ SPQF_FMT( PART,              CHANNAME, REASON                                   
 SPQF_FMT( MODE,              CHANNAME, DELTASTR                                                              )
 SPQF_FMT( UMODE,             DELTASTR                                                                        )
 SPQF_FMT( UMODEIS,           NICKNAME, DELTASTR                                                              )
+SPQF_FMT( TOPIC,             SELFNAME, CHANNAME, TEXT,                                                       )
 SPQF_FMT( CHANNELMODEIS,     NICKNAME, CHANNAME, DELTASTR                                                    )
 SPQF_FMT( KICK,              CHANNAME, TARGET,   REASON                                                      )
 SPQF_FMT( CHANMSG,           CHANNAME, TEXT                                                                  )
@@ -30,6 +31,7 @@ SPQF_FMT( WHOISIDLE,         SELFNAME, NICKNAME, SECONDS,  REMARKS              
 SPQF_FMT( WHOISSECURE,       SELFNAME, NICKNAME, REMARKS,                                                    )
 SPQF_FMT( WHOISACCOUNT,      SELFNAME, NICKNAME, ACCOUNT,  REMARKS                                           )
 SPQF_FMT( CREATIONTIME,      SELFNAME, CHANNAME, TIME,                                                       )
+SPQF_FMT( TOPICWHOTIME,      SELFNAME, CHANNAME, MASK,     TIME,                                             )
 SPQF_FMT( BANLIST,           SELFNAME, CHANNAME, BANMASK,  OPERATOR, TIME,                                   )
 SPQF_FMT( QUIETLIST,         SELFNAME, CHANNAME, MODECODE, BANMASK,  OPERATOR, TIME,                         )
 }

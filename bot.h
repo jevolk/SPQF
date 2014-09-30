@@ -48,6 +48,7 @@ class Bot
 
 	void handle_bannedfromchan(const Msg &m);
 	void handle_channelmodeis(const Msg &m);
+	void handle_topicwhotime(const Msg &m);
 	void handle_creationtime(const Msg &m);
 	void handle_endofnames(const Msg &m);
 	void handle_namreply(const Msg &m);
