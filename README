@@ -7,7 +7,7 @@ Requirements:
 		* libstdc++
 
 	* libircclient >= 1.8
-	* Boost (Tokenizer)
+	* Boost (Tokenizer, lexical_cast)
 
 
 Compile:
