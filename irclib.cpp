@@ -7,9 +7,13 @@
 
 
 #include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+#include <signal.h>
 #include <vector>
 #include <map>
 #include <set>
+#include <list>
 #include <unordered_map>
 #include <functional>
 #include <iomanip>
@@ -19,16 +23,16 @@
 #include <iostream>
 #include <ostream>
 #include <atomic>
-#include <string.h>
-#include <stdio.h>
-#include <signal.h>
+
 #include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <libircclient.h>
 #include <libirc_rfcnumeric.h>
 
 #include "util.h"
 #include "mode.h"
+#include "ban.h"
 #include "msg.h"
 #include "sess.h"
 #include "user.h"
@@ -61,7 +65,7 @@ try
 	Bot &bot = *static_cast<Bot *>(ctx);
 	bot(event,origin,params,count);
 }
-catch(const std::runtime_error &e)
+catch(const std::exception &e)
 {
 	std::cerr
 	<< "\033[1;31m"
@@ -73,7 +77,8 @@ catch(const std::runtime_error &e)
 	<< "," << params
 	<< "," << count
 	<< ")"
-	<< "\033[0m";
+	<< "\033[0m"
+	<< std::endl;
 }
 
 

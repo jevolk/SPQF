@@ -7,9 +7,13 @@
 
 
 #include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+#include <signal.h>
 #include <vector>
 #include <map>
 #include <set>
+#include <list>
 #include <unordered_map>
 #include <functional>
 #include <iomanip>
@@ -19,16 +23,16 @@
 #include <iostream>
 #include <ostream>
 #include <atomic>
-#include <string.h>
-#include <stdio.h>
-#include <signal.h>
+
 #include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <libircclient.h>
 #include <libirc_rfcnumeric.h>
 
 #include "util.h"
 #include "mode.h"
+#include "ban.h"
 #include "msg.h"
 #include "sess.h"
 #include "user.h"
@@ -110,15 +114,18 @@ void Bot::operator()(const uint32_t &event,
 		case LIBIRC_RFC_RPL_ENDOFNAMES:           handle_endofnames(msg);              break;
 		case LIBIRC_RFC_RPL_UMODEIS:              handle_umodeis(msg);                 break;
 		case LIBIRC_RFC_RPL_WHOREPLY:             handle_whoreply(msg);                break;
-		case 354: /* WHOSPCRPL */                 handle_whospcrpl(msg);               break;
+		case 354 /* RPL_WHOSPCRPL */:             handle_whospcrpl(msg);               break;
 		case LIBIRC_RFC_RPL_WHOISUSER:            handle_whoisuser(msg);               break;
 		case LIBIRC_RFC_RPL_WHOISIDLE:            handle_whoisidle(msg);               break;
 		case LIBIRC_RFC_RPL_WHOISSERVER:          handle_whoisserver(msg);             break;
-		case 671: /* WHOISSECURE */               handle_whoissecure(msg);             break;
-		case 330: /* WHOISACCOUNT */              handle_whoisaccount(msg);            break;
+		case 671 /* RPL_WHOISSECURE */:           handle_whoissecure(msg);             break;
+		case 330 /* RPL_WHOISACCOUNT */:          handle_whoisaccount(msg);            break;
 		case LIBIRC_RFC_RPL_ENDOFWHOIS:           handle_endofwhois(msg);              break;
 		case LIBIRC_RFC_RPL_WHOWASUSER:           handle_whowasuser(msg);              break;
 		case LIBIRC_RFC_RPL_CHANNELMODEIS:        handle_channelmodeis(msg);           break;
+		case 329 /* RPL_CREATIONTIME */:          handle_creationtime(msg);            break;
+		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 break;
+		case 728 /* RPL_QUIETLIST */:             handle_quietlist(msg);               break;
 
 		case LIBIRC_RFC_ERR_ERRONEUSNICKNAME:     handle_erroneusnickname(msg);        break;
 		case LIBIRC_RFC_ERR_BANNEDFROMCHAN:       handle_bannedfromchan(msg);          break;
@@ -214,9 +221,11 @@ void Bot::handle_join(const Msg &msg)
 
 	if(my_nick(nick))
 	{
-		c.set_joined(true);
+		c.joined = true;
 		c.mode();
-		c.who("%tna,0");
+		c.who();
+		c.banlist();
+		c.quietlist();
 	}
 
 	handle_join(msg,c,u);
@@ -281,18 +290,27 @@ void Bot::handle_mode(const Msg &msg)
 		return;
 	}
 
-	// Channel user mode
+	// Channel user/target mode
 	Users &users = get_users();
 	const std::string sign(1,mode.at(0));
 	for(size_t d = 1, m = 2; m < msg.num_params(); d++, m++) try
 	{
 		const std::string delta = sign + mode.at(d);
-		const std::string &targ = msg[m];
+		const Mask &targ = msg[m];
+
+		// Target was mask                    //TODO: combine?
+		if(targ.get_form() != Mask::INVALID)
+		{
+			c.delta_mode(delta,targ);
+			continue;
+		}
+
+		// Target was user
 		User &u = users.get(targ);
-		c.delta_mode(u,delta);
+		c.delta_mode(delta,u);
 		handle_mode(msg,c,u);
 	}
-	catch(const std::out_of_range &e)
+	catch(const std::exception &e)
 	{
 		std::cerr << "Mode update failed:"
 		          << " chan: " << chan
@@ -336,15 +354,76 @@ void Bot::handle_umodeis(const Msg &msg)
 
 void Bot::handle_channelmodeis(const Msg &msg)
 {
+	using namespace Fmt::CHANNELMODEIS;
+
 	log_handle(msg,"CHANNELMODEIS");
 
-	const std::string &self = msg[CHANNELMODEIS::NICKNAME];
-	const std::string &chan = msg[CHANNELMODEIS::CHANNAME];
-	const std::string &mode = msg[CHANNELMODEIS::DELTASTR];
+	const std::string &self = msg[NICKNAME];
+	const std::string &chan = msg[CHANNAME];
+	const std::string &mode = msg[DELTASTR];
 
 	Chans &chans = get_chans();
 	Chan &c = chans.get(chan);
 	c.delta_mode(mode);
+}
+
+
+void Bot::handle_creationtime(const Msg &msg)
+{
+	using namespace Fmt::CREATIONTIME;
+
+	log_handle(msg,"CREATION TIME");
+
+	const std::string &self = msg[SELFNAME];
+	const std::string &chan = msg[CHANNAME];
+	const time_t time = msg.get<time_t>(TIME);
+
+	Chans &chans = get_chans();
+	Chan &c = chans.get(chan);
+
+	c.creation = time;
+}
+
+
+void Bot::handle_banlist(const Msg &msg)
+{
+	using namespace Fmt::BANLIST;
+
+	log_handle(msg,"BAN LIST");
+
+	const std::string &self = msg[SELFNAME];
+	const std::string &chan = msg[CHANNAME];
+	const std::string &mask = msg[BANMASK];
+	const std::string &oper = msg[OPERATOR];
+	const time_t time = msg.get<time_t>(TIME);
+
+	Chans &chans = get_chans();
+	Chan &c = chans.get(chan);
+
+	c.bans.add(mask,oper,time);
+}
+
+
+void Bot::handle_quietlist(const Msg &msg)
+{
+	using namespace Fmt::QUIETLIST;
+
+	log_handle(msg,"QUIET LIST");
+
+	const std::string &self = msg[SELFNAME];
+	const std::string &chan = msg[CHANNAME];
+	const std::string &mode = msg[MODECODE];
+	const std::string &mask = msg[BANMASK];
+	const std::string &oper = msg[OPERATOR];
+	const time_t time = msg.get<time_t>(TIME);
+
+	if(mode != "q")
+		throw Exception("Received non 'q' mode for 728");
+
+	Chans &chans = get_chans();
+	Chan &c = chans.get(chan);
+
+	c.quiets.add(mask,oper,time);
 }
 
 
@@ -549,22 +628,33 @@ void Bot::handle_whoreply(const Msg &msg)
 
 void Bot::handle_whospcrpl(const Msg &msg)
 {
-	log_handle(msg,"WHO SPC RPL");
+	log_handle(msg,"WHO SPECIAL");
 
 	const std::string &server = msg.get_nick();
 	const std::string &self = msg[0];
-	const std::string &recipe = msg[1];
-	const std::string &nick = msg[2];
-	const std::string &acct = msg[3];
+	const int recipe = msg.get<int>(1);
 
-	if(recipe != "0")
-		throw Exception("WHO SPECIAL recipe unrecognized");
+	switch(recipe)
+	{
+		case User::WHO_RECIPE:
+		{
+			const std::string &nick = msg[3];
+			const std::string &host = msg[2];
+			const std::string &acct = msg[4];
+			//const time_t idle = msg.get<time_t>(4);
 
-	Users &users = get_users();
-	User &user = users.get(nick);
+			Users &users = get_users();
+			User &user = users.get(nick);
 
-	if(acct != "0")
-		user.account = acct;
+			user.host = host;
+			user.acct = acct;
+			//user.idle = idle;
+			break;
+		}
+
+		default:
+			throw Exception("WHO SPECIAL recipe unrecognized");
+	}
 }
 
 
@@ -576,9 +666,25 @@ void Bot::handle_whoisuser(const Msg &msg)
 
 
 void Bot::handle_whoisidle(const Msg &msg)
+try
 {
 	log_handle(msg,"WHOIS IDLE");
 
+	const std::string &selfserv = msg.get_nick();
+	const std::string &self = msg[WHOISIDLE::SELFNAME];
+	const std::string &nick = msg[WHOISIDLE::NICKNAME];
+	const std::string &info = msg[WHOISIDLE::REMARKS];
+	const time_t secs = msg.get<time_t>(WHOISIDLE::SECONDS);
+
+	Users &users = get_users();
+	User &u = users.get(nick);
+
+	u.idle = boost::lexical_cast<time_t>(secs);
+}
+catch(const Exception &e)
+{
+	std::cerr << "handle_whoisidle(): " << e << std::endl;
+	return;
 }
 
 
@@ -590,21 +696,46 @@ void Bot::handle_whoisserver(const Msg &msg)
 
 
 void Bot::handle_whoissecure(const Msg &msg)
+try
 {
 	log_handle(msg,"WHOIS SECURE");
 
+	const std::string &selfserv = msg.get_nick();
+	const std::string &self = msg[WHOISSECURE::SELFNAME];
+	const std::string &nick = msg[WHOISSECURE::NICKNAME];
+	const std::string &info = msg[WHOISSECURE::REMARKS];
+
+	Users &users = get_users();
+	User &u = users.get(nick);
+
+	u.secure = true;
+}
+catch(const Exception &e)
+{
+	std::cerr << "handle_whoissecure(): " << e << std::endl;
+	return;
 }
 
 
 void Bot::handle_whoisaccount(const Msg &msg)
+try
 {
 	log_handle(msg,"WHOIS ACCOUNT");
 
-	Users &users = get_users();
-	Chans &chans = get_chans();
+	const std::string &selfserv = msg.get_nick();
+	const std::string &self = msg[WHOISACCOUNT::SELFNAME];
+	const std::string &nick = msg[WHOISACCOUNT::NICKNAME];
+	const std::string &acct = msg[WHOISACCOUNT::ACCOUNT];
+	const std::string &info = msg[WHOISACCOUNT::REMARKS];
 
-	User &u = users.get("jzk1");
-	Chan &c = chans.get("#SPQF");
+	Users &users = get_users();
+	User &u = users.get(nick);
+	u.acct = acct;
+}
+catch(const Exception &e)
+{
+	std::cerr << "handle_whoisaccount(): " << e << std::endl;
+	return;
 }
 
 

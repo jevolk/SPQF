@@ -12,37 +12,45 @@ class User
 
 	// Handlers access
 	friend class Bot;
-	std::string nick;
-	std::string account;
-	bool secure;
-	time_t idle;
+	std::string nick;                                   // who 'n'
+	std::string host;                                   // who 'h'
+	std::string acct;                                   // who 'a'
+	bool secure;                                        // WHOISSECURE
+	time_t idle;                                        // who 'l' or WHOISIDLE
 
 	// Chan increments or decrements
 	friend class Chan;
 	size_t chans;
 
   public:
-	// Observers
-	const Sess &get_sess() const                       { return sess;                               }
-	const std::string &get_nick() const                { return nick;                               }
-	const std::string &get_account() const             { return account;                            }
-	const bool &is_secure() const                      { return secure;                             }
-	const time_t &get_idle() const                     { return idle;                               }
-	const size_t &num_chans() const                    { return chans;                              }
+	// WHO recipe with expected format, fulfills our members
+	static constexpr int WHO_RECIPE = 0;
+	static constexpr const char *WHO_FORMAT = "%tnha,0";
 
-	bool is_logged_in() const                          { return !get_account().empty();             }
-	bool is_myself() const                             { return sess.get_nick() == get_nick();      }
+	// Observers
+	const Sess &get_sess() const                        { return sess;                               }
+	const std::string &get_nick() const                 { return nick;                               }
+	const std::string &get_host() const                 { return host;                               }
+	const std::string &get_acct() const                 { return acct;                               }
+	const bool &is_secure() const                       { return secure;                             }
+	const time_t &get_idle() const                      { return idle;                               }
+	const size_t &num_chans() const                     { return chans;                              }
+
+	bool is_logged_in() const                           { return acct.size() && acct != "0";         }
+	bool is_myself() const                              { return get_nick() == sess.get_nick();      }
+
+	Mask mask(const Mask::Type &t) const;               // Generate a mask from *this members
 
 	// [SEND] Controls
-	void kick(const std::string &chan, const std::string &reason = "");
-	void notice(const std::string &msg);               // Notice to user
-	void msg(const std::string &msg);                  // Message to user
-	void whois();                                      // Sends whois to server
+	void notice(const std::string &msg);                // Notice to user
+	void msg(const std::string &msg);                   // Message to user
+	void who(const std::string &flags = WHO_FORMAT);    // Requests who with flags we need by default
+	void whois();                                       // Requests full/multipart whois
 
 	User(Sess &sess, const std::string &nick);
 
-	bool operator<(const User &o) const                { return nick < o.nick;                      }
-	bool operator==(const User &o) const               { return nick == o.nick;                     }
+	bool operator<(const User &o) const                 { return nick < o.nick;                      }
+	bool operator==(const User &o) const                { return nick == o.nick;                     }
 
 	friend std::ostream &operator<<(std::ostream &s, const User &u);
 };
@@ -70,6 +78,13 @@ void User::whois()
 
 
 inline
+void User::who(const std::string &flags)
+{
+    sess.quote("who %s %s",get_nick().c_str(),flags.c_str());
+}
+
+
+inline
 void User::msg(const std::string &text)
 {
 	sess.call(irc_cmd_msg,get_nick().c_str(),text.c_str());
@@ -84,10 +99,28 @@ void User::notice(const std::string &text)
 
 
 inline
-void User::kick(const std::string &chan,
-                const std::string &reason)
+Mask User::mask(const Mask::Type &recipe) const
 {
-	sess.call(irc_cmd_kick,get_nick().c_str(),chan.c_str(),reason.c_str());
+	std::stringstream s;
+	switch(recipe)
+	{
+		case Mask::NICK:
+			s << get_nick() << "!*@*";
+			break;
+
+		case Mask::HOST:
+			s << "*!*@" << get_host();
+			break;
+
+		case Mask::ACCT:
+			if(!is_logged_in())
+				throw Exception("Can't mask ACCT: user not logged in");
+
+			s << "$a:" << get_acct();
+			break;
+	}
+
+	return s.str();
 }
 
 
@@ -95,6 +128,17 @@ inline
 std::ostream &operator<<(std::ostream &s,
                          const User &u)
 {
-	s << "nick: " << u.get_nick() << " chans: " << u.num_chans();
+	s << std::setw(18) << std::left << u.get_nick();
+	s << "@: " << std::setw(64) << std::left << u.get_host();
+	s << "ssl: " << std::boolalpha << std::setw(8) << std::left << u.is_secure();
+	s << "idle: " << std::setw(7) << std::left <<  u.get_idle();
+	s << "chans: " << std::setw(3) << std::left << u.num_chans();
+
+	if(u.is_logged_in())
+		s << "acct: " << std::setw(18) << std::left << u.get_acct();
+
+	if(u.is_myself())
+		s << "<MYSELF>";
+
 	return s;
 }

@@ -9,35 +9,40 @@
 class Chan
 {
   public:
-	enum Type {SECRET, PRIVATE, PUBLIC};
+	enum Type { SECRET, PRIVATE, PUBLIC };
+	static char flag2mode(const char &flag);                // input = '@' then output = 'o' (or null)
+	static char nick_flag(const std::string &name);         // input = "@nickname" then output = '@' (or null)
+	static Type chan_type(const char &c);
+
 	using UsersVal = std::tuple<User *, Mode>;
 	using Users = std::unordered_map<std::string, UsersVal>;
-
-	static char flag2mode(const char &flag);           // input = '@' then output = 'o' (or null)
-	static char nick_flag(const std::string &name);    // input = "@nickname" then output = '@' (or null)
-	static Type chan_type(const char &c);
 
   private:
 	Sess &sess;
 	std::string name;
 	Mode _mode;
+	time_t creation;
 	Users users;
-	bool joined;                                       // State the server has sent us
+	Bans quiets;
+	Bans bans;
+	bool joined;                                            // State the server has sent us
 
   public:
 	// Observers
-	const Sess &get_sess() const                       { return sess;                               }
-	const std::string &get_name() const                { return name;                               }
-	const Mode &get_mode() const                       { return _mode;                              }
-	const Users &get_users() const                     { return users;                              }
-	const bool &is_joined() const                      { return joined;                             }
+	const Sess &get_sess() const                            { return sess;                          }
+	const std::string &get_name() const                     { return name;                          }
+	const Mode &get_mode() const                            { return _mode;                         }
+	const time_t &get_creation() const                      { return creation;                      }
+	const Users &get_users() const                          { return users;                         }
+	const bool &is_joined() const                           { return joined;                        }
 
 	const User &get_user(const std::string &nick) const;
 	const Mode &get_mode(const User &user) const;
-	bool has(const User &user) const                   { return users.count(user.get_nick());       }
-	size_t num_users() const                           { return users.size();                       }
+	bool has(const User &user) const                        { return users.count(user.get_nick());  }
+	size_t num_users() const                                { return users.size();                  }
 	bool is_op() const;
 
+	// Closures
 	using ConstClosure = std::function<void (const UsersVal &)>;
 	using Closure = std::function<void (UsersVal &)>;
 	void for_each(const ConstClosure &c) const;
@@ -54,29 +59,38 @@ class Chan
 
     // [RECV] Bot handler updates
 	friend class Bot;
-	void set_joined(const bool &joined)                { this->joined = joined;                     }
-	void delta_mode(const std::string &delta)          { _mode.delta(delta);                        }
-	bool delta_mode(const User &user, const std::string &delta);
+	void delta_mode(const std::string &delta)               { _mode.delta(delta);                   }
+	bool delta_mode(const std::string &delta, const User &u);
+	bool delta_mode(const std::string &delta, const Mask &m);
 	bool rename(const User &user, const std::string &old_nick);
 	bool add(User &user, const Mode &mode = {});
 	bool del(User &user);
 
-	// [SEND] bot handler supplies recipe
-	void who(const std::string &flags);                // raw who command
+	// [SEND] raw interface to channel
+	void mode(const std::string &mode);                     // Raw mode command
 
   public:
-	// [SEND] to channel
-	void kick(const User &user, const std::string &reason = "");
-	void mode(const std::string &mode);                // Set mode of channel
-	void notice(const std::string &msg);               // Notice to channel
-	void msg(const std::string &msg);                  // Message to channel
+	// [SEND] State update interface
+	void who(const std::string &fl = User::WHO_FORMAT);     // Updates User state of channel (goes into Users->User)
+	void quietlist();                                       // Updates quietlist state of channel
+	void banlist();                                         // Updates banlist state of channel
+	void names();                                           // Update user list of channel (goes into this->users)
+	void mode();                                            // Update mode of channel (sets this->mode)
+
+	// [SEND] Locution interface to channel
+	void notice(const std::string &msg);                    // Notice to channel
+	void msg(const std::string &msg);                       // Message to channel
 	void me(const std::string &msg);
 
-	// [SEND] Controls to channel
-	void names();                                      // Update users of channel (goes into this->users)
-	void mode();                                       // Update mode of channel (sets this->mode)
-	void part();                                       // Leave channel
-	void join();                                       // Enter channel
+	// [SEND] Control interface to channel
+	void kick(const User &user, const std::string &reason = "");
+	bool quiet(const User &user, const Quiet::Type &type = Quiet::Type::HOST);
+	bool ban(const User &user, const Ban::Type &type = Ban::Type::HOST);
+	size_t unquiet(const User &user);
+	size_t unban(const User &user);
+
+	void part();                                            // Leave channel
+	void join();                                            // Enter channel
 
 	Chan(Sess &sess, const std::string &name);
 	~Chan() = default;
@@ -126,6 +140,20 @@ void Chan::names()
 
 
 inline
+void Chan::quietlist()
+{
+	mode("+q");
+}
+
+
+inline
+void Chan::banlist()
+{
+	mode("+b");
+}
+
+
+inline
 void Chan::who(const std::string &flags)
 {
 	sess.quote("who %s %s",get_name().c_str(),flags.c_str());
@@ -154,6 +182,100 @@ void Chan::notice(const std::string &text)
 
 
 inline
+size_t Chan::unquiet(const User &u)
+{
+	std::stringstream m, s;
+	m << "-";
+
+	if(quiets.has(u.mask(Mask::NICK)))
+	{
+		m << "q";
+		s << u.mask(Mask::NICK) << " ";
+	}
+
+	if(quiets.has(u.mask(Mask::HOST)))
+	{
+		m << "q";
+		s << u.mask(Mask::HOST) << " ";
+	}
+
+	if(u.is_logged_in() && quiets.has(u.mask(Mask::ACCT)))
+	{
+		m << "q";
+		s << u.mask(Mask::ACCT) << " ";
+	}
+
+	const size_t ret = m.str().size() - 1;
+
+	if(ret)
+	{
+		m << " " << s.str();
+		mode(m.str());
+	}
+
+	return ret;
+}
+
+
+inline
+size_t Chan::unban(const User &u)
+{
+	std::stringstream m, s;
+	m << "-";
+
+	if(bans.has(u.mask(Mask::NICK)))
+	{
+		m << "b";
+		s << u.mask(Mask::NICK) << " ";
+	}
+
+	if(bans.has(u.mask(Mask::HOST)))
+	{
+		m << "b";
+		s << u.mask(Mask::HOST) << " ";
+	}
+
+	if(u.is_logged_in() && bans.has(u.mask(Mask::ACCT)))
+	{
+		m << "b";
+		s << u.mask(Mask::ACCT) << " ";
+	}
+
+	const size_t ret = m.str().size() - 1;
+
+	if(ret)
+	{
+		m << " " << s.str();
+		mode(m.str());
+	}
+
+	return ret;
+}
+
+
+inline
+bool Chan::ban(const User &user,
+               const Ban::Type &type)
+{
+	std::stringstream s;
+	s << "+b " << user.mask(type);
+	mode(s.str());
+	return true;
+}
+
+
+inline
+bool Chan::quiet(const User &user,
+                 const Quiet::Type &type)
+{
+	std::stringstream s;
+	s << "+q " << user.mask(type);
+	mode(s.str());
+	return true;
+}
+
+
+inline
 void Chan::kick(const User &user,
                 const std::string &reason)
 {
@@ -170,8 +292,8 @@ void Chan::mode(const std::string &mode)
 
 
 inline
-bool Chan::delta_mode(const User &user,
-                      const std::string &delta)
+bool Chan::delta_mode(const std::string &delta,
+                      const User &user)
 try
 {
 	Mode &mode = get_mode(user);
@@ -181,6 +303,21 @@ try
 catch(const std::out_of_range &e)
 {
 	return false;
+}
+
+
+inline
+bool Chan::delta_mode(const std::string &delta,
+                      const Mask &mask)
+{
+	switch(hash(delta.c_str()))
+	{
+		case hash("+b"):     return bans.add(mask);
+		case hash("-b"):     return bans.del(mask);
+		case hash("+q"):     return quiets.add(mask);
+		case hash("-q"):     return quiets.del(mask);
+		default:             throw Exception("Mode was not handled");
+	}
 }
 
 
@@ -378,9 +515,10 @@ std::ostream &operator<<(std::ostream &s,
 {
 	s << "name:       \t" << c.get_name() << std::endl;
 	s << "mode:       \t" << c.get_mode() << std::endl;
+	s << "creation:   \t" << c.get_creation() << std::endl;
 	s << "joined:     \t" << std::boolalpha << c.is_joined() << std::endl;
-	s << "privs:      \t" << (c.is_op()? "I am an operator." : "I am not an operator.") << std::endl;
-	s << "users (" << c.num_users() << "): \t";
+	s << "my privs:   \t" << (c.is_op()? "I am an operator." : "I am not an operator.") << std::endl;
+	s << "users: " << c.num_users() << " -------" << std::endl;
 	for(const auto &userp : c.users)
 	{
 		s << userp.first;
@@ -392,6 +530,14 @@ std::ostream &operator<<(std::ostream &s,
 
 		s << " ";
 	}
+	s << std::endl;
+
+	s << "Bans: " << c.bans.num() << " quiets: " << c.quiets.num() << " -------" << std::endl;
+	for(const auto &b : c.bans)
+		s << "+b " << b << std::endl;
+
+	for(const auto &q : c.quiets)
+		s << "+q " << q << std::endl;
 
 	s << std::endl;
 	return s;

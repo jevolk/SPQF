@@ -7,9 +7,13 @@
 
 
 #include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+#include <signal.h>
 #include <vector>
 #include <map>
 #include <set>
+#include <list>
 #include <unordered_map>
 #include <functional>
 #include <iomanip>
@@ -19,16 +23,16 @@
 #include <iostream>
 #include <ostream>
 #include <atomic>
-#include <string.h>
-#include <stdio.h>
-#include <signal.h>
+
 #include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <libircclient.h>
 #include <libirc_rfcnumeric.h>
 
 #include "util.h"
 #include "mode.h"
+#include "ban.h"
 #include "msg.h"
 #include "sess.h"
 #include "user.h"
@@ -45,7 +49,6 @@ void ResPublica::handle_mode(const Msg &msg,
 
 
 }
-
 
 
 void ResPublica::handle_mode(const Msg &msg,
@@ -103,6 +106,67 @@ void ResPublica::handle_chanmsg(const Msg &msg,
 	const std::string &text = msg[CHANMSG::TEXT];
 	const boost::tokenizer<delim> toks(text,sep);
 	const std::vector<std::string> tokens(toks.begin(),toks.end());
+
+	if(tokens.at(0) == "!ban") try
+	{
+		if(tokens.at(1) == "NICK")
+			c.ban(u,Ban::Type::NICK);
+		else if(tokens.at(1) == "HOST")
+			c.ban(u,Ban::Type::HOST);
+		else if(tokens.at(1) == "ACCT")
+			c.ban(u,Ban::Type::ACCT);
+
+		return;
+	}
+	catch(const std::out_of_range &e)
+	{
+		c.msg("specify");
+		return;
+	}
+
+	if(tokens.at(0) == "!quiet") try
+	{
+		if(tokens.at(1) == "NICK")
+			c.quiet(u,Ban::Type::NICK);
+		else if(tokens.at(1) == "HOST")
+			c.quiet(u,Ban::Type::HOST);
+		else if(tokens.at(1) == "ACCT")
+			c.quiet(u,Ban::Type::ACCT);
+
+		return;
+	}
+	catch(const std::out_of_range &e)
+	{
+		c.msg("specify");
+		return;
+	}
+
+	if(tokens.at(0) == "!unban") try
+	{
+		std::cout << c << std::endl;
+		c.unban(u);
+		std::cout << c << std::endl;
+		return;
+	}
+	catch(const std::out_of_range &e)
+	{
+		c.msg("specify");
+		return;
+	}
+
+	if(tokens.at(0) == "!unquiet") try
+	{
+		std::cout << c << std::endl;
+		c.unquiet(u);
+		std::cout << c << std::endl;
+		return;
+	}
+	catch(const std::out_of_range &e)
+	{
+		c.msg("specify");
+		return;
+	}
+
 
 	if(tokens.at(0) == "!accounttest")
 	{
