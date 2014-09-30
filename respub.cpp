@@ -32,6 +32,7 @@
 
 #include "util.h"
 #include "mode.h"
+#include "mask.h"
 #include "ban.h"
 #include "msg.h"
 #include "sess.h"

@@ -59,9 +59,9 @@ class Chan
 
     // [RECV] Bot handler updates
 	friend class Bot;
-	void delta_mode(const std::string &delta)               { _mode.delta(delta);                   }
-	bool delta_mode(const std::string &delta, const User &u);
-	bool delta_mode(const std::string &delta, const Mask &m);
+	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
+	bool delta_mode(const std::string &d, const User &u);
+	bool delta_mode(const std::string &d, const Mask &m);
 	bool rename(const User &user, const std::string &old_nick);
 	bool add(User &user, const Mode &mode = {});
 	bool del(User &user);
