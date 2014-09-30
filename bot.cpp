@@ -270,7 +270,7 @@ void Bot::handle_mode(const Msg &msg)
 
 	const std::string nick = msg.get_nick();
 
-	// UMODE coming as MODE from the lib
+	// Our UMODE coming as MODE from the irclib
 	if(msg.num_params() == 1)
 	{
 		handle_umode(msg);
@@ -283,7 +283,7 @@ void Bot::handle_mode(const Msg &msg)
 	Chans &chans = get_chans();
 	Chan &c = chans.get(chan);
 
-	// Channel mode
+	// Channel's own mode
 	if(msg.num_params() < 3)
 	{
 		c.delta_mode(mode);
@@ -291,25 +291,20 @@ void Bot::handle_mode(const Msg &msg)
 		return;
 	}
 
-	// Channel user/target mode
+	// Channel mode apropos a user
 	Users &users = get_users();
 	const std::string sign(1,mode.at(0));
 	for(size_t d = 1, m = 2; m < msg.num_params(); d++, m++) try
 	{
 		const std::string delta = sign + mode.at(d);
 		const Mask &targ = msg[m];
+		c.delta_mode(delta,targ);             // Chan handles masks/nicknames from here
 
-		// Target was mask                    //TODO: combine?
-		if(targ.get_form() != Mask::INVALID)
+		if(targ.get_form() == Mask::INVALID)  // Target is a straight nickname, we can call downstream
 		{
-			c.delta_mode(delta,targ);
-			continue;
+			User &u = users.get(targ);
+			handle_mode(msg,c,u);
 		}
-
-		// Target was user
-		User &u = users.get(targ);
-		c.delta_mode(delta,u);
-		handle_mode(msg,c,u);
 	}
 	catch(const std::exception &e)
 	{

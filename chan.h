@@ -43,8 +43,8 @@ class Chan
 	bool is_op() const;
 
 	// Closures
-	using ConstClosure = std::function<void (const UsersVal &)>;
-	using Closure = std::function<void (UsersVal &)>;
+	using ConstClosure = std::function<void (const User &, const Mode &)>;
+	using Closure = std::function<void (User &, Mode &)>;
 	void for_each(const ConstClosure &c) const;
 	void for_each(const Closure &c);
 
@@ -55,12 +55,12 @@ class Chan
 
   private:
 	User &get_user(const std::string &nick);
+	Mode &get_mode(const std::string &nick);
 	Mode &get_mode(const User &user);
 
     // [RECV] Bot handler updates
 	friend class Bot;
 	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
-	bool delta_mode(const std::string &d, const User &u);
 	bool delta_mode(const std::string &d, const Mask &m);
 	bool rename(const User &user, const std::string &old_nick);
 	bool add(User &user, const Mode &mode = {});
@@ -293,31 +293,33 @@ void Chan::mode(const std::string &mode)
 
 inline
 bool Chan::delta_mode(const std::string &delta,
-                      const User &user)
-try
-{
-	Mode &mode = get_mode(user);
-	mode.delta(delta);
-	return true;
-}
-catch(const std::out_of_range &e)
-{
-	return false;
-}
-
-
-inline
-bool Chan::delta_mode(const std::string &delta,
                       const Mask &mask)
 {
-	switch(hash(delta.c_str()))
+	bool ret;
+	switch(hash(delta.c_str()))                // Careful what is switched if Mask::INVALID
 	{
-		case hash("+b"):     return bans.add(mask);
-		case hash("-b"):     return bans.del(mask);
-		case hash("+q"):     return quiets.add(mask);
-		case hash("-q"):     return quiets.del(mask);
-		default:             throw Exception("Mode was not handled");
+		case hash("+b"):     ret = bans.add(mask);      break;
+		case hash("-b"):     ret = bans.del(mask);      break;
+		case hash("+q"):     ret = quiets.add(mask);    break;
+		case hash("-q"):     ret = quiets.del(mask);    break;
+		default:             ret = false;               break;
 	}
+
+	// Target is a straight nickname, not a Mask
+	if(mask.get_form() == Mask::INVALID) try
+	{
+		Mode &mode = get_mode(mask);
+		return mode.delta(delta);
+	}
+	catch(const Exception &e)
+	{
+		// Ignore user's absence from channel, though this shouldn't happen.
+		std::cerr << "Chan: " << get_name()
+		          << " delta_mode(" << mask << "): "
+		          << e << std::endl;
+	}
+
+	return ret;
 }
 
 
@@ -414,7 +416,9 @@ void Chan::for_each(const Closure &c)
 	{
 		const std::string &nick = pair.first;
 		UsersVal &val = pair.second;
-		c(val);
+		User &user = *std::get<0>(val);
+		Mode &mode = std::get<1>(val);
+		c(user,mode);
 	}
 }
 
@@ -427,7 +431,9 @@ const
 	{
 		const std::string &nick = pair.first;
 		const UsersVal &val = pair.second;
-		c(val);
+		const User &user = *std::get<0>(val);
+		const Mode &mode = std::get<1>(val);
+		c(user,mode);
 	}
 }
 
@@ -436,6 +442,13 @@ inline
 Mode &Chan::get_mode(const User &user)
 {
 	const std::string &nick = user.get_nick();
+	return get_mode(nick);
+}
+
+
+inline
+Mode &Chan::get_mode(const std::string &nick)
+{
 	UsersVal &val = users.at(nick);
 	return std::get<1>(val);
 }
@@ -443,9 +456,14 @@ Mode &Chan::get_mode(const User &user)
 
 inline
 User &Chan::get_user(const std::string &nick)
+try
 {
 	UsersVal &val = users.at(nick);
 	return *std::get<0>(val);
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("User not found");
 }
 
 
@@ -461,10 +479,14 @@ const
 
 inline
 const User &Chan::get_user(const std::string &nick)
-const
+const try
 {
 	const UsersVal &val = users.at(nick);
 	return *std::get<0>(val);
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("User not found");
 }
 
 
