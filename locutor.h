@@ -19,13 +19,13 @@ class Locutor
 	std::ostringstream sendq;                               // State for stream operators
 
   public:
-	static constexpr struct flush_t {} endl {};             // Stream is flushed (sent) to channel
+	static constexpr struct flush_t {} flush {};            // Stream is flushed (sent) to channel
 
 	enum Type
 	{
-		ME,
 		MSG,
-		NOTICE
+		NOTICE,
+		ME,
 	};
 
 	const Sess &get_sess() const                        { return sess;                               }
@@ -81,14 +81,6 @@ Locutor &Locutor::operator<<(const T &t)
 
 
 inline
-Locutor &Locutor::operator<<(const Type &type)
-{
-	sendq.iword(locution_type_idx) = type;
-	return *this;
-}
-
-
-inline
 Locutor &Locutor::operator<<(const flush_t f)
 {
 	switch(Type(sendq.iword(locution_type_idx)))
@@ -100,28 +92,52 @@ Locutor &Locutor::operator<<(const flush_t f)
 	}
 
 	sendq.str(std::string());
+	sendq.iword(locution_type_idx) = MSG;        // reset stream to default
 	return *this;
 }
 
 
 inline
-void Locutor::me(const std::string &msg)
+Locutor &Locutor::operator<<(const Type &type)
 {
-	sess.call(irc_cmd_me,get_target().c_str(),msg.c_str());
+	sendq.iword(locution_type_idx) = type;
+	return *this;
+}
+
+
+inline
+void Locutor::me(const std::string &text)
+{
+	using delim = boost::char_separator<char>;
+	static const delim sep("\n");
+
+	const boost::tokenizer<delim> toks(text,sep);
+	for(const std::string &token : toks)
+		sess.call(irc_cmd_me,get_target().c_str(),token.c_str());
 }
 
 
 inline
 void Locutor::msg(const std::string &text)
 {
-	sess.call(irc_cmd_msg,get_target().c_str(),text.c_str());
+	using delim = boost::char_separator<char>;
+	static const delim sep("\n");
+
+	const boost::tokenizer<delim> toks(text,sep);
+	for(const std::string &token : toks)
+		sess.call(irc_cmd_msg,get_target().c_str(),token.c_str());
 }
 
 
 inline
 void Locutor::notice(const std::string &text)
 {
-	sess.call(irc_cmd_notice,get_target().c_str(),text.c_str());
+	using delim = boost::char_separator<char>;
+	static const delim sep("\n");
+
+	const boost::tokenizer<delim> toks(text,sep);
+	for(const std::string &token : toks)
+		sess.call(irc_cmd_notice,get_target().c_str(),token.c_str());
 }
 
 
