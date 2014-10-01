@@ -14,6 +14,14 @@ size_t hash(const char *const &str,
 }
 
 
+inline
+size_t hash(const std::string &str,
+            const size_t i = 0)
+{
+    return i >= str.size()? 5381ULL : (hash(str,i+1) * 33ULL) ^ str.at(i);
+}
+
+
 struct scope
 {
 	typedef std::function<void ()> Func;
