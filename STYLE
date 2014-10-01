@@ -4,10 +4,18 @@ Rules:
 	- That means use your judgment above all else.
 	- Whatever you do, be consistent about it. Random badness is harder to fix with a script.
 
-2. No circular dependencies. Ever. (hint: Break it down).
-	- No header include guards except on some header exposed to an end-user.
 
-3. Use complete const correctness, everywhere.
+2. Tabs Before Spaces.
+	Tabs are used to establish the current bracket {} level. Do not use tabs for anything else.
+	Do not format things or make things pretty with tabs. Use spaces for all formatting and
+	prettiness after the current tab-level, and do not mix them hence: spaces-after-tabs or
+	tabs-before-spaces.
+
+	Goal: Code should appear as originally intended with any tab setting, whether it be 2, 4 or 8, etc.
+
+
+3. No circular dependencies. Ever. (hint: Break it down).
+	- No header include guards except on some header exposed to an end-user.
 
 
 
