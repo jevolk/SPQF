@@ -68,16 +68,12 @@ class Chan : public Locutor
 	bool add(User &user, const Mode &mode = {});
 	bool del(User &user);
 
-	// [SEND] raw interfaces to channel
-	void mode(const std::string &mode);                     // Raw mode command
-
   public:
 	// [SEND] State update interface
 	void who(const std::string &fl = User::WHO_FORMAT);     // Updates state of users in channel (goes into Users->User)
 	void quietlist();                                       // Updates quietlist state of channel
 	void banlist();                                         // Updates banlist state of channel
 	void names();                                           // Update user list of channel (goes into this->users)
-	void mode();                                            // Update mode of channel (sets this->mode)
 
 	// [SEND] Control interface to channel
 	void kick(const User &user, const std::string &reason = "");
@@ -118,13 +114,6 @@ inline
 void Chan::part()
 {
 	sess.call(irc_cmd_part,get_name().c_str());
-}
-
-
-inline
-void Chan::mode()
-{
-	sess.call(irc_cmd_channel_mode,get_name().c_str(),nullptr);
 }
 
 
@@ -256,13 +245,6 @@ void Chan::kick(const User &user,
 {
 	const std::string &targ = user.get_nick();
 	sess.call(irc_cmd_kick,targ.c_str(),get_name().c_str(),reason.c_str());
-}
-
-
-inline
-void Chan::mode(const std::string &mode)
-{
-	sess.call(irc_cmd_channel_mode,get_name().c_str(),mode.c_str());
 }
 
 

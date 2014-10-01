@@ -36,12 +36,20 @@ class Locutor
 	std::ostringstream &get_sendq()                         { return sendq;                      }
 	void set_target(const std::string &target)              { this->target = target;             }
 
+	// [SEND] Raw interface for subclasses
+	void mode(const std::string &mode);                     // Raw mode command
+
   public:
-	void whois();
+	// [SEND] Controls / Utils
+	void whois();                                           // Sends whois query
+	void mode();                                            // Sends mode query
+
+	// [SEND] string interface
 	void notice(const std::string &msg);
 	void msg(const std::string &msg);
 	void me(const std::string &msg);
 
+	// [SEND] stream interface
 	Locutor &operator<<(const flush_t f);                   // Flush stream to channel
 	Locutor &operator<<(const Type &type);                  // Set Locution type
 	template<class T> Locutor &operator<<(const T &t);      // Append to sendq stream
@@ -115,7 +123,23 @@ void Locutor::notice(const std::string &text)
 
 
 inline
+void Locutor::mode()
+{
+	//NOTE: libircclient irc_cmd_channel_mode is just: %s %s
+	sess.call(irc_cmd_channel_mode,get_target().c_str(),nullptr);
+}
+
+
+inline
 void Locutor::whois()
 {
 	sess.call(irc_cmd_whois,get_target().c_str());
+}
+
+
+inline
+void Locutor::mode(const std::string &str)
+{
+	//NOTE: libircclient irc_cmd_channel_mode is just: %s %s
+	sess.call(irc_cmd_channel_mode,get_target().c_str(),str.c_str());
 }
