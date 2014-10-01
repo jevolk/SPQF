@@ -1,3 +1,4 @@
 respublica
 *.o
 db_*
+db

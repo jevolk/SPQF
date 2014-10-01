@@ -10,9 +10,10 @@ class User : public Locutor
 {
 	// Handlers access
 	friend class Bot;
+
 	// nick is Locutor::target                         // who 'n'
 	std::string host;                                  // who 'h'
-	std::string acct;                                  // who 'a'
+	std::string acct;                                  // who 'a' (account name)
 	bool secure;                                       // WHOISSECURE
 	time_t idle;                                       // who 'l' or WHOISIDLE
 
@@ -36,9 +37,18 @@ class User : public Locutor
 	const time_t &get_idle() const                     { return idle;                                }
 	const size_t &num_chans() const                    { return chans;                               }
 
+	bool has_acct() const                              { return accts.exists(get_acct());            }
 	bool is_myself() const                             { return get_nick() == get_sess().get_nick(); }
 	bool is_logged_in() const                          { return acct.size() && acct != "0";          }
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
+
+	// Local database interface
+	template<class T = std::string> T get(const std::string &key) const;
+	template<class T = std::string> T get(const std::string &key);
+	template<class T> void set(const std::string &key, const T &t);
+
+	std::string operator[](const std::string &k) const { return get(k);                              }
+	std::string operator[](const std::string &k)       { return get(k);                              }
 
 	// [SEND] Controls
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default
@@ -62,6 +72,32 @@ chans(0)
 {
 
 
+}
+
+
+template<class T>
+void User::set(const std::string &key,
+               const T &t)
+{
+	Acct adata = accts.get(std::nothrow,get_acct());
+	adata.put(key,t);
+	accts.set(get_acct(),adata);
+}
+
+
+template<class T>
+T User::get(const std::string &key)
+{
+	const Acct adata = accts.get(std::nothrow,get_acct());
+	return adata.get<T>(key);
+}
+
+
+template<class T>
+T User::get(const std::string &key) const
+{
+	const Acct adata = accts.get(std::nothrow,get_acct());
+	return adata.get<T>(key);
 }
 
 
@@ -109,7 +145,7 @@ std::ostream &operator<<(std::ostream &s,
 	s << "chans: " << std::setw(3) << std::left << u.num_chans();
 
 	if(u.is_logged_in())
-		s << "acct: " << std::setw(18) << std::left << u.get_acct();
+		s << "$a: " << std::setw(18) << std::left << u.get_acct();
 
 	if(u.is_myself())
 		s << "<MYSELF>";

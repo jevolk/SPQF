@@ -26,6 +26,8 @@
 
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 #include <libircclient.h>
 #include <libirc_rfcnumeric.h>
@@ -35,12 +37,13 @@
 #include <leveldb/db.h>
 
 #include "util.h"
+#include "ldb.h"
 #include "mode.h"
 #include "mask.h"
 #include "ban.h"
 #include "msg.h"
+#include "accts.h"
 #include "sess.h"
-#include "ldb.h"
 #include "locutor.h"
 #include "user.h"
 #include "chan.h"

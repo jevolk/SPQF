@@ -12,6 +12,7 @@ class Locutor
 {
   protected:
 	Sess &sess;
+	Accts &accts;
 
   private:
 	std::string target;                                     // Target entity name
@@ -27,22 +28,23 @@ class Locutor
 		NOTICE
 	};
 
-	const Sess &get_sess() const                            { return sess;                       }
-	const std::string &get_target() const                   { return target;                     }
-	const std::ostringstream &get_sendq() const             { return sendq;                      }
+	const Sess &get_sess() const                        { return sess;                               }
+	const Accts &get_accts() const                      { return accts;                              }
+	const std::string &get_target() const               { return target;                             }
+	const std::ostringstream &get_sendq() const         { return sendq;                              }
 
   protected:
-	Sess &get_sess()                                        { return sess;                       }
-	std::ostringstream &get_sendq()                         { return sendq;                      }
-	void set_target(const std::string &target)              { this->target = target;             }
+	Sess &get_sess()                                    { return sess;                               }
+	Accts &get_accts()                                  { return accts;                              }
+	std::ostringstream &get_sendq()                     { return sendq;                              }
 
 	// [SEND] Raw interface for subclasses
-	void mode(const std::string &mode);                     // Raw mode command
+	void mode(const std::string &mode);                 // Raw mode command
 
   public:
 	// [SEND] Controls / Utils
-	void whois();                                           // Sends whois query
-	void mode();                                            // Sends mode query
+	void whois();                                       // Sends whois query
+	void mode();                                        // Sends mode query
 
 	// [SEND] string interface
 	void notice(const std::string &msg);
@@ -50,9 +52,9 @@ class Locutor
 	void me(const std::string &msg);
 
 	// [SEND] stream interface
-	Locutor &operator<<(const flush_t f);                   // Flush stream to channel
-	Locutor &operator<<(const Type &type);                  // Set Locution type
-	template<class T> Locutor &operator<<(const T &t);      // Append to sendq stream
+	Locutor &operator<<(const flush_t f);               // Flush stream to channel
+	Locutor &operator<<(const Type &type);              // Set Locution type
+	template<class T> Locutor &operator<<(const T &t);  // Append to sendq stream
 
 	Locutor(Sess &sess, const std::string &target);
 };
@@ -62,6 +64,7 @@ inline
 Locutor::Locutor(Sess &sess,
                  const std::string &target):
 sess(sess),
+accts(sess.get_accts()),
 target(target)
 {
 	locution_type_idx = std::ios_base::xalloc();

@@ -26,6 +26,8 @@
 
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 #include <libircclient.h>
 #include <libirc_rfcnumeric.h>
@@ -35,12 +37,13 @@
 #include <leveldb/db.h>
 
 #include "util.h"
+#include "ldb.h"
 #include "mode.h"
 #include "mask.h"
 #include "ban.h"
 #include "msg.h"
+#include "accts.h"
 #include "sess.h"
-#include "ldb.h"
 #include "locutor.h"
 #include "user.h"
 #include "chan.h"
@@ -652,7 +655,7 @@ void Bot::handle_whoreply(const Msg &msg)
 	const std::string &host = msg[WHOREPLY::HOSTNAME];
 	const std::string &serv = msg[WHOREPLY::SERVNAME];
 	const std::string &nick = msg[WHOREPLY::NICKNAME];
-	const std::string &flags = msg[WHOREPLY::FLAGS];
+	const std::string &flag = msg[WHOREPLY::FLAGS];
 	const std::string &addl = msg[WHOREPLY::ADDL];
 
 }
@@ -681,6 +684,10 @@ void Bot::handle_whospcrpl(const Msg &msg)
 			user.host = host;
 			user.acct = acct;
 			//user.idle = idle;
+
+			if(user.is_logged_in() && !user.has_acct())
+				user.set("FIRST_SEEN",time(NULL));
+
 			break;
 		}
 

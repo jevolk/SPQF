@@ -21,6 +21,7 @@ struct Ident
 class Sess
 {
 	Ident ident;
+	Accts accts;
 	irc_callbacks_t *cbs;
 	irc_session_t *sess;
 	std::string nick;
@@ -37,9 +38,11 @@ class Sess
   public:
 	// State observers
 	const Ident &get_ident() const                     { return ident;                              }
+	const Accts &get_accts() const                     { return accts;                              }
 	const irc_callbacks_t *get_cbs() const             { return cbs;                                }
 	const irc_session_t *get() const                   { return sess;                               }
 	operator const irc_session_t *() const             { return get();                              }
+	Accts &get_accts()                                 { return accts;                              }
 
 	// [SEND] libircclient call wrapper
 	template<class F, class... A> void call(F&& f, A&&... a);
@@ -83,6 +86,7 @@ Sess::Sess(const Ident &ident,
            irc_callbacks_t &cbs,
            irc_session_t *const &sess):
 ident(ident),
+accts("db"),
 cbs(&cbs),
 sess(sess),
 nick(ident.nick)

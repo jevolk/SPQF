@@ -9,11 +9,12 @@
 class Users
 {
 	Sess &sess;
-	Ldb ldb;
 	std::unordered_map<std::string, User> users;
 
   public:
 	// Observers
+	const Sess &get_sess() const                       { return sess;                               }
+
 	const User &get(const std::string &nick) const;
 	bool has(const std::string &nick) const            { return users.count(nick);                  }
 	size_t num() const                                 { return users.size();                       }
@@ -35,8 +36,7 @@ class Users
 
 inline
 Users::Users(Sess &sess):
-sess(sess),
-ldb("db_users")
+sess(sess)
 {
 
 
