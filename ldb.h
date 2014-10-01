@@ -49,18 +49,23 @@ class Ldb
 		using Closure = std::function<void (const char *const &key, const size_t &,        // key
 		                                    const char *const &val, const size_t &)>;      // val
 
+		// Utils
 		bool valid() const                                    { return it->Valid();                 }
+
+		// Move the state pointer
 		void seek(const leveldb::Slice &key)                  { it->Seek(key);                      }
 		void seek(const std::string &key)                     { it->Seek(key);                      }
 		void seek(const Seek &seek);
 		Iterator &operator++()                                { seek(NEXT); return *this;           }
 		Iterator &operator--()                                { seek(PREV); return *this;           }
 
+		// Read current state, false on !valid()
 		bool next(const Closure &closure) const;              // no increment to next
 		bool next(const Closure &closure);                    // increments to next
 		template<class... A> bool operator()(A&&... a) const  { return next(std::forward<A>(a)...); }
 		template<class... A> bool operator()(A&&... a)        { return next(std::forward<A>(a)...); }
 
+		// Dependent utils
 		size_t count();
 
 		Iterator(Ldb &ldb,
@@ -78,12 +83,15 @@ class Ldb
 
 	using Closure = Iterator::Closure;
 
+	// Utils
 	size_t count();
 	bool exists(const std::string &key, const bool &cache = false);
 
+	// Reading
 	bool get(const std::string &key, const Closure &closure, const bool &cache = true);
 	std::string get(const std::string &key, const bool &cache = true);
 
+	// Writing
 	void set(const std::string &key, const std::string &value, const bool &sync = false);
 
 	Ldb(const std::string &dir,
