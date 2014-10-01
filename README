@@ -6,8 +6,9 @@ Requirements:
 		* GNU gcc preferred
 		* libstdc++
 
+	* Boost (tokenizer, lexical_cast, property_tree (json_parser))
 	* libircclient >= 1.8
-	* Boost (Tokenizer, lexical_cast)
+	* LevelDB
 
 
 Compile:
