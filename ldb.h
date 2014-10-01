@@ -49,6 +49,8 @@ class Ldb
 		using Closure = std::function<void (const char *const &key, const size_t &,        // key
 		                                    const char *const &val, const size_t &)>;      // val
 
+		using StrClosure = std::function<void (const std::string &key, const std::string &val)>;
+
 		// Utils
 		bool valid() const                                    { return it->Valid();                 }
 
@@ -62,6 +64,8 @@ class Ldb
 		// Read current state, false on !valid()
 		bool next(const Closure &closure) const;              // no increment to next
 		bool next(const Closure &closure);                    // increments to next
+		bool next(const StrClosure &closure) const;           // no increment to next
+		bool next(const StrClosure &closure);                 // increments to next
 		template<class... A> bool operator()(A&&... a) const  { return next(std::forward<A>(a)...); }
 		template<class... A> bool operator()(A&&... a)        { return next(std::forward<A>(a)...); }
 
@@ -322,6 +326,28 @@ size_t Ldb::Iterator::count()
 
 	seek(cur_key);
 	return ret;
+}
+
+
+inline
+bool Ldb::Iterator::next(const StrClosure &closure)
+{
+	return next([&closure]
+	(const char *const &key, const size_t &ks, const char *const &val, const size_t &vs)
+	{
+		closure({key,ks},{val,vs});
+	});
+}
+
+
+inline
+bool Ldb::Iterator::next(const StrClosure &closure) const
+{
+	return next([&closure]
+	(const char *const &key, const size_t &ks, const char *const &val, const size_t &vs)
+	{
+		closure({key,ks},{val,vs});
+	});
 }
 
 
