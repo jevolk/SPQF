@@ -5,14 +5,16 @@
  *  DISTRIBUTED UNDER THE GNU GENERAL PUBLIC LICENSE (GPL) (see: LICENSE)
  */
 
+
+
+using Tokens = std::vector<std::string>;
+using Selection = std::forward_list<Tokens::const_iterator>;
+
+
 class ResPublica : public Bot
 {
-	//static bool nick_has_flags(const std::string &nick);
+	Selection karma_tokens(const Tokens &tokens, const Chan &c, const std::string &oper);
 
-	//size_t get_votes_against(const std::string &nick) const;
-	//size_t inc_votes_against(const std::string &nick);
-
-	//void handle_votekick(const std::string &target);
 
 	void handle_privmsg(const Msg &m, User &u) override;
 	void handle_notice(const Msg &m, User &u) override;

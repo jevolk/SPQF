@@ -15,6 +15,7 @@
 #include <set>
 #include <list>
 #include <unordered_map>
+#include <forward_list>
 #include <functional>
 #include <iomanip>
 #include <algorithm>
@@ -110,100 +111,26 @@ void ResPublica::handle_chanmsg(const Msg &msg,
                                 Chan &c,
                                 User &u)
 {
+	// Just prints debugging to console
+	std::cout << get_users() << std::endl << std::endl;
+	std::cout << u << std::endl << std::endl;
+	std::cout << c << std::endl << std::endl;
+
 	using delim = boost::char_separator<char>;
 	const delim sep(" ");
 
 	const std::string &text = msg[CHANMSG::TEXT];
 	const boost::tokenizer<delim> toks(text,sep);
-	const std::vector<std::string> tokens(toks.begin(),toks.end());
+	const Tokens tokens(toks.begin(),toks.end());
 
-	if(tokens.at(0) == "!ban") try
-	{
-		if(tokens.at(1) == "NICK")
-			c.ban(u,Ban::Type::NICK);
-		else if(tokens.at(1) == "HOST")
-			c.ban(u,Ban::Type::HOST);
-		else if(tokens.at(1) == "ACCT")
-			c.ban(u,Ban::Type::ACCT);
+	const Selection good = karma_tokens(tokens,c,"++");
+	const Selection bad = karma_tokens(tokens,c,"--");
 
-		return;
-	}
-	catch(const std::out_of_range &e)
-	{
-		c.msg("specify");
-		return;
-	}
+	for(const auto &token : good)
+		c << *token << " is good" << Chan::flush;
 
-	if(tokens.at(0) == "!quiet") try
-	{
-		if(tokens.at(1) == "NICK")
-			c.quiet(u,Ban::Type::NICK);
-		else if(tokens.at(1) == "HOST")
-			c.quiet(u,Ban::Type::HOST);
-		else if(tokens.at(1) == "ACCT")
-			c.quiet(u,Ban::Type::ACCT);
-
-		return;
-	}
-	catch(const std::out_of_range &e)
-	{
-		c.msg("specify");
-		return;
-	}
-
-	if(tokens.at(0) == "!unban") try
-	{
-		std::cout << c << std::endl;
-		c.unban(u);
-		std::cout << c << std::endl;
-		return;
-	}
-	catch(const std::out_of_range &e)
-	{
-		c.msg("specify");
-		return;
-	}
-
-	if(tokens.at(0) == "!unquiet") try
-	{
-		std::cout << c << std::endl;
-		c.unquiet(u);
-		std::cout << c << std::endl;
-		return;
-	}
-	catch(const std::out_of_range &e)
-	{
-		c.msg("specify");
-		return;
-	}
-
-
-	if(tokens.at(0) == "!accounttest")
-	{
-		c.for_each([&]
-		(const User &user)
-		{
-			std::stringstream s;
-			s << user.get_nick() << " is" << (!user.is_logged_in()? " not " : " ") << "logged in";
-			if(user == u)
-				s << " and made this query.";
-
-			c.msg(s.str());
-		});
-
-		return;
-	}
-
-	if(tokens.at(0) == "!votekick") try
-	{
-		const std::string &target = tokens.at(1);
-		c.msg("Thanks for voting");
-	}
-	catch(const std::out_of_range &e)
-	{
-		c.msg("Try using !votekick <nickname> to cast your vote.");
-		return;
-	}
+	for(const auto &token : bad)
+		c << *token << " is bad" << Chan::flush;
 }
 
 
@@ -223,69 +150,22 @@ void ResPublica::handle_privmsg(const Msg &msg,
 }
 
 
-/*
-void ResPublica::handle_votekick(const std::string &target)
+Selection ResPublica::karma_tokens(const Tokens &tokens,
+                                   const Chan &c,
+                                   const std::string &oper)
 {
-	if(target == my_nick())
+	Selection ret;
+	for(auto it = tokens.begin(); it != tokens.end(); ++it)
 	{
-		reply_chan("http://en.wikipedia.org/wiki/Leviathan_(book)");
-		return;
+		const std::string &token = *it;
+		if(token.find_last_of(oper) == std::string::npos)
+			continue;
+
+		const std::string nick = token.substr(0,token.size()-oper.size());
+		if(c.has_nick(nick))
+			ret.push_front(it);
 	}
 
-	const size_t votes = inc_votes_against(target);
-
-	if(!votes)
-	{
-		reply_chan("I do not recognize that nickname.\n");
-		return;
-	}
-
-	const size_t thresh = 2;
-
-	std::stringstream s;
-	s << "Thanks for your vote! ";
-	s << "I count " << votes << " of " << thresh << " required to censure " << target << ".";
-	reply_chan(s.str());
-
-	if(votes >= thresh)
-		kick(target,"The people have spoken.");
-}
-*/
-
-
-/*
-size_t ResPublica::inc_votes_against(const std::string &nick)
-try
-{
-	User &user = users.at(nick);
-	return ++user.votes_against;
-}
-catch(const std::out_of_range &e)
-{
-	return 0;
+	return ret;
 }
 
-
-size_t ResPublica::get_votes_against(const std::string &nick)
-const try
-{
-	const User &user = users.at(nick);
-	return user.votes_against;
-}
-catch(const std::out_of_range &e)
-{
-	return 0;
-}
-
-
-bool ResPublica::nick_has_flags(const std::string &nick)
-try
-{
-	const char &c = nick.at(0);
-	return c == '@' || c == '+';
-}
-catch(const std::out_of_range &e)
-{
-	return false;
-}
-*/

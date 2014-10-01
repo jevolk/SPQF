@@ -15,6 +15,7 @@
 #include <set>
 #include <list>
 #include <unordered_map>
+#include <forward_list>
 #include <functional>
 #include <iomanip>
 #include <algorithm>
