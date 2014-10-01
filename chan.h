@@ -6,7 +6,8 @@
  */
 
 
-class Chan : public Locutor
+class Chan : public Locutor,
+             public Acct
 {
   public:
 	// Channel type and utils
@@ -85,7 +86,7 @@ class Chan : public Locutor
 	void part();                                            // Leave channel
 	void join();                                            // Enter channel
 
-	Chan(Sess &sess, const std::string &name);
+	Chan(Adb &adb, Sess &sess, const std::string &name);
 	~Chan() = default;
 
 	friend std::ostream &operator<<(std::ostream &s, const Chan &chan);
@@ -93,9 +94,11 @@ class Chan : public Locutor
 
 
 inline
-Chan::Chan(Sess &sess,
+Chan::Chan(Adb &adb,
+           Sess &sess,
            const std::string &name):
 Locutor(sess,name),
+Acct(adb,Locutor::get_target()),
 joined(false)
 {
 
@@ -106,6 +109,7 @@ joined(false)
 inline
 void Chan::join()
 {
+	Sess &sess = get_sess();
 	sess.call(irc_cmd_join,get_name().c_str(),nullptr);
 }
 
@@ -113,6 +117,7 @@ void Chan::join()
 inline
 void Chan::part()
 {
+	Sess &sess = get_sess();
 	sess.call(irc_cmd_part,get_name().c_str());
 }
 
@@ -120,6 +125,7 @@ void Chan::part()
 inline
 void Chan::names()
 {
+	Sess &sess = get_sess();
 	sess.call(irc_cmd_names,get_name().c_str());
 }
 
@@ -141,6 +147,7 @@ void Chan::banlist()
 inline
 void Chan::who(const std::string &flags)
 {
+	Sess &sess = get_sess();
 	sess.quote("who %s %s",get_name().c_str(),flags.c_str());
 }
 
@@ -243,6 +250,7 @@ inline
 void Chan::kick(const User &user,
                 const std::string &reason)
 {
+	Sess &sess = get_sess();
 	const std::string &targ = user.get_nick();
 	sess.call(irc_cmd_kick,targ.c_str(),get_name().c_str(),reason.c_str());
 }
@@ -332,6 +340,7 @@ inline
 bool Chan::is_op()
 const
 {
+	const Sess &sess = get_sess();
 	const std::string &nick = sess.get_nick();
 	const User &user = get_user(nick);
 	const Mode &mode = get_mode(user);

@@ -6,36 +6,30 @@
  */
 
 
-static thread_local int locution_type_idx;
+static thread_local int locution_meth_idx;
 
 class Locutor
 {
-  protected:
 	Sess &sess;
-	Accts &accts;
-
-  private:
-	std::string target;                                     // Target entity name
-	std::ostringstream sendq;                               // State for stream operators
+	std::string target;                                 // Target entity name
+	std::ostringstream sendq;                           // State for stream operators
 
   public:
-	static constexpr struct flush_t {} flush {};            // Stream is flushed (sent) to channel
+	static constexpr struct flush_t {} flush {};        // Stream is flushed (sent) to channel
 
-	enum Type
+	enum Method
 	{
-		MSG,
-		NOTICE,
-		ME,
+		MSG,                                            // PRIVMSG (default)
+		NOTICE,                                         // NOTICE
+		ME,                                             // ACTION
 	};
 
 	const Sess &get_sess() const                        { return sess;                               }
-	const Accts &get_accts() const                      { return accts;                              }
 	const std::string &get_target() const               { return target;                             }
 	const std::ostringstream &get_sendq() const         { return sendq;                              }
 
   protected:
 	Sess &get_sess()                                    { return sess;                               }
-	Accts &get_accts()                                  { return accts;                              }
 	std::ostringstream &get_sendq()                     { return sendq;                              }
 
 	// [SEND] Raw interface for subclasses
@@ -51,10 +45,10 @@ class Locutor
 	void msg(const std::string &msg);
 	void me(const std::string &msg);
 
-	// [SEND] stream interface
+	// [SEND] stream interface                          // Defaults back to MSG after every flush
 	Locutor &operator<<(const flush_t f);               // Flush stream to channel
-	Locutor &operator<<(const Type &type);              // Set Locution type
-	template<class T> Locutor &operator<<(const T &t);  // Append to sendq stream
+	Locutor &operator<<(const Method &method);          // Set method for this message
+	template<class T> Locutor &operator<<(const T &t);  // Append data to sendq stream
 
 	Locutor(Sess &sess, const std::string &target);
 };
@@ -64,10 +58,9 @@ inline
 Locutor::Locutor(Sess &sess,
                  const std::string &target):
 sess(sess),
-accts(sess.get_accts()),
 target(target)
 {
-	locution_type_idx = std::ios_base::xalloc();
+	locution_meth_idx = std::ios_base::xalloc();
 
 }
 
@@ -83,7 +76,7 @@ Locutor &Locutor::operator<<(const T &t)
 inline
 Locutor &Locutor::operator<<(const flush_t f)
 {
-	switch(Type(sendq.iword(locution_type_idx)))
+	switch(Method(sendq.iword(locution_meth_idx)))
 	{
 		case ME:        me(sendq.str());         break;
 		case NOTICE:    notice(sendq.str());     break;
@@ -92,15 +85,15 @@ Locutor &Locutor::operator<<(const flush_t f)
 	}
 
 	sendq.str(std::string());
-	sendq.iword(locution_type_idx) = MSG;        // reset stream to default
+	sendq.iword(locution_meth_idx) = MSG;        // reset stream to default
 	return *this;
 }
 
 
 inline
-Locutor &Locutor::operator<<(const Type &type)
+Locutor &Locutor::operator<<(const Method &meth)
 {
-	sendq.iword(locution_type_idx) = type;
+	sendq.iword(locution_meth_idx) = meth;
 	return *this;
 }
 

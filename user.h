@@ -6,7 +6,8 @@
  */
 
 
-class User : public Locutor
+class User : public Locutor,
+             public Acct
 {
 	// Handlers access
 	friend class Bot;
@@ -37,23 +38,14 @@ class User : public Locutor
 	const time_t &get_idle() const                     { return idle;                                }
 	const size_t &num_chans() const                    { return chans;                               }
 
-	bool has_acct() const                              { return accts.exists(get_acct());            }
 	bool is_myself() const                             { return get_nick() == get_sess().get_nick(); }
 	bool is_logged_in() const                          { return acct.size() && acct != "0";          }
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
 
-	// Local database interface
-	template<class T = std::string> T get(const std::string &key) const;
-	template<class T = std::string> T get(const std::string &key);
-	template<class T> void set(const std::string &key, const T &t);
-
-	std::string operator[](const std::string &k) const { return get(k);                              }
-	std::string operator[](const std::string &k)       { return get(k);                              }
-
 	// [SEND] Controls
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default
 
-	User(Sess &sess, const std::string &nick);
+	User(Adb &adb, Sess &sess, const std::string &nick);
 
 	bool operator<(const User &o) const                { return get_nick() < o.get_nick();           }
 	bool operator==(const User &o) const               { return get_nick() == o.get_nick();          }
@@ -63,9 +55,11 @@ class User : public Locutor
 
 
 inline
-User::User(Sess &sess,
+User::User(Adb &adb,
+           Sess &sess,
            const std::string &nick):
 Locutor(sess,nick),
+Acct(adb,this->acct),
 secure(false),
 idle(0),
 chans(0)
@@ -75,41 +69,17 @@ chans(0)
 }
 
 
-template<class T>
-void User::set(const std::string &key,
-               const T &t)
-{
-	Acct adata = accts.get(std::nothrow,get_acct());
-	adata.put(key,t);
-	accts.set(get_acct(),adata);
-}
-
-
-template<class T>
-T User::get(const std::string &key)
-{
-	const Acct adata = accts.get(std::nothrow,get_acct());
-	return adata.get<T>(key);
-}
-
-
-template<class T>
-T User::get(const std::string &key) const
-{
-	const Acct adata = accts.get(std::nothrow,get_acct());
-	return adata.get<T>(key);
-}
-
-
 inline
 void User::who(const std::string &flags)
 {
-    sess.quote("who %s %s",get_nick().c_str(),flags.c_str());
+	Sess &sess = get_sess();
+	sess.quote("who %s %s",get_nick().c_str(),flags.c_str());
 }
 
 
 inline
-Mask User::mask(const Mask::Type &recipe) const
+Mask User::mask(const Mask::Type &recipe)
+const
 {
 	std::stringstream s;
 	switch(recipe)

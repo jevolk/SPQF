@@ -42,7 +42,7 @@
 #include "mask.h"
 #include "ban.h"
 #include "msg.h"
-#include "accts.h"
+#include "adb.h"
 #include "sess.h"
 #include "locutor.h"
 #include "user.h"
@@ -55,9 +55,10 @@
 Bot::Bot(const Ident &ident,
          irc_callbacks_t &cbs)
 try:
+adb("db"),
 sess(ident,cbs),
-chans(sess),
-users(sess)
+chans(adb,sess),
+users(adb,sess)
 {
 	irc_set_ctx(sess,this);
 

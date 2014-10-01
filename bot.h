@@ -8,11 +8,13 @@
 
 class Bot
 {
+	Adb adb;
 	Sess sess;
 	Chans chans;
 	Users users;
 
   public:
+	const Adb &get_adb() const                              { return adb;                         }
 	const Sess &get_sess() const                            { return sess;                        }
 	const Chans &get_chans() const                          { return chans;                       }
 	const Users &get_users() const                          { return users;                       }
@@ -22,6 +24,7 @@ class Bot
 	bool my_nick(const std::string &nick) const             { return get_nick() == nick;          }
 
   protected:
+	Adb &get_adb()                                          { return adb;                         }
 	Sess &get_sess()                                        { return sess;                        }
 	Chans &get_chans()                                      { return chans;                       }
 	Users &get_users()                                      { return users;                       }

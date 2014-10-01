@@ -8,11 +8,13 @@
 
 class Users
 {
+	Adb &adb;
 	Sess &sess;
 	std::unordered_map<std::string, User> users;
 
   public:
 	// Observers
+	const Adb &get_adb() const                         { return adb;                                }
 	const Sess &get_sess() const                       { return sess;                               }
 
 	const User &get(const std::string &nick) const;
@@ -28,14 +30,16 @@ class Users
 	User &add(const std::string &nick);
 	bool del(const User &user);
 
-	Users(Sess &sess);
+	Users(Adb &adb, Sess &sess);
 
 	friend std::ostream &operator<<(std::ostream &s, const Users &u);
 };
 
 
 inline
-Users::Users(Sess &sess):
+Users::Users(Adb &adb,
+             Sess &sess):
+adb(adb),
 sess(sess)
 {
 
@@ -56,7 +60,7 @@ User &Users::add(const std::string &nick)
 {
 	const auto &iit = users.emplace(std::piecewise_construct,
 	                                std::forward_as_tuple(nick),
-	                                std::forward_as_tuple(sess,nick));
+	                                std::forward_as_tuple(adb,sess,nick));
 	User &user = iit.first->second;
 
 	if(iit.second)

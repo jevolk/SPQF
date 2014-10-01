@@ -43,7 +43,7 @@
 #include "mask.h"
 #include "ban.h"
 #include "msg.h"
-#include "accts.h"
+#include "adb.h"
 #include "sess.h"
 #include "locutor.h"
 #include "user.h"

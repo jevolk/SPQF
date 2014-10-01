@@ -8,12 +8,16 @@
 
 class Chans
 {
+	Adb &adb;
 	Sess &sess;
 
 	std::map<std::string, Chan> chans;
 
   public:
 	// Observers
+	const Adb &get_adb() const                         { return adb;                                }
+	const Sess &get_sess() const                       { return sess;                               }
+
 	const Chan &get(const std::string &name) const     { return chans.at(name);                     }
 	bool has(const std::string &name) const            { return chans.count(name);                  }
 	size_t num() const                                 { return chans.size();                       }
@@ -28,14 +32,16 @@ class Chans
 	Chan &add(const std::string &name);                // Add channel (w/o join) or return existing
 	Chan &join(const std::string &name);               // Add channel with join or return existing
 
-	Chans(Sess &sess);
+	Chans(Adb &adb, Sess &sess);
 
 	friend std::ostream &operator<<(std::ostream &s, const Chans &c);
 };
 
 
 inline
-Chans::Chans(Sess &sess):
+Chans::Chans(Adb &adb,
+             Sess &sess):
+adb(adb),
 sess(sess)
 {
 
@@ -71,7 +77,7 @@ Chan &Chans::add(const std::string &name)
 {
 	auto iit = chans.emplace(std::piecewise_construct,
 	                         std::forward_as_tuple(name),
-	                         std::forward_as_tuple(sess,name));
+	                         std::forward_as_tuple(adb,sess,name));
 
 	Chan &chan = iit.first->second;
 	return chan;
