@@ -84,12 +84,20 @@ class Ldb
 	using Closure = Iterator::Closure;
 
 	// Utils
-	size_t count();
+	size_t count() const;
+	bool exists(const std::string &key) const;
 	bool exists(const std::string &key, const bool &cache = false);
 
 	// Reading
-	bool get(const std::string &key, const Closure &closure, const bool &cache = true);
+	bool get(const std::nothrow_t, const std::string &key, const Closure &closure, const bool &cache = true) noexcept;
+	bool get(const std::nothrow_t, const std::string &key, const Closure &closure) const noexcept;
+	void get(const std::string &key, const Closure &closure, const bool &cache = true);
+	void get(const std::string &key, const Closure &closure) const;
+
+	std::string get(const std::nothrow_t, const std::string &key, const bool &cache = true) noexcept;
+	std::string get(const std::nothrow_t, const std::string &key) const noexcept;
 	std::string get(const std::string &key, const bool &cache = true);
+	std::string get(const std::string &key) const;
 
 	// Writing
 	void set(const std::string &key, const std::string &value, const bool &sync = false);
@@ -106,9 +114,7 @@ Ldb::Ldb(const std::string &dir,
          const size_t &bloom_bits):
 cache(cache_size? leveldb::NewLRUCache(cache_size) : nullptr),
 fp(bloom_bits? leveldb::NewBloomFilterPolicy(bloom_bits) : nullptr),
-opts(cache.get(),
-     fp.get(),
-     leveldb::kSnappyCompression),
+opts(cache.get(),fp.get(),leveldb::kSnappyCompression),
 db([&]() -> leveldb::DB *
 {
 	leveldb::DB *ret;
@@ -139,8 +145,30 @@ void Ldb::set(const std::string &key,
 
 
 inline
+std::string Ldb::get(const std::string &key)
+const
+{
+	const std::string ret = get(std::nothrow,key);
+	return ret;
+}
+
+
+inline
 std::string Ldb::get(const std::string &key,
                      const bool &cache)
+{
+	const std::string ret = get(std::nothrow,key,cache);
+	if(ret.empty())
+		throw Exception("Key not found in database");
+
+	return ret;
+}
+
+
+inline
+std::string Ldb::get(const std::nothrow_t,
+                     const std::string &key)
+const noexcept
 {
 	std::string ret;
 	const auto closure = [&ret]
@@ -149,15 +177,66 @@ std::string Ldb::get(const std::string &key,
 		ret = {val,vs};
 	};
 
-	get(key,closure,cache);
+	get(std::nothrow,key,closure);
 	return ret;
 }
 
 
 inline
-bool Ldb::get(const std::string &key,
+std::string Ldb::get(const std::nothrow_t,
+                     const std::string &key,
+                     const bool &cache)
+noexcept
+{
+	std::string ret;
+	const auto closure = [&ret]
+	(const char *const &key, const size_t &ks, const char *const &val, const size_t &vs)
+	{
+		ret = {val,vs};
+	};
+
+	get(std::nothrow,key,closure,cache);
+	return ret;
+}
+
+
+inline
+void Ldb::get(const std::string &key,
+              const Closure &closure)
+const
+{
+	if(!get(std::nothrow,key,closure))
+		throw Exception("Key not found in database");
+}
+
+
+inline
+void Ldb::get(const std::string &key,
               const Closure &closure,
               const bool &cache)
+{
+	if(!get(std::nothrow,key,closure,cache))
+		throw Exception("Key not found in database");
+}
+
+
+inline
+bool Ldb::get(const std::nothrow_t,
+              const std::string &key,
+              const Closure &closure)
+const noexcept
+{
+	const Iterator it(const_cast<Ldb &>(*this),key,false,true);
+	return it.next(closure);
+}
+
+
+inline
+bool Ldb::get(const std::nothrow_t,
+              const std::string &key,
+              const Closure &closure,
+              const bool &cache)
+noexcept
 {
 	const Iterator it(*this,key,cache,true);
 	return it.next(closure);
@@ -174,9 +253,19 @@ bool Ldb::exists(const std::string &key,
 
 
 inline
-size_t Ldb::count()
+bool Ldb::exists(const std::string &key)
+const
 {
-	Iterator it(*this,true,false,true);
+	const Iterator it(const_cast<Ldb &>(*this),key,false,false);
+	return it.valid();
+}
+
+
+inline
+size_t Ldb::count()
+const
+{
+	Iterator it(const_cast<Ldb &>(*this),true,false,true);
 	return it.count();
 }
 
@@ -246,7 +335,8 @@ bool Ldb::Iterator::next(const Closure &closure)
 
 
 inline
-bool Ldb::Iterator::next(const Closure &closure) const
+bool Ldb::Iterator::next(const Closure &closure)
+const
 {
 	if(!valid())
 		return false;
