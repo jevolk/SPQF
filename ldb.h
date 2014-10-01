@@ -45,7 +45,7 @@ class Ldb
 		std::unique_ptr<leveldb::Iterator> it;
 
 	  public:
-		enum Seek { FIRST, LAST, NEXT, PREV };
+		enum Seek { NEXT, PREV, FIRST, LAST, END };
 		using Closure = std::function<void (const char *const &key, const size_t &,        // key
 		                                    const char *const &val, const size_t &)>;      // val
 
@@ -75,6 +75,7 @@ class Ldb
 
 		Iterator(Ldb &ldb,
 		         const std::string &key,
+		         const bool &exact_match = true,              // false = seek to next closest key
 		         const bool &cache       = false,
 		         const bool &snap        = true);
 
@@ -226,7 +227,7 @@ bool Ldb::get(const std::nothrow_t,
               const Closure &closure)
 const noexcept
 {
-	const Iterator it(const_cast<Ldb &>(*this),key,false,true);
+	const Iterator it(const_cast<Ldb &>(*this),key,true,false,true);
 	return it.next(closure);
 }
 
@@ -238,7 +239,7 @@ bool Ldb::get(const std::nothrow_t,
               const bool &cache)
 noexcept
 {
-	const Iterator it(*this,key,cache,true);
+	const Iterator it(*this,key,true,cache,true);
 	return it.next(closure);
 }
 
@@ -247,7 +248,7 @@ inline
 bool Ldb::exists(const std::string &key,
                  const bool &cache)
 {
-	const Iterator it(*this,key,cache,false);
+	const Iterator it(*this,key,true,cache,false);
 	return it.valid();
 }
 
@@ -256,7 +257,7 @@ inline
 bool Ldb::exists(const std::string &key)
 const
 {
-	const Iterator it(const_cast<Ldb &>(*this),key,false,false);
+	const Iterator it(const_cast<Ldb &>(*this),key,true,false,false);
 	return it.valid();
 }
 
@@ -274,11 +275,15 @@ const
 inline
 Ldb::Iterator::Iterator(Ldb &ldb,
                         const std::string &key,
+                        const bool &exact_match,
                         const bool &cache,
                         const bool &snap):
 Iterator(ldb,false,cache,snap)
 {
 	seek(key);
+
+	if(exact_match && valid() && it->key() != key)
+		seek(END);
 }
 
 
@@ -353,10 +358,11 @@ void Ldb::Iterator::seek(const Seek &seek)
 {
 	switch(seek)
 	{
-		case FIRST:    it->SeekToFirst();       break;
-		case LAST:     it->SeekToLast();        break;
-		case NEXT:     it->Next();              break;
-		case PREV:     it->Prev();              break;
+		case NEXT:     it->Next();                      break;
+		case PREV:     it->Prev();                      break;
+		case FIRST:    it->SeekToFirst();               break;
+		case LAST:     it->SeekToLast();                break;
+		case END:      it->SeekToLast();  it->Next();   break;
 	};
 }
 
