@@ -9,6 +9,7 @@
 class Users
 {
 	Sess &sess;
+	Ldb ldb;
 	std::unordered_map<std::string, User> users;
 
   public:
@@ -34,7 +35,8 @@ class Users
 
 inline
 Users::Users(Sess &sess):
-sess(sess)
+sess(sess),
+ldb("db_users")
 {
 
 

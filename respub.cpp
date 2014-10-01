@@ -30,12 +30,17 @@
 #include <libircclient.h>
 #include <libirc_rfcnumeric.h>
 
+#include <leveldb/filter_policy.h>
+#include <leveldb/cache.h>
+#include <leveldb/db.h>
+
 #include "util.h"
 #include "mode.h"
 #include "mask.h"
 #include "ban.h"
 #include "msg.h"
 #include "sess.h"
+#include "ldb.h"
 #include "locutor.h"
 #include "user.h"
 #include "chan.h"

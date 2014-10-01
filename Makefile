@@ -30,7 +30,7 @@ WFLAGS = -Wall                                 \
          #-Wsuggest-attribute=noreturn
 
 CCFLAGS = -std=c++11
-LDFLAGS = -lircclient
+LDFLAGS = -lircclient -lleveldb
 
 TARGET = respublica
 
