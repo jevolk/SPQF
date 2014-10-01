@@ -81,15 +81,15 @@ inline
 Locutor &Locutor::operator<<(const flush_t f)
 {
 	switch(Type(sendq.iword(locution_type_idx)))
-    {
-        case ME:        me(sendq.str());         break;
-        case NOTICE:    notice(sendq.str());     break;
-        case MSG:
-        default:        msg(sendq.str());        break;
-    }
+	{
+		case ME:        me(sendq.str());         break;
+		case NOTICE:    notice(sendq.str());     break;
+		case MSG:
+		default:        msg(sendq.str());        break;
+	}
 
-    sendq.clear();
-    return *this;
+	sendq.str(std::string());
+	return *this;
 }
 
 
