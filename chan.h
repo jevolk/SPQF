@@ -519,26 +519,26 @@ std::ostream &operator<<(std::ostream &s,
 	s << "topic by:   \t" << std::get<Chan::Topic::MASK>(c.get_topic()) << std::endl;
 	s << "topic time: \t" << std::get<Chan::Topic::TIME>(c.get_topic()) << std::endl;
 
-	s << "users: " << c.num_users() << " -------" << std::endl;
+	s << "users:      \t" << c.num_users() << std::endl;
 	for(const auto &userp : c.users)
 	{
-		s << userp.first;
-
 		const auto &val = userp.second;
 		const Mode &mode = std::get<1>(val);
-		if(!mode.empty())
-			s << "(+" << mode << ")";
 
-		s << " ";
+		if(!mode.empty())
+			s << "+" << mode;
+
+		s << "\t" << userp.first << std::endl;;
 	}
 	s << std::endl;
 
-	s << "Bans: " << c.bans.num() << " quiets: " << c.quiets.num() << " -------" << std::endl;
+	s << "bans:      \t" << c.bans.num() << std::endl;
 	for(const auto &b : c.bans)
-		s << "+b " << b << std::endl;
+		s << "\t+b " << b << std::endl;
 
+	s << "quiets:    \t" << c.quiets.num() << std::endl;
 	for(const auto &q : c.quiets)
-		s << "+q " << q << std::endl;
+		s << "\t+q " << q << std::endl;
 
 	s << std::endl;
 	return s;
