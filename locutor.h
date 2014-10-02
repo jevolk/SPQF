@@ -19,9 +19,9 @@ class Locutor
 
 	enum Method
 	{
-		MSG,                                            // PRIVMSG (default)
-		NOTICE,                                         // NOTICE
-		ME,                                             // ACTION
+		PRIVMSG,
+		NOTICE,
+		ACTION,
 	};
 
 	const Sess &get_sess() const                        { return sess;                               }
@@ -78,14 +78,14 @@ Locutor &Locutor::operator<<(const flush_t f)
 {
 	switch(Method(sendq.iword(locution_meth_idx)))
 	{
-		case ME:        me(sendq.str());         break;
+		case ACTION:    me(sendq.str());         break;
 		case NOTICE:    notice(sendq.str());     break;
-		case MSG:
+		case PRIVMSG:
 		default:        msg(sendq.str());        break;
 	}
 
 	sendq.str(std::string());
-	sendq.iword(locution_meth_idx) = MSG;        // reset stream to default
+	sendq.iword(locution_meth_idx) = PRIVMSG;    // reset stream to default
 	return *this;
 }
 

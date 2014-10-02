@@ -120,7 +120,7 @@ void Sess::disconn()
 inline
 void Sess::quit()
 {
-	call(irc_cmd_quit,"K-Lined");
+	call(irc_cmd_quit,"By all means must we fly; not with our feet, however, but with our hands.");
 }
 
 
