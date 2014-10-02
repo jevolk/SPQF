@@ -6,51 +6,10 @@
  */
 
 
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-#include <signal.h>
-#include <vector>
-#include <map>
-#include <set>
-#include <list>
-#include <unordered_map>
 #include <forward_list>
-#include <functional>
-#include <iomanip>
-#include <algorithm>
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <ostream>
-#include <atomic>
+#include <thread>
 
-#include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-
-#include <libircclient.h>
-#include <libirc_rfcnumeric.h>
-
-#include <leveldb/filter_policy.h>
-#include <leveldb/cache.h>
-#include <leveldb/db.h>
-
-#include "util.h"
-#include "ldb.h"
-#include "mode.h"
-#include "mask.h"
-#include "ban.h"
-#include "msg.h"
-#include "adb.h"
-#include "sess.h"
-#include "locutor.h"
-#include "user.h"
-#include "chan.h"
-#include "users.h"
-#include "chans.h"
-#include "bot.h"
+#include "ircbot/bot.h"
 #include "respub.h"
 
 

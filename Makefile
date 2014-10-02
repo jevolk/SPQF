@@ -26,20 +26,23 @@ WFLAGS = -Wall                                 \
          -Wno-missing-field-initializers       \
          -Wmissing-format-attribute            \
          -Wno-unused-parameter                 \
-         -Wsuggest-attribute=format            \
+         -Wno-unused-label                     \
+         -Wsuggest-attribute=format
          #-Wsuggest-attribute=noreturn
 
-CCFLAGS = -std=c++11
-LDFLAGS = -lircclient -lleveldb
+CCFLAGS = -std=c++14
+LDFLAGS = -lircbot -lircclient -lleveldb -lpthread
+LIBPATH = -Lircbot/
 
+
+LIBRARIES = libircbot
 TARGET = respublica
 
+all: $(LIBRARIES) $(TARGET)
 
-all: $(TARGET)
 
-$(TARGET): main.o respub.o irclib.o bot.o
-	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $^ $(LDFLAGS)
-
+respublica: main.o respub.o votes.o help.o
+	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
 
 main.o: main.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
@@ -47,12 +50,17 @@ main.o: main.cpp *.h
 respub.o: respub.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
-irclib.o: irclib.cpp irclib.h
+votes.o: votes.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
-bot.o: bot.cpp *.h
+help.o: help.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+
+
+libircbot:
+	$(MAKE) -C ircbot
 
 
 clean:
+	$(MAKE) -C ircbot clean
 	rm -f *.o respublica
