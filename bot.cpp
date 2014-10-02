@@ -125,20 +125,20 @@ void Bot::operator()(const uint32_t &event,
 		case LIBIRC_RFC_RPL_ENDOFNAMES:           handle_endofnames(msg);              break;
 		case LIBIRC_RFC_RPL_UMODEIS:              handle_umodeis(msg);                 break;
 		case LIBIRC_RFC_RPL_WHOREPLY:             handle_whoreply(msg);                break;
-		case 354 /* RPL_WHOSPCRPL */:             handle_whospcrpl(msg);               break;
+		case 354     /* RPL_WHOSPCRPL */:         handle_whospcrpl(msg);               break;
 		case LIBIRC_RFC_RPL_WHOISUSER:            handle_whoisuser(msg);               break;
 		case LIBIRC_RFC_RPL_WHOISIDLE:            handle_whoisidle(msg);               break;
 		case LIBIRC_RFC_RPL_WHOISSERVER:          handle_whoisserver(msg);             break;
-		case 671 /* RPL_WHOISSECURE */:           handle_whoissecure(msg);             break;
-		case 330 /* RPL_WHOISACCOUNT */:          handle_whoisaccount(msg);            break;
+		case 671     /* RPL_WHOISSECURE */:       handle_whoissecure(msg);             break;
+		case 330     /* RPL_WHOISACCOUNT */:      handle_whoisaccount(msg);            break;
 		case LIBIRC_RFC_RPL_ENDOFWHOIS:           handle_endofwhois(msg);              break;
 		case LIBIRC_RFC_RPL_WHOWASUSER:           handle_whowasuser(msg);              break;
 		case LIBIRC_RFC_RPL_CHANNELMODEIS:        handle_channelmodeis(msg);           break;
 		case LIBIRC_RFC_RPL_TOPIC:                handle_topic(msg);                   break;
-		case 333 /* RPL_TOPICWHOTIME */:          handle_topicwhotime(msg);            break;
-		case 329 /* RPL_CREATIONTIME */:          handle_creationtime(msg);            break;
+		case 333     /* RPL_TOPICWHOTIME */:      handle_topicwhotime(msg);            break;
+		case 329     /* RPL_CREATIONTIME */:      handle_creationtime(msg);            break;
 		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 break;
-		case 728 /* RPL_QUIETLIST */:             handle_quietlist(msg);               break;
+		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               break;
 
 		case LIBIRC_RFC_ERR_ERRONEUSNICKNAME:     handle_erroneusnickname(msg);        break;
 		case LIBIRC_RFC_ERR_BANNEDFROMCHAN:       handle_bannedfromchan(msg);          break;
@@ -687,7 +687,7 @@ void Bot::handle_whospcrpl(const Msg &msg)
 			//user.idle = idle;
 
 			if(user.is_logged_in() && !user.has_acct())
-				user.set("FIRST_SEEN",time(NULL));
+				user.setval("first_seen",time(NULL));
 
 			break;
 		}

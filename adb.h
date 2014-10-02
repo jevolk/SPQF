@@ -24,8 +24,8 @@ class Adb
 	Ldb ldb;
 
   public:
-	bool exists(const std::string &name) const               { return ldb.exists(name);            }
-	size_t count() const                                     { return ldb.count();                 }
+	bool exists(const std::string &name) const          { return ldb.exists(name);                 }
+	size_t count() const                                { return ldb.count();                      }
 
 	Adoc get(const std::nothrow_t, const std::string &name) const noexcept;
 	Adoc get(const std::nothrow_t, const std::string &name) noexcept;
@@ -44,15 +44,23 @@ class Acct
 	const std::string &acct;      // the document key in the database; subclass holds data
 
   public:
-	const std::string &get_acct() const                      { return acct;                        }
-	bool has_acct() const                                    { return adb.exists(get_acct());      }
+	const std::string &get_acct() const                 { return acct;                             }
+	bool has_acct() const                               { return adb.exists(get_acct());           }
 
-	template<class T = std::string> T get(const std::string &key) const;
-	template<class T = std::string> T get(const std::string &key);
-	template<class T> void set(const std::string &key, const T &t);
+	// Get documents
+	Adoc get(const std::string &key) const              { return adb.get(std::nothrow,get_acct()); }
+	Adoc get(const std::string &key)                    { return adb.get(std::nothrow,get_acct()); }
+	Adoc operator[](const std::string &key) const       { return get(key);                         }
+	Adoc operator[](const std::string &key)             { return get(key);                         }
+	bool has(const std::string &key) const              { return !get(key).empty();                }
 
-	std::string operator[](const std::string &k) const       { return get(k);                      }
-	std::string operator[](const std::string &k)             { return get(k);                      }
+	// Set documents
+	void set(const std::string &key, const Adoc &doc);
+
+	// Convenience for single key => value
+	template<class T = std::string> T getval(const std::string &key) const;
+	template<class T = std::string> T getval(const std::string &key);
+	template<class T> void setval(const std::string &key, const T &t);
 
   protected:
 	Acct(Adb &adb, const std::string &acct);
@@ -70,28 +78,36 @@ acct(acct)
 
 
 template<class T>
-void Acct::set(const std::string &key,
-               const T &t)
+void Acct::setval(const std::string &key,
+                  const T &t)
 {
 	Adoc doc = adb.get(std::nothrow,get_acct());
 	doc.put(key,t);
+	set(key,doc);
+}
+
+
+inline
+void Acct::set(const std::string &key,
+               const Adoc &doc)
+{
 	adb.set(get_acct(),doc);
 }
 
 
 template<class T>
-T Acct::get(const std::string &key)
+T Acct::getval(const std::string &key)
 {
-	const Adoc doc = adb.get(std::nothrow,get_acct());
+	const Adoc doc = get(key);
 	return doc.get<T>(key);
 }
 
 
 template<class T>
-T Acct::get(const std::string &key)
+T Acct::getval(const std::string &key)
 const
 {
-	const Adoc doc = adb.get(std::nothrow,get_acct());
+	const Adoc doc = get(key);
 	return doc.get<T>(key);
 }
 
