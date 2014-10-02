@@ -2,3 +2,4 @@ respublica
 *.o
 db_*
 db
+core
