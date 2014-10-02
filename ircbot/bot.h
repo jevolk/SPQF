@@ -6,6 +6,58 @@
  */
 
 
+#ifndef LIBIRCBOT_INCLUDE
+#define LIBIRCBOT_INCLUDE
+
+// stdc
+#include <stdint.h>
+
+// stdc++
+#include <set>
+#include <map>
+#include <list>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include <functional>
+#include <string>
+#include <cstdio>
+#include <iomanip>
+#include <sstream>
+#include <mutex>
+
+// boost
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
+// leveldb
+#include <leveldb/filter_policy.h>
+#include <leveldb/cache.h>
+#include <leveldb/db.h>
+
+// ircclient
+#include <libircclient.h>
+#include <libirc_rfcnumeric.h>
+
+// ircbot
+#include "util.h"
+#include "ident.h"
+#include "ldb.h"
+#include "mode.h"
+#include "mask.h"
+#include "ban.h"
+#include "msg.h"
+#include "adb.h"
+#include "sess.h"
+#include "locutor.h"
+#include "user.h"
+#include "chan.h"
+#include "users.h"
+#include "chans.h"
+
+
 class Bot
 {
 	Adb adb;
@@ -24,6 +76,8 @@ class Bot
 	bool my_nick(const std::string &nick) const             { return get_nick() == nick;          }
 
   protected:
+	std::mutex handler_mutex;                               // Locked during irclib event handling
+
 	Adb &get_adb()                                          { return adb;                         }
 	Sess &get_sess()                                        { return sess;                        }
 	Chans &get_chans()                                      { return chans;                       }
@@ -111,3 +165,10 @@ class Bot
 
 	friend std::ostream &operator<<(std::ostream &s, const Bot &bot);
 };
+
+
+// irclib.h contains the callbacks depending on a definition of Bot
+#include "irclib.h"
+
+
+#endif // LIBIRCBOT_INCLUDE

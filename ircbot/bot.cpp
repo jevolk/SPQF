@@ -6,56 +6,13 @@
  */
 
 
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-#include <signal.h>
-#include <vector>
-#include <map>
-#include <set>
-#include <list>
-#include <unordered_map>
-#include <functional>
-#include <iomanip>
-#include <algorithm>
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <ostream>
-#include <atomic>
-
-#include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-
-#include <libircclient.h>
-#include <libirc_rfcnumeric.h>
-
-#include <leveldb/filter_policy.h>
-#include <leveldb/cache.h>
-#include <leveldb/db.h>
-
-#include "util.h"
-#include "ldb.h"
-#include "mode.h"
-#include "mask.h"
-#include "ban.h"
-#include "msg.h"
-#include "adb.h"
-#include "sess.h"
-#include "locutor.h"
-#include "user.h"
-#include "chan.h"
-#include "users.h"
-#include "chans.h"
 #include "bot.h"
 
 
 Bot::Bot(const Ident &ident,
          irc_callbacks_t &cbs)
 try:
-adb("db"),
+adb(ident["dbdir"]),
 sess(ident,cbs),
 chans(adb,sess),
 users(adb,sess)
@@ -87,6 +44,7 @@ void Bot::operator()(const char *const &event,
                      const size_t &count)
 {
 	const Msg msg(0,origin,params,count);
+	const std::lock_guard<std::mutex> lock(handler_mutex);
 
 	switch(hash(event))
 	{
@@ -118,6 +76,7 @@ void Bot::operator()(const uint32_t &event,
                      const size_t &count)
 {
 	const Msg msg(event,origin,params,count);
+	const std::lock_guard<std::mutex> lock(handler_mutex);
 
 	switch(event)
 	{

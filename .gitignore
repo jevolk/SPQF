@@ -1,5 +1,6 @@
 respublica
 *.o
+*.a
 db_*
 db
 core

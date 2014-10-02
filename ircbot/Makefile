@@ -1,6 +1,14 @@
+# 
+#  COPYRIGHT 2014 (C) Jason Volk
+#  COPYRIGHT 2014 (C) Svetlana Tkachenko
+#
+#  DISTRIBUTED UNDER THE GNU GENERAL PUBLIC LICENSE (GPL) (see: LICENSE)
+#
 
+TARGET = libircbot.a
 
 CC = g++
+CCFLAGS = -std=c++11
 WFLAGS = -Wall                                 \
          -Wextra                               \
          -Wcomment                             \
@@ -27,40 +35,23 @@ WFLAGS = -Wall                                 \
          -Wmissing-format-attribute            \
          -Wno-unused-parameter                 \
          -Wno-unused-label                     \
-         -Wsuggest-attribute=format
+         -Wsuggest-attribute=format            \
          #-Wsuggest-attribute=noreturn
 
-CCFLAGS = -std=c++14
-LDFLAGS = -lircbot -lircclient -lleveldb -lpthread
-LIBPATH = -Lircbot/
+
+all: $(TARGET)
 
 
-LIBRARIES = libircbot
-TARGET = respublica
+$(TARGET): irclib.o bot.o
+	ar rc $@ $^
+	ranlib $@
 
-all: $(LIBRARIES) $(TARGET)
-
-
-respublica: main.o respub.o votes.o help.o
-	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
-
-main.o: main.cpp *.h
+irclib.o: irclib.cpp irclib.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
-respub.o: respub.cpp *.h
+bot.o: bot.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
-
-votes.o: votes.cpp *.h
-	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
-
-help.o: help.cpp *.h
-	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
-
-
-libircbot:
-	$(MAKE) -C ircbot
 
 
 clean:
-	$(MAKE) -C ircbot clean
-	rm -f *.o respublica
+	rm -f *.o *.a

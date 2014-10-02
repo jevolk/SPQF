@@ -6,21 +6,9 @@
  */
 
 
-struct Ident
-{
-	std::string nick;
-	std::string host;
-	uint16_t port;
-
-	std::vector<std::string> autojoin;
-
-	friend std::ostream &operator<<(std::ostream &s, const Ident &id);
-};
-
-
 class Sess
 {
-	Ident ident;
+	const Ident ident;
 	irc_callbacks_t *cbs;
 	irc_session_t *sess;
 	std::string nick;
@@ -51,7 +39,7 @@ class Sess
 	// IRC Observers
 	const std::string &get_nick() const                { return nick;                               }
 	const Mode &get_mode() const                       { return mode;                               }
-	bool is_desired_nick() const                       { return nick == get_ident().nick;           }
+	bool is_desired_nick() const                       { return nick == ident["nickname"];          }
 	bool is_conn() const;
 
 	// [SEND] IRC Controls
@@ -85,7 +73,7 @@ Sess::Sess(const Ident &ident,
 ident(ident),
 cbs(&cbs),
 sess(sess),
-nick(ident.nick)
+nick(ident["nick"])
 {
 
 
@@ -103,10 +91,14 @@ Sess::~Sess() noexcept
 inline
 void Sess::conn()
 {
-	const std::string &host = get_ident().host;
-	const std::string &nick = get_ident().nick;
-	const uint16_t &port = get_ident().port;
-	call(irc_connect,host.c_str(),port,nullptr,nick.c_str(),nick.c_str(),nick.c_str());
+	const Ident &id = get_ident();
+	call(irc_connect,
+	     id["hostname"].c_str(),
+	     boost::lexical_cast<uint16_t>(id["port"]),
+	     id["pass"].empty()? nullptr : id["pass"].c_str(),
+	     id["nickname"].c_str(),
+	     id["username"].c_str(),
+	     id["fullname"].c_str());
 }
 
 
@@ -182,17 +174,5 @@ std::ostream &operator<<(std::ostream &s,
 	s << "irc_session_t:   " << ss.sess << std::endl;
 	s << "nick:            " << ss.nick << std::endl;
 	s << "mode:            " << ss.mode << std::endl;
-	return s;
-}
-
-
-
-inline
-std::ostream &operator<<(std::ostream &s,
-                         const Ident &id)
-{
-	s << "host: " << id.host;
-	s << " port: " << id.port;
-	s << " nick: " << id.nick;
 	return s;
 }
