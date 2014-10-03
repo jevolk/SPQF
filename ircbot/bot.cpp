@@ -81,6 +81,7 @@ void Bot::operator()(const uint32_t &event,
 		case LIBIRC_RFC_RPL_NAMREPLY:             handle_namreply(msg);                break;
 		case LIBIRC_RFC_RPL_ENDOFNAMES:           handle_endofnames(msg);              break;
 		case LIBIRC_RFC_RPL_UMODEIS:              handle_umodeis(msg);                 break;
+		case LIBIRC_RFC_RPL_AWAY:                 handle_away(msg);                    break;
 		case LIBIRC_RFC_RPL_WHOREPLY:             handle_whoreply(msg);                break;
 		case 354     /* RPL_WHOSPCRPL */:         handle_whospecial(msg);              break;
 		case LIBIRC_RFC_RPL_WHOISUSER:            handle_whoisuser(msg);               break;
@@ -311,6 +312,18 @@ void Bot::handle_umodeis(const Msg &msg)
 
 	Sess &sess = get_sess();
 	sess.delta_mode(msg[DELTASTR]);
+}
+
+
+void Bot::handle_away(const Msg &msg)
+{
+	using namespace fmt::AWAY;
+
+	log_handle(msg,"AWAY");
+
+	Users &users = get_users();
+	User &user = users.get(msg[NICKNAME]);
+	user.set_away(true);
 }
 
 

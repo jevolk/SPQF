@@ -16,6 +16,7 @@ SPQF_FMT( QUIT,              REASON                                             
 SPQF_FMT( JOIN,              CHANNAME                                                                        )
 SPQF_FMT( PART,              CHANNAME, REASON                                                                )
 SPQF_FMT( MODE,              CHANNAME, DELTASTR                                                              )
+SPQF_FMT( AWAY,              NICKNAME, MESSAGE                                                               )
 SPQF_FMT( UMODE,             DELTASTR                                                                        )
 SPQF_FMT( UMODEIS,           NICKNAME, DELTASTR                                                              )
 SPQF_FMT( INVITE,            SELFNAME, CHANNAME,                                                             )

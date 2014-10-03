@@ -14,6 +14,7 @@ class User : public Locutor,
 	std::string acct;                                  // who 'a' (account name)
 	bool secure;                                       // WHOISSECURE (ssl)
 	time_t idle;                                       // who 'l' or WHOISIDLE
+	bool away;
 
 	// Chan increments or decrements
 	friend class Chan;
@@ -28,6 +29,7 @@ class User : public Locutor,
 	const std::string &get_host() const                { return host;                                }
 	const std::string &get_acct() const                { return acct;                                }
 	const bool &is_secure() const                      { return secure;                              }
+	const bool &is_away() const                        { return away;                                }
 	const time_t &get_idle() const                     { return idle;                                }
 	const size_t &num_chans() const                    { return chans;                               }
 
@@ -40,6 +42,7 @@ class User : public Locutor,
 	void set_host(const std::string &host)             { this->host = host;                          }
 	void set_secure(const bool &secure)                { this->secure = secure;                      }
 	void set_idle(const time_t &idle)                  { this->idle = idle;                          }
+	void set_away(const bool &away)                    { this->away = away;                          }
 
 	// [SEND] Controls
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default

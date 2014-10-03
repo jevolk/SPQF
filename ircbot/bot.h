@@ -139,6 +139,7 @@ class Bot : public std::mutex                               // Locked during irc
 	void handle_privmsg(const Msg &m);
 	void handle_invite(const Msg &m);
 	void handle_umode(const Msg &m);
+	void handle_away(const Msg &m);
 	void handle_nick(const Msg &m);
 	void handle_quit(const Msg &m);
 	void handle_conn(const Msg &m);
