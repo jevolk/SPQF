@@ -10,8 +10,7 @@ struct Adoc : public boost::property_tree::ptree
 {
 	operator std::string() const;
 
-	Adoc() = default;
-	Adoc(const std::string &str);
+	Adoc(const std::string &str = "{}");
 	Adoc(boost::property_tree::ptree &&p):       boost::property_tree::ptree(std::move(p)) {}
 	Adoc(const boost::property_tree::ptree &p):  boost::property_tree::ptree(p) {}
 
@@ -24,8 +23,8 @@ class Adb
 	Ldb ldb;
 
   public:
-	bool exists(const std::string &name) const          { return ldb.exists(name);                 }
-	size_t count() const                                { return ldb.count();                      }
+	bool exists(const std::string &name) const       { return ldb.exists(name);                     }
+	size_t count() const                             { return ldb.count();                          }
 
 	Adoc get(const std::nothrow_t, const std::string &name) const noexcept;
 	Adoc get(const std::nothrow_t, const std::string &name) noexcept;
@@ -44,23 +43,30 @@ class Acct
 	const std::string &acct;      // the document key in the database; subclass holds data
 
   public:
-	const std::string &get_acct() const                 { return acct;                             }
-	bool has_acct() const                               { return adb.exists(get_acct());           }
+	const std::string &get_acct() const              { return acct;                                 }
+	bool has_acct() const                            { return adb.exists(get_acct());               }
 
-	// Get documents
-	Adoc get(const std::string &key) const              { return adb.get(std::nothrow,get_acct()); }
-	Adoc get(const std::string &key)                    { return adb.get(std::nothrow,get_acct()); }
-	Adoc operator[](const std::string &key) const       { return get(key);                         }
-	Adoc operator[](const std::string &key)             { return get(key);                         }
-	bool has(const std::string &key) const              { return !get(key).empty();                }
+	// Get document
+	Adoc get() const                                 { return adb.get(std::nothrow,get_acct());     }
+	Adoc get()                                       { return adb.get(std::nothrow,get_acct());     }
+	Adoc get(const std::string &key) const           { return get().get_child(key,Adoc());          }
+	Adoc get(const std::string &key)                 { return get().get_child(key,Adoc());          }
+	Adoc operator[](const std::string &key) const    { return get(key);                             }
+	Adoc operator[](const std::string &key)          { return get(key);                             }
 
-	// Set documents
-	void set(const std::string &key, const Adoc &doc);
+	// Get value of document
+	template<class T = std::string> T get_val(const std::string &key) const;
+	template<class T = std::string> T get_val(const std::string &key);
+
+	// Check if document exists
+	bool has(const std::string &key) const           { return !get_val(key).empty();                }
+
+	// Set document
+	void set(const Adoc &doc);
 
 	// Convenience for single key => value
-	template<class T = std::string> T getval(const std::string &key) const;
-	template<class T = std::string> T getval(const std::string &key);
-	template<class T> void setval(const std::string &key, const T &t);
+	template<class T> void set_val(const std::string &key, const T &t);
+
 
   protected:
 	Acct(Adb &adb, const std::string &acct);
@@ -78,37 +84,36 @@ acct(acct)
 
 
 template<class T>
-void Acct::setval(const std::string &key,
-                  const T &t)
+void Acct::set_val(const std::string &key,
+                   const T &t)
 {
 	Adoc doc = adb.get(std::nothrow,get_acct());
 	doc.put(key,t);
-	set(key,doc);
+	set(doc);
 }
 
 
 inline
-void Acct::set(const std::string &key,
-               const Adoc &doc)
+void Acct::set(const Adoc &doc)
 {
 	adb.set(get_acct(),doc);
 }
 
 
 template<class T>
-T Acct::getval(const std::string &key)
+T Acct::get_val(const std::string &key)
 {
 	const Adoc doc = get(key);
-	return doc.get<T>(key);
+	return doc.get_value<T>(T());
 }
 
 
 template<class T>
-T Acct::getval(const std::string &key)
+T Acct::get_val(const std::string &key)
 const
 {
 	const Adoc doc = get(key);
-	return doc.get<T>(key);
+	return doc.get_value<T>(T());
 }
 
 
@@ -214,6 +219,6 @@ inline
 std::ostream &operator<<(std::ostream &s,
                          const Adoc &doc)
 {
-	boost::property_tree::write_json(s,doc);
+	boost::property_tree::write_json(s,doc,false);
 	return s;
 }

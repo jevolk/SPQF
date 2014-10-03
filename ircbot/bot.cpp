@@ -644,7 +644,7 @@ void Bot::handle_whospcrpl(const Msg &msg)
 			//user.idle = idle;
 
 			if(user.is_logged_in() && !user.has_acct())
-				user.setval("first_seen",time(NULL));
+				user.set_val("first_seen",time(NULL));
 
 			break;
 		}
