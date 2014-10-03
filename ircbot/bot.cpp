@@ -196,6 +196,7 @@ void Bot::handle_join(const Msg &msg)
 		c.banlist();
 		c.quietlist();
 	}
+	else u.who();
 
 	handle_join(msg,c,u);
 }

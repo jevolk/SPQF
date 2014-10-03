@@ -62,10 +62,6 @@ User &Users::add(const std::string &nick)
 	                                std::forward_as_tuple(nick),
 	                                std::forward_as_tuple(adb,sess,nick));
 	User &user = iit.first->second;
-
-	if(iit.second)
-		user.who();
-
 	return user;
 }
 
