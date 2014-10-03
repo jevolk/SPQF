@@ -41,7 +41,7 @@ TARGET = respublica
 all: $(LIBRARIES) $(TARGET)
 
 
-respublica: main.o respub.o votes.o help.o
+respublica: main.o respub.o voting.o help.o
 	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
 
 main.o: main.cpp *.h
@@ -50,7 +50,7 @@ main.o: main.cpp *.h
 respub.o: respub.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
-votes.o: votes.cpp *.h
+voting.o: voting.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 help.o: help.cpp *.h
