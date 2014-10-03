@@ -15,7 +15,7 @@ class Voting
 	Users &users;
 	std::map<std::string, std::unique_ptr<Vote>> motions;   // Quick motions   : channel => vote
 	std::map<id_t, std::unique_ptr<Vote>> votes;            // Standing votes  : id => vote
-	std::multimap<std::string, size_t> voteidx;             // Index of votes  : chann => id
+	std::multimap<std::string, size_t> voteidx;             // Index of votes  : chan => id
 	std::condition_variable sem;                            // Notify worker of new work
 
   public:
@@ -29,9 +29,6 @@ class Voting
 	auto &get(const id_t &id) const;
 	auto &get(const Chan &chan) const;
 
-	template<class Vote, class... Args> id_t vote(Chan &chan, Args&&... args);
-	template<class Vote, class... Args> void motion(Chan &chan, Args&&... args);
-
   private:
 	void call_finish(Vote &vote) noexcept;
 	void poll_motions();
@@ -41,14 +38,38 @@ class Voting
 	std::thread thread;
 
   public:
+	template<class Vote, class... Args> id_t vote(Chan &chan, Args&&... args);
+	template<class Vote, class... Args> void motion(Chan &chan, Args&&... args);
+
+	void cancel(const id_t &id);
+	void cancel(const Chan &chan);
+
 	Voting(Bot &bot, Chans &chans, Users &users);
 };
+
+
+inline
+void Voting::cancel(const Chan &chan)
+{
+	//auto &vote = get(chan);
+	//vote.cancel();
+	motions.erase(chan.get_name());
+}
+
+
+inline
+void cancel(const id_t &id)
+{
+
+
+}
 
 
 template<class Vote,
          class... Args>
 void Voting::motion(Chan &chan,
                     Args&&... args)
+try
 {
 	const std::string &name = chan.get_name();
 	const auto iit = motions.emplace(name,std::make_unique<Vote>(chans,users,chan,std::forward<Args>(args)...));
@@ -67,12 +88,18 @@ void Voting::motion(Chan &chan,
 	}
 	else throw Exception("A motion is already active for this channel");
 }
+catch(const Exception &e)
+{
+	chan << "Vote is not valid: " << e << Chan::flush;
+	return;
+}
 
 
 template<class Vote,
          class... Args>
 Voting::id_t Voting::vote(Chan &chan,
                           Args&&... args)
+try
 {
 	id_t id; do
 	{
@@ -97,6 +124,11 @@ Voting::id_t Voting::vote(Chan &chan,
 	}
 
 	return id;
+}
+catch(const Exception &e)
+{
+	chan << "Vote is not valid: " << e << Chan::flush;
+	return;
 }
 
 
