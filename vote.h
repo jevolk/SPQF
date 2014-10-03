@@ -14,7 +14,7 @@ extern const char *const help_vote_mode;        // help.cpp
 
 struct DefaultConfig : public Adoc
 {
-	static Adoc &configure(Adoc &doc);
+	static size_t configure(Adoc &doc);
 	static Adoc configure(Chan &chan);
 
 	DefaultConfig()
@@ -86,7 +86,7 @@ class Vote
 	void finish();
 	void start();
 
-	Vote(Chans &chans, Users &users, Chan &chan, User &user, const std::string &issue, const Adoc &cfg = {});
+	Vote(Chans &chans, Users &users, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
 	virtual ~Vote() = default;
 };
 
@@ -97,17 +97,22 @@ Vote::Vote(Chans &chans,
            Chan &chan,
            User &user,
            const std::string &issue,
-           const Adoc &cfg):
+           Adoc cfg):
 chans(chans),
 users(users),
-//cfg(cfg),
-cfg(DefaultConfig::configure(chan)),
+cfg([&]() -> Adoc
+{
+	if(cfg.empty())
+		return DefaultConfig::configure(chan);
+
+	DefaultConfig::configure(cfg);
+	return cfg;
+}()),
 began(time(NULL)),
 chan(chan.get_name()),
 user(user.get_acct()),
 issue(issue)
 {
-	//DefaultConfig::configure(this->cfg);
 
 }
 
@@ -204,26 +209,35 @@ Vote::Stat Vote::vote(const Ballot &ballot,
 inline
 Adoc DefaultConfig::configure(Chan &chan)
 {
-	static const DefaultConfig default_config;
-
 	Adoc cfg = chan.get("config.vote");
-	if(!cfg.empty())
-		return cfg;
 
-	cfg.put_child("config.vote",default_config);
-	chan.set(cfg);
-	return cfg.get_child("config.vote");
+	if(configure(cfg))
+	{
+		Adoc chan_cfg;
+		chan_cfg.put_child("config.vote",cfg);
+		chan.set(chan_cfg);
+	}
+
+	return cfg;
 }
 
 
 inline
-Adoc &DefaultConfig::configure(Adoc &vote_cfg)
+size_t DefaultConfig::configure(Adoc &cfg)
 {
 	static const DefaultConfig default_config;
 
-//	for(const auto &p : default_config)
-//		if(!vote_cfg.count(p.first))
-//			vote_cfg.put(*p);
+	size_t ret = 0;
+	for(const auto &pair : default_config)
+	{
+		const std::string &key = pair.first;
+		if(!cfg.has(key))
+		{
+			const std::string &val = pair.second.get_value<std::string>();
+			cfg.put(key,val);
+			ret++;
+		}
+	}
 
-	return vote_cfg;
+	return ret;
 }
