@@ -10,10 +10,22 @@ namespace vote
 {
 	class Config : public Vote
 	{
+		std::string key;
+		std::string val;
+
 		void passed();
 
 	  public:
 		template<class... Args> Config(Args&&... args);
+	};
+
+	class Mode : public Vote
+	{
+		void passed();
+		void starting();
+
+	  public:
+		template<class... Args> Mode(Args&&... args);
 	};
 
 	class Kick : public Vote
@@ -22,6 +34,14 @@ namespace vote
 
 	  public:
 		template<class... Args> Kick(Args&&... args);
+	};
+
+	class Invite : public Vote
+	{
+		void passed();
+
+	  public:
+		template<class... Args> Invite(Args&&... args);
 	};
 }
 
@@ -43,8 +63,9 @@ void vote::Kick::passed()
 }
 
 
+
 template<class... Args>
-vote::Config::Config(Args&&... args):
+vote::Invite::Invite(Args&&... args):
 Vote(std::forward<Args>(args)...)
 {
 
@@ -52,9 +73,70 @@ Vote(std::forward<Args>(args)...)
 
 
 inline
-void vote::Config::passed()
+void vote::Invite::passed()
+{
+	Chan &chan = get_chan();
+	chan << "An invite to " << get_issue() << " is being sent..." << flush;
+	chan.invite(get_issue());
+}
+
+
+
+template<class... Args>
+vote::Mode::Mode(Args&&... args):
+Vote(std::forward<Args>(args)...)
+{
+
+}
+
+
+inline
+void vote::Mode::passed()
+{
+	Chan &chan = get_chan();
+	chan.mode(get_issue());
+}
+
+
+inline
+void vote::Mode::starting()
 {
 	Chan &chan = get_chan();
 
+}
 
+
+
+template<class... Args>
+vote::Config::Config(Args&&... args):
+Vote(std::forward<Args>(args)...)
+{
+	using delim = boost::char_separator<char>;
+
+	const delim sep("=");
+    const boost::tokenizer<delim> exprs(get_issue(),sep);
+    std::vector<std::string> tokens(exprs.begin(),exprs.end());
+	if(tokens.size() != 2 || tokens.at(0).empty() || tokens.at(1).empty())
+		throw Exception("Invalid syntax to assign a configuration variable.");
+
+	key = tokens.at(0);
+	if(key.back() == ' ')
+		key.pop_back();
+
+	val = tokens.at(1);
+	if(val.front() == ' ')
+		val.erase(val.begin());
+
+	if(!get_chan().Acct::has(key))
+		throw Exception("Variable not found in channel's configuration.");
+}
+
+
+inline
+void vote::Config::passed()
+{
+	Chan &chan = get_chan();
+	Adoc cfg = chan.get();
+	cfg.put(key,val);
+	chan.set(cfg);
 }

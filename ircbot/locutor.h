@@ -32,10 +32,10 @@ class Locutor
 	Sess &get_sess()                                    { return sess;                               }
 	std::ostringstream &get_sendq()                     { return sendq;                              }
 
-	// [SEND] Raw interface for subclasses
+  public:
+	// [SEND] Raw interface                             // Should attempt to specify in a subclasses
 	void mode(const std::string &mode);                 // Raw mode command
 
-  public:
 	// [SEND] Controls / Utils
 	void whois();                                       // Sends whois query
 	void mode();                                        // Sends mode query

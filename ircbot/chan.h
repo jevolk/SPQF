@@ -77,6 +77,7 @@ class Chan : public Locutor,
 	void names();                                           // Update user list of channel (goes into this->users)
 
 	// [SEND] Control interface to channel
+	void invite(const std::string &nick);
 	void kick(const User &user, const std::string &reason = "");
 	bool quiet(const User &user, const Quiet::Type &type = Quiet::Type::HOST);
 	bool ban(const User &user, const Ban::Type &type = Ban::Type::HOST);
@@ -253,6 +254,14 @@ void Chan::kick(const User &user,
 	Sess &sess = get_sess();
 	const std::string &targ = user.get_nick();
 	sess.call(irc_cmd_kick,targ.c_str(),get_name().c_str(),reason.c_str());
+}
+
+
+inline
+void Chan::invite(const std::string &nick)
+{
+	Sess &sess = get_sess();
+	sess.call(irc_cmd_invite,nick.c_str(),get_name().c_str());
 }
 
 

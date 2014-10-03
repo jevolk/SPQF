@@ -19,10 +19,10 @@ struct DefaultConfig : public Adoc
 
 	DefaultConfig()
 	{
-		put("min_votes","1");
-		put("min_yay","1");
-		put("duration","15");
-		put("plurality","0.51");
+		put("min_votes",2);
+		put("min_yay",1);
+		put("duration",30);
+		put("plurality",0.51);
 	}
 };
 
@@ -35,7 +35,8 @@ class Vote
 	Adoc cfg;                                   // Configuration of this vote
 	time_t began;                               // Time vote was constructed
 	std::string chan;                           // Name of the channel
-	std::string issue;                          // "Issue" display name of the vote
+	std::string user;                           // Initiating user ($a name)
+	std::string issue;                          // "Issue" input of the vote
 	std::set<std::string> yay;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
 
@@ -45,6 +46,7 @@ class Vote
 
 	auto &get_cfg() const                       { return cfg;                                       }
 	auto &get_chan() const                      { return chans.get(chan);                           }
+	auto &get_user() const                      { return user;                                      }
 	auto &get_began() const                     { return began;                                     }
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yay() const                       { return yay;                                       }
@@ -71,16 +73,20 @@ class Vote
 	// Subclass throws from these for abortions
 	virtual void passed()                       { get_chan() << "The yays have it!" << flush;       }
 	virtual void failed()                       { get_chan() << "The nays have it!" << flush;       }
-	virtual void proffer() {}
+	virtual void canceled() {}
 	virtual void proffer(const Ballot &b, User &u) {}
+	virtual void starting() {}
 
   public:
+	// Called by Bot handlers
 	Stat vote(const Ballot &ballot, User &user);
 
-	void finish();                              // Called by the asynchronous deadline timer
-	void start();                               // Called by Voting construction function
+	// Called by the asynchronous Voting worker only
+	void cancel();
+	void finish();
+	void start();
 
-	Vote(Chans &chans, Users &users, Chan &chan, const std::string &issue, const Adoc &cfg = {});
+	Vote(Chans &chans, Users &users, Chan &chan, User &user, const std::string &issue, const Adoc &cfg = {});
 	virtual ~Vote() = default;
 };
 
@@ -89,6 +95,7 @@ inline
 Vote::Vote(Chans &chans,
            Users &users,
            Chan &chan,
+           User &user,
            const std::string &issue,
            const Adoc &cfg):
 chans(chans),
@@ -97,6 +104,7 @@ users(users),
 cfg(DefaultConfig::configure(chan)),
 began(time(NULL)),
 chan(chan.get_name()),
+user(user.get_acct()),
 issue(issue)
 {
 	//DefaultConfig::configure(this->cfg);
@@ -106,19 +114,12 @@ issue(issue)
 
 inline
 void Vote::start()
-try
 {
-	proffer();
+	starting();
 
 	auto &chan = get_chan();
 	chan << "Vote initiated! You have " << get_duration() << " seconds left to vote! ";
 	chan << "Type: !vote yay or !vote nay" << flush;
-}
-catch(const Exception &e)
-{
-	auto &chan = get_chan();
-	chan << "Vote is not valid: " << e << flush;
-	throw;
 }
 
 
@@ -167,6 +168,14 @@ catch(const Exception &e)
 
 
 inline
+void Vote::cancel()
+{
+	canceled();
+	get_chan() << "The vote has been canceled." << flush;
+}
+
+
+inline
 Vote::Stat Vote::vote(const Ballot &ballot,
                       User &user)
 {
@@ -197,14 +206,13 @@ Adoc DefaultConfig::configure(Chan &chan)
 {
 	static const DefaultConfig default_config;
 
-	Adoc cfg = chan.get("config");
-	if(cfg.empty() || cfg.get_child("vote").empty())
-	{
-		cfg.add_child("vote",default_config);
-		chan.set("config",cfg);
-	}
+	Adoc cfg = chan.get("config.vote");
+	if(!cfg.empty())
+		return cfg;
 
-	return cfg.get_child("vote");
+	cfg.put_child("config.vote",default_config);
+	chan.set(cfg);
+	return cfg.get_child("config.vote");
 }
 
 

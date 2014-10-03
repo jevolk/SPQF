@@ -21,7 +21,6 @@ void ResPublica::handle_mode(const Msg &msg,
                              Chan &chan)
 {
 
-
 }
 
 
@@ -30,7 +29,6 @@ void ResPublica::handle_mode(const Msg &msg,
                              User &user)
 {
 
-
 }
 
 
@@ -38,13 +36,15 @@ void ResPublica::handle_join(const Msg &msg,
                              Chan &chan,
                              User &user)
 {
+	const Adoc doc = chan.get();
+	std::cout << doc << std::endl;
+
 	const Adoc config = chan["config"];
+	std::cout << config << std::endl;
 
-	if(config.empty())
-	{
+	const Adoc configvote = chan["config.vote"];
+	std::cout << configvote << std::endl;
 
-
-	}
 }
 
 
@@ -52,7 +52,6 @@ void ResPublica::handle_part(const Msg &msg,
                              Chan &chan,
                              User &user)
 {
-
 
 }
 
@@ -62,7 +61,6 @@ void ResPublica::handle_kick(const Msg &msg,
                              User &user)
 {
 
-
 }
 
 
@@ -70,7 +68,6 @@ void ResPublica::handle_cnotice(const Msg &msg,
                                 Chan &chan,
                                 User &user)
 {
-
 
 }
 
@@ -119,8 +116,20 @@ void ResPublica::handle_chanmsg_cmd(const Msg &msg,
 	switch(hash(tokens.at(0).substr(1)))
 	{
 		case hash("vote"):     handle_vote(msg,chan,user,subtoks);            break;
+		case hash("config"):   handle_config(msg,chan,user,subtoks);          break;
 		default:                                                              break;
 	}
+}
+
+
+void ResPublica::handle_config(const Msg &msg,
+                               Chan &chan,
+                               User &user,
+                               const Tokens &toks)
+{
+	const Adoc doc = chan.get();
+	std::cout << doc << std::endl;
+	chan << doc << flush;
 }
 
 
@@ -130,17 +139,37 @@ void ResPublica::handle_vote(const Msg &msg,
                              const Tokens &toks)
 {
 	const std::string subcmd = toks.size()? *toks.at(0) : "help";
-	const Tokens subtoks = subtokenize(toks);
 
+	// Handle pattern for voting on config
+	if(subcmd.find("config.") == 0)
+	{
+		handle_vote_config(msg,chan,user,toks);
+		return;
+	}
+
+	// Handle pattern for voting on modes
+	if(subcmd.at(0) == '+' || subcmd.at(0) == '-')
+	{
+		handle_vote_mode(msg,chan,user,toks);
+		return;
+	}
+
+	// Handle various sub-keywords
+	const Tokens subtoks = subtokenize(toks);
 	switch(hash(subcmd))
 	{
+		// Administrative
 		case hash("yay"):      handle_vote_ballot(msg,chan,user,Vote::YAY);      break;
 		case hash("nay"):      handle_vote_ballot(msg,chan,user,Vote::NAY);      break;
 		case hash("poll"):     handle_vote_poll(msg,chan,user,subtoks);          break;
 		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);          break;
-		case hash("config"):   handle_vote_config(msg,chan,user,subtoks);        break;
+		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);        break;
+		case hash("config"):   handle_vote_config_dump(msg,chan,user,toks);      break;
+
+		// Actual vote types
 		case hash("kick"):     handle_vote_kick(msg,chan,user,subtoks);          break;
-		default:               handle_vote_mode(msg,chan,user,toks);             break;
+		case hash("invite"):   handle_vote_invite(msg,chan,user,subtoks);        break;
+		default:               handle_vote_opine(msg,chan,user,toks);            break;
 	}
 }
 
@@ -212,42 +241,62 @@ void ResPublica::handle_vote_help(const Msg &msg,
 }
 
 
-void ResPublica::handle_vote_config(const Msg &msg,
+void ResPublica::handle_vote_cancel(const Msg &msg,
                                     Chan &chan,
                                     User &user,
                                     const Tokens &toks)
 {
-	if(toks.empty())
+	Vote &vote = voting.get(chan);
+	if(user.get_acct() != vote.get_user())
 	{
-		handle_vote_config_dump(msg,chan,user);
+		chan << user.get_nick() << ": You can't cancel a vote by " << vote.get_user() << "." << flush;
 		return;
 	}
 
-	const std::string issue = detokenize(toks);
-	voting.motion<vote::Config>(chan,issue);
+	if(vote.total() > 0)
+	{
+		chan << user.get_nick() << ": You can't cancel after a vote has been cast." << flush;
+		return;
+	}
+
+	vote.cancel();
+	voting.cancel(chan);
 }
 
 
 void ResPublica::handle_vote_config_dump(const Msg &msg,
                                          Chan &chan,
-                                         User &user)
+                                         User &user,
+                                         const Tokens &toks)
 {
-	const Adoc cfg = chan.get("config");
+	const Adoc cfg = chan.get("config.vote");
 	if(cfg.empty())
-	{
-		chan << "Channel has no configuration." << flush;
-		return;
-	}
-
-	const Adoc vote_cfg = cfg.get_child("vote");
-	if(vote_cfg.empty())
 	{
 		chan << "Channel has no voting configuration." << flush;
 		return;
 	}
 
-	for(const auto &var : cfg)
-		chan << var.first << " " << var.second << flush;
+	chan << cfg << flush;
+}
+
+
+void ResPublica::handle_vote_config(const Msg &msg,
+                                    Chan &chan,
+                                    User &user,
+                                    const Tokens &toks)
+{
+	const std::string issue = detokenize(toks);
+	voting.motion<vote::Config>(chan,user,issue);
+}
+
+
+void ResPublica::handle_vote_mode(const Msg &msg,
+                                  Chan &chan,
+                                  User &user,
+                                  const Tokens &toks)
+{
+	const std::string issue = detokenize(toks);
+	voting.motion<vote::Mode>(chan,user,issue);
 }
 
 
@@ -257,17 +306,27 @@ void ResPublica::handle_vote_kick(const Msg &msg,
                                   const Tokens &toks)
 {
 	const std::string &target = *toks.at(0);
-	voting.motion<vote::Kick>(chan,target);
+	voting.motion<vote::Kick>(chan,user,target);
 }
 
 
-void ResPublica::handle_vote_mode(const Msg &msg,
-                                  Chan &chan,
-                                  User &user,
-                                  const Tokens &toks)
+void ResPublica::handle_vote_invite(const Msg &msg,
+                                    Chan &chan,
+                                    User &user,
+                                    const Tokens &toks)
 {
-	for(const auto &tok : toks)
-		chan << "Mode token: [" << *tok << "]" << flush;
+	const std::string &target = *toks.at(0);
+	voting.motion<vote::Invite>(chan,user,target);
+}
+
+
+void ResPublica::handle_vote_opine(const Msg &msg,
+                                   Chan &chan,
+                                   User &user,
+                                   const Tokens &toks)
+{
+
+
 }
 
 
@@ -290,8 +349,8 @@ void ResPublica::handle_privmsg(const Msg &msg,
 std::string ResPublica::detokenize(const Tokens &tokens)
 {
 	std::stringstream str;
-	for(const auto &token : tokens)
-		str << *token;
+	for(auto it = tokens.begin(); it != tokens.end(); ++it)
+		str << **it << (it == tokens.end() - 1? "" : " ");
 
 	return str.str();
 }

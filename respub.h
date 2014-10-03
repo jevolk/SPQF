@@ -22,14 +22,19 @@ class ResPublica : public Bot
 	Voting voting;
 
 	// Vote cmd stack
-	void handle_vote_config_dump(const Msg &m, Chan &c, User &u);
-	void handle_vote_config(const Msg &m, Chan &c, User &u, const Tokens &toks);
+	void handle_vote_opine(const Msg &m, Chan &c, User &u, const Tokens &toks);
+	void handle_vote_invite(const Msg &m, Chan &c, User &u, const Tokens &toks);
 	void handle_vote_kick(const Msg &m, Chan &c, User &u, const Tokens &toks);
 	void handle_vote_mode(const Msg &m, Chan &c, User &u, const Tokens &toks);
+	void handle_vote_config(const Msg &m, Chan &c, User &u, const Tokens &toks);
+	void handle_vote_config_dump(const Msg &m, Chan &c, User &u, const Tokens &toks);
+	void handle_vote_cancel(const Msg &m, Chan &c, User &u, const Tokens &toks);
 	void handle_vote_help(const Msg &m, Chan &c, User &u, const Tokens &toks);
 	void handle_vote_poll(const Msg &m, Chan &c, User &u, const Tokens &toks);
 	void handle_vote_ballot(const Msg &m, Chan &c, User &u, const Vote::Ballot &b);
 	void handle_vote(const Msg &m, Chan &c, User &u, const Tokens &toks);
+
+	void handle_config(const Msg &m, Chan &c, User &u, const Tokens &toks);
 
 	// Cmd prefix dispatch; default: '!'
 	void handle_chanmsg_cmd(const Msg &m, Chan &c, User &u);
