@@ -40,6 +40,9 @@ class Vote
 	std::set<std::string> nay;                  // Accounts voting No
 
   public:
+	enum Stat                                   { ADDED, CHANGED,                                   };
+	enum Ballot                                 { YAY, NAY,                                         };
+
 	auto &get_cfg() const                       { return cfg;                                       }
 	auto &get_chan() const                      { return chans.get(chan);                           }
 	auto &get_began() const                     { return began;                                     }
@@ -65,15 +68,14 @@ class Vote
 	auto &get_chans()                           { return chans;                                     }
 	auto &get_chan()                            { return chans.get(chan);                           }
 
-	virtual void accepted()                     { get_chan() << "The yays have it!" << flush;       }
-	virtual void declined()                     { get_chan() << "The nays have it!" << flush;       }
-	virtual void validate()                     {} // If this throws the vote is canceled
+	// Subclass throws from these for abortions
+	virtual void passed()                       { get_chan() << "The yays have it!" << flush;       }
+	virtual void failed()                       { get_chan() << "The nays have it!" << flush;       }
+	virtual void proffer() {}
+	virtual void proffer(const Ballot &b, User &u) {}
 
   public:
-	enum Stat { ADDED, CHANGED, ALREADY };
-
-	Stat vote_yay(const User &user);
-	Stat vote_nay(const User &user);
+	Stat vote(const Ballot &ballot, User &user);
 
 	void finish();                              // Called by the asynchronous deadline timer
 	void start();                               // Called by Voting construction function
@@ -106,7 +108,7 @@ inline
 void Vote::start()
 try
 {
-	validate();
+	proffer();
 
 	auto &chan = get_chan();
 	chan << "Vote initiated! You have " << get_duration() << " seconds left to vote! ";
@@ -130,7 +132,7 @@ try
 	{
 		chan << "Failed to reach minimum number of votes: ";
 		chan << total() << " of " << get_min_votes() << " required." << flush;
-		declined();
+		failed();
 		return;
 	}
 
@@ -138,7 +140,7 @@ try
 	{
 		chan << "Failed to reach minimum number of yes votes: ";
 		chan << yay.size() << " of " << get_min_yay() << " required." << flush;
-		declined();
+		failed();
 		return;
 	}
 
@@ -146,11 +148,11 @@ try
 	{
 		chan << "Failed to pass. Yays: " << yay.size() << ". Nays: " << nay.size() << ". ";
 		chan << "Required at least: " << required() << " yays." << flush;
-		declined();
+		failed();
 		return;
 	}
 
-	accepted();
+	passed();
 
 	const auto t = tally();
 	chan << "The vote passed with: " << t.first << ", against: " << t.second << " ";
@@ -165,26 +167,29 @@ catch(const Exception &e)
 
 
 inline
-Vote::Stat Vote::vote_yay(const User &user)
+Vote::Stat Vote::vote(const Ballot &ballot,
+                      User &user)
 {
-	const bool erased = nay.erase(user.get_acct());
-	const bool added = yay.emplace(user.get_acct()).second;
-	return !added? ALREADY:
-	       erased? CHANGED:
-	               ADDED;
+	proffer(ballot,user);
+
+	switch(ballot)
+	{
+		case YAY:
+			if(!yay.emplace(user.get_acct()).second)
+				throw Exception("You have already voted yay in this election.");
+
+			return nay.erase(user.get_acct())? CHANGED : ADDED;
+
+		case NAY:
+			if(!nay.emplace(user.get_acct()).second)
+				throw Exception("You have already voted nay in this election.");
+
+			return yay.erase(user.get_acct())? CHANGED : ADDED;
+
+		default:
+			throw Exception("Ballot type not accepted");
+	}
 }
-
-
-inline
-Vote::Stat Vote::vote_nay(const User &user)
-{
-	const bool erased = yay.erase(user.get_acct());
-	const bool added = nay.emplace(user.get_acct()).second;
-	return !added? ALREADY:
-	       erased? CHANGED:
-	               ADDED;
-}
-
 
 
 inline
