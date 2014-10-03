@@ -83,9 +83,10 @@ class Chan : public Locutor,
 	bool ban(const User &user, const Ban::Type &type = Ban::Type::HOST);
 	size_t unquiet(const User &user);
 	size_t unban(const User &user);
-
 	void part();                                            // Leave channel
 	void join();                                            // Enter channel
+
+	friend Chan &operator<<(Chan &c, const User &user);     // append "nickname: " to locutor stream
 
 	Chan(Adb &adb, Sess &sess, const std::string &name);
 	~Chan() = default;
@@ -104,6 +105,15 @@ joined(false)
 {
 
 
+}
+
+
+inline
+Chan &operator<<(Chan &chan,
+                 const User &user)
+{
+	chan << user.get_nick() << ": ";
+	return chan;
 }
 
 

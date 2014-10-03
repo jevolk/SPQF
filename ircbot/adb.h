@@ -138,7 +138,6 @@ inline
 Adoc Adb::get(const std::string &name)
 {
 	const Adoc ret = get(std::nothrow,name);
-
 	if(ret.empty())
 		throw Exception("Account not found");
 
@@ -151,7 +150,6 @@ Adoc Adb::get(const std::string &name)
 const
 {
 	const Adoc ret = get(std::nothrow,name);
-
 	if(ret.empty())
 		throw Exception("Account not found");
 

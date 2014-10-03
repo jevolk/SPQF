@@ -184,15 +184,15 @@ try
 
 	switch(vote.vote(ballot,user))
 	{
-		case Vote::ADDED:    chan << user.get_nick() << ": thanks for casting your vote!";       break;
-		case Vote::CHANGED:  chan << user.get_nick() << ": you have changed your vote to yay.";  break;
+		case Vote::ADDED:    chan << user << "Thanks for casting your vote!";       break;
+		case Vote::CHANGED:  chan << user << "You have changed your vote to yay.";  break;
 	}
 
 	chan << flush;
 }
 catch(const Exception &e)
 {
-	chan << user.get_nick() << ": Your vote was not accepted: " << e << flush;
+	chan << user << "Your vote was not accepted: " << e << flush;
 	return;
 }
 
@@ -249,13 +249,13 @@ void ResPublica::handle_vote_cancel(const Msg &msg,
 	Vote &vote = voting.get(chan);
 	if(user.get_acct() != vote.get_user())
 	{
-		chan << user.get_nick() << ": You can't cancel a vote by " << vote.get_user() << "." << flush;
+		chan << user << "You can't cancel a vote by " << vote.get_user() << "." << flush;
 		return;
 	}
 
 	if(vote.total() > 0)
 	{
-		chan << user.get_nick() << ": You can't cancel after a vote has been cast." << flush;
+		chan << user << "You can't cancel after a vote has been cast." << flush;
 		return;
 	}
 
