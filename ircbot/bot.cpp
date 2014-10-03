@@ -44,7 +44,6 @@ void Bot::operator()(const char *const &event,
                      const size_t &count)
 {
 	const Msg msg(0,origin,params,count);
-	const std::lock_guard<std::mutex> lock(handler_mutex);
 
 	switch(hash(event))
 	{
@@ -76,7 +75,6 @@ void Bot::operator()(const uint32_t &event,
                      const size_t &count)
 {
 	const Msg msg(event,origin,params,count);
-	const std::lock_guard<std::mutex> lock(handler_mutex);
 
 	switch(event)
 	{

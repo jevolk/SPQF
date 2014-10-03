@@ -29,6 +29,7 @@ try
 	}
 
 	Bot &bot = *static_cast<Bot *>(ctx);
+	const std::lock_guard<std::mutex> lock(bot);
 	bot(event,origin,params,count);
 }
 catch(const std::exception &e)

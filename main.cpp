@@ -8,9 +8,13 @@
 
 #include <signal.h>
 #include <forward_list>
+#include <condition_variable>
 #include <thread>
 
 #include "ircbot/bot.h"
+#include "vote.h"
+#include "votes.h"
+#include "voting.h"
 #include "respub.h"
 
 
@@ -36,13 +40,13 @@ try
 {
 	if(argc < 4)
 	{
-		printf("usage: ./%s <host> <port> [nick] [chan]...\n",argv[0]);
+		printf("usage: %s <host> [port] [nick] [chan]...\n",argv[0]);
 		return -1;
 	}
 
 	struct Ident id;
 	id["hostname"] = argv[1];
-	id["port"] = argv[2];
+	id["port"] = argc > 2? argv[2] : "6667";
 	id["nickname"] = argc > 3? argv[3] : "ResPublica";
 	for(int i = 4; i < argc; i++)
 		id.autojoin.emplace_back(argv[i]);

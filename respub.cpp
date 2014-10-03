@@ -7,9 +7,13 @@
 
 
 #include <forward_list>
+#include <condition_variable>
 #include <thread>
 
 #include "ircbot/bot.h"
+#include "vote.h"
+#include "votes.h"
+#include "voting.h"
 #include "respub.h"
 
 
@@ -34,8 +38,13 @@ void ResPublica::handle_join(const Msg &msg,
                              Chan &chan,
                              User &user)
 {
+	const Adoc config = chan["config"];
+
+	if(config.empty())
+	{
 
 
+	}
 }
 
 
@@ -80,7 +89,7 @@ try
 	// Dispatch based on first character
 	switch(text.at(0))
 	{
-		case '!':      handle_chanmsg_cmd(msg,chan,user);                     break;
+		case COMMAND_PREFIX:   handle_chanmsg_cmd(msg,chan,user);             break;
 		default:                                                              break;
 	}
 }
@@ -125,6 +134,9 @@ void ResPublica::handle_vote(const Msg &msg,
 
 	switch(hash(subcmd))
 	{
+		case hash("yay"):      handle_vote_yay(msg,chan,user,subtoks);           break;
+		case hash("nay"):      handle_vote_nay(msg,chan,user,subtoks);           break;
+		case hash("poll"):     handle_vote_poll(msg,chan,user,subtoks);          break;
 		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);          break;
 		case hash("config"):   handle_vote_config(msg,chan,user,subtoks);        break;
 		case hash("kick"):     handle_vote_kick(msg,chan,user,subtoks);          break;
@@ -133,36 +145,78 @@ void ResPublica::handle_vote(const Msg &msg,
 }
 
 
-static const char *help_vote = \
-"*** SENATVS POPVLVS QVE FREENODUS - The Senate and The People of Freenode ( #SPQF )\n"\
-"*** Voting System:\n"\
-"*** usage:    !vote   <command | issue>       : Initiate a vote for an issue or supply a command...\n"\
-"*** issue:    <mode>  [target ...]            : Vote on setting modes for channel or target (+b implies kick)\n"\
-"*** issue:    kick    <target>                : Vote to kick a target from the channel\n"\
-"*** issue:    config  <variable = value>      : Vote on the voting configuration in this channel\n"\
-"*** command:  config  [variable ...]          : Show whole configuration or one or more variable\n"\
-;
+void ResPublica::handle_vote_yay(const Msg &msg,
+                                 Chan &chan,
+                                 User &user,
+                                 const Tokens &toks)
+{
+	auto &vote = voting.get(chan);
 
-static const char *help_vote_config = \
-"** Vote on changing various configuration settings.\n"\
-"** The syntax for initiating a vote is: <variable> = <new value>\n"\
-"** The alternative syntax for printing information is: <variable> [variable ...]\n"\
-"** Example: !vote config vote_minimum_quorum = 10  : requires at least 10 participants in any vote\n"\
-;
+	switch(vote.vote_yay(user))
+	{
+		case Vote::ADDED:
+			chan << user.get_nick() << ", thanks for casting your vote!" << flush;
+			break;
 
-static const char *help_vote_kick = \
-"** Vote to kick user(s) from the channel.\n"\
-"** The syntax for initiating a vote is: [target ...]\n"\
-"** Example: !vote kick fred waldo             : Starts a single vote to kick both fred and waldo"\
-;
+		case Vote::CHANGED:
+			chan << user.get_nick() << ", you have changed your vote to yay." << flush;
+			break;
 
-static const char *help_vote_mode = \
-"** Vote on changing modes for a channel with operator syntax.\n"\
-"** The syntax for initiating a vote is: <mode string> [target ...]\n"\
-"** Example: !vote +q $a:foobar     : Quiets based on the account foobar\n"\
-"** Example: !vote +b <nickname>    : Kick-ban based on a nickname's $a: and/or *!*@host all in one\n"\
-"** Example: !vote +r               : Set the channel for registered users only\n"\
-;
+		default:
+		case Vote::ALREADY:
+			chan << user.get_nick() << ", you have already voted in this election." << flush;
+			break;
+	}
+}
+
+
+void ResPublica::handle_vote_nay(const Msg &msg,
+                                 Chan &chan,
+                                 User &user,
+                                 const Tokens &toks)
+{
+	auto &vote = voting.get(chan);
+
+	switch(vote.vote_nay(user))
+	{
+		case Vote::ADDED:
+			chan << user.get_nick() << ", thanks for casting your vote!" << flush;
+			break;
+
+		case Vote::CHANGED:
+			chan << user.get_nick() << ", you have changed your vote to nay." << flush;
+			break;
+
+		default:
+		case Vote::ALREADY:
+			chan << user.get_nick() << ", you have already voted in this election." << flush;
+			break;
+	}
+}
+
+
+void ResPublica::handle_vote_poll(const Msg &msg,
+                                  Chan &chan,
+                                  User &user,
+                                  const Tokens &toks)
+{
+	const auto &vote = voting.get(chan);
+	const auto tally = vote.tally();
+
+	chan << "Current tally: ";
+	chan << "YAY: " << tally.first << " ";
+	chan << "NAY: " << tally.second << ". ";
+	chan << "There are " << vote.remaining() << " seconds left. ";
+
+	if(vote.total() < vote.minimum())
+		chan << (vote.minimum() - vote.total()) << " more votes are required. ";
+	else if(tally.first < vote.required())
+		chan << (vote.required() < tally.first) << " more yays are required to pass. ";
+	else
+		chan << "As it stands, the motion will pass.";
+
+	chan << flush;
+}
 
 
 void ResPublica::handle_vote_help(const Msg &msg,
@@ -196,22 +250,31 @@ void ResPublica::handle_vote_config(const Msg &msg,
 		return;
 	}
 
-	const std::string &what = *toks.at(0);
-	const Tokens subtoks = subtokenize(toks);
-
-	for(const auto &tok : toks)
-		chan << "Config token [" << *tok << "]" << flush;
+	const std::string issue = detokenize(toks);
+	voting.motion<vote::Config>(chan,get_users(),get_chans(),chan,issue);
 }
-
 
 
 void ResPublica::handle_vote_config_dump(const Msg &msg,
                                          Chan &chan,
                                          User &user)
 {
+	const Adoc cfg = chan.get("config");
+	if(cfg.empty())
+	{
+		chan << "Channel has no configuration." << flush;
+		return;
+	}
 
+	const Adoc vote_cfg = cfg.get_child("vote");
+	if(vote_cfg.empty())
+	{
+		chan << "Channel has no voting configuration." << flush;
+		return;
+	}
 
-
+	for(const auto &var : cfg)
+		chan << var.first << " " << var.second << flush;
 }
 
 
@@ -221,7 +284,7 @@ void ResPublica::handle_vote_kick(const Msg &msg,
                                   const Tokens &toks)
 {
 	const std::string &target = *toks.at(0);
-	chan << "Vote to kick: " << target << flush;
+	voting.motion<vote::Kick>(chan,get_users(),get_chans(),chan,target);
 }
 
 
@@ -248,6 +311,16 @@ void ResPublica::handle_privmsg(const Msg &msg,
 {
 
 
+}
+
+
+std::string ResPublica::detokenize(const Tokens &tokens)
+{
+	std::stringstream str;
+	for(const auto &token : tokens)
+		str << *token;
+
+	return str.str();
 }
 
 

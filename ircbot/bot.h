@@ -58,7 +58,8 @@
 #include "chans.h"
 
 
-class Bot
+class Bot : public std::mutex                               // Locked during irclib event handling
+
 {
 	Adb adb;
 	Sess sess;
@@ -76,8 +77,6 @@ class Bot
 	bool my_nick(const std::string &nick) const             { return get_nick() == nick;          }
 
   protected:
-	std::mutex handler_mutex;                               // Locked during irclib event handling
-
 	Adb &get_adb()                                          { return adb;                         }
 	Sess &get_sess()                                        { return sess;                        }
 	Chans &get_chans()                                      { return chans;                       }

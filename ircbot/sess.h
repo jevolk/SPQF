@@ -73,7 +73,7 @@ Sess::Sess(const Ident &ident,
 ident(ident),
 cbs(&cbs),
 sess(sess),
-nick(ident["nick"])
+nick(ident["nickname"])
 {
 
 
