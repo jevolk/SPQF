@@ -11,6 +11,8 @@ class Voting
 	using id_t = size_t;
 
 	Bot &bot;
+	Chans &chans;
+	Users &users;
 	std::map<std::string, std::unique_ptr<Vote>> motions;   // Quick motions   : channel => vote
 	std::map<id_t, std::unique_ptr<Vote>> votes;            // Standing votes  : id => vote
 	std::multimap<std::string, size_t> voteidx;             // Index of votes  : chann => id
@@ -27,8 +29,8 @@ class Voting
 	auto &get(const id_t &id) const;
 	auto &get(const Chan &chan) const;
 
-	template<class Vote, class... Args> id_t vote(const Chan &chan, Args&&... args);
-	template<class Vote, class... Args> void motion(const Chan &chan, Args&&... args);
+	template<class Vote, class... Args> id_t vote(Chan &chan, Args&&... args);
+	template<class Vote, class... Args> void motion(Chan &chan, Args&&... args);
 
   private:
 	void call_finish(Vote &vote) noexcept;
@@ -39,17 +41,17 @@ class Voting
 	std::thread thread;
 
   public:
-	Voting(Bot &bot);
+	Voting(Bot &bot, Chans &chans, Users &users);
 };
 
 
 template<class Vote,
          class... Args>
-void Voting::motion(const Chan &chan,
+void Voting::motion(Chan &chan,
                     Args&&... args)
 {
 	const std::string &name = chan.get_name();
-	const auto iit = motions.emplace(name,std::make_unique<Vote>(std::forward<Args>(args)...));
+	const auto iit = motions.emplace(name,std::make_unique<Vote>(chans,users,chan,std::forward<Args>(args)...));
 	const bool &inserted = iit.second;
 
 	if(inserted) try
@@ -69,7 +71,7 @@ void Voting::motion(const Chan &chan,
 
 template<class Vote,
          class... Args>
-Voting::id_t Voting::vote(const Chan &chan,
+Voting::id_t Voting::vote(Chan &chan,
                           Args&&... args)
 {
 	id_t id; do
@@ -78,7 +80,7 @@ Voting::id_t Voting::vote(const Chan &chan,
 	}
 	while(has_vote(id));
 
-	const auto iit = motions.emplace(id,std::make_unique<Vote>(std::forward<Args>(args)...));
+	const auto iit = motions.emplace(id,std::make_unique<Vote>(chans,users,chan,std::forward<Args>(args)...));
 	const bool &inserted = iit.second;
 
 	if(inserted) try

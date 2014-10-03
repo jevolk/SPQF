@@ -15,8 +15,12 @@
 #include "voting.h"
 
 
-Voting::Voting(Bot &bot):
+Voting::Voting(Bot &bot,
+               Chans &chans,
+               Users &users):
 bot(bot),
+chans(chans),
+users(users),
 thread(&Voting::worker,this)
 {
 

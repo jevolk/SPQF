@@ -251,7 +251,7 @@ void ResPublica::handle_vote_config(const Msg &msg,
 	}
 
 	const std::string issue = detokenize(toks);
-	voting.motion<vote::Config>(chan,get_users(),get_chans(),chan,issue);
+	voting.motion<vote::Config>(chan,issue);
 }
 
 
@@ -284,7 +284,7 @@ void ResPublica::handle_vote_kick(const Msg &msg,
                                   const Tokens &toks)
 {
 	const std::string &target = *toks.at(0);
-	voting.motion<vote::Kick>(chan,get_users(),get_chans(),chan,target);
+	voting.motion<vote::Kick>(chan,target);
 }
 
 

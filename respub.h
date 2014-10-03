@@ -54,7 +54,7 @@ class ResPublica : public Bot
 template<class... Args>
 ResPublica::ResPublica(Args&&... args):
 Bot(std::forward<Args>(args)...),
-voting(*this)
+voting(*this,get_chans(),get_users())
 {
 
 
