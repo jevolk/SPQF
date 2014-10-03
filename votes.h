@@ -14,6 +14,7 @@ namespace vote
 		std::string val;
 
 		void passed();
+		void starting();
 
 	  public:
 		template<class... Args> Config(Args&&... args);
@@ -126,9 +127,20 @@ Vote(std::forward<Args>(args)...)
 	val = tokens.at(1);
 	if(val.front() == ' ')
 		val.erase(val.begin());
+}
 
-	if(!get_chan().Acct::has(key))
+
+inline
+void vote::Config::starting()
+{
+	const Chan &chan = get_chan();
+	const Adoc &cfg = chan.get();
+
+	if(!cfg.has(key))
 		throw Exception("Variable not found in channel's configuration.");
+
+	if(cfg[key] == val)
+		throw Exception("Variable already set to that value.");
 }
 
 
