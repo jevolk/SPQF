@@ -39,7 +39,7 @@ void vote::Kick::accepted()
 {
 	Chan &chan = get_chan();
 	const User &user = get_users().get(get_issue());
-	chan.kick(user,"Voted off the island.");
+	chan.kick(user,"Voted off the island");
 }
 
 
@@ -55,5 +55,6 @@ inline
 void vote::Config::accepted()
 {
 	Chan &chan = get_chan();
-	throw Exception("Config except handler");
+
+
 }

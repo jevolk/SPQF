@@ -29,8 +29,9 @@ struct DefaultConfig : public Adoc
 
 class Vote
 {
-	Users &users;
 	Chans &chans;
+	Users &users;
+
 	Adoc cfg;                                   // Configuration of this vote
 	time_t began;                               // Time vote was constructed
 	std::string chan;                           // Name of the channel
@@ -77,19 +78,19 @@ class Vote
 	void finish();                              // Called by the asynchronous deadline timer
 	void start();                               // Called by Voting construction function
 
-	Vote(Users &users, Chans &chans, Chan &chan, const std::string &issue, const Adoc &cfg = {});
+	Vote(Chans &chans, Users &users, Chan &chan, const std::string &issue, const Adoc &cfg = {});
 	virtual ~Vote() = default;
 };
 
 
 inline
-Vote::Vote(Users &users,
-           Chans &chans,
+Vote::Vote(Chans &chans,
+           Users &users,
            Chan &chan,
            const std::string &issue,
            const Adoc &cfg):
-users(users),
 chans(chans),
+users(users),
 //cfg(cfg),
 cfg(DefaultConfig::configure(chan)),
 began(time(NULL)),
@@ -105,8 +106,9 @@ inline
 void Vote::start()
 try
 {
-	auto &chan = get_chan();
 	validate();
+
+	auto &chan = get_chan();
 	chan << "Vote initiated! You have " << get_duration() << " seconds left to vote! ";
 	chan << "Type: !vote yay or !vote nay" << flush;
 }
