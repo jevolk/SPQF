@@ -10,7 +10,7 @@ namespace vote
 {
 	class Config : public Vote
 	{
-		void accepted();
+		void passed();
 
 	  public:
 		template<class... Args> Config(Args&&... args);
@@ -18,7 +18,7 @@ namespace vote
 
 	class Kick : public Vote
 	{
-		void accepted();
+		void passed();
 
 	  public:
 		template<class... Args> Kick(Args&&... args);
@@ -35,7 +35,7 @@ Vote(std::forward<Args>(args)...)
 
 
 inline
-void vote::Kick::accepted()
+void vote::Kick::passed()
 {
 	Chan &chan = get_chan();
 	const User &user = get_users().get(get_issue());
@@ -52,7 +52,7 @@ Vote(std::forward<Args>(args)...)
 
 
 inline
-void vote::Config::accepted()
+void vote::Config::passed()
 {
 	Chan &chan = get_chan();
 

@@ -134,8 +134,8 @@ void ResPublica::handle_vote(const Msg &msg,
 
 	switch(hash(subcmd))
 	{
-		case hash("yay"):      handle_vote_yay(msg,chan,user,subtoks);           break;
-		case hash("nay"):      handle_vote_nay(msg,chan,user,subtoks);           break;
+		case hash("yay"):      handle_vote_ballot(msg,chan,user,Vote::YAY);      break;
+		case hash("nay"):      handle_vote_ballot(msg,chan,user,Vote::NAY);      break;
 		case hash("poll"):     handle_vote_poll(msg,chan,user,subtoks);          break;
 		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);          break;
 		case hash("config"):   handle_vote_config(msg,chan,user,subtoks);        break;
@@ -145,53 +145,26 @@ void ResPublica::handle_vote(const Msg &msg,
 }
 
 
-void ResPublica::handle_vote_yay(const Msg &msg,
-                                 Chan &chan,
-                                 User &user,
-                                 const Tokens &toks)
+void ResPublica::handle_vote_ballot(const Msg &msg,
+                                    Chan &chan,
+                                    User &user,
+                                    const Vote::Ballot &ballot)
+try
 {
 	auto &vote = voting.get(chan);
 
-	switch(vote.vote_yay(user))
+	switch(vote.vote(ballot,user))
 	{
-		case Vote::ADDED:
-			chan << user.get_nick() << ", thanks for casting your vote!" << flush;
-			break;
-
-		case Vote::CHANGED:
-			chan << user.get_nick() << ", you have changed your vote to yay." << flush;
-			break;
-
-		default:
-		case Vote::ALREADY:
-			chan << user.get_nick() << ", you have already voted in this election." << flush;
-			break;
+		case Vote::ADDED:    chan << user.get_nick() << ": thanks for casting your vote!";       break;
+		case Vote::CHANGED:  chan << user.get_nick() << ": you have changed your vote to yay.";  break;
 	}
+
+	chan << flush;
 }
-
-
-void ResPublica::handle_vote_nay(const Msg &msg,
-                                 Chan &chan,
-                                 User &user,
-                                 const Tokens &toks)
+catch(const Exception &e)
 {
-	auto &vote = voting.get(chan);
-
-	switch(vote.vote_nay(user))
-	{
-		case Vote::ADDED:
-			chan << user.get_nick() << ", thanks for casting your vote!" << flush;
-			break;
-
-		case Vote::CHANGED:
-			chan << user.get_nick() << ", you have changed your vote to nay." << flush;
-			break;
-
-		default:
-		case Vote::ALREADY:
-			chan << user.get_nick() << ", you have already voted in this election." << flush;
-			break;
-	}
+	chan << user.get_nick() << ": Your vote was not accepted: " << e << flush;
+	return;
 }
 
 
