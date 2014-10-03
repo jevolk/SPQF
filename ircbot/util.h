@@ -22,6 +22,14 @@ size_t hash(const std::string &str,
 }
 
 
+inline
+std::string tolower(const std::string &str)
+{
+	static const std::locale locale = boost::locale::generator().generate("en_US.UTF-8");
+	return boost::locale::to_lower(str.c_str(),locale);
+}
+
+
 struct scope
 {
 	typedef std::function<void ()> Func;

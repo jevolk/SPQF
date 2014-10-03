@@ -43,6 +43,7 @@ class Sess
 	bool is_conn() const;
 
 	// [SEND] IRC Controls
+	void help(const std::string &topic);               // IRCd response goes to console
 	void umode(const std::string &mode);               // Send umode update
 	void umode();                                      // Request this->mode to be updated
 	void quit();                                       // Quit to server
@@ -127,6 +128,13 @@ inline
 void Sess::umode(const std::string &mode)
 {
 	call(irc_cmd_user_mode,mode.c_str());
+}
+
+
+inline
+void Sess::help(const std::string &topic)
+{
+	quote("HELP %s",topic.c_str());
 }
 
 

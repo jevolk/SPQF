@@ -63,6 +63,8 @@ class Chan : public Locutor,
 
     // [RECV] Bot:: handler's call these to update state
 	friend class Bot;
+	void set_joined(const bool &joined)                     { this->joined = joined;                }
+	void set_creation(const time_t &creation)               { this->creation = creation;            }
 	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
 	bool delta_mode(const std::string &d, const Mask &m);
 	bool rename(const User &user, const std::string &old_nick);

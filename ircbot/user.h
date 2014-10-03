@@ -9,22 +9,15 @@
 class User : public Locutor,
              public Acct
 {
-	// Handlers access
-	friend class Bot;
-
 	// nick is Locutor::target                         // who 'n'
 	std::string host;                                  // who 'h'
 	std::string acct;                                  // who 'a' (account name)
-	bool secure;                                       // WHOISSECURE
+	bool secure;                                       // WHOISSECURE (ssl)
 	time_t idle;                                       // who 'l' or WHOISIDLE
 
 	// Chan increments or decrements
 	friend class Chan;
 	size_t chans;
-
-	// Temp
-	friend class ResPublica;
-	int karma = 0;
 
   public:
 	static constexpr int WHO_RECIPE                    = 0;
@@ -41,6 +34,12 @@ class User : public Locutor,
 	bool is_myself() const                             { return get_nick() == get_sess().get_nick(); }
 	bool is_logged_in() const                          { return acct.size() && acct != "0";          }
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
+
+	// Mutators used by Bot handlers
+	void set_acct(const std::string &acct)             { this->acct = tolower(acct);                 }
+	void set_host(const std::string &host)             { this->host = host;                          }
+	void set_secure(const bool &secure)                { this->secure = secure;                      }
+	void set_idle(const time_t &idle)                  { this->idle = idle;                          }
 
 	// [SEND] Controls
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default

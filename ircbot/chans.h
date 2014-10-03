@@ -28,9 +28,10 @@ class Chans
 
 	// Manipulators
 	Chan &get(const std::string &name);                // throws Exception
-	bool del(const std::string &name)                  { return chans.erase(name);                  }
 	Chan &add(const std::string &name);                // Add channel (w/o join) or return existing
 	Chan &join(const std::string &name);               // Add channel with join or return existing
+	bool del(const std::string &name)                  { return chans.erase(name);                  }
+	bool del(const Chan &chan)                         { return del(chan.get_name());               }
 
 	Chans(Adb &adb, Sess &sess);
 

@@ -2,14 +2,23 @@
 GETTING STARTED:
 
 Requirements:
-	* C++11 basic development toolset:
+	* Development toolset:
+		* C++11 for libircbot
+		* C++14 for ResPublica
 		* GNU gcc preferred
 		* libstdc++
 
-	* Boost (tokenizer, lexical_cast, property_tree (json_parser))
-	* libircclient >= 1.8
-	* LevelDB
+	* Boost
+		* tokenizer
+		* lexical_cast
+		* property_tree, json_parser
+		* locale (linkage)
+
+	* libircclient >= 1.8 (linkage)
+
+	* LevelDB (linkage)
 
 
 Compile:
 	1. type `make`
+	2. type `make` again if necessary

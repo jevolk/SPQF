@@ -21,12 +21,12 @@
 #include <algorithm>
 #include <functional>
 #include <string>
-#include <cstdio>
 #include <iomanip>
 #include <sstream>
 #include <mutex>
 
 // boost
+#include <boost/locale.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -132,7 +132,7 @@ class Bot : public std::mutex                               // Locked during irc
 	void handle_whoisserver(const Msg &m);
 	void handle_whoisidle(const Msg &m);
 	void handle_whoisuser(const Msg &m);
-	void handle_whospcrpl(const Msg &m);
+	void handle_whospecial(const Msg &m);
 	void handle_whoreply(const Msg &m);
 	void handle_umodeis(const Msg &m);
 	void handle_notice(const Msg &m);

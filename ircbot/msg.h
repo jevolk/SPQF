@@ -9,7 +9,7 @@
 #define SPQF_FMT(type, fields...)  namespace type { enum { fields }; }
 
 
-inline namespace Fmt
+inline namespace fmt
 {
 SPQF_FMT( NICK,              NICKNAME                                                                        )
 SPQF_FMT( QUIT,              REASON                                                                          )
@@ -18,6 +18,7 @@ SPQF_FMT( PART,              CHANNAME, REASON                                   
 SPQF_FMT( MODE,              CHANNAME, DELTASTR                                                              )
 SPQF_FMT( UMODE,             DELTASTR                                                                        )
 SPQF_FMT( UMODEIS,           NICKNAME, DELTASTR                                                              )
+SPQF_FMT( INVITE,            SELFNAME, CHANNAME,                                                             )
 SPQF_FMT( TOPIC,             SELFNAME, CHANNAME, TEXT,                                                       )
 SPQF_FMT( CHANNELMODEIS,     NICKNAME, CHANNAME, DELTASTR                                                    )
 SPQF_FMT( KICK,              CHANNAME, TARGET,   REASON                                                      )
