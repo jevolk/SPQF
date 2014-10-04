@@ -153,7 +153,7 @@ std::ostream &operator<<(std::ostream &s,
 {
 	s << "(" << std::setw(3) << m.get_code() << ")";
 	s << " " << std::setw(27) << std::setfill(' ') << std::left << m.get_origin();
-	s << " (" << std::setw(2) << m.num_params() << "): ";
+	s << " [" << std::setw(2) << m.num_params() << "]: ";
 
 	for(const auto &param : m.get_params())
 		s << "[" << param << "]";
