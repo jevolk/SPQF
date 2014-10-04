@@ -31,6 +31,7 @@ namespace vote
 
 	class Kick : public Vote
 	{
+		void starting();
 		void passed();
 
 	  public:
@@ -56,10 +57,24 @@ Vote(std::forward<Args>(args)...)
 
 
 inline
+void vote::Kick::starting()
+{
+	const Adoc &cfg = get_cfg();
+	User &user = get_users().get(get_issue());
+	user.whois();
+}
+
+
+inline
 void vote::Kick::passed()
 {
 	Chan &chan = get_chan();
 	const User &user = get_users().get(get_issue());
+	const Adoc &cfg = get_cfg();
+
+	if(cfg["kick.if_away"] == "0" && user.is_away())
+		throw Exception("The user is currently away and config.vote.kick.on_away == 0");
+
 	chan.kick(user,"Voted off the island");
 }
 

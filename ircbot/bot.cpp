@@ -648,7 +648,8 @@ try
 
 	Users &users = get_users();
 	User &user = users.get(msg[NICKNAME]);
-	user.set_idle(msg.get<time_t>(WHOISIDLE::SECONDS));
+	user.set_idle(msg.get<time_t>(SECONDS));
+	user.set_signon(msg.get<time_t>(SIGNON));
 }
 catch(const Exception &e)
 {

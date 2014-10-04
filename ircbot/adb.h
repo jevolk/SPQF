@@ -10,8 +10,9 @@ struct Adoc : public boost::property_tree::ptree
 {
 	operator std::string() const;
 
-	std::string operator[](const std::string &key) const    { return get<std::string>(key,"");     }
-	bool has(const std::string &key) const                  { return !(((*this)[key]).empty());    }
+	std::string operator[](const std::string &key) const { return get(key,std::string());           }
+	bool has_child(const std::string &key) const         { return count(key) > 0;                   }
+	bool has(const std::string &key) const               { return !get(key,std::string()).empty();  }
 
 	Adoc(const std::string &str = "{}");
 	Adoc(boost::property_tree::ptree &&p):           boost::property_tree::ptree(std::move(p)) {}

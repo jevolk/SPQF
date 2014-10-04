@@ -13,6 +13,7 @@ class User : public Locutor,
 	std::string host;                                  // who 'h'
 	std::string acct;                                  // who 'a' (account name)
 	bool secure;                                       // WHOISSECURE (ssl)
+	time_t signon;                                     // WHOISIDLE
 	time_t idle;                                       // who 'l' or WHOISIDLE
 	bool away;
 
@@ -30,6 +31,7 @@ class User : public Locutor,
 	const std::string &get_acct() const                { return acct;                                }
 	const bool &is_secure() const                      { return secure;                              }
 	const bool &is_away() const                        { return away;                                }
+	const time_t &get_signon() const                   { return signon;                              }
 	const time_t &get_idle() const                     { return idle;                                }
 	const size_t &num_chans() const                    { return chans;                               }
 
@@ -41,6 +43,7 @@ class User : public Locutor,
 	void set_acct(const std::string &acct)             { this->acct = tolower(acct);                 }
 	void set_host(const std::string &host)             { this->host = host;                          }
 	void set_secure(const bool &secure)                { this->secure = secure;                      }
+	void set_signon(const time_t &signon)              { this->signon = signon;                      }
 	void set_idle(const time_t &idle)                  { this->idle = idle;                          }
 	void set_away(const bool &away)                    { this->away = away;                          }
 
@@ -63,7 +66,9 @@ User::User(Adb &adb,
 Locutor(sess,nick),
 Acct(adb,this->acct),
 secure(false),
+signon(0),
 idle(0),
+away(false),
 chans(0)
 {
 

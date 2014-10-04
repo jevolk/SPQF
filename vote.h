@@ -19,10 +19,15 @@ struct DefaultConfig : public Adoc
 
 	DefaultConfig()
 	{
-		put("min_votes",2);
+		// config.vote
+		put("min_votes",1);
 		put("min_yay",1);
+		put("min_turnout",0.00);
 		put("duration",30);
 		put("plurality",0.51);
+
+		// config.vote.kick
+		put("kick.if_away",1);
 	}
 };
 
@@ -51,9 +56,10 @@ class Vote
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yay() const                       { return yay;                                       }
 	auto &get_nay() const                       { return nay;                                       }
-	auto get_plurality() const                  { return cfg.get<float>("plurality",0.51);          }
-	auto get_min_votes() const                  { return cfg.get<size_t>("min_votes",2);            }
-	auto get_min_yay() const                    { return cfg.get<size_t>("min_yay",1);              }
+	auto get_plurality() const                  { return cfg.get<float>("plurality");               }
+	auto get_min_votes() const                  { return cfg.get<size_t>("min_votes");              }
+	auto get_min_yay() const                    { return cfg.get<size_t>("min_yay");                }
+	auto get_min_turnout() const                { return cfg.get<size_t>("min_turnout");            }
 	auto get_duration() const                   { return cfg.get<time_t>("duration");               }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
 	auto remaining() const                      { return get_duration() - elapsed();                }
@@ -167,7 +173,7 @@ try
 catch(const Exception &e)
 {
 	auto &chan = get_chan();
-	chan << "The vote was not accepted in post-processing: " << e << flush;
+	chan << "The vote was rejected: " << e << flush;
 	return;
 }
 
@@ -227,17 +233,30 @@ size_t DefaultConfig::configure(Adoc &cfg)
 {
 	static const DefaultConfig default_config;
 
-	size_t ret = 0;
-	for(const auto &pair : default_config)
+	const std::function<size_t (const Adoc &def, Adoc &cfg)> recurse = [&]
+	(const Adoc &def, Adoc &cfg) -> size_t
 	{
-		const std::string &key = pair.first;
-		if(!cfg.has(key))
+		size_t ret = 0;
+		for(const auto &pair : def)
 		{
-			const std::string &val = pair.second.get_value<std::string>();
-			cfg.put(key,val);
-			ret++;
-		}
-	}
+			const std::string &key = pair.first;
+			const auto &subtree = pair.second;
 
-	return ret;
+			if(!subtree.empty())
+			{
+				Adoc sub = cfg.get_child(key,Adoc());
+				ret += recurse(subtree,sub);
+				cfg.put_child(key,sub);
+			}
+			else if(!cfg.has_child(key))
+			{
+				cfg.put_child(key,subtree);
+				ret++;
+			}
+		}
+
+		return ret;
+	};
+
+	return recurse(default_config,cfg);
 }
