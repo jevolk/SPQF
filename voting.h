@@ -45,6 +45,8 @@ class Voting
 	void cancel(const Chan &chan);
 
 	Voting(Bot &bot, Chans &chans, Users &users);
+	Voting(const Voting &) = delete;
+	Voting &operator=(const Voting &) = delete;
 	~Voting() noexcept;
 };
 
