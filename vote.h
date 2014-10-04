@@ -34,6 +34,7 @@ struct DefaultConfig : public Adoc
 
 class Vote
 {
+	const Sess &sess;
 	Chans &chans;
 	Users &users;
 
@@ -72,6 +73,7 @@ class Vote
   protected:
 	static constexpr auto &flush = Locutor::flush;
 
+	auto &get_sess() const                      { return sess;                                      }
 	auto &get_users()                           { return users;                                     }
 	auto &get_chans()                           { return chans;                                     }
 	auto &get_chan()                            { return chans.get(chan);                           }
@@ -92,18 +94,20 @@ class Vote
 	void finish();
 	void start();
 
-	Vote(Chans &chans, Users &users, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
+	Vote(const Sess &sess, Chans &chans, Users &users, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
 	virtual ~Vote() = default;
 };
 
 
 inline
-Vote::Vote(Chans &chans,
+Vote::Vote(const Sess &sess,
+           Chans &chans,
            Users &users,
            Chan &chan,
            User &user,
            const std::string &issue,
            Adoc cfg):
+sess(sess),
 chans(chans),
 users(users),
 cfg([&]() -> Adoc

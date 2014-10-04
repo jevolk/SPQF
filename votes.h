@@ -121,8 +121,13 @@ void vote::Mode::passed()
 inline
 void vote::Mode::starting()
 {
-	Chan &chan = get_chan();
+	const Sess &sess = get_sess();
+	const Server &serv = sess.get_server();
 
+	const Delta delta(get_issue());
+	delta.validate_chan(serv);
+
+	Chan &chan = get_chan();
 }
 
 
