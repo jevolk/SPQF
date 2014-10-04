@@ -23,7 +23,9 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <thread>
 #include <mutex>
+#include <condition_variable>
 
 // boost
 #include <boost/locale.hpp>
@@ -96,11 +98,9 @@ class Bot : public std::mutex                               // Locked during irc
 	virtual void handle_mode(const Msg &m, Chan &c) {}
 
   private:
-	void log_handle(const Msg &m, const std::string &name,  const std::string &remarks = "") const;
-	void log_handle(const Msg &m, const uint32_t &code, const std::string &remarks = "") const;
+	void log_handle(const Msg &m, const std::string &name = "") const;
 
 	// [RECV] Handlers update internal state first, then call user's handler^
-	void handle_unhandled(const Msg &m, const std::string &name);
 	void handle_unhandled(const Msg &m);
 
 	void handle_bannedfromchan(const Msg &m);
@@ -154,16 +154,24 @@ class Bot : public std::mutex                               // Locked during irc
 	void handle_welcome(const Msg &m);
 	void handle_conn(const Msg &m);
 
+	std::deque<Msg> dispatch_queue;
+	std::mutex dispatch_mutex;
+	std::condition_variable dispatch_cond;
+
+	Msg dispatch_next();
+	void dispatch(const Msg &m);
+	void dispatch_worker();
+	std::thread dispatch_thread;
+
   public:
 	// Event/Handler input
-	void operator()(const uint32_t &event, const char *const  &origin, const char **const &params, const size_t &count);
-	void operator()(const char *const &event, const char *const &origin, const char **const &params, const size_t &count);
+	template<class... Msg> void operator()(Msg&&... msg);
 
-	// Run worker loop
+	// Main controls
 	void join(const std::string &chan)                      { get_chans().join(chan);             }
 	void quit()                                             { get_sess().quit();                  }
 	void conn()                                             { get_sess().conn();                  }
-	void run();
+	void run();                                             // Run worker loop
 
 	Bot(void) = delete;
 	Bot(const Ident &ident, irc_callbacks_t &cbs);
@@ -179,6 +187,15 @@ class Bot : public std::mutex                               // Locked during irc
 
 // irclib.h contains the callbacks depending on a definition of Bot
 #include "irclib.h"
+
+
+template<class... Msg>
+void Bot::operator()(Msg&&... args)
+{
+    const std::lock_guard<std::mutex> lock(dispatch_mutex);
+    dispatch_queue.emplace_back(std::forward<Msg>(args)...);
+    dispatch_cond.notify_one();
+}
 
 
 #endif // LIBIRCBOT_INCLUDE

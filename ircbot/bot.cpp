@@ -15,7 +15,8 @@ try:
 adb(ident["dbdir"]),
 sess(ident,cbs),
 chans(adb,sess),
-users(adb,sess)
+users(adb,sess),
+dispatch_thread(&Bot::dispatch_worker,this)
 {
 	irc_set_ctx(sess,this);
 
@@ -29,6 +30,7 @@ catch(const Exception &e)
 Bot::~Bot(void)
 noexcept try
 {
+	dispatch_thread.join();
 	sess.disconn();
 }
 catch(const Exception &e)
@@ -38,89 +40,104 @@ catch(const Exception &e)
 }
 
 
-void Bot::operator()(const char *const &event,
-                     const char *const &origin,
-                     const char **const &params,
-                     const size_t &count)
-{
-	const Msg msg(0,origin,params,count);
-
-	switch(hash(event))
-	{
-		case hash("CTCP_ACTION"):      handle_ctcp_act(msg);            break;
-		case hash("CTCP_REP"):         handle_ctcp_rep(msg);            break;
-		case hash("CTCP_REQ"):         handle_ctcp_req(msg);            break;
-		case hash("ACCOUNT"):          handle_account(msg);             break;
-		case hash("INVITE"):           handle_invite(msg);              break;
-		case hash("CHANNEL_NOTICE"):   handle_cnotice(msg);             break;
-		case hash("NOTICE"):           handle_notice(msg);              break;
-		case hash("PRIVMSG"):          handle_privmsg(msg);             break;
-		case hash("CHANNEL"):          handle_chanmsg(msg);             break;
-		case hash("KICK"):             handle_kick(msg);                break;
-		case hash("TOPIC"):            handle_topic(msg);               break;
-		case hash("UMODE"):            handle_umode(msg);               break;
-		case hash("MODE"):             handle_mode(msg);                break;
-		case hash("PART"):             handle_part(msg);                break;
-		case hash("JOIN"):             handle_join(msg);                break;
-		case hash("QUIT"):             handle_quit(msg);                break;
-		case hash("NICK"):             handle_nick(msg);                break;
-		case hash("CAP"):              handle_cap(msg);                 break;
-		case hash("CONNECT"):          handle_conn(msg);                break;
-		default:                       handle_unhandled(msg,event);     break;
-	}
-}
-
-
-void Bot::operator()(const uint32_t &event,
-                     const char *const &origin,
-                     const char **const &params,
-                     const size_t &count)
-{
-	const Msg msg(event,origin,params,count);
-
-	switch(event)
-	{
-		case LIBIRC_RFC_RPL_WELCOME:              handle_welcome(msg);                 break;
-		case LIBIRC_RFC_RPL_YOURHOST:             handle_yourhost(msg);                break;
-		case LIBIRC_RFC_RPL_CREATED:              handle_created(msg);                 break;
-		case LIBIRC_RFC_RPL_MYINFO:               handle_myinfo(msg);                  break;
-		case LIBIRC_RFC_RPL_BOUNCE:               handle_bounce(msg);                  break;
-
-		case LIBIRC_RFC_RPL_NAMREPLY:             handle_namreply(msg);                break;
-		case LIBIRC_RFC_RPL_ENDOFNAMES:           handle_endofnames(msg);              break;
-		case LIBIRC_RFC_RPL_UMODEIS:              handle_umodeis(msg);                 break;
-		case LIBIRC_RFC_RPL_AWAY:                 handle_away(msg);                    break;
-		case LIBIRC_RFC_RPL_WHOREPLY:             handle_whoreply(msg);                break;
-		case 354     /* RPL_WHOSPCRPL */:         handle_whospecial(msg);              break;
-		case LIBIRC_RFC_RPL_WHOISUSER:            handle_whoisuser(msg);               break;
-		case LIBIRC_RFC_RPL_WHOISIDLE:            handle_whoisidle(msg);               break;
-		case LIBIRC_RFC_RPL_WHOISSERVER:          handle_whoisserver(msg);             break;
-		case 671     /* RPL_WHOISSECURE */:       handle_whoissecure(msg);             break;
-		case 330     /* RPL_WHOISACCOUNT */:      handle_whoisaccount(msg);            break;
-		case LIBIRC_RFC_RPL_ENDOFWHOIS:           handle_endofwhois(msg);              break;
-		case LIBIRC_RFC_RPL_WHOWASUSER:           handle_whowasuser(msg);              break;
-		case LIBIRC_RFC_RPL_CHANNELMODEIS:        handle_channelmodeis(msg);           break;
-		case LIBIRC_RFC_RPL_TOPIC:                handle_topic(msg);                   break;
-		case 333     /* RPL_TOPICWHOTIME */:      handle_topicwhotime(msg);            break;
-		case 329     /* RPL_CREATIONTIME */:      handle_creationtime(msg);            break;
-		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 break;
-		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               break;
-
-		case LIBIRC_RFC_ERR_CHANOPRIVSNEEDED:     handle_chanoprivsneeded(msg);        break;
-		case LIBIRC_RFC_ERR_ERRONEUSNICKNAME:     handle_erroneusnickname(msg);        break;
-		case LIBIRC_RFC_ERR_BANNEDFROMCHAN:       handle_bannedfromchan(msg);          break;
-		default:                                  handle_unhandled(msg);               break;
-	}
-
-}
-
-
 void Bot::run()
 {
 	sess.call(irc_run);              // Loops forever here
 
 	// see: handle_quit()
 	std::cout << "Worker exit clean." << std::endl;
+}
+
+
+void Bot::dispatch_worker()
+{
+	while(1)
+	{
+		const Msg msg = dispatch_next();
+		const std::lock_guard<std::mutex> lock(*this);
+		dispatch(msg);
+	}
+
+	std::cout << "Dispatch worker exit clean." << std::endl;
+}
+
+
+Msg Bot::dispatch_next()
+{
+	std::unique_lock<std::mutex> lock(dispatch_mutex);
+	dispatch_cond.wait(lock,[&]{ return !dispatch_queue.empty(); });
+	const Msg ret = std::move(dispatch_queue.front());
+	dispatch_queue.pop_front();
+	return ret;
+}
+
+
+void Bot::dispatch(const Msg &msg)
+try
+{
+	switch(msg.get_code())
+	{
+		case 0: switch(hash(msg.get_name()))
+		{
+			case hash("CTCP_ACTION"):      handle_ctcp_act(msg);            return;
+			case hash("CTCP_REP"):         handle_ctcp_rep(msg);            return;
+			case hash("CTCP_REQ"):         handle_ctcp_req(msg);            return;
+			case hash("ACCOUNT"):          handle_account(msg);             return;
+			case hash("INVITE"):           handle_invite(msg);              return;
+			case hash("CHANNEL_NOTICE"):   handle_cnotice(msg);             return;
+			case hash("NOTICE"):           handle_notice(msg);              return;
+			case hash("PRIVMSG"):          handle_privmsg(msg);             return;
+			case hash("CHANNEL"):          handle_chanmsg(msg);             return;
+			case hash("KICK"):             handle_kick(msg);                return;
+			case hash("TOPIC"):            handle_topic(msg);               return;
+			case hash("UMODE"):            handle_umode(msg);               return;
+			case hash("MODE"):             handle_mode(msg);                return;
+			case hash("PART"):             handle_part(msg);                return;
+			case hash("JOIN"):             handle_join(msg);                return;
+			case hash("QUIT"):             handle_quit(msg);                return;
+			case hash("NICK"):             handle_nick(msg);                return;
+			case hash("CAP"):              handle_cap(msg);                 return;
+			case hash("CONNECT"):          handle_conn(msg);                return;
+			default:                       handle_unhandled(msg);           return;
+		}
+
+		case LIBIRC_RFC_RPL_WELCOME:              handle_welcome(msg);                 return;
+		case LIBIRC_RFC_RPL_YOURHOST:             handle_yourhost(msg);                return;
+		case LIBIRC_RFC_RPL_CREATED:              handle_created(msg);                 return;
+		case LIBIRC_RFC_RPL_MYINFO:               handle_myinfo(msg);                  return;
+		case LIBIRC_RFC_RPL_BOUNCE:               handle_bounce(msg);                  return;
+
+		case LIBIRC_RFC_RPL_NAMREPLY:             handle_namreply(msg);                return;
+		case LIBIRC_RFC_RPL_ENDOFNAMES:           handle_endofnames(msg);              return;
+		case LIBIRC_RFC_RPL_UMODEIS:              handle_umodeis(msg);                 return;
+		case LIBIRC_RFC_RPL_AWAY:                 handle_away(msg);                    return;
+		case LIBIRC_RFC_RPL_WHOREPLY:             handle_whoreply(msg);                return;
+		case 354     /* RPL_WHOSPCRPL */:         handle_whospecial(msg);              return;
+		case LIBIRC_RFC_RPL_WHOISUSER:            handle_whoisuser(msg);               return;
+		case LIBIRC_RFC_RPL_WHOISIDLE:            handle_whoisidle(msg);               return;
+		case LIBIRC_RFC_RPL_WHOISSERVER:          handle_whoisserver(msg);             return;
+		case 671     /* RPL_WHOISSECURE */:       handle_whoissecure(msg);             return;
+		case 330     /* RPL_WHOISACCOUNT */:      handle_whoisaccount(msg);            return;
+		case LIBIRC_RFC_RPL_ENDOFWHOIS:           handle_endofwhois(msg);              return;
+		case LIBIRC_RFC_RPL_WHOWASUSER:           handle_whowasuser(msg);              return;
+		case LIBIRC_RFC_RPL_CHANNELMODEIS:        handle_channelmodeis(msg);           return;
+		case LIBIRC_RFC_RPL_TOPIC:                handle_topic(msg);                   return;
+		case 333     /* RPL_TOPICWHOTIME */:      handle_topicwhotime(msg);            return;
+		case 329     /* RPL_CREATIONTIME */:      handle_creationtime(msg);            return;
+		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 return;
+		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               return;
+
+		case LIBIRC_RFC_ERR_CHANOPRIVSNEEDED:     handle_chanoprivsneeded(msg);        return;
+		case LIBIRC_RFC_ERR_ERRONEUSNICKNAME:     handle_erroneusnickname(msg);        return;
+		case LIBIRC_RFC_ERR_BANNEDFROMCHAN:       handle_bannedfromchan(msg);          return;
+		default:                                  handle_unhandled(msg);               return;
+	}
+}
+catch(const std::exception &e)
+{
+	std::cerr << "\033[1;37;41mException:\033[0m [\033[1;31m" << e.what() << "\033[0m]"
+	          << " Message: [\033[1;31m" << msg << "\033[0;0m]"
+              << std::endl;
 }
 
 
@@ -871,39 +888,20 @@ void Bot::handle_nosuchnick(const Msg &msg)
 }
 
 
-void Bot::handle_unhandled(const Msg &msg,
-                           const std::string &name)
-{
-	log_handle(msg,name);
-}
-
-
 void Bot::handle_unhandled(const Msg &msg)
 {
-	log_handle(msg,msg.get_code());
+	log_handle(msg);
+
 }
 
 
 void Bot::log_handle(const Msg &msg,
-                     const uint32_t &code,
-                     const std::string &remarks)
+                     const std::string &name)
 const
 {
-	std::cout << std::setw(15) << std::setfill(' ') << std::left << "";
+	const std::string &n = name.empty()? msg.get_name() : name;
+	std::cout << std::setw(15) << std::setfill(' ') << std::left << n;
 	std::cout << msg;
-	std::cout << " " << remarks;
-	std::cout << std::endl;
-}
-
-
-void Bot::log_handle(const Msg &msg,
-                     const std::string &name,
-                     const std::string &remarks)
-const
-{
-	std::cout << std::setw(15) << std::setfill(' ') << std::left << name;
-	std::cout << msg;
-	std::cout << " " << remarks;
 	std::cout << std::endl;
 }
 

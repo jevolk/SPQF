@@ -52,11 +52,13 @@ class Msg
 	using Params = std::vector<std::string>;
 
 	uint32_t code;
+	std::string name;
 	std::string origin;
 	Params params;
 
   public:
 	const uint32_t &get_code() const                        { return code;                      }
+	const std::string &get_name() const                     { return name;                      }
 	const std::string &get_origin() const                   { return origin;                    }
 	const Params &get_params() const                        { return params;                    }
 	size_t num_params() const                               { return get_params().size();       }
@@ -72,9 +74,40 @@ class Msg
 
 	Msg(const uint32_t &code, const std::string &origin, const Params &params);
 	Msg(const uint32_t &code, const char *const &origin, const char **const &params, const size_t &count);
+	Msg(const std::string &name, const std::string &origin, const Params &params);
+	Msg(const char *const &name, const char *const &origin, const char **const &params, const size_t &count);
 
 	friend std::ostream &operator<<(std::ostream &s, const Msg &m);
 };
+
+
+inline
+Msg::Msg(const char *const &name,
+         const char *const &origin,
+         const char **const &params,
+         const size_t &count):
+code(0),
+name(name),
+origin(origin),
+params(params,params+count)
+{
+
+
+}
+
+
+inline
+Msg::Msg(const std::string &name,
+         const std::string &origin,
+         const Params &params):
+code(0),
+name(name),
+origin(origin),
+params(params)
+{
+
+
+}
 
 
 inline

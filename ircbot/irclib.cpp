@@ -29,14 +29,13 @@ try
 	}
 
 	Bot &bot = *static_cast<Bot *>(ctx);
-	const std::lock_guard<std::mutex> lock(bot);
 	bot(event,origin,params,count);
 }
 catch(const std::exception &e)
 {
 	std::cerr
-	<< "\033[1;31m"
-	<< "Exception: [" << e.what() << "] "
+	<< "\033[1;37;41mException:\033[0m "
+	<< "[\033[1;31m" << e.what() << "\033[0m] "
 	<< "handler"
 	<< "(" << session
 	<< "," << event
