@@ -9,7 +9,7 @@
 class Sess
 {
 	// Our constant data
-	const Ident ident;
+	Ident ident;
 
 	// libircclient
 	irc_callbacks_t *cbs;
@@ -65,6 +65,8 @@ class Sess
 
 	Sess(const Ident &id, irc_callbacks_t &cbs, irc_session_t *const &sess);
 	Sess(const Ident &id, irc_callbacks_t &cbs);
+	Sess(const Sess &) = delete;
+	Sess &operator=(const Sess &) = delete;
 	~Sess() noexcept;
 
 	friend std::ostream &operator<<(std::ostream &s, const Sess &sess);

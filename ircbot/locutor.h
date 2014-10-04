@@ -52,6 +52,9 @@ class Locutor
 	template<class T> Locutor &operator<<(const T &t);  // Append data to sendq stream
 
 	Locutor(Sess &sess, const std::string &target);
+	Locutor(const Locutor &) = delete;
+	Locutor &operator=(const Locutor &) = delete;
+	virtual ~Locutor() = default;
 };
 
 

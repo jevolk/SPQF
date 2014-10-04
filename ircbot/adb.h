@@ -38,6 +38,8 @@ class Adb
 	void set(const std::string &name, const Adoc &data);
 
 	Adb(const std::string &dir);
+	Adb(const Adb &) = delete;
+	Adb &operator=(const Adb &) = delete;
 };
 
 
@@ -74,6 +76,7 @@ class Acct
 
   protected:
 	Acct(Adb &adb, const std::string &acct);
+	virtual ~Acct() = default;
 };
 
 

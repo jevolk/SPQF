@@ -39,9 +39,9 @@ class Ldb
 
 	class Iterator
 	{
-		leveldb::DB &db;
+		leveldb::DB *db;
 		const leveldb::Snapshot *snap;
-		const ReadOptions ropt;
+		ReadOptions ropt;
 		std::unique_ptr<leveldb::Iterator> it;
 
 	  public:
@@ -296,10 +296,10 @@ Ldb::Iterator::Iterator(Ldb &ldb,
                         const bool &first,
                         const bool &cache,
                         const bool &snap):
-db(*ldb.db),
-snap(snap? db.GetSnapshot() : nullptr),
+db(ldb.db.get()),
+snap(snap? db->GetSnapshot() : nullptr),
 ropt(cache,false,this->snap),
-it(db.NewIterator(ropt))
+it(db->NewIterator(ropt))
 {
 	if(first)
 		seek(FIRST);
@@ -311,7 +311,7 @@ Ldb::Iterator::~Iterator()
 noexcept
 {
 	if(snap)
-		db.ReleaseSnapshot(snap);
+		db->ReleaseSnapshot(snap);
 }
 
 
