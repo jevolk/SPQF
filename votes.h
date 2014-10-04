@@ -59,8 +59,12 @@ Vote(std::forward<Args>(args)...)
 inline
 void vote::Kick::starting()
 {
-	const Adoc &cfg = get_cfg();
-	User &user = get_users().get(get_issue());
+	const std::string &victim = get_issue();
+	User &user = get_users().get(victim);
+
+	if(user.is_myself())
+		throw Exception("GNU philosophy 101: You're not free to be unfree.");
+
 	user.whois();
 }
 
