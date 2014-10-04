@@ -501,8 +501,8 @@ void Bot::handle_topicwhotime(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	std::get<Chan::Topic::MASK>(chan.topic) = msg[MASK];
-	std::get<Chan::Topic::TIME>(chan.topic) = msg.get<time_t>(TIME);
+	std::get<Chan::Topic::MASK>(chan.get_topic()) = msg[MASK];
+	std::get<Chan::Topic::TIME>(chan.get_topic()) = msg.get<time_t>(TIME);
 }
 
 
@@ -544,7 +544,7 @@ void Bot::handle_topic(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	std::get<Chan::Topic::TEXT>(chan.topic) = msg[TEXT];
+	std::get<Chan::Topic::TEXT>(chan.get_topic()) = msg[TEXT];
 }
 
 

@@ -25,7 +25,7 @@ class Chan : public Locutor,
 	using Userv = std::tuple<User *, Mode>;
 	using Users = std::unordered_map<std::string, Userv>;
 
-	Topic topic;
+	Topic _topic;
 	Mode _mode;
 	time_t creation;
 	Users users;
@@ -36,7 +36,7 @@ class Chan : public Locutor,
   public:
 	// Observers
 	const std::string &get_name() const                     { return Locutor::get_target();         }
-	const Topic &get_topic() const                          { return topic;                         }
+	const Topic &get_topic() const                          { return _topic;                        }
 	const Mode &get_mode() const                            { return _mode;                         }
 	const time_t &get_creation() const                      { return creation;                      }
 	const bool &is_joined() const                           { return joined;                        }
@@ -63,6 +63,7 @@ class Chan : public Locutor,
 
     // [RECV] Bot:: handler's call these to update state
 	friend class Bot;
+	Topic &get_topic()                                      { return _topic;                        }
 	void set_joined(const bool &joined)                     { this->joined = joined;                }
 	void set_creation(const time_t &creation)               { this->creation = creation;            }
 	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
@@ -80,6 +81,7 @@ class Chan : public Locutor,
 
 	// [SEND] Control interface to channel
 	void invite(const std::string &nick);
+	void topic(const std::string &topic);
 	void kick(const User &user, const std::string &reason = "");
 	bool quiet(const User &user, const Quiet::Type &type = Quiet::Type::HOST);
 	bool ban(const User &user, const Ban::Type &type = Ban::Type::HOST);
@@ -274,6 +276,14 @@ void Chan::invite(const std::string &nick)
 {
 	Sess &sess = get_sess();
 	sess.call(irc_cmd_invite,nick.c_str(),get_name().c_str());
+}
+
+
+inline
+void Chan::topic(const std::string &topic)
+{
+	Sess &sess = get_sess();
+	sess.call(irc_cmd_topic,get_name().c_str(),topic.c_str());
 }
 
 
