@@ -5,6 +5,7 @@
  *  DISTRIBUTED UNDER THE GNU GENERAL PUBLIC LICENSE (GPL) (see: LICENSE)
  */
 
+#include <chrono>
 
 class Sess
 {
@@ -202,7 +203,37 @@ template<class Func,
 void Sess::call(Func&& func,
                 Args&&... args)
 {
-	::irc_call(get(),func,std::forward<Args>(args)...);
+	static const uint32_t CALL_MAX_ATTEMPTS = 50;
+	static constexpr std::chrono::milliseconds CALL_THROTTLE {200};
+
+	// Loop to reattempt for certain library errors
+	for(size_t i = 0; i < CALL_MAX_ATTEMPTS; i++) try
+	{
+		::irc_call(get(),func,std::forward<Args>(args)...);
+		return;
+	}
+	catch(const Exception &e)
+	{
+		// No more reattempts at the limit
+		if(i >= CALL_MAX_ATTEMPTS - 1)
+			throw;
+
+		switch(e.code())
+		{
+			case LIBIRC_ERR_NOMEM:
+				// Sent too much data without letting libirc recv(), we can throttle and try again.
+				std::cerr << "call(): \033[1;33mthrottling send\033[0m"
+				          << " (attempt: " << i << " timeout: " << CALL_THROTTLE.count() << ")"
+				          << std::endl;
+
+				std::this_thread::sleep_for(CALL_THROTTLE);
+				continue;
+
+			default:
+				// No reattempt for everything else
+				throw;
+		}
+	}
 }
 
 
