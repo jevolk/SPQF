@@ -16,9 +16,11 @@
 
 
 Voting::Voting(Bot &bot,
+               Sess &sess,
                Chans &chans,
                Users &users):
 bot(bot),
+sess(sess),
 chans(chans),
 users(users),
 thread(&Voting::worker,this)

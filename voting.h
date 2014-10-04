@@ -11,6 +11,7 @@ class Voting
 	using id_t = size_t;
 
 	Bot &bot;
+	Sess &sess;
 	Chans &chans;
 	Users &users;
 	std::map<std::string, std::unique_ptr<Vote>> motions;   // Quick motions   : channel => vote
@@ -44,7 +45,7 @@ class Voting
 	void cancel(const id_t &id);
 	void cancel(const Chan &chan);
 
-	Voting(Bot &bot, Chans &chans, Users &users);
+	Voting(Bot &bot, Sess &sess, Chans &chans, Users &users);
 	Voting(const Voting &) = delete;
 	Voting &operator=(const Voting &) = delete;
 	~Voting() noexcept;
@@ -75,7 +76,7 @@ void Voting::motion(Chan &chan,
 try
 {
 	const std::string &name = chan.get_name();
-	const auto iit = motions.emplace(name,std::make_unique<Vote>(chans,users,chan,std::forward<Args>(args)...));
+	const auto iit = motions.emplace(name,std::make_unique<Vote>(sess,chans,users,chan,std::forward<Args>(args)...));
 	const bool &inserted = iit.second;
 
 	if(inserted) try
@@ -110,7 +111,7 @@ try
 	}
 	while(has_vote(id));
 
-	const auto iit = motions.emplace(id,std::make_unique<Vote>(chans,users,chan,std::forward<Args>(args)...));
+	const auto iit = motions.emplace(id,std::make_unique<Vote>(sess,chans,users,chan,std::forward<Args>(args)...));
 	const bool &inserted = iit.second;
 
 	if(inserted) try
