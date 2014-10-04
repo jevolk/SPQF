@@ -104,6 +104,7 @@ class Bot : public std::mutex                               // Locked during irc
 	void handle_unhandled(const Msg &m);
 
 	void handle_bannedfromchan(const Msg &m);
+	void handle_chanoprivsneeded(const Msg &m);
 	void handle_channelmodeis(const Msg &m);
 	void handle_topicwhotime(const Msg &m);
 	void handle_creationtime(const Msg &m);

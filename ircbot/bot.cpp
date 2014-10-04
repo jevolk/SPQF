@@ -106,6 +106,7 @@ void Bot::operator()(const uint32_t &event,
 		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 break;
 		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               break;
 
+		case LIBIRC_RFC_ERR_CHANOPRIVSNEEDED:     handle_chanoprivsneeded(msg);        break;
 		case LIBIRC_RFC_ERR_ERRONEUSNICKNAME:     handle_erroneusnickname(msg);        break;
 		case LIBIRC_RFC_ERR_BANNEDFROMCHAN:       handle_bannedfromchan(msg);          break;
 		default:                                  handle_unhandled(msg);               break;
@@ -464,6 +465,18 @@ void Bot::handle_channelmodeis(const Msg &msg)
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
 	chan.delta_mode(msg[DELTASTR]);
+}
+
+
+void Bot::handle_chanoprivsneeded(const Msg &msg)
+{
+	using namespace fmt::CHANOPRIVSNEEDED;
+
+	log_handle(msg,"CHANOPRIVSNEEDED");
+
+	Chans &chans = get_chans();
+	Chan &chan = chans.get(msg[CHANNAME]);
+	chan << Chan::NOTICE << "I need to be +o to do that. (" << msg[REASON] << ")" << Chan::flush;
 }
 
 
