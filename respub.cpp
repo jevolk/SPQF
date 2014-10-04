@@ -238,14 +238,17 @@ void ResPublica::handle_vote_help(const Msg &msg,
 	const Tokens subtoks = subtokenize(toks);
 
 	Locutor &out = chan;
+	out << Locutor::NOTICE;
 
 	switch(hash(what))
 	{
-		case hash("config"):   out << help_vote_config  << flush;               break;
-		case hash("kick"):     out << help_vote_kick    << flush;               break;
-		case hash("mode"):     out << help_vote_mode    << flush;               break;
-		default:               out << help_vote         << flush;               break;
+		case hash("config"):   out << help_vote_config;   break;
+		case hash("kick"):     out << help_vote_kick;     break;
+		case hash("mode"):     out << help_vote_mode;     break;
+		default:               out << help_vote;          break;
 	}
+
+	out << flush;
 }
 
 
