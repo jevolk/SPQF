@@ -28,6 +28,13 @@ thread(&Voting::worker,this)
 }
 
 
+Voting::~Voting() noexcept
+{
+	thread.join();
+
+}
+
+
 void Voting::worker()
 {
 	while(1)
