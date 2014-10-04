@@ -10,7 +10,7 @@ class Users
 {
 	Adb &adb;
 	Sess &sess;
-	std::unordered_map<std::string, User> users;
+	std::unordered_map<std::string, std::unique_ptr<User>> users;
 
   public:
 	// Observers
@@ -26,6 +26,7 @@ class Users
 	void for_each(const std::function<void (User &)> &c);
 
 	// Manipulators
+	void rename(const std::string &old_nick, const std::string &new_nick);
 	User &get(const std::string &nick);
 	User &add(const std::string &nick);
 	bool del(const User &user);
@@ -58,10 +59,8 @@ bool Users::del(const User &user)
 inline
 User &Users::add(const std::string &nick)
 {
-	const auto &iit = users.emplace(std::piecewise_construct,
-	                                std::forward_as_tuple(nick),
-	                                std::forward_as_tuple(adb,sess,nick));
-	User &user = iit.first->second;
+	const auto &iit = users.emplace(nick,std::unique_ptr<User>(new User(adb,sess,nick)));
+	User &user = *iit.first->second;
 	return user;
 }
 
@@ -70,7 +69,7 @@ inline
 User &Users::get(const std::string &nick)
 try
 {
-	return users.at(nick);
+	return *users.at(nick);
 }
 catch(const std::out_of_range &e)
 {
@@ -79,10 +78,21 @@ catch(const std::out_of_range &e)
 
 
 inline
+void Users::rename(const std::string &old_nick,
+                   const std::string &new_nick)
+{
+	auto user = std::move(users.at(old_nick));
+	users.erase(old_nick);
+	user->set_nick(new_nick);
+	users.emplace(new_nick,std::move(user));
+}
+
+
+inline
 const User &Users::get(const std::string &nick)
 const try
 {
-	return users.at(nick);
+	return *users.at(nick);
 }
 catch(const std::out_of_range &e)
 {
@@ -95,7 +105,7 @@ void Users::for_each(const std::function<void (User &)> &closure)
 {
 	for(auto &userp : users)
 	{
-		User &user = userp.second;
+		User &user = *userp.second;
 		closure(user);
 	}
 }
@@ -107,7 +117,7 @@ const
 {
 	for(const auto &userp : users)
 	{
-		const User &user = userp.second;
+		const User &user = *userp.second;
 		closure(user);
 	}
 }
@@ -120,7 +130,7 @@ std::ostream &operator<<(std::ostream &s,
 	s << "Users(" << u.num() << ")" << std::endl;
 	for(const auto &userp : u.users)
 	{
-		const User &user = userp.second;
+		const User &user = *userp.second;
 		s << user << std::endl;
 	}
 

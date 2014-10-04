@@ -283,9 +283,10 @@ void Bot::handle_nick(const Msg &msg)
 	}
 
 	Users &users = get_users();
-	User &user = users.get(old_nick);
+	users.rename(old_nick,new_nick);
 
 	Chans &chans = get_chans();
+	User &user = users.get(new_nick);
 	chans.for_each([&user,&old_nick]
 	(Chan &chan)
 	{

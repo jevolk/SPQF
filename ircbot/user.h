@@ -40,6 +40,7 @@ class User : public Locutor,
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
 
 	// Mutators used by Bot handlers
+	void set_nick(const std::string &nick)             { Locutor::set_target(nick);                  }
 	void set_acct(const std::string &acct)             { this->acct = tolower(acct);                 }
 	void set_host(const std::string &host)             { this->host = host;                          }
 	void set_secure(const bool &secure)                { this->secure = secure;                      }

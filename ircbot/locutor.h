@@ -31,6 +31,7 @@ class Locutor
   protected:
 	Sess &get_sess()                                    { return sess;                               }
 	std::ostringstream &get_sendq()                     { return sendq;                              }
+	void set_target(const std::string &target)          { this->target = target;                     }
 
   public:
 	// [SEND] Raw interface                             // Should attempt to specify in a subclasses
