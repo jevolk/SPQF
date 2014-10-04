@@ -645,8 +645,8 @@ void Bot::handle_invite(const Msg &msg)
 
 	// Temp hack to throttle invites to 10 minutes
 	static const time_t limit = 600;
-	static time_t throttle = time(NULL);
-	if(time(NULL) - throttle < limit)
+	static time_t throttle = 0;
+	if(time(NULL) - limit < throttle)
 		return;
 
 	Chans &chans = get_chans();
