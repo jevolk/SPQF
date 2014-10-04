@@ -200,18 +200,18 @@ Vote::Stat Vote::vote(const Ballot &ballot,
 	{
 		case YAY:
 			if(!yay.emplace(user.get_acct()).second)
-				throw Exception("You have already voted yay in this election.");
+				throw Exception("You have already voted yay.");
 
 			return nay.erase(user.get_acct())? CHANGED : ADDED;
 
 		case NAY:
 			if(!nay.emplace(user.get_acct()).second)
-				throw Exception("You have already voted nay in this election.");
+				throw Exception("You have already voted nay.");
 
 			return yay.erase(user.get_acct())? CHANGED : ADDED;
 
 		default:
-			throw Exception("Ballot type not accepted");
+			throw Exception("Ballot type not accepted.");
 	}
 }
 
