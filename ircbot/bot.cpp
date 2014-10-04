@@ -704,7 +704,7 @@ void Bot::handle_namreply(const Msg &msg)
 	Chan &chan = chans.add(msg[CHANNAME]);
 
 	using delim = boost::char_separator<char>;
-	const delim sep(" ");
+	static const delim sep(" ");
 	const boost::tokenizer<delim> tokens(msg[NAMELIST],sep);
 	for(const auto &nick: tokens)
 	{

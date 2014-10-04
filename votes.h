@@ -133,9 +133,9 @@ Vote(std::forward<Args>(args)...)
 {
 	using delim = boost::char_separator<char>;
 
-	const delim sep("=");
-    const boost::tokenizer<delim> exprs(get_issue(),sep);
-    std::vector<std::string> tokens(exprs.begin(),exprs.end());
+	static const delim sep("=");
+	const boost::tokenizer<delim> exprs(get_issue(),sep);
+	std::vector<std::string> tokens(exprs.begin(),exprs.end());
 	if(tokens.size() != 2 || tokens.at(0).empty() || tokens.at(1).empty())
 		throw Exception("Invalid syntax to assign a configuration variable.");
 

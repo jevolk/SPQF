@@ -105,7 +105,7 @@ void ResPublica::handle_chanmsg_cmd(const Msg &msg,
                                     User &user)
 {
 	using delim = boost::char_separator<char>;
-	const delim sep(" ");
+	static const delim sep(" ");
 
 	const std::string &text = msg[CHANMSG::TEXT];
 	const boost::tokenizer<delim> tokenize(text,sep);
