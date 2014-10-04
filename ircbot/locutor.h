@@ -80,6 +80,13 @@ Locutor &Locutor::operator<<(const T &t)
 inline
 Locutor &Locutor::operator<<(const flush_t f)
 {
+	const scope reset_stream([&]
+	{
+		sendq.clear();
+		sendq.str(std::string());
+		sendq.iword(locution_meth_idx) = PRIVMSG;    // reset stream to default
+	});
+
 	switch(Method(sendq.iword(locution_meth_idx)))
 	{
 		case ACTION:    me(sendq.str());         break;
@@ -88,8 +95,6 @@ Locutor &Locutor::operator<<(const flush_t f)
 		default:        msg(sendq.str());        break;
 	}
 
-	sendq.str(std::string());
-	sendq.iword(locution_meth_idx) = PRIVMSG;    // reset stream to default
 	return *this;
 }
 
