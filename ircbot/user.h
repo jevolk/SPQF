@@ -36,7 +36,7 @@ class User : public Locutor,
 	const size_t &num_chans() const                    { return chans;                               }
 
 	bool is_myself() const                             { return get_nick() == get_sess().get_nick(); }
-	bool is_logged_in() const                          { return acct.size() && acct != "0";          }
+	bool is_logged_in() const;
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
 
 	// Mutators used by Bot handlers
@@ -81,6 +81,16 @@ void User::who(const std::string &flags)
 {
 	Sess &sess = get_sess();
 	sess.quote("who %s %s",get_nick().c_str(),flags.c_str());
+}
+
+
+inline
+bool User::is_logged_in()
+const
+{
+	return !acct.empty() &&
+	       acct != "0"   &&
+	       acct != "*";
 }
 
 

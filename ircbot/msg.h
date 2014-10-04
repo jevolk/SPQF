@@ -11,9 +11,15 @@
 
 inline namespace fmt
 {
+SPQF_FMT( WELCOME,           TEXT                                                                            )
+SPQF_FMT( YOURHOST,          SELFNAME, TEXT                                                                  )
+SPQF_FMT( CREATED,           SELFNAME, TEXT                                                                  )
+SPQF_FMT( MYINFO,            SELFNAME, SERVNAME, VERSION,  USERMODS, CHANMODS, CHANPARM                      )
+SPQF_FMT( CAP,               SELFNAME, COMMAND,  CAPLIST                                                     )
+SPQF_FMT( ACCOUNT,           ACCTNAME,                                                                       )
 SPQF_FMT( NICK,              NICKNAME                                                                        )
 SPQF_FMT( QUIT,              REASON                                                                          )
-SPQF_FMT( JOIN,              CHANNAME                                                                        )
+SPQF_FMT( JOIN,              CHANNAME, ACCTNAME, EGECOS                                                      )
 SPQF_FMT( PART,              CHANNAME, REASON                                                                )
 SPQF_FMT( MODE,              CHANNAME, DELTASTR                                                              )
 SPQF_FMT( AWAY,              SELFNAME, NICKNAME, MESSAGE                                                     )
@@ -31,7 +37,7 @@ SPQF_FMT( NAMREPLY,          NICKNAME, TYPE,     CHANNAME, NAMELIST             
 SPQF_FMT( WHOREPLY,          SELFNAME, CHANNAME, USERNAME, HOSTNAME, SERVNAME, NICKNAME, FLAGS,    ADDL      )
 SPQF_FMT( WHOISIDLE,         SELFNAME, NICKNAME, SECONDS,  SIGNON,   REMARKS                                 )
 SPQF_FMT( WHOISSECURE,       SELFNAME, NICKNAME, REMARKS,                                                    )
-SPQF_FMT( WHOISACCOUNT,      SELFNAME, NICKNAME, ACCOUNT,  REMARKS                                           )
+SPQF_FMT( WHOISACCOUNT,      SELFNAME, NICKNAME, ACCTNAME, REMARKS                                           )
 SPQF_FMT( CREATIONTIME,      SELFNAME, CHANNAME, TIME,                                                       )
 SPQF_FMT( TOPICWHOTIME,      SELFNAME, CHANNAME, MASK,     TIME,                                             )
 SPQF_FMT( BANLIST,           SELFNAME, CHANNAME, BANMASK,  OPERATOR, TIME,                                   )

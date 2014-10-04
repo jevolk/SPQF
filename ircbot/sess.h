@@ -8,11 +8,18 @@
 
 class Sess
 {
+	// Our constant data
 	const Ident ident;
+
+	// libircclient
 	irc_callbacks_t *cbs;
 	irc_session_t *sess;
-	std::string nick;
-	Mode mode;
+
+	// Server data
+	Server server;                                     // Filled at connection time
+	std::set<std::string> caps;                        // registered extended capabilities
+	std::string nick;                                  // NICK reply
+	Mode mode;                                         // UMODE
 
 	irc_session_t *get()                               { return sess;                               }
 	operator irc_session_t *()                         { return get();                              }
@@ -21,6 +28,8 @@ class Sess
 	friend class Bot;
 	void set_nick(const std::string &nick)             { this->nick = nick;                         }
 	void delta_mode(const std::string &str)            { mode.delta(str);                           }
+	void cap_req(const std::string &cap);              // IRCv3 CAP REQ
+	void cap_end();                                    // IRCv3 CAP END
 
   public:
 	// State observers
@@ -37,8 +46,10 @@ class Sess
 	template<class... VA_LIST> void quote(const char *const &fmt, VA_LIST&&... ap);
 
 	// IRC Observers
+	const Server &get_server() const                   { return server;                             }
 	const std::string &get_nick() const                { return nick;                               }
 	const Mode &get_mode() const                       { return mode;                               }
+	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
 	bool is_desired_nick() const                       { return nick == ident["nickname"];          }
 	bool is_conn() const;
 
@@ -46,6 +57,8 @@ class Sess
 	void help(const std::string &topic);               // IRCd response goes to console
 	void umode(const std::string &mode);               // Send umode update
 	void umode();                                      // Request this->mode to be updated
+	void cap_list();                                   // IRCv3 update our capabilities list
+	void cap_ls();                                     // IRCv3 update server capabilities list
 	void quit();                                       // Quit to server
 	void disconn();
 	void conn();
@@ -132,6 +145,34 @@ void Sess::umode(const std::string &mode)
 
 
 inline
+void Sess::cap_ls()
+{
+	quote("CAP LS");
+}
+
+
+inline
+void Sess::cap_list()
+{
+	quote("CAP LIST");
+}
+
+
+inline
+void Sess::cap_req(const std::string &cap)
+{
+	quote("CAP REQ %s",cap.c_str());
+}
+
+
+inline
+void Sess::cap_end()
+{
+	quote("CAP END");
+}
+
+
+inline
 void Sess::help(const std::string &topic)
 {
 	quote("HELP %s",topic.c_str());
@@ -177,10 +218,16 @@ inline
 std::ostream &operator<<(std::ostream &s,
                          const Sess &ss)
 {
-	s << "Ident:           " << ss.ident << std::endl;
 	s << "Cbs:             " << ss.cbs << std::endl;
 	s << "irc_session_t:   " << ss.sess << std::endl;
+	s << "server:          " << ss.server << std::endl;
+	s << "Ident:           " << ss.ident << std::endl;
 	s << "nick:            " << ss.nick << std::endl;
 	s << "mode:            " << ss.mode << std::endl;
+	s << "caps:            ";
+	for(const auto &cap : ss.caps)
+		s << "[" << cap << "]";
+	s << std::endl;
+
 	return s;
 }

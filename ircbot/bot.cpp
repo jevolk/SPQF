@@ -50,6 +50,7 @@ void Bot::operator()(const char *const &event,
 		case hash("CTCP_ACTION"):      handle_ctcp_act(msg);            break;
 		case hash("CTCP_REP"):         handle_ctcp_rep(msg);            break;
 		case hash("CTCP_REQ"):         handle_ctcp_req(msg);            break;
+		case hash("ACCOUNT"):          handle_account(msg);             break;
 		case hash("INVITE"):           handle_invite(msg);              break;
 		case hash("CHANNEL_NOTICE"):   handle_cnotice(msg);             break;
 		case hash("NOTICE"):           handle_notice(msg);              break;
@@ -63,6 +64,7 @@ void Bot::operator()(const char *const &event,
 		case hash("JOIN"):             handle_join(msg);                break;
 		case hash("QUIT"):             handle_quit(msg);                break;
 		case hash("NICK"):             handle_nick(msg);                break;
+		case hash("CAP"):              handle_cap(msg);                 break;
 		case hash("CONNECT"):          handle_conn(msg);                break;
 		default:                       handle_unhandled(msg,event);     break;
 	}
@@ -78,6 +80,12 @@ void Bot::operator()(const uint32_t &event,
 
 	switch(event)
 	{
+		case LIBIRC_RFC_RPL_WELCOME:              handle_welcome(msg);                 break;
+		case LIBIRC_RFC_RPL_YOURHOST:             handle_yourhost(msg);                break;
+		case LIBIRC_RFC_RPL_CREATED:              handle_created(msg);                 break;
+		case LIBIRC_RFC_RPL_MYINFO:               handle_myinfo(msg);                  break;
+		case LIBIRC_RFC_RPL_BOUNCE:               handle_bounce(msg);                  break;
+
 		case LIBIRC_RFC_RPL_NAMREPLY:             handle_namreply(msg);                break;
 		case LIBIRC_RFC_RPL_ENDOFNAMES:           handle_endofnames(msg);              break;
 		case LIBIRC_RFC_RPL_UMODEIS:              handle_umodeis(msg);                 break;
@@ -119,36 +127,114 @@ void Bot::handle_conn(const Msg &msg)
 {
 	log_handle(msg,"CONNECT");
 
+	Sess &sess = get_sess();
+	sess.cap_ls();
+	sess.cap_req("account-notify");
+	sess.cap_req("extended-join");
+	sess.cap_end();
+
 	const Ident &id = get_sess().get_ident();
 	for(const auto &chan : id.autojoin)
 		join(chan);
 }
 
 
-void Bot::handle_nick(const Msg &msg)
+void Bot::handle_welcome(const Msg &msg)
 {
-	using namespace fmt::NICK;
+	log_handle(msg,"WELCOME");
 
-	log_handle(msg,"NICK");
+}
 
-	const std::string old_nick = msg.get_nick();
-	const std::string &new_nick = msg[NICKNAME];
 
-	if(my_nick(old_nick))
+void Bot::handle_yourhost(const Msg &msg)
+{
+	log_handle(msg,"YOURHOST");
+
+}
+
+
+void Bot::handle_created(const Msg &msg)
+{
+	log_handle(msg,"CREATED");
+
+}
+
+
+void Bot::handle_myinfo(const Msg &msg)
+{
+	using namespace fmt::MYINFO;
+
+	log_handle(msg,"MYINFO");
+
+	Sess &sess = get_sess();
+	Server &server = sess.server;
+
+	server.name = msg[SERVNAME];
+	server.vers = msg[VERSION];
+	server.user_modes = msg[USERMODS];
+	server.chan_modes = msg[CHANMODS];
+	server.chan_pmodes = msg[CHANPARM];
+}
+
+
+void Bot::handle_bounce(const Msg &msg)
+{
+	log_handle(msg,"BOUNCE");
+
+	Sess &sess = get_sess();
+	Server &server = sess.server;
+
+	const std::string &self = msg[0];
+	for(size_t i = 1; i < msg.num_params(); i++)
 	{
-		Sess &sess = get_sess();
-		sess.set_nick(new_nick);
+		const std::string &opt = msg[i];
+		const size_t sep = opt.find('=');
+		const std::string key = opt.substr(0,sep);
+		const std::string val = sep == std::string::npos? "" : opt.substr(sep+1);
+
+		if(!std::all_of(key.begin(),key.end(),::isupper))
+			continue;
+
+		server.cfg.emplace(key,val);
 	}
+}
 
-	Users &users = get_users();
-	User &user = users.get(old_nick);
 
-	Chans &chans = get_chans();
-	chans.for_each([&user,&old_nick]
-	(Chan &chan)
+void Bot::handle_cap(const Msg &msg)
+{
+	using namespace fmt::CAP;
+
+	log_handle(msg,"CAP");
+
+	Sess &sess = get_sess();
+	Server &server = sess.server;
+
+	using delim = boost::char_separator<char>;
+	static const delim sep(" ");
+	const boost::tokenizer<delim> caps(msg[CAPLIST],sep);
+
+	switch(hash(msg[COMMAND]))
 	{
-		chan.rename(user,old_nick);
-	});
+		case hash("LS"):
+			server.caps.insert(caps.begin(),caps.end());
+			break;
+
+		case hash("ACK"):
+			sess.caps.insert(caps.begin(),caps.end());
+			break;
+
+		case hash("LIST"):
+			sess.caps.clear();
+			sess.caps.insert(caps.begin(),caps.end());
+			break;
+
+		case hash("NAK"):
+			std::cerr << "UNSUPPORTED CAPABILITIES: " << msg[CAPLIST] << std::endl;
+			break;
+
+		default:
+			throw Exception("Unhandled CAP response type");
+	}
 }
 
 
@@ -180,17 +266,60 @@ void Bot::handle_quit(const Msg &msg)
 }
 
 
+void Bot::handle_nick(const Msg &msg)
+{
+	using namespace fmt::NICK;
+
+	log_handle(msg,"NICK");
+
+	const std::string old_nick = msg.get_nick();
+	const std::string &new_nick = msg[NICKNAME];
+
+	if(my_nick(old_nick))
+	{
+		Sess &sess = get_sess();
+		sess.set_nick(new_nick);
+	}
+
+	Users &users = get_users();
+	User &user = users.get(old_nick);
+
+	Chans &chans = get_chans();
+	chans.for_each([&user,&old_nick]
+	(Chan &chan)
+	{
+		chan.rename(user,old_nick);
+	});
+}
+
+
+void Bot::handle_account(const Msg &msg)
+{
+	using namespace fmt::ACCOUNT;
+
+	log_handle(msg,"ACCOUNT");
+
+	Users &users = get_users();
+	User &user = users.add(msg.get_nick());
+	user.set_acct(msg[ACCTNAME]);
+}
+
+
 void Bot::handle_join(const Msg &msg)
 {
 	using namespace fmt::JOIN;
 
 	log_handle(msg,"JOIN");
 
+	Sess &sess = get_sess();
 	Chans &chans = get_chans();
 	Users &users = get_users();
 
-	Chan &chan = chans.add(msg[CHANNAME]);
 	User &user = users.add(msg.get_nick());
+	if(sess.has_cap("extended-join"))
+		user.set_acct(msg[ACCTNAME]);
+
+	Chan &chan = chans.add(msg[CHANNAME]);
 	chan.add(user);
 
 	if(my_nick(msg.get_nick()))
@@ -201,7 +330,6 @@ void Bot::handle_join(const Msg &msg)
 		chan.banlist();
 		chan.quietlist();
 	}
-	else user.who();
 
 	handle_join(msg,chan,user);
 }
@@ -692,7 +820,7 @@ try
 
 	Users &users = get_users();
 	User &user = users.get(msg[NICKNAME]);
-	user.set_acct(msg[ACCOUNT]);
+	user.set_acct(msg[ACCTNAME]);
 }
 catch(const Exception &e)
 {

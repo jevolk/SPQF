@@ -50,6 +50,7 @@
 #include "ban.h"
 #include "msg.h"
 #include "adb.h"
+#include "server.h"
 #include "sess.h"
 #include "locutor.h"
 #include "user.h"
@@ -142,6 +143,14 @@ class Bot : public std::mutex                               // Locked during irc
 	void handle_away(const Msg &m);
 	void handle_nick(const Msg &m);
 	void handle_quit(const Msg &m);
+
+	void handle_account(const Msg &m);
+	void handle_cap(const Msg &m);
+	void handle_bounce(const Msg &m);
+	void handle_myinfo(const Msg &m);
+	void handle_created(const Msg &m);
+	void handle_yourhost(const Msg &m);
+	void handle_welcome(const Msg &m);
 	void handle_conn(const Msg &m);
 
   public:
