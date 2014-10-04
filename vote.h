@@ -119,7 +119,8 @@ chan(chan.get_name()),
 user(user.get_acct()),
 issue(issue)
 {
-
+	if(!user.is_logged_in())
+		throw Exception("You must be registered with nickserv to create a vote.");
 }
 
 
@@ -190,6 +191,9 @@ inline
 Vote::Stat Vote::vote(const Ballot &ballot,
                       User &user)
 {
+	if(!user.is_logged_in())
+		throw Exception("You must be registered with nickserv to vote.");
+
 	proffer(ballot,user);
 
 	switch(ballot)
