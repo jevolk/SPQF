@@ -158,9 +158,17 @@ void ResPublica::handle_vote(const Msg &msg,
 	const Tokens subtoks = subtokenize(toks);
 	switch(hash(subcmd))
 	{
-		// Administrative
-		case hash("yay"):      handle_vote_ballot(msg,chan,user,Vote::YAY);      break;
-		case hash("nay"):      handle_vote_ballot(msg,chan,user,Vote::NAY);      break;
+		case hash("yay"):
+		case hash("yes"):
+		case hash("yea"):
+		case hash("Y"):
+		case hash("y"):
+		                       handle_vote_ballot(msg,chan,user,Vote::YAY);      break;
+		case hash("nay"):
+		case hash("no"):
+		case hash("N"):
+		case hash("n"):
+		                       handle_vote_ballot(msg,chan,user,Vote::NAY);      break;
 		case hash("poll"):     handle_vote_poll(msg,chan,user,subtoks);          break;
 		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);          break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);        break;
