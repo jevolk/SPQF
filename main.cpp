@@ -38,7 +38,7 @@ void handle_sig(const int sig)
 int main(int argc, char **argv)
 try
 {
-	if(argc < 4)
+	if(argc < 2)
 	{
 		printf("usage: %s <host> [port] [nick] [chan]...\n",argv[0]);
 		return -1;
