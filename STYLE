@@ -3,6 +3,7 @@ Rules:
 1. Policy is the enemy of prudence.
 	- That means use your judgment above all else.
 	- Whatever you do, be consistent about it. Random badness is harder to fix with a script.
+	- Unless it pains you, try to match the style that already exists as much as possible.
 
 
 2. Tabs Before Spaces.
@@ -22,14 +23,15 @@ Rules:
 Style:
 
 
-A. Formatting
+A. Formatting:
 	- Allman brace style.
 		- You can use " } else { "
 	- Function definitions have two newlines between them.
 	- Use whitespace liberally, but not more than 1 blank line for most else.
+	- TABS BEFORE SPACES.
 
 
-B. Always be covered by RAII, it's your alibi.
+B. Always be covered by RAII, it's your alibi:
 	- Use exceptions liberally. For an IRC project, the relative overhead of a catch is trivial...
 		  ex: User sends !command with 2 out of 3 required arguments: don't tango with tabs and 
 		  if() the number of arguments, just let the bad access throw, etc.
@@ -37,11 +39,11 @@ B. Always be covered by RAII, it's your alibi.
 		- Avoid naked try/catch blocks. It's best to use function try, second-best to use loop/if-try.
 
 
-C. Order everything by dependency.
+C. Order everything by dependency:
 	- In class declarations this means if foo() calls bar(), foo() is listed BELOW bar().
 		- Proper (RAII) use of the initializer list reflects why this is the proper layout of a class.
-		- The ideal class has one "public:" label somewhere in the middle, and no other labels.
-		  (this is obviously not a rule...)
+		- The ideal class has one "public:" label somewhere in the middle, and no other labels
+		  (this is obviously not a rule...).
 		
 	- In class definitions the order is the REVERSE OF THE CLASS DECLARATION.
 		- The definition file should open to the constructor at the top.
