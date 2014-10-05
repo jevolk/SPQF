@@ -92,11 +92,11 @@ try
 }
 catch(const Exception &e)
 {
-	chan << Meth::NOTICE << "Error with your command: " << e << flush;
+	chan << "Error with your command: " << e << flush;
 }
 catch(const std::out_of_range &e)
 {
-	chan << Meth::NOTICE << "You did not supply required arguments. Use the help command." << flush;
+	chan << "You did not supply required arguments. Use the help command." << flush;
 }
 
 
@@ -192,8 +192,8 @@ try
 
 	switch(vote.vote(ballot,user))
 	{
-		case Vote::ADDED:    chan << user << "Thanks for casting your vote!";       break;
-		case Vote::CHANGED:  chan << user << "You have changed your vote to yay.";  break;
+		case Vote::ADDED:    chan << user << "Thanks for casting your vote!";    break;
+		case Vote::CHANGED:  chan << user << "You have changed your vote.";      break;
 	}
 
 	chan << flush;
@@ -210,18 +210,20 @@ void ResPublica::handle_vote_poll(const Msg &msg,
                                   User &user,
                                   const Tokens &toks)
 {
+	using namespace colors;
+
 	const auto &vote = voting.get(chan);
 	const auto tally = vote.tally();
 
 	chan << "Current tally: ";
-	chan << "YAY: " << tally.first << " ";
-	chan << "NAY: " << tally.second << ". ";
-	chan << "There are " << vote.remaining() << " seconds left. ";
+	chan << BOLD << "YAY" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " ";
+	chan << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " ";
+	chan << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
 
 	if(vote.total() < vote.minimum())
-		chan << (vote.minimum() - vote.total()) << " more votes are required. ";
+		chan << BOLD << (vote.minimum() - vote.total()) << OFF << " more votes are required. ";
 	else if(tally.first < vote.required())
-		chan << (vote.required() < tally.first) << " more yays are required to pass. ";
+		chan << BOLD << (vote.required() < tally.first) << OFF << " more yays are required to pass. ";
 	else
 		chan << "As it stands, the motion will pass.";
 
@@ -237,8 +239,7 @@ void ResPublica::handle_vote_help(const Msg &msg,
 	const std::string &what = toks.size()? *toks.at(0) : "";
 	const Tokens subtoks = subtokenize(toks);
 
-	Locutor &out = chan;
-	out << Locutor::NOTICE;
+	Locutor &out = chan; // TODO: user or chan?
 
 	switch(hash(what))
 	{
