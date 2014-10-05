@@ -4,11 +4,11 @@ GETTING STARTED:
 Requirements:
 	* Development toolset:
 		* C++11 for libircbot
-		* C++14 for ResPublica
+		* C++14 for SPQF
 		* GNU gcc preferred
 		* libstdc++
 
-	* Boost
+	* Boost:
 		* tokenizer
 		* lexical_cast
 		* property_tree, json_parser
