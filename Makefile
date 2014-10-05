@@ -1,7 +1,8 @@
 
 
 CC = g++
-WFLAGS = -Wall                                 \
+WFLAGS = -pedantic                             \
+         -Wall                                 \
          -Wextra                               \
          -Wcomment                             \
          -Waddress                             \

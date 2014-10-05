@@ -6,7 +6,7 @@
  */
 
 
-#define SPQF_FMT(type, fields...)  namespace type { enum { fields }; }
+#define SPQF_FMT(type, ...)  namespace type { enum { __VA_ARGS__ }; }
 
 
 inline namespace fmt
