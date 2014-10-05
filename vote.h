@@ -79,8 +79,8 @@ class Vote
 	auto &get_chan()                            { return chans.get(chan);                           }
 
 	// Subclass throws from these for abortions
-	virtual void passed()                       { get_chan() << "The yays have it!" << flush;       }
-	virtual void failed()                       { get_chan() << "The nays have it!" << flush;       }
+	virtual void passed() {}
+	virtual void failed() {}
 	virtual void canceled() {}
 	virtual void proffer(const Ballot &b, User &u) {}
 	virtual void starting() {}
