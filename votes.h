@@ -123,9 +123,7 @@ void vote::Mode::starting()
 {
 	const Sess &sess = get_sess();
 	const Server &serv = sess.get_server();
-
-	const Delta delta(get_issue());
-	delta.validate_chan(serv);
+	const Deltas deltas(get_issue(),serv);
 
 	Chan &chan = get_chan();
 }
