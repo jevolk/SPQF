@@ -125,6 +125,7 @@ class Bot : public std::mutex                               // Locked during irc
 	void handle_ctcp_rep(const Msg &m);
 	void handle_ctcp_req(const Msg &m);
 
+	void handle_unknownmode(const Msg &m);
 	void handle_erroneusnickname(const Msg &m);
 	void handle_nosuchnick(const Msg &m);
 	void handle_whowasuser(const Msg &m);
@@ -148,9 +149,9 @@ class Bot : public std::mutex                               // Locked during irc
 
 	void handle_account(const Msg &m);
 	void handle_cap(const Msg &m);
-	void handle_bounce(const Msg &m);
 	void handle_myinfo(const Msg &m);
 	void handle_created(const Msg &m);
+	void handle_isupport(const Msg &m);
 	void handle_yourhost(const Msg &m);
 	void handle_welcome(const Msg &m);
 	void handle_conn(const Msg &m);

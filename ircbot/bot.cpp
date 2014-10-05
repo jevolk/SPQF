@@ -105,7 +105,7 @@ try
 		case LIBIRC_RFC_RPL_YOURHOST:             handle_yourhost(msg);                return;
 		case LIBIRC_RFC_RPL_CREATED:              handle_created(msg);                 return;
 		case LIBIRC_RFC_RPL_MYINFO:               handle_myinfo(msg);                  return;
-		case LIBIRC_RFC_RPL_BOUNCE:               handle_bounce(msg);                  return;
+		case LIBIRC_RFC_RPL_BOUNCE:               handle_isupport(msg);                return;
 
 		case LIBIRC_RFC_RPL_NAMREPLY:             handle_namreply(msg);                return;
 		case LIBIRC_RFC_RPL_ENDOFNAMES:           handle_endofnames(msg);              return;
@@ -127,6 +127,7 @@ try
 		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 return;
 		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               return;
 
+		case LIBIRC_RFC_ERR_UNKNOWNMODE:          handle_unknownmode(msg);             return;
 		case LIBIRC_RFC_ERR_CHANOPRIVSNEEDED:     handle_chanoprivsneeded(msg);        return;
 		case LIBIRC_RFC_ERR_ERRONEUSNICKNAME:     handle_erroneusnickname(msg);        return;
 		case LIBIRC_RFC_ERR_BANNEDFROMCHAN:       handle_bannedfromchan(msg);          return;
@@ -195,9 +196,9 @@ void Bot::handle_myinfo(const Msg &msg)
 }
 
 
-void Bot::handle_bounce(const Msg &msg)
+void Bot::handle_isupport(const Msg &msg)
 {
-	log_handle(msg,"BOUNCE");
+	log_handle(msg,"ISUPPORT");
 
 	Sess &sess = get_sess();
 	Server &server = sess.server;
@@ -728,6 +729,12 @@ void Bot::handle_endofnames(const Msg &msg)
 void Bot::handle_bannedfromchan(const Msg &msg)
 {
 	log_handle(msg,"BANNED FROM CHAN");
+}
+
+
+void Bot::handle_unknownmode(const Msg &msg)
+{
+	log_handle(msg,"UNKNOWN MODE");
 }
 
 
