@@ -62,8 +62,23 @@
 #include "chans.h"
 
 
-class Bot : public std::mutex                               // Locked during irclib event handling
-
+/**
+ * Primary libircbot object
+ *
+ * Usage:
+ *  0. #include this file, and only this file, in your project.
+ *	1. Override the given virtual handle_* functions in the protected section.
+ *	2. Fill in an Ident options structure (ident.h) and instance of this bot in your project.
+ *	3. Operate the controls:
+ *		conn() - initiate the connection to server
+ *		run() - runs the event processing
+ *		
+ * This class is protected by a simple mutex:
+ *	- Mutex is locked when handling events.
+ *		+ The handlers you override operate under this lock.
+ *  - If you access this class asynchronously outside of the handler stack you must lock.
+ */
+class Bot : public std::mutex
 {
 	Adb adb;
 	Sess sess;
@@ -86,10 +101,9 @@ class Bot : public std::mutex                               // Locked during irc
 	Chans &get_chans()                                      { return chans;                       }
 	Users &get_users()                                      { return users;                       }
 
-	// [RECV] Handlers for user
+	// [RECV] Main interface for users of this library
 	virtual void handle_privmsg(const Msg &m, User &u) {}
 	virtual void handle_notice(const Msg &m, User &u) {}
-
 	virtual void handle_chanmsg(const Msg &m, Chan &c, User &u) {}
 	virtual void handle_cnotice(const Msg &m, Chan &c, User &u) {}
 	virtual void handle_kick(const Msg &m, Chan &c, User &u) {}

@@ -48,7 +48,6 @@ SPQF_FMT( QUIETLIST,         SELFNAME, CHANNAME, MODECODE, BANMASK,  OPERATOR, T
 
 class Msg
 {
-
 	using Params = std::vector<std::string>;
 
 	uint32_t code;

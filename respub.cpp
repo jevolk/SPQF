@@ -264,8 +264,7 @@ void ResPublica::handle_vote_cancel(const Msg &msg,
 		chan << user << "You can't cancel a vote by " << vote.get_user() << "." << flush;
 		return;
 	}
-
-	if(vote.total() > 0)
+	else if(vote.total() > 0)
 	{
 		chan << user << "You can't cancel after a vote has been cast." << flush;
 		return;
