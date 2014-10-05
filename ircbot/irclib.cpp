@@ -9,7 +9,7 @@
 #include "bot.h"
 
 
-Callbacks bot_cbs;        // Event handler globals for libircclient (irclib.h)
+irc::bot::Callbacks irc::bot::bot_cbs;        // Event handler globals for libircclient (irclib.h)
 
 
 template<class event_t>
@@ -28,7 +28,7 @@ try
 		return;
 	}
 
-	Bot &bot = *static_cast<Bot *>(ctx);
+	irc::bot::Bot &bot = *static_cast<irc::bot::Bot *>(ctx);
 	bot(event,origin,params,count);
 }
 catch(const std::exception &e)
@@ -86,7 +86,7 @@ void handler_named(irc_session_t *const session,
 }
 
 
-Callbacks::Callbacks(void)
+irc::bot::Callbacks::Callbacks(void)
 {
 	event_numeric         = &handler_numeric;
 	event_unknown         = &handler_named;

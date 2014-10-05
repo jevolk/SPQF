@@ -209,7 +209,7 @@ void Sess::call(Func&& func,
 	// Loop to reattempt for certain library errors
 	for(size_t i = 0; i < CALL_MAX_ATTEMPTS; i++) try
 	{
-		::irc_call(get(),func,std::forward<Args>(args)...);
+		irc_call(get(),func,std::forward<Args>(args)...);
 		return;
 	}
 	catch(const Exception &e)
@@ -243,7 +243,7 @@ bool Sess::call(std::nothrow_t,
                 Func&& func,
                 Args&&... args)
 {
-	return ::irc_call(std::nothrow,get(),func,std::forward<Args>(args)...);
+	return irc_call(std::nothrow,get(),func,std::forward<Args>(args)...);
 }
 
 

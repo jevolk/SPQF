@@ -6,10 +6,15 @@
  */
 
 
+// libstd
 #include <condition_variable>
 #include <thread>
 
+// libircbot irc::bot::
 #include "ircbot/bot.h"
+
+// SPQF
+using namespace irc::bot;
 #include "vote.h"
 #include "votes.h"
 #include "voting.h"

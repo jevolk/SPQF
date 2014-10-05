@@ -6,12 +6,17 @@
  */
 
 
+// libstd
 #include <signal.h>
 #include <forward_list>
 #include <condition_variable>
 #include <thread>
 
+// libircbot irc::bot::
 #include "ircbot/bot.h"
+
+// SPQF
+using namespace irc::bot;
 #include "vote.h"
 #include "votes.h"
 #include "voting.h"
@@ -19,7 +24,7 @@
 
 
 // Pointer to instance for signals
-static Bot *bot;
+static irc::bot::Bot *instance;
 
 static
 void handle_sig(const int sig)
@@ -30,8 +35,8 @@ void handle_sig(const int sig)
 		case SIGTERM:  printf("TERMINATE...\n");  break;
 	}
 
-	if(bot)
-		bot->quit();
+	if(instance)
+		instance->quit();
 }
 
 
@@ -44,22 +49,22 @@ try
 		return -1;
 	}
 
-	struct Ident id;
+	struct irc::bot::Ident id;
 	id["hostname"] = argv[1];
 	id["port"] = argc > 2? argv[2] : "6667";
 	id["nickname"] = argc > 3? argv[3] : "ResPublica";
 	for(int i = 4; i < argc; i++)
 		id.autojoin.emplace_back(argv[i]);
 
-	Callbacks &cbs = bot_cbs;                  // irclib.cpp extern callbacks structure
-	ResPublica bot(id,cbs);                    // Create instance of the bot
-	::bot = &bot;                              // Set pointer for sighandlers
+	irc::bot::Callbacks &cbs = bot_cbs;        // irclib.cpp extern callbacks structure
+	ResPublica instance(id,cbs);               // Create instance of the bot
+	::instance = &instance;                    // Set pointer for sighandlers
 	signal(SIGINT,&handle_sig);                // Register handler for ctrl-c
 	signal(SIGTERM,&handle_sig);               // Register handler for term
-	bot.conn();                                // Connect to server (may throw)
-	bot.run();                                 // Loops in foreground forever
+	instance.conn();                           // Connect to server (may throw)
+	instance.run();                            // Loops in foreground forever
 }
-catch(const Exception &e)
+catch(const irc::bot::Exception &e)
 {
 	std::cerr << "Exception: " << e << std::endl;
 	return -1;

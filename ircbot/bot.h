@@ -43,7 +43,11 @@
 #include <libircclient.h>
 #include <libirc_rfcnumeric.h>
 
-// ircbot
+
+// irc::bot
+namespace irc {
+namespace bot {
+
 #include "util.h"
 #include "ident.h"
 #include "ldb.h"
@@ -214,4 +218,7 @@ void Bot::operator()(Msg&&... args)
 }
 
 
-#endif // LIBIRCBOT_INCLUDE
+}       // namespace bot
+}       // namespace irc
+
+#endif  // LIBIRCBOT_INCLUDE

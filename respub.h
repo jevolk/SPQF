@@ -6,9 +6,10 @@
  */
 
 
-class ResPublica : public Bot
+class ResPublica : public irc::bot::Bot
 {
 	using Meth = Locutor::Method;
+
 	using Tokens = std::vector<const std::string *>;
 	using Selection = std::forward_list<Tokens::const_iterator>;
 
@@ -57,7 +58,7 @@ class ResPublica : public Bot
 
 template<class... Args>
 ResPublica::ResPublica(Args&&... args):
-Bot(std::forward<Args>(args)...),
+irc::bot::Bot(std::forward<Args>(args)...),
 voting(*this,get_sess(),get_chans(),get_users())
 {
 

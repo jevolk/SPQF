@@ -8,6 +8,8 @@
 
 #include "bot.h"
 
+using namespace irc::bot;
+
 
 Bot::Bot(const Ident &ident,
          irc_callbacks_t &cbs)
@@ -914,8 +916,8 @@ const
 }
 
 
-std::ostream &operator<<(std::ostream &s,
-                         const Bot &b)
+std::ostream &irc::bot::operator<<(std::ostream &s,
+                                   const Bot &b)
 {
 	s << "Session: " << std::endl;
 	s << b.sess << std::endl;
