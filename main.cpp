@@ -56,8 +56,7 @@ try
 	for(int i = 4; i < argc; i++)
 		id.autojoin.emplace_back(argv[i]);
 
-	irc::bot::Callbacks &cbs = bot_cbs;        // irclib.cpp extern callbacks structure
-	ResPublica instance(id,cbs);               // Create instance of the bot
+	ResPublica instance(id);                   // Create instance of the bot
 	::instance = &instance;                    // Set pointer for sighandlers
 	signal(SIGINT,&handle_sig);                // Register handler for ctrl-c
 	signal(SIGTERM,&handle_sig);               // Register handler for term
