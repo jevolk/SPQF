@@ -5,7 +5,6 @@
  *  DISTRIBUTED UNDER THE GNU GENERAL PUBLIC LICENSE (GPL) (see: LICENSE)
  */
 
-#include <chrono>
 
 class Sess
 {
@@ -13,7 +12,7 @@ class Sess
 	Ident ident;
 
 	// libircclient
-	irc_callbacks_t *cbs;
+	Callbacks cbs;
 	irc_session_t *sess;
 
 	// Server data
@@ -24,6 +23,7 @@ class Sess
 
 	irc_session_t *get()                               { return sess;                               }
 	operator irc_session_t *()                         { return get();                              }
+	irc_callbacks_t *get_cbs()                         { return &cbs;                               }
 
 	// Bot handler access
 	friend class Bot;
@@ -35,7 +35,7 @@ class Sess
   public:
 	// State observers
 	const Ident &get_ident() const                     { return ident;                              }
-	const irc_callbacks_t *get_cbs() const             { return cbs;                                }
+	const irc_callbacks_t *get_cbs() const             { return &cbs;                               }
 	const irc_session_t *get() const                   { return sess;                               }
 	operator const irc_session_t *() const             { return get();                              }
 
@@ -64,8 +64,7 @@ class Sess
 	void disconn();
 	void conn();
 
-	Sess(const Ident &id, irc_callbacks_t &cbs, irc_session_t *const &sess);
-	Sess(const Ident &id, irc_callbacks_t &cbs);
+	Sess(const Ident &id, Callbacks &cbs, irc_session_t *const &sess = nullptr);
 	Sess(const Sess &) = delete;
 	Sess &operator=(const Sess &) = delete;
 	~Sess() noexcept;
@@ -76,20 +75,11 @@ class Sess
 
 inline
 Sess::Sess(const Ident &ident,
-           irc_callbacks_t &cbs):
-Sess(ident,cbs,irc_create_session(&cbs))
-{
-
-}
-
-
-inline
-Sess::Sess(const Ident &ident,
-           irc_callbacks_t &cbs,
+           Callbacks &cbs,
            irc_session_t *const &sess):
 ident(ident),
-cbs(&cbs),
-sess(sess),
+cbs(cbs),
+sess(sess? sess : irc_create_session(get_cbs())),
 nick(ident["nickname"])
 {
 
@@ -251,7 +241,7 @@ inline
 std::ostream &operator<<(std::ostream &s,
                          const Sess &ss)
 {
-	s << "Cbs:             " << ss.cbs << std::endl;
+	s << "Cbs:             " << ss.get_cbs() << std::endl;
 	s << "irc_session_t:   " << ss.sess << std::endl;
 	s << "server:          " << ss.server << std::endl;
 	s << "Ident:           " << ss.ident << std::endl;

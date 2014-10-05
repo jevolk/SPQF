@@ -11,11 +11,10 @@
 using namespace irc::bot;
 
 
-Bot::Bot(const Ident &ident,
-         irc_callbacks_t &cbs)
+Bot::Bot(const Ident &ident)
 try:
 adb(ident["dbdir"]),
-sess(ident,cbs),
+sess(ident,callbacks),
 chans(adb,sess),
 users(adb,sess),
 dispatch_thread(&Bot::dispatch_worker,this)

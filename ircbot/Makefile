@@ -47,7 +47,7 @@ $(TARGET): irclib.o bot.o
 	ar rc $@ $^
 	ranlib $@
 
-irclib.o: irclib.cpp irclib.h
+irclib.o: irclib.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 bot.o: bot.cpp *.h

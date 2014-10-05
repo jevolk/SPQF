@@ -9,9 +9,6 @@
 #include "bot.h"
 
 
-irc::bot::Callbacks irc::bot::bot_cbs;        // Event handler globals for libircclient (irclib.h)
-
-
 template<class event_t>
 void handler(irc_session_t *const &session,
              event_t&& event,
@@ -86,27 +83,5 @@ void handler_named(irc_session_t *const session,
 }
 
 
-irc::bot::Callbacks::Callbacks(void)
-{
-	event_numeric         = &handler_numeric;
-	event_unknown         = &handler_named;
-	event_connect         = &handler_named;
-	event_nick            = &handler_named;
-	event_quit            = &handler_named;
-	event_join            = &handler_named;
-	event_part            = &handler_named;
-	event_mode            = &handler_named;
-	event_umode           = &handler_named;
-	event_topic           = &handler_named;
-	event_kick            = &handler_named;
-	event_channel         = &handler_named;
-	event_privmsg         = &handler_named;
-	event_notice          = &handler_named;
-	event_channel_notice  = &handler_named;
-	event_invite          = &handler_named;
-	event_ctcp_req        = &handler_named;
-	event_ctcp_rep        = &handler_named;
-	event_ctcp_action     = &handler_named;
-	//event_dcc_chat_req    = &handler_dcc;
-	//event_dcc_send_req    = &handler_dcc;
-}
+// Event handler globals for libircclient (callbacks.h)
+irc::bot::Callbacks irc::bot::callbacks {&handler_numeric,&handler_named};

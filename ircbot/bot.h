@@ -17,6 +17,7 @@
 #include <map>
 #include <list>
 #include <vector>
+#include <chrono>
 #include <unordered_map>
 #include <algorithm>
 #include <functional>
@@ -49,6 +50,7 @@ namespace irc {
 namespace bot {
 
 #include "util.h"
+#include "callbacks.h"
 #include "ident.h"
 #include "ldb.h"
 #include "mask.h"
@@ -64,7 +66,6 @@ namespace bot {
 #include "chan.h"
 #include "users.h"
 #include "chans.h"
-
 
 /**
  * Primary libircbot object
@@ -194,7 +195,7 @@ class Bot : public std::mutex
 	void run();                                             // Run worker loop
 
 	Bot(void) = delete;
-	Bot(const Ident &ident, irc_callbacks_t &cbs);
+	Bot(const Ident &ident);
 	Bot(Bot &&) = delete;
 	Bot(const Bot &) = delete;
 	Bot &operator=(Bot &&) = delete;
@@ -203,10 +204,6 @@ class Bot : public std::mutex
 
 	friend std::ostream &operator<<(std::ostream &s, const Bot &bot);
 };
-
-
-// irclib.h contains the callbacks depending on a definition of Bot
-#include "irclib.h"
 
 
 template<class... Msg>
@@ -220,5 +217,6 @@ void Bot::operator()(Msg&&... args)
 
 }       // namespace bot
 }       // namespace irc
+
 
 #endif  // LIBIRCBOT_INCLUDE
