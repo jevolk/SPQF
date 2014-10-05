@@ -24,7 +24,7 @@ using namespace irc::bot;
 
 
 // Pointer to instance for signals
-static irc::bot::Bot *instance;
+static Bot *instance;
 
 static
 void handle_sig(const int sig)
@@ -49,10 +49,10 @@ try
 		return -1;
 	}
 
-	struct irc::bot::Ident id;
+	Ident id;
 	id["hostname"] = argv[1];
 	id["port"] = argc > 2? argv[2] : "6667";
-	id["nickname"] = argc > 3? argv[3] : "ResPublica";
+	id["nickname"] = argc > 3? argv[3] : "SPQF";
 	for(int i = 4; i < argc; i++)
 		id.autojoin.emplace_back(argv[i]);
 
@@ -63,7 +63,7 @@ try
 	instance.conn();                           // Connect to server (may throw)
 	instance.run();                            // Loops in foreground forever
 }
-catch(const irc::bot::Exception &e)
+catch(const Exception &e)
 {
 	std::cerr << "Exception: " << e << std::endl;
 	return -1;
