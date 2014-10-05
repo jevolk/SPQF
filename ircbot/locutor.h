@@ -43,18 +43,20 @@ class Locutor
   public:
 	enum Method
 	{
-		PRIVMSG,
 		NOTICE,
+		PRIVMSG,
 		ACTION,
 	};
 
 	static constexpr struct flush_t {} flush {};        // Stream is flushed (sent) to channel
+	static const Method DEFAULT_METHOD = NOTICE;
 
   private:
 	Sess &sess;
 	std::string target;                                 // Target entity name
-	std::ostringstream sendq;                           // State for stream operators
-	Method meth;                                        // Current method state
+	std::ostringstream sendq;                           // Stream buffer for stream operators
+	Method meth;                                        // Stream state for current method
+	colors::FG fg;                                      // Stream state for foreground color
 
   public:
 	const Sess &get_sess() const                        { return sess;                               }
@@ -98,7 +100,9 @@ inline
 Locutor::Locutor(Sess &sess,
                  const std::string &target):
 sess(sess),
-target(target)
+target(target),
+meth(DEFAULT_METHOD),
+fg(colors::FG::BLACK)
 {
 
 
@@ -117,6 +121,7 @@ inline
 Locutor &Locutor::operator<<(const colors::FG &fg)
 {
 	sendq << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
+	this->fg = fg;
 	return *this;
 }
 
@@ -124,7 +129,8 @@ Locutor &Locutor::operator<<(const colors::FG &fg)
 inline
 Locutor &Locutor::operator<<(const colors::BG &bg)
 {
-	sendq << "\x03" << std::setfill('0') << std::setw(2) << int(bg);
+	sendq << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
+	sendq << "," << std::setfill('0') << std::setw(2) << int(bg);
 	return *this;
 }
 
@@ -152,7 +158,7 @@ Locutor &Locutor::operator<<(const flush_t f)
 	{
 		sendq.clear();
 		sendq.str(std::string());
-		meth = PRIVMSG;    // reset stream to default
+		meth = DEFAULT_METHOD;
 	});
 
 	switch(meth)

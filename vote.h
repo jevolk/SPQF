@@ -131,11 +131,18 @@ issue(issue)
 inline
 void Vote::start()
 {
+	using namespace colors;
+
 	starting();
 
 	auto &chan = get_chan();
-	chan << "Vote initiated! You have " << get_duration() << " seconds left to vote! ";
-	chan << "Type: !vote yay or !vote nay" << flush;
+	chan << BOLD << "Voting has started!" << OFF
+	     << " You have " << BOLD << get_duration() << OFF << " seconds to vote! "
+	     << "Type: "
+	     << BOLD << FG::GREEN << "!vote y" << OFF
+	     << " or "
+	     << BOLD << FG::RED << "!vote n" << OFF
+	     << flush;
 }
 
 
@@ -143,37 +150,54 @@ inline
 void Vote::finish()
 try
 {
+	using namespace colors;
+
 	auto &chan = get_chan();
 
 	if(total() < get_min_votes())
 	{
-		chan << "Failed to reach minimum number of votes: ";
-		chan << total() << " of " << get_min_votes() << " required." << flush;
+		chan << "Failed to reach minimum number of votes: "
+		     << BOLD << total() << OFF
+		     << " of "
+		     << BOLD << get_min_votes() << OFF
+		     << " required."
+		     << flush;
+
 		failed();
 		return;
 	}
 
 	if(yay.size() < get_min_yay())
 	{
-		chan << "Failed to reach minimum number of yes votes: ";
-		chan << yay.size() << " of " << get_min_yay() << " required." << flush;
+		chan << "Failed to reach minimum number of yes votes: "
+		     << FG::GREEN << yay.size() << OFF
+		     << " of "
+		     << FG::GREEN << BOLD << get_min_yay() << OFF
+		     << " required."
+		     << flush;
+
 		failed();
 		return;
 	}
 
 	if(yay.size() < required())
 	{
-		chan << "Failed to pass. Yays: " << yay.size() << ". Nays: " << nay.size() << ". ";
-		chan << "Required at least: " << required() << " yays." << flush;
+		chan << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF << "."
+		     << " Yays: " << FG::GREEN << yay.size() << OFF << "."
+		     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
+		     << " Required at least: " << BOLD << required() << OFF << " yays."
+		     << flush;
+
 		failed();
 		return;
 	}
 
 	passed();
 
-	const auto t = tally();
-	chan << "The vote passed with: " << t.first << ", against: " << t.second << " ";
-	chan << "The yays have it!" << flush;
+	chan << FG::WHITE << BG::GREEN << BOLD << "The yays have it." << OFF
+	     << " Yays: " << FG::GREEN << BOLD << yay.size() << OFF << "."
+	     << " Nays: " << FG::RED << nay.size() << OFF << "."
+	     << flush;
 }
 catch(const Exception &e)
 {

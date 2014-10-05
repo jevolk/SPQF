@@ -136,9 +136,10 @@ try
 }
 catch(const std::exception &e)
 {
-	std::cerr << "\033[1;37;41mException:\033[0m [\033[1;31m" << e.what() << "\033[0m]"
+	std::cerr << "\033[1;37;41mDispatch Exception:\033[0m"
+	          << " [\033[1;31m" << e.what() << "\033[0m]"
 	          << " Message: [\033[1;31m" << msg << "\033[0;0m]"
-              << std::endl;
+	          << std::endl;
 }
 
 
