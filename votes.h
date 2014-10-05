@@ -77,7 +77,7 @@ void vote::Kick::passed()
 	const Adoc &cfg = get_cfg();
 
 	if(cfg["kick.if_away"] == "0" && user.is_away())
-		throw Exception("The user is currently away and config.vote.kick.on_away == 0");
+		throw Exception("The user is currently away and config.vote.kick.if_away == 0");
 
 	chan.kick(user,"Voted off the island");
 }
