@@ -37,12 +37,12 @@ LIBPATH = -Lircbot/
 
 
 LIBRARIES = libircbot
-TARGET = respublica
+TARGET = spqf
 
 all: $(LIBRARIES) $(TARGET)
 
 
-respublica: main.o respub.o voting.o help.o
+$(TARGET): main.o respub.o voting.o help.o
 	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
 
 main.o: main.cpp *.h
@@ -64,4 +64,4 @@ libircbot:
 
 clean:
 	$(MAKE) -C ircbot clean
-	rm -f *.o respublica
+	rm -f *.o $(TARGET)
