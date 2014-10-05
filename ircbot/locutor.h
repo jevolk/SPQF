@@ -6,17 +6,41 @@
  */
 
 
-static thread_local int locution_meth_idx;
+namespace colors
+{
+	enum Mode
+	{
+		OFF           = 0x0f,
+		BOLD          = 0x02,
+		COLOR         = 0x03,
+		ITALIC        = 0x09,
+		STRIKE        = 0x13,
+		UNDER         = 0x15,
+		UNDER2        = 0x1f,
+		REVERSE       = 0x16,
+	};
+
+	enum class FG
+	{
+		WHITE,    BLACK,      BLUE,      GREEN,
+		LRED,     RED,        MAGENTA,   ORANGE,
+		YELLOW,   LGREEN,     CYAN,      LCYAN,
+		LBLUE,    LMAGENTA,   GRAY,      LGRAY
+	};
+
+	enum class BG
+	{
+		LGRAY_BLINK,     BLACK,           BLUE,          GREEN,
+		RED,             RED_BLINK,       MAGENTA,       ORANGE,
+		ORANGE_BLINK,    GREEN_BLINK,     CYAN,          CYAN_BLINK,
+		BLUE_BLINK,      MAGENTA_BLINK,   BLACK_BLINK,   LGRAY,
+	};
+}
+
 
 class Locutor
 {
-	Sess &sess;
-	std::string target;                                 // Target entity name
-	std::ostringstream sendq;                           // State for stream operators
-
   public:
-	static constexpr struct flush_t {} flush {};        // Stream is flushed (sent) to channel
-
 	enum Method
 	{
 		PRIVMSG,
@@ -24,6 +48,15 @@ class Locutor
 		ACTION,
 	};
 
+	static constexpr struct flush_t {} flush {};        // Stream is flushed (sent) to channel
+
+  private:
+	Sess &sess;
+	std::string target;                                 // Target entity name
+	std::ostringstream sendq;                           // State for stream operators
+	Method meth;                                        // Current method state
+
+  public:
 	const Sess &get_sess() const                        { return sess;                               }
 	const std::string &get_target() const               { return target;                             }
 	const std::ostringstream &get_sendq() const         { return sendq;                              }
@@ -49,6 +82,9 @@ class Locutor
 	// [SEND] stream interface                          // Defaults back to MSG after every flush
 	Locutor &operator<<(const flush_t f);               // Flush stream to channel
 	Locutor &operator<<(const Method &method);          // Set method for this message
+	Locutor &operator<<(const colors::FG &fg);          // Insert foreground color
+	Locutor &operator<<(const colors::BG &fg);          // Insert background color
+	Locutor &operator<<(const colors::Mode &mode);      // Color controls
 	template<class T> Locutor &operator<<(const T &t);  // Append data to sendq stream
 
 	Locutor(Sess &sess, const std::string &target);
@@ -64,7 +100,7 @@ Locutor::Locutor(Sess &sess,
 sess(sess),
 target(target)
 {
-	locution_meth_idx = std::ios_base::xalloc();
+
 
 }
 
@@ -78,23 +114,25 @@ Locutor &Locutor::operator<<(const T &t)
 
 
 inline
-Locutor &Locutor::operator<<(const flush_t f)
+Locutor &Locutor::operator<<(const colors::FG &fg)
 {
-	const scope reset_stream([&]
-	{
-		sendq.clear();
-		sendq.str(std::string());
-		sendq.iword(locution_meth_idx) = PRIVMSG;    // reset stream to default
-	});
+	sendq << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
+	return *this;
+}
 
-	switch(Method(sendq.iword(locution_meth_idx)))
-	{
-		case ACTION:    me(sendq.str());         break;
-		case NOTICE:    notice(sendq.str());     break;
-		case PRIVMSG:
-		default:        msg(sendq.str());        break;
-	}
 
+inline
+Locutor &Locutor::operator<<(const colors::BG &bg)
+{
+	sendq << "\x03" << std::setfill('0') << std::setw(2) << int(bg);
+	return *this;
+}
+
+
+inline
+Locutor &Locutor::operator<<(const colors::Mode &mode)
+{
+	sendq << (unsigned char)mode;
 	return *this;
 }
 
@@ -102,7 +140,29 @@ Locutor &Locutor::operator<<(const flush_t f)
 inline
 Locutor &Locutor::operator<<(const Method &meth)
 {
-	sendq.iword(locution_meth_idx) = meth;
+	this->meth = meth;
+	return *this;
+}
+
+
+inline
+Locutor &Locutor::operator<<(const flush_t f)
+{
+	const scope reset_stream([&]
+	{
+		sendq.clear();
+		sendq.str(std::string());
+		meth = PRIVMSG;    // reset stream to default
+	});
+
+	switch(meth)
+	{
+		case ACTION:    me(sendq.str());         break;
+		case NOTICE:    notice(sendq.str());     break;
+		case PRIVMSG:
+		default:        msg(sendq.str());        break;
+	}
+
 	return *this;
 }
 
