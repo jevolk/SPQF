@@ -244,7 +244,7 @@ void ResPublica::handle_vote_help(const Msg &msg,
 	const std::string &what = toks.size()? *toks.at(0) : "";
 	const Tokens subtoks = subtokenize(toks);
 
-	Locutor &out = chan; // TODO: user or chan?
+	Locutor &out = user;
 
 	switch(hash(what))
 	{
