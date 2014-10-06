@@ -114,7 +114,7 @@ Msg::Msg(const uint32_t &code,
          const char *const &origin,
          const char **const &params,
          const size_t &count):
-Msg(0,
+Msg(code,
     origin? origin : std::string(),
     {params,params+count})
 {

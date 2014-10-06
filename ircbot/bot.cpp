@@ -660,7 +660,6 @@ void Bot::handle_privmsg(const Msg &msg)
 void Bot::handle_notice(const Msg &msg)
 {
 	using namespace fmt::NOTICE;
-	using boost::starts_with;
 
 	log_handle(msg,"NOTICE");
 
@@ -670,7 +669,8 @@ void Bot::handle_notice(const Msg &msg)
 	if(msg.from_nickserv())
 	{
 		Sess &sess = get_sess();
-		if(!sess.is_identified() && starts_with(msg[1],"You are now identified"))
+		if(!sess.is_identified() &&
+		   msg[1].find("You are now identified") != std::string::npos)
 		{
 			sess.set_identified(true);
 
