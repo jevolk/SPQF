@@ -11,6 +11,7 @@ Requirements:
 	* Boost:
 		* tokenizer
 		* lexical_cast
+		* algorithm
 		* property_tree, json_parser
 		* locale (linkage)
 
