@@ -32,6 +32,7 @@ class Chans
 	Chan &join(const std::string &name);               // Add channel with join or return existing
 	bool del(const std::string &name)                  { return chans.erase(name);                  }
 	bool del(const Chan &chan)                         { return del(chan.get_name());               }
+	void autojoin();                                   // Joins all channels in the autojoin list
 
 	Chans(Adb &adb, Sess &sess);
 
@@ -47,6 +48,15 @@ sess(sess)
 {
 
 
+}
+
+
+inline
+void Chans::autojoin()
+{
+	const Ident &id = sess.get_ident();
+	for(const auto &chan : id.autojoin)
+		join(chan);
 }
 
 

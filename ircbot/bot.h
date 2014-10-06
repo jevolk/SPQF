@@ -32,6 +32,7 @@
 #include <boost/locale.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
@@ -166,6 +167,7 @@ class Bot : public std::mutex
 	void handle_nick(const Msg &m);
 	void handle_quit(const Msg &m);
 
+	void handle_authenticate(const Msg &m);
 	void handle_account(const Msg &m);
 	void handle_cap(const Msg &m);
 	void handle_myinfo(const Msg &m);

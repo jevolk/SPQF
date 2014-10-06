@@ -20,6 +20,7 @@ class Sess
 	std::set<std::string> caps;                        // registered extended capabilities
 	std::string nick;                                  // NICK reply
 	Mode mode;                                         // UMODE
+	bool identified;                                   // Identified to services
 
 	irc_session_t *get()                               { return sess;                               }
 	operator irc_session_t *()                         { return get();                              }
@@ -29,6 +30,8 @@ class Sess
 	friend class Bot;
 	void set_nick(const std::string &nick)             { this->nick = nick;                         }
 	void delta_mode(const std::string &str)            { mode.delta(str);                           }
+	void set_identified(const bool &identified)        { this->identified = identified;             }
+	void authenticate(const std::string &str);         // IRCv3 AUTHENTICATE
 	void cap_req(const std::string &cap);              // IRCv3 CAP REQ
 	void cap_end();                                    // IRCv3 CAP END
 
@@ -39,6 +42,15 @@ class Sess
 	const irc_session_t *get() const                   { return sess;                               }
 	operator const irc_session_t *() const             { return get();                              }
 
+	// IRC Observers
+	const Server &get_server() const                   { return server;                             }
+	const std::string &get_nick() const                { return nick;                               }
+	const Mode &get_mode() const                       { return mode;                               }
+	const bool &is_identified() const                  { return identified;                         }
+	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
+	bool is_desired_nick() const                       { return nick == ident["nickname"];          }
+	bool is_conn() const;
+
 	// [SEND] libircclient call wrapper
 	template<class F, class... A> void call(F&& f, A&&... a);
 	template<class F, class... A> bool call(std::nothrow_t, F&& f, A&&... a);
@@ -46,16 +58,10 @@ class Sess
 	// [SEND] Raw send
 	template<class... VA_LIST> void quote(const char *const &fmt, VA_LIST&&... ap);
 
-	// IRC Observers
-	const Server &get_server() const                   { return server;                             }
-	const std::string &get_nick() const                { return nick;                               }
-	const Mode &get_mode() const                       { return mode;                               }
-	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
-	bool is_desired_nick() const                       { return nick == ident["nickname"];          }
-	bool is_conn() const;
-
-	// [SEND] IRC Controls
+	// [SEND] Primary commands
 	void help(const std::string &topic);               // IRCd response goes to console
+	void chanserv(const std::string &str);             // /cs
+	void nickserv(const std::string &str);             // /ns
 	void umode(const std::string &mode);               // Send umode update
 	void umode();                                      // Request this->mode to be updated
 	void cap_list();                                   // IRCv3 update our capabilities list
@@ -63,6 +69,9 @@ class Sess
 	void quit();                                       // Quit to server
 	void disconn();
 	void conn();
+
+	// [SEND] Baked commands
+	void identify(const std::string &acct, const std::string &pass);
 
 	Sess(const Ident &id, Callbacks &cbs, irc_session_t *const &sess = nullptr);
 	Sess(const Sess &) = delete;
@@ -92,6 +101,16 @@ Sess::~Sess() noexcept
 {
 	if(sess)
 		irc_destroy_session(get());
+}
+
+
+inline
+void Sess::identify(const std::string &acct,
+                    const std::string &pass)
+{
+	std::stringstream ss;
+	ss << "identify" << " " << acct << " " << pass;
+	nickserv(ss.str());
 }
 
 
@@ -131,9 +150,30 @@ void Sess::umode()
 
 
 inline
+void Sess::nickserv(const std::string &str)
+{
+	quote("ns %s",str.c_str());
+}
+
+
+inline
+void Sess::chanserv(const std::string &str)
+{
+	quote("cs %s",str.c_str());
+}
+
+
+inline
 void Sess::umode(const std::string &mode)
 {
 	call(irc_cmd_user_mode,mode.c_str());
+}
+
+
+inline
+void Sess::help(const std::string &topic)
+{
+	quote("HELP %s",topic.c_str());
 }
 
 
@@ -154,7 +194,14 @@ void Sess::cap_list()
 inline
 void Sess::cap_req(const std::string &cap)
 {
-	quote("CAP REQ %s",cap.c_str());
+	quote("CAP REQ :%s",cap.c_str());
+}
+
+
+inline
+void Sess::authenticate(const std::string &str)
+{
+	quote("AUTHENTICATE %s",str.c_str());
 }
 
 
@@ -162,13 +209,6 @@ inline
 void Sess::cap_end()
 {
 	quote("CAP END");
-}
-
-
-inline
-void Sess::help(const std::string &topic)
-{
-	quote("HELP %s",topic.c_str());
 }
 
 

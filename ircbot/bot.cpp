@@ -98,6 +98,7 @@ try
 			case hash("QUIT"):             handle_quit(msg);                return;
 			case hash("NICK"):             handle_nick(msg);                return;
 			case hash("CAP"):              handle_cap(msg);                 return;
+			case hash("AUTHENTICATE"):     handle_authenticate(msg);        return;
 			case hash("CONNECT"):          handle_conn(msg);                return;
 			default:                       handle_unhandled(msg);           return;
 		}
@@ -149,14 +150,20 @@ void Bot::handle_conn(const Msg &msg)
 	log_handle(msg,"CONNECT");
 
 	Sess &sess = get_sess();
+
 	sess.cap_ls();
-	sess.cap_req("account-notify");
-	sess.cap_req("extended-join");
+	sess.cap_req("account-notify extended-join");
 	sess.cap_end();
 
-	const Ident &id = get_sess().get_ident();
-	for(const auto &chan : id.autojoin)
-		join(chan);
+	const Ident &id = sess.get_ident();
+	if(!id["ns_acct"].empty() && !id["ns_pass"].empty())
+	{
+		sess.identify(id["ns_acct"],id["ns_pass"]);
+		return;
+	}
+
+	Chans &chans = get_chans();
+	chans.autojoin();
 }
 
 
@@ -218,6 +225,14 @@ void Bot::handle_isupport(const Msg &msg)
 
 		server.cfg.emplace(key,val);
 	}
+}
+
+
+void Bot::handle_authenticate(const Msg &msg)
+{
+	log_handle(msg,"AUTHENTICATE");
+
+
 }
 
 
@@ -645,11 +660,26 @@ void Bot::handle_privmsg(const Msg &msg)
 void Bot::handle_notice(const Msg &msg)
 {
 	using namespace fmt::NOTICE;
+	using boost::starts_with;
 
 	log_handle(msg,"NOTICE");
 
 	if(msg.from_server())
 		return;
+
+	if(msg.from_nickserv())
+	{
+		Sess &sess = get_sess();
+		if(!sess.is_identified() && starts_with(msg[1],"You are now identified"))
+		{
+			sess.set_identified(true);
+
+			Chans &chans = get_chans();
+			chans.autojoin();
+		}
+
+		return;
+	}
 
 	Users &users = get_users();
 	User &user = users.get(msg[NICKNAME]);

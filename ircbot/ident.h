@@ -15,6 +15,10 @@ struct Ident : public std::map<std::string,std::string>
 		{"username",   "SPQF"                         },
 		{"fullname",   "Senate & People of Freenode"  },
 
+		// Nickserv identification
+		{"ns_acct",    ""                             },
+		{"ns_pass",    ""                             },
+
 		// Server info
 		{"hostname",   "chat.freenode.net"            },
 		{"port",       "6667"                         },
