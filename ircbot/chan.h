@@ -61,7 +61,7 @@ class Chan : public Locutor,
 	Mode &get_mode(const std::string &nick);
 	Mode &get_mode(const User &user);
 
-    // [RECV] Bot:: handler's call these to update state
+	// [RECV] Bot:: handler's call these to update state
 	friend class Bot;
 	Topic &get_topic()                                      { return _topic;                        }
 	void set_joined(const bool &joined)                     { this->joined = joined;                }

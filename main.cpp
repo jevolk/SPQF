@@ -36,7 +36,10 @@ void handle_sig(const int sig)
 	}
 
 	if(instance)
+	{
+		const std::lock_guard<std::mutex> lock(*instance);
 		instance->quit();
+	}
 }
 
 

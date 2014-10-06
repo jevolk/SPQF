@@ -71,7 +71,7 @@ namespace bot {
  * Primary libircbot object
  *
  * Usage:
- *  0. #include this file, and only this file, in your project.
+ *	0. #include this file, and only this file, in your project.
  *	1. Override the given virtual handle_* functions in the protected section.
  *	2. Fill in an Ident options structure (ident.h) and instance of this bot in your project.
  *	3. Operate the controls:
