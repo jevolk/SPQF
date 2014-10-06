@@ -85,12 +85,10 @@ Msg::Msg(const char *const &name,
          const char *const &origin,
          const char **const &params,
          const size_t &count):
-code(0),
-name(name),
-origin(origin),
-params(params,params+count)
+Msg(name,
+    origin? origin : std::string(),
+    {params,params+count})
 {
-
 
 }
 
@@ -114,11 +112,10 @@ Msg::Msg(const uint32_t &code,
          const char *const &origin,
          const char **const &params,
          const size_t &count):
-code(code),
-origin(origin),
-params(params,params+count)
+Msg(0,
+    origin? origin : std::string(),
+    {params,params+count})
 {
-
 
 }
 
