@@ -182,6 +182,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		// Actual vote types
 		case hash("kick"):     handle_vote_kick(msg,chan,user,subtoks);          break;
 		case hash("invite"):   handle_vote_invite(msg,chan,user,subtoks);        break;
+		case hash("topic"):    handle_vote_topic(msg,chan,user,subtoks);         break;
 		default:               handle_vote_opine(msg,chan,user,toks);            break;
 	}
 }
@@ -344,6 +345,18 @@ void ResPublica::handle_vote_opine(const Msg &msg,
 
 
 }
+
+
+void ResPublica::handle_vote_topic(const Msg &msg,
+                                  Chan &chan,
+                                  User &user,
+                                  const Tokens &toks)
+{
+	const std::string issue = detokenize(toks);
+	voting.motion<vote::Topic>(chan,user,issue);
+}
+
+
 
 
 void ResPublica::handle_notice(const Msg &msg,

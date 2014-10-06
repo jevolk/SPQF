@@ -45,6 +45,14 @@ namespace vote
 	  public:
 		template<class... Args> Invite(Args&&... args);
 	};
+
+	class Topic: public Vote
+	{
+		void passed();
+
+	  public:
+		template<class... Args> Topic(Args&&... args);
+	};
 }
 
 
@@ -126,6 +134,23 @@ void vote::Mode::starting()
 	const Deltas deltas(get_issue(),serv);
 
 	Chan &chan = get_chan();
+}
+
+
+
+template<class... Args>
+vote::Topic::Topic(Args&&... args):
+Vote(std::forward<Args>(args)...)
+{
+
+}
+
+ 
+inline
+void vote::Topic::passed()
+{
+	Chan &chan = get_chan();
+	chan.topic(get_issue());
 }
 
 
