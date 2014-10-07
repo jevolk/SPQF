@@ -51,6 +51,7 @@ class Vote
 	std::set<std::string> nay;                  // Accounts voting No
 
   public:
+	virtual const char *type() const            { return "";                                        }
 	auto &get_id() const                        { return id;                                        }
 	auto &get_cfg() const                       { return cfg;                                       }
 	auto &get_chan_name() const                 { return chan;                                      }
@@ -72,6 +73,7 @@ class Vote
 	auto plurality() const -> size_t            { return ceil(float(total()) * get_plurality());    }
 	auto minimum() const                        { return std::max(get_min_votes(),get_min_yay());   }
 	auto required() const                       { return std::max(get_min_yay(),plurality());       }
+	bool disabled() const;
 
 	friend Locutor &operator<<(Locutor &l, const Vote &v);    // Appends formatted #ID to channel stream
 
@@ -139,6 +141,9 @@ inline
 void Vote::start()
 {
 	using namespace colors;
+
+	if(disabled())
+		throw Exception("Votes of this type are disabled by the configuration.");
 
 	starting();
 
@@ -254,6 +259,17 @@ Vote::Stat Vote::vote(const Ballot &ballot,
 		default:
 			throw Exception("Ballot type not accepted.");
 	}
+}
+
+
+inline
+bool Vote::disabled()
+const
+{
+	if(!cfg.has_child(type()))
+		return false;
+
+	return cfg.get_child(type()).get("disable","0") == "1";
 }
 
 
