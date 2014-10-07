@@ -55,7 +55,7 @@ void Bot::dispatch_worker()
 	while(1)
 	{
 		const Msg msg = dispatch_next();
-		const std::lock_guard<std::mutex> lock(*this);
+		const std::unique_lock<Bot> lock(*this);
 		dispatch(msg);
 	}
 

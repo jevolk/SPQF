@@ -8,29 +8,37 @@
 
 class Voting
 {
-	using id_t = size_t;
+	using id_t = Vote::id_t;
 
 	Bot &bot;
 	Sess &sess;
 	Chans &chans;
 	Users &users;
-	std::map<std::string, std::unique_ptr<Vote>> motions;   // Quick motions   : channel => vote
-	std::map<id_t, std::unique_ptr<Vote>> votes;            // Standing votes  : id => vote
-	std::multimap<std::string, size_t> voteidx;             // Index of votes  : chan => id
-	std::condition_variable sem;                            // Notify worker of new work
+
+	std::map<id_t, std::unique_ptr<Vote>> votes;        // Standing votes  : id => vote
+	std::multimap<std::string, id_t> chanidx;           // Index of votes  : chan => id
+	std::multimap<std::string, id_t> useridx;           // Index of votes  : acct => id
+	std::condition_variable sem;                        // Notify worker of new work
 
   public:
-	auto has_motion(const std::string &chan) const -> bool  { return motions.count(chan);          }
-	auto has_vote(const id_t &id) const -> bool             { return votes.count(id);              }
+	auto has_vote(const Chan &chan) const -> bool       { return chanidx.count(chan.get_name());   }
+	auto has_vote(const User &user) const -> bool       { return useridx.count(user.get_acct());   }
+	auto has_vote(const id_t &id) const -> bool         { return votes.count(id);                  }
+	auto num_votes(const Chan &chan) const              { return chanidx.count(chan.get_name());   }
+	auto num_votes(const User &user) const              { return useridx.count(user.get_acct());   }
+	auto num_votes() const                              { return votes.size();                     }
 
-	auto num_motions() const                                { return motions.size();               }
-	auto num_votes() const                                  { return votes.size();                 }
-	auto num_votes(const std::string &chan) const           { return voteidx.count(chan);          }
+	const id_t &get_id(const Chan &chan) const;         // Throws if more than one vote in channel
+	const id_t &get_id(const User &chan) const;         // Throws if more than one vote for user
 
-	auto &get(const id_t &id) const;
-	auto &get(const Chan &chan) const;
+	const Vote &get(const id_t &id) const;
+	const Vote &get(const Chan &chan) const             { return get(get_id(chan));                }
+	const Vote &get(const User &user) const             { return get(get_id(user));                }
 
   private:
+	void del(const decltype(votes.begin()) &it);
+	void del(const id_t &id);
+
 	void call_finish(Vote &vote) noexcept;
 	void poll_motions();
 	void poll_votes();
@@ -39,11 +47,22 @@ class Voting
 	std::thread thread;
 
   public:
-	template<class Vote, class... Args> id_t vote(Chan &chan, Args&&... args);
-	template<class Vote, class... Args> void motion(Chan &chan, Args&&... args);
+	Vote &get(const id_t &id);
+	Vote &get(const Chan &chan)                         { return get(get_id(chan));               }
+	Vote &get(const User &user)                         { return get(get_id(user));               }
 
-	void cancel(const id_t &id);
-	void cancel(const Chan &chan);
+	void for_each(const Chan &chan, const std::function<void (const Vote &vote)> &closure) const;
+	void for_each(const User &user, const std::function<void (const Vote &vote)> &closure) const;
+	void for_each(const std::function<void (const Vote &vote)> &closure) const;
+
+	void for_each(const Chan &chan, const std::function<void (Vote &vote)> &closure);
+	void for_each(const User &user, const std::function<void (Vote &vote)> &closure);
+	void for_each(const std::function<void (Vote &vote)> &closure);
+
+	void cancel(const id_t &id, const Chan &chan, const User &user);
+
+	// Initiate a vote
+	template<class Vote, class... Args> Vote &motion(Args&&... args);
 
 	Voting(Bot &bot, Sess &sess, Chans &chans, Users &users);
 	Voting(const Voting &) = delete;
@@ -52,92 +71,181 @@ class Voting
 };
 
 
-inline
-void Voting::cancel(const Chan &chan)
-{
-	//auto &vote = get(chan);
-	//vote.cancel();
-	motions.erase(chan.get_name());
-}
-
-
-inline
-void cancel(const id_t &id)
-{
-
-
-}
-
-
 template<class Vote,
          class... Args>
-void Voting::motion(Chan &chan,
-                    Args&&... args)
-try
-{
-	const std::string &name = chan.get_name();
-	const auto iit = motions.emplace(name,std::make_unique<Vote>(sess,chans,users,chan,std::forward<Args>(args)...));
-	const bool &inserted = iit.second;
-
-	if(inserted) try
-	{
-		auto &vote = *iit.first->second;
-		vote.start();
-		sem.notify_one();
-	}
-	catch(const std::exception &e)
-	{
-		motions.erase(name);
-		throw;
-	}
-	else throw Exception("A motion is already active for this channel");
-}
-catch(const Exception &e)
-{
-	chan << "Vote is not valid: " << e << Chan::flush;
-	return;
-}
-
-
-template<class Vote,
-         class... Args>
-Voting::id_t Voting::vote(Chan &chan,
-                          Args&&... args)
+Vote &Voting::motion(Args&&... args)
 try
 {
 	id_t id; do
 	{
-		id = rand() % 9999;
+		id = rand() % 999;
 	}
 	while(has_vote(id));
 
-	const auto iit = motions.emplace(id,std::make_unique<Vote>(sess,chans,users,chan,std::forward<Args>(args)...));
+	const auto iit = votes.emplace(id,std::make_unique<Vote>(id,sess,chans,users,std::forward<Args>(args)...));
 	const bool &inserted = iit.second;
 
 	if(inserted) try
 	{
-		const scope notify([&]{ sem.notify_one(); });
-		auto &vote = *iit.first->second;
+		Vote &vote = dynamic_cast<Vote &>(*iit.first->second);
+		chanidx.emplace(vote.get_chan_name(),id);
+		useridx.emplace(vote.get_user_acct(),id);
 		vote.start();
 		sem.notify_one();
+		return vote;
 	}
 	catch(const std::exception &e)
 	{
-		votes.erase(id);
+		del(id);
 		throw;
 	}
-
-	return id;
+	else throw Exception("Failed to track this vote (internal error)");
 }
 catch(const Exception &e)
 {
-	chan << "Vote is not valid: " << e << Chan::flush;
-	return;
+	std::stringstream ss;
+	ss << "Vote is not valid: " << e;
+	throw Exception(ss.str());
 }
 
 
 inline
-auto &Voting::get(const id_t &id)
+void Voting::cancel(const id_t &id,
+                    const Chan &chan,
+                    const User &user)
+{
+	Vote &vote = get(id);
+
+	if(user.get_acct() != vote.get_user_acct())
+	{
+		std::stringstream ss;
+		ss << "You can't cancel a vote by " << vote.get_user_acct() << ".";
+		throw Exception(ss.str());
+	}
+
+	if(vote.total() > 0)
+		throw Exception("You can't cancel after a vote has been cast.");
+
+	vote.cancel();
+	del(id);
+}
+
+
+inline
+void Voting::for_each(const std::function<void (Vote &vote)> &closure)
+{
+	for(const auto &p : votes)
+	{
+		Vote &vote = *p.second;
+		closure(vote);
+	}
+}
+
+
+inline
+void Voting::for_each(const User &user,
+                      const std::function<void (Vote &vote)> &closure)
+{
+	auto pit = useridx.equal_range(user.get_acct());
+	for(; pit.first != pit.second; ++pit.first) try
+	{
+		const auto &id = pit.first->second;
+		Vote &vote = *votes.at(id);
+		closure(vote);
+	}
+	catch(const std::out_of_range &e)
+	{
+		std::cerr << "Voting index user[" << user.get_acct() << "]: "
+		          << e.what() << std::endl;
+	}
+}
+
+
+inline
+void Voting::for_each(const Chan &chan,
+                      const std::function<void (Vote &vote)> &closure)
+{
+	auto pit = useridx.equal_range(chan.get_name());
+	for(; pit.first != pit.second; ++pit.first) try
+	{
+		const auto &id = pit.first->second;
+		Vote &vote = *votes.at(id);
+		closure(vote);
+	}
+	catch(const std::out_of_range &e)
+	{
+		std::cerr << "Voting index chan[" << chan.get_name() << "]: "
+		          << e.what() << std::endl;
+	}
+}
+
+
+inline
+void Voting::for_each(const std::function<void (const Vote &vote)> &closure)
+const
+{
+	for(const auto &p : votes)
+	{
+		const Vote &vote = *p.second;
+		closure(vote);
+	}
+}
+
+
+inline
+void Voting::for_each(const User &user,
+                      const std::function<void (const Vote &vote)> &closure)
+const
+{
+	auto pit = useridx.equal_range(user.get_acct());
+	for(; pit.first != pit.second; ++pit.first) try
+	{
+		const auto &id = pit.first->second;
+		const Vote &vote = *votes.at(id);
+		closure(vote);
+	}
+	catch(const std::out_of_range &e)
+	{
+		std::cerr << "Voting index user[" << user.get_acct() << "]: "
+		          << e.what() << std::endl;
+	}
+}
+
+
+inline
+void Voting::for_each(const Chan &chan,
+                      const std::function<void (const Vote &vote)> &closure)
+const
+{
+	auto pit = useridx.equal_range(chan.get_name());
+	for(; pit.first != pit.second; ++pit.first) try
+	{
+		const auto &id = pit.first->second;
+		const Vote &vote = *votes.at(id);
+		closure(vote);
+	}
+	catch(const std::out_of_range &e)
+	{
+		std::cerr << "Voting index chan[" << chan.get_name() << "]: "
+		          << e.what() << std::endl;
+	}
+}
+
+
+inline
+Vote &Voting::get(const id_t &id)
+try
+{
+	return *votes.at(id);
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("There is no active vote with that ID.");
+}
+
+
+inline
+const Vote &Voting::get(const id_t &id)
 const try
 {
 	return *votes.at(id);
@@ -149,12 +257,32 @@ catch(const std::out_of_range &e)
 
 
 inline
-auto &Voting::get(const Chan &chan)
-const try
+const Voting::id_t &Voting::get_id(const User &user)
+const
 {
-	return *motions.at(chan.get_name());
+	if(num_votes(user) > 1)
+		throw Exception("There are multiple votes initiated by this user. Specify an ID#.");
+
+	const auto it = useridx.find(user.get_acct());
+	if(it == useridx.end())
+		throw Exception("There are no active votes initiated by this user.");
+
+	const auto &id = it->second;
+	return id;
 }
-catch(const std::out_of_range &e)
+
+
+inline
+const Voting::id_t &Voting::get_id(const Chan &chan)
+const
 {
-	throw Exception("There are no active votes on this channel.");
+	if(num_votes(chan) > 1)
+		throw Exception("There are multiple votes active in this channel. Specify an ID#.");
+
+	const auto it = chanidx.find(chan.get_name());
+	if(it == chanidx.end())
+		throw Exception("There are no active votes in this channel.");
+
+	const auto &id = it->second;
+	return id;
 }

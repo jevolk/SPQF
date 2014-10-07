@@ -41,14 +41,7 @@ void ResPublica::handle_join(const Msg &msg,
                              Chan &chan,
                              User &user)
 {
-	const Adoc doc = chan.get();
-	std::cout << doc << std::endl;
 
-	const Adoc config = chan["config"];
-	std::cout << config << std::endl;
-
-	const Adoc configvote = chan["config.vote"];
-	std::cout << configvote << std::endl;
 
 }
 
@@ -168,21 +161,21 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("yea"):
 		case hash("Y"):
 		case hash("y"):
-		                       handle_vote_ballot(msg,chan,user,Vote::YAY);      break;
+		                       handle_vote_ballot(msg,chan,user,subtoks,Vote::YAY);      break;
 		case hash("nay"):
 		case hash("no"):
 		case hash("N"):
 		case hash("n"):
-		                       handle_vote_ballot(msg,chan,user,Vote::NAY);      break;
-		case hash("poll"):     handle_vote_poll(msg,chan,user,subtoks);          break;
-		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);          break;
-		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);        break;
-		case hash("config"):   handle_vote_config_dump(msg,chan,user,toks);      break;
+		                       handle_vote_ballot(msg,chan,user,subtoks,Vote::NAY);      break;
+		case hash("poll"):     handle_vote_poll(msg,chan,user,subtoks);                  break;
+		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);                  break;
+		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);                break;
+		case hash("config"):   handle_vote_config_dump(msg,chan,user,toks);              break;
 
 		// Actual vote types
-		case hash("kick"):     handle_vote_kick(msg,chan,user,subtoks);          break;
-		case hash("invite"):   handle_vote_invite(msg,chan,user,subtoks);        break;
-		default:               handle_vote_opine(msg,chan,user,toks);            break;
+		case hash("kick"):     handle_vote_kick(msg,chan,user,subtoks);                  break;
+		case hash("invite"):   handle_vote_invite(msg,chan,user,subtoks);                break;
+		default:               handle_vote_opine(msg,chan,user,toks);                    break;
 	}
 }
 
@@ -190,22 +183,50 @@ void ResPublica::handle_vote(const Msg &msg,
 void ResPublica::handle_vote_ballot(const Msg &msg,
                                     Chan &chan,
                                     User &user,
+                                    const Tokens &toks,
                                     const Vote::Ballot &ballot)
+{
+	if(!toks.empty())
+	{
+		const auto &id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
+		auto &vote = voting.get(id);
+		handle_vote_ballot(msg,chan,user,toks,ballot,vote);
+	} else {
+		auto &vote = voting.get(chan);
+		handle_vote_ballot(msg,chan,user,toks,ballot,vote);
+	}
+}
+
+
+void ResPublica::handle_vote_ballot(const Msg &msg,
+                                    Chan &chan,
+                                    User &user,
+                                    const Tokens &toks,
+                                    const Vote::Ballot &ballot,
+                                    Vote &vote)
 try
 {
-	auto &vote = voting.get(chan);
+	using namespace colors;
 
 	switch(vote.vote(ballot,user))
 	{
-		case Vote::ADDED:    chan << user << "Thanks for casting your vote!";    break;
-		case Vote::CHANGED:  chan << user << "You have changed your vote.";      break;
+		case Vote::ADDED:
+			chan << user << "Thanks for casting your vote on #" << BOLD << vote.get_id() << OFF << "!";
+			break;
+
+		case Vote::CHANGED:
+			chan << user << "You have changed your vote on #" << BOLD << vote.get_id() << OFF << "!";
+			break;
 	}
 
 	chan << flush;
 }
 catch(const Exception &e)
 {
-	chan << user << "Your vote was not accepted: " << e << flush;
+	using namespace colors;
+
+	chan << user << "Your vote was not accepted for #" << BOLD << vote.get_id() << OFF
+	             << ": " << e << flush;
 	return;
 }
 
@@ -217,13 +238,40 @@ void ResPublica::handle_vote_poll(const Msg &msg,
 {
 	using namespace colors;
 
-	const auto &vote = voting.get(chan);
+	const Tokens subtoks = subtokenize(toks);
+
+	if(toks.empty())
+	{
+		voting.for_each(chan,[&]
+		(const Vote &vote)
+		{
+			const auto &id = vote.get_id();
+			handle_vote_poll(msg,chan,user,subtoks,id);
+		});
+
+		return;
+	}
+
+	const auto &id = boost::lexical_cast<Vote::id_t>(toks.at(0));
+	handle_vote_poll(msg,chan,user,subtoks,id);
+}
+
+
+void ResPublica::handle_vote_poll(const Msg &msg,
+                                  Chan &chan,
+                                  User &user,
+                                  const Tokens &toks,
+                                  const id_t &id)
+{
+	using namespace colors;
+
+	const auto &vote = voting.get(id);
 	const auto tally = vote.tally();
 
-	chan << "Current tally: ";
-	chan << BOLD << "YAY" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " ";
-	chan << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " ";
-	chan << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
+	chan << "Current tally #" << BOLD << id << OFF << ": "
+	     << BOLD << "YAY" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " "
+	     << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " "
+	     << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
 
 	if(vote.total() < vote.minimum())
 		chan << BOLD << (vote.minimum() - vote.total()) << OFF << " more votes are required. ";
@@ -262,21 +310,14 @@ void ResPublica::handle_vote_cancel(const Msg &msg,
                                     Chan &chan,
                                     User &user,
                                     const Tokens &toks)
+try
 {
-	Vote &vote = voting.get(chan);
-	if(user.get_acct() != vote.get_user())
-	{
-		chan << user << "You can't cancel a vote by " << vote.get_user() << "." << flush;
-		return;
-	}
-	else if(vote.total() > 0)
-	{
-		chan << user << "You can't cancel after a vote has been cast." << flush;
-		return;
-	}
-
-	vote.cancel();
-	voting.cancel(chan);
+	const Vote::id_t &id = boost::lexical_cast<Vote::id_t>(toks.at(0));
+	voting.cancel(id,chan,user);
+}
+catch(const Exception &e)
+{
+	chan << user << e << flush;
 }
 
 
