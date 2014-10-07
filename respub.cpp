@@ -90,11 +90,11 @@ try
 }
 catch(const Exception &e)
 {
-	chan << "Error with your command: " << e << flush;
+	chan << user << "Failed: " << e << flush;
 }
 catch(const std::out_of_range &e)
 {
-	chan << "You did not supply required arguments. Use the help command." << flush;
+	chan << user << "You did not supply required arguments. Use the help command." << flush;
 }
 
 
