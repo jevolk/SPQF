@@ -316,7 +316,7 @@ void ResPublica::handle_vote_cancel(const Msg &msg,
                                     const Tokens &toks)
 try
 {
-	const Vote::id_t &id = boost::lexical_cast<Vote::id_t>(toks.at(0));
+	const Vote::id_t &id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
 	voting.cancel(id,chan,user);
 }
 catch(const Exception &e)
