@@ -156,16 +156,17 @@ void ResPublica::handle_vote(const Msg &msg,
 	const Tokens subtoks = subtokenize(toks);
 	switch(hash(subcmd))
 	{
+		// Ballot
 		case hash("yes"):
 		case hash("yea"):
 		case hash("Y"):
-		case hash("y"):
-		                       handle_vote_ballot(msg,chan,user,subtoks,Vote::YEA);      break;
+		case hash("y"):        handle_vote_ballot(msg,chan,user,subtoks,Vote::YEA);      break;
 		case hash("nay"):
 		case hash("no"):
 		case hash("N"):
-		case hash("n"):
-		                       handle_vote_ballot(msg,chan,user,subtoks,Vote::NAY);      break;
+		case hash("n"):        handle_vote_ballot(msg,chan,user,subtoks,Vote::NAY);      break;
+
+		// Administrative
 		case hash("poll"):     handle_vote_poll(msg,chan,user,subtoks);                  break;
 		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);                  break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);                break;
@@ -187,11 +188,16 @@ void ResPublica::handle_vote_ballot(const Msg &msg,
                                     User &user,
                                     const Tokens &toks,
                                     const Vote::Ballot &ballot)
+try
 {
 	static constexpr auto&& id_cast = boost::lexical_cast<Vote::id_t,std::string>;
 	auto &vote = !toks.empty()? voting.get(id_cast(*toks.at(0))):
 	                            voting.get(chan);
 	vote.vote(ballot,user);
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw Exception("You must supply the vote ID as a number");
 }
 
 
@@ -212,12 +218,10 @@ void ResPublica::handle_vote_poll(const Msg &msg,
 			const auto &id = vote.get_id();
 			handle_vote_poll(msg,chan,user,subtoks,id);
 		});
-
-		return;
+	} else {
+		const auto &id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
+		handle_vote_poll(msg,chan,user,subtoks,id);
 	}
-
-	const auto &id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
-	handle_vote_poll(msg,chan,user,subtoks,id);
 }
 
 
