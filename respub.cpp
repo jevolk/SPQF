@@ -156,12 +156,11 @@ void ResPublica::handle_vote(const Msg &msg,
 	const Tokens subtoks = subtokenize(toks);
 	switch(hash(subcmd))
 	{
-		case hash("yay"):
 		case hash("yes"):
 		case hash("yea"):
 		case hash("Y"):
 		case hash("y"):
-		                       handle_vote_ballot(msg,chan,user,subtoks,Vote::YAY);      break;
+		                       handle_vote_ballot(msg,chan,user,subtoks,Vote::YEA);      break;
 		case hash("nay"):
 		case hash("no"):
 		case hash("N"):
@@ -234,14 +233,14 @@ void ResPublica::handle_vote_poll(const Msg &msg,
 	const auto tally = vote.tally();
 
 	chan << "Current tally #" << BOLD << id << OFF << ": "
-	     << BOLD << "YAY" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " "
+	     << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " "
 	     << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " "
 	     << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
 
 	if(vote.total() < vote.minimum())
 		chan << BOLD << (vote.minimum() - vote.total()) << OFF << " more votes are required. ";
 	else if(tally.first < vote.required())
-		chan << BOLD << (vote.required() < tally.first) << OFF << " more yays are required to pass. ";
+		chan << BOLD << (vote.required() < tally.first) << OFF << " more yeas are required to pass. ";
 	else
 		chan << "As it stands, the motion will pass.";
 
