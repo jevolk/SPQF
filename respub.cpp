@@ -172,6 +172,9 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);                break;
 
 		// Actual vote types
+		case hash("ban"):      handle_vote_ban(msg,chan,user,subtoks);                   break;
+		case hash("unquiet"):  handle_vote_unquiet(msg,chan,user,subtoks);               break;
+		case hash("quiet"):    handle_vote_quiet(msg,chan,user,subtoks);                 break;
 		case hash("kick"):     handle_vote_kick(msg,chan,user,subtoks);                  break;
 		case hash("invite"):   handle_vote_invite(msg,chan,user,subtoks);                break;
 		case hash("topic"):    handle_vote_topic(msg,chan,user,subtoks);                 break;
@@ -363,6 +366,36 @@ void ResPublica::handle_vote_kick(const Msg &msg,
 {
 	const std::string &target = *toks.at(0);
 	voting.motion<vote::Kick>(chan,user,target);
+}
+
+
+void ResPublica::handle_vote_ban(const Msg &msg,
+                                 Chan &chan,
+                                 User &user,
+                                 const Tokens &toks)
+{
+	const std::string &target = *toks.at(0);
+	voting.motion<vote::Ban>(chan,user,target);
+}
+
+
+void ResPublica::handle_vote_quiet(const Msg &msg,
+                                   Chan &chan,
+                                   User &user,
+                                   const Tokens &toks)
+{
+	const std::string &target = *toks.at(0);
+	voting.motion<vote::Quiet>(chan,user,target);
+}
+
+
+void ResPublica::handle_vote_unquiet(const Msg &msg,
+                                     Chan &chan,
+                                     User &user,
+                                     const Tokens &toks)
+{
+	const std::string &target = *toks.at(0);
+	voting.motion<vote::UnQuiet>(chan,user,target);
 }
 
 
