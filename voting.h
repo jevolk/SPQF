@@ -165,7 +165,7 @@ inline
 void Voting::for_each(const Chan &chan,
                       const std::function<void (Vote &vote)> &closure)
 {
-	auto pit = useridx.equal_range(chan.get_name());
+	auto pit = chanidx.equal_range(chan.get_name());
 	for(; pit.first != pit.second; ++pit.first) try
 	{
 		const auto &id = pit.first->second;
@@ -217,7 +217,7 @@ void Voting::for_each(const Chan &chan,
                       const std::function<void (const Vote &vote)> &closure)
 const
 {
-	auto pit = useridx.equal_range(chan.get_name());
+	auto pit = chanidx.equal_range(chan.get_name());
 	for(; pit.first != pit.second; ++pit.first) try
 	{
 		const auto &id = pit.first->second;
