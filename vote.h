@@ -205,13 +205,13 @@ try
 		return;
 	}
 
-	passed();
-
 	chan << (*this) << ": "
 	     << FG::WHITE << BG::GREEN << BOLD << "The yays have it." << OFF
 	     << " Yays: " << FG::GREEN << BOLD << yay.size() << OFF << "."
 	     << " Nays: " << FG::RED << nay.size() << OFF << "."
 	     << flush;
+
+	passed();
 }
 catch(const Exception &e)
 {
