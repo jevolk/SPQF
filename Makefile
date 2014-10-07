@@ -1,5 +1,4 @@
 
-
 CC = g++
 WFLAGS = -pedantic                             \
          -Wall                                 \
@@ -35,15 +34,26 @@ CCFLAGS = -std=c++14
 LDFLAGS = -lircbot -lircclient -lleveldb -lboost_locale -lpthread
 LIBPATH = -Lircbot/
 
-
 LIBRARIES = libircbot
-TARGET = spqf
-
-all: $(LIBRARIES) $(TARGET)
+TARGETS = spqf helpgen
 
 
-$(TARGET): main.o respub.o voting.o help.o
+all:  $(LIBRARIES) $(TARGETS)
+
+clean:
+	$(MAKE) -C ircbot clean
+	rm -f *.o $(TARGETS)
+
+
+libircbot:
+	$(MAKE) -C ircbot
+
+spqf: main.o respub.o voting.o help.o
 	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
+
+helpgen: helpgen.o help.o
+	$(CC) -o $@ $(CCFLAGS) $^ $(WFLAGS)
+
 
 main.o: main.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
@@ -54,14 +64,8 @@ respub.o: respub.cpp *.h
 voting.o: voting.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
-help.o: help.cpp *.h
+help.o: help.cpp help.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
-
-libircbot:
-	$(MAKE) -C ircbot
-
-
-clean:
-	$(MAKE) -C ircbot clean
-	rm -f *.o $(TARGET)
+helpgen.o: helpgen.cpp help.h
+	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
