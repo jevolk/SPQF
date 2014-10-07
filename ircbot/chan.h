@@ -83,8 +83,10 @@ class Chan : public Locutor,
 	void invite(const std::string &nick);
 	void topic(const std::string &topic);
 	void kick(const User &user, const std::string &reason = "");
-	bool quiet(const User &user, const Quiet::Type &type = Quiet::Type::HOST);
-	bool ban(const User &user, const Ban::Type &type = Ban::Type::HOST);
+	bool quiet(const User &user, const Quiet::Type &type);
+	bool quiet(const User &user);
+	bool ban(const User &user, const Ban::Type &type);
+	bool ban(const User &user);
 	size_t unquiet(const User &user);
 	size_t unban(const User &user);
 	void part();                                            // Leave channel
@@ -170,72 +172,66 @@ void Chan::who(const std::string &flags)
 inline
 size_t Chan::unquiet(const User &u)
 {
-	std::stringstream m, s;
-	m << "-";
+	Deltas deltas;
 
 	if(quiets.has(u.mask(Mask::NICK)))
-	{
-		m << "q";
-		s << u.mask(Mask::NICK) << " ";
-	}
+		deltas.emplace_back('-','q',u.mask(Mask::NICK));
 
 	if(quiets.has(u.mask(Mask::HOST)))
-	{
-		m << "q";
-		s << u.mask(Mask::HOST) << " ";
-	}
+		deltas.emplace_back('-','q',u.mask(Mask::HOST));
 
 	if(u.is_logged_in() && quiets.has(u.mask(Mask::ACCT)))
-	{
-		m << "q";
-		s << u.mask(Mask::ACCT) << " ";
-	}
+		deltas.emplace_back('-','q',u.mask(Mask::ACCT));
 
-	const size_t ret = m.str().size() - 1;
-
-	if(ret)
-	{
-		m << " " << s.str();
-		mode(m.str());
-	}
-
-	return ret;
+	mode(string(deltas));
+	return deltas.size();
 }
 
 
 inline
 size_t Chan::unban(const User &u)
 {
-	std::stringstream m, s;
-	m << "-";
+	Deltas deltas;
 
 	if(bans.has(u.mask(Mask::NICK)))
-	{
-		m << "b";
-		s << u.mask(Mask::NICK) << " ";
-	}
+		deltas.emplace_back('-','b',u.mask(Mask::NICK));
 
 	if(bans.has(u.mask(Mask::HOST)))
-	{
-		m << "b";
-		s << u.mask(Mask::HOST) << " ";
-	}
+		deltas.emplace_back('-','b',u.mask(Mask::HOST));
 
 	if(u.is_logged_in() && bans.has(u.mask(Mask::ACCT)))
-	{
-		m << "b";
-		s << u.mask(Mask::ACCT) << " ";
-	}
+		deltas.emplace_back('-','b',u.mask(Mask::ACCT));
 
-	const size_t ret = m.str().size() - 1;
+	mode(string(deltas));
+	return deltas.size();
+}
 
-	if(ret)
-	{
-		m << " " << s.str();
-		mode(m.str());
-	}
 
-	return ret;
+inline
+bool Chan::ban(const User &u)
+{
+	Deltas deltas;
+	deltas.emplace_back('+','b',u.mask(Mask::HOST));
+
+	if(u.is_logged_in())
+		deltas.emplace_back('+','b',u.mask(Mask::ACCT));
+
+	mode(string(deltas));
+	return true;
+}
+
+
+inline
+bool Chan::quiet(const User &u)
+{
+	Deltas deltas;
+	deltas.emplace_back('+','q',u.mask(Mask::HOST));
+
+	if(u.is_logged_in())
+		deltas.emplace_back('+','q',u.mask(Mask::ACCT));
+
+	mode(string(deltas));
+	return true;
 }
 
 
@@ -243,9 +239,8 @@ inline
 bool Chan::ban(const User &user,
                const Ban::Type &type)
 {
-	std::stringstream s;
-	s << "+b " << user.mask(type);
-	mode(s.str());
+	Delta delta('+','b',user.mask(type));
+	mode(string(delta));
 	return true;
 }
 
@@ -254,9 +249,8 @@ inline
 bool Chan::quiet(const User &user,
                  const Quiet::Type &type)
 {
-	std::stringstream s;
-	s << "+q " << user.mask(type);
-	mode(s.str());
+	Delta delta('+','q',user.mask(type));
+	mode(string(delta));
 	return true;
 }
 

@@ -22,6 +22,15 @@ size_t hash(const std::string &str,
 }
 
 
+template<class T>
+std::string string(const T &t)
+{
+	std::stringstream s;
+	s << t;
+	return s.str();
+}
+
+
 inline
 std::string tolower(const std::string &str)
 {

@@ -11,6 +11,7 @@ struct Delta : std::tuple<bool,char,Mask>
 	enum Field                                   { SIGN, MODE, MASK                                 };
 	enum Valid                                   { VALID, NOT_FOUND, NEED_MASK, CANT_MASK           };
 
+	static char sign(const bool &b)              { return b? '+' : '-';                             }
 	static bool sign(const char &s);             // throws on not + or -
 	static bool needs_inv_mask(const char &m);   // Modes that take an argument which is not a Mask
 
@@ -33,6 +34,7 @@ struct Delta : std::tuple<bool,char,Mask>
 	void validate_user(const Server &s) const;
 
 	Delta(const bool &sign, const char &mode, const Mask &mask);
+	Delta(const char &sign, const char &mode, const Mask &mask);
 	Delta(const std::string &mode_delta, const Mask &mask);
 	Delta(const std::string &delta);
 
@@ -146,10 +148,13 @@ const
 
 inline
 std::ostream &operator<<(std::ostream &s,
-                         const Deltas &d)
+                         const Deltas &deltas)
 {
-	for(const Delta &delta : d)
-		s << "[" << delta << "]";
+	for(const Delta &d : deltas)
+		s << d.sign(std::get<Delta::SIGN>(d)) << std::get<Delta::MODE>(d);
+
+	for(const Delta &d : deltas)
+		s << " " << std::get<Delta::MASK>(d);
 
 	return s;
 }
@@ -185,6 +190,17 @@ Delta((mode_delta.at(0) == '+'? true:
 catch(const std::out_of_range &e)
 {
 	throw Exception("Bad mode delta: Need two characters: [+/-][mode] (had less).");
+}
+
+
+inline
+Delta::Delta(const char &sc,
+             const char &mode,
+             const Mask &mask):
+Delta(sign(sc),mode,mask)
+{
+
+
 }
 
 
@@ -303,13 +319,13 @@ bool Delta::sign(const char &s)
 
 inline
 std::ostream &operator<<(std::ostream &s,
-                         const Delta &delta)
+                         const Delta &d)
 {
-	s << (std::get<Delta::SIGN>(delta)? '+' : '-');
-	s << std::get<Delta::MODE>(delta);
+	s << d.sign(std::get<Delta::SIGN>(d));
+	s << std::get<Delta::MODE>(d);
 
-	if(!std::get<Delta::MASK>(delta).empty())
-		s << " " << std::get<Delta::MASK>(delta);
+	if(!std::get<Delta::MASK>(d).empty())
+		s << " " << std::get<Delta::MASK>(d);
 
 	return s;
 }
