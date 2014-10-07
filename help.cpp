@@ -45,6 +45,6 @@ extern const char *const help_vote_mode = \
 "** The syntax for initiating a vote is: <mode string> [target ...]\n"\
 "** Example: !vote +q $a:foobar     : Quiets based on the account foobar.\n"\
 "** Example: !vote +r               : Set the channel for registered users only.\n"\
-"** Example: !vote +b <nickname>    : Ban based on a nickname's $a: and/or *!*@host all in one.\n"\
-"** Example: !vote +b <*!*@host>    : Set ban based *!*@host mask.\n"\
+"** Example: !vote +b nick!*@*      : Ban based on a nick\n"\
+"** Example: !vote +b *!*@host      : Set ban based *!*@host mask.\n"\
 ;
