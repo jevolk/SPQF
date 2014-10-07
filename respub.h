@@ -24,6 +24,7 @@ class ResPublica : public irc::bot::Bot
 
 	// Vote cmd stack
 	void handle_vote_opine(const Msg &m, Chan &c, User &u, const Tokens &t);
+	void handle_vote_topic(const Msg &m, Chan &c, User &u, const Tokens &toks);
 	void handle_vote_invite(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_kick(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_mode(const Msg &m, Chan &c, User &u, const Tokens &t);
