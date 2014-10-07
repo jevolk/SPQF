@@ -81,7 +81,7 @@ namespace bot {
  * This class is protected by a simple mutex:
  *	- Mutex is locked when handling events.
  *		+ The handlers you override operate under this lock.
- *  - If you access this class asynchronously outside of the handler stack you must lock.
+ *	- If you access this class asynchronously outside of the handler stack you must lock.
  */
 class Bot : public std::mutex
 {

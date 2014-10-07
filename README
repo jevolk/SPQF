@@ -3,20 +3,19 @@ GETTING STARTED:
 
 Requirements:
 	* Development toolset:
-		* C++11 for libircbot
-		* C++14 for SPQF
-		* GNU gcc preferred
-		* libstdc++
+		* C++11 for libircbot   (tested: g++ 4.9.1)
+		* C++14 for SPQF        (tested: g++ 4.9.1)
+		* libstdc++             (tested: 4.9)
 
-	* Boost:
+	* Boost:                    (tested: 1.54)
 		* tokenizer
 		* lexical_cast
 		* property_tree, json_parser
-		* locale (linkage)
+		* locale (linkage required)
 
-	* libircclient >= 1.8 (linkage)
+	* libircclient >= 1.8 (linkage required)
 
-	* LevelDB (linkage)
+	* LevelDB (linkage required)
 
 
 Compile:
