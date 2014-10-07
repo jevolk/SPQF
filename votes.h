@@ -10,6 +10,8 @@ namespace vote
 {
 	class Config : public Vote
 	{
+		const char *type() const    { return "config";   }
+
 		std::string key;
 		std::string val;
 
@@ -22,6 +24,8 @@ namespace vote
 
 	class Mode : public Vote
 	{
+		const char *type() const    { return "mode";     }
+
 		void passed();
 		void starting();
 
@@ -31,6 +35,8 @@ namespace vote
 
 	class Kick : public Vote
 	{
+		const char *type() const    { return "kick";     }
+
 		void starting();
 		void passed();
 
@@ -40,6 +46,8 @@ namespace vote
 
 	class Invite : public Vote
 	{
+		const char *type() const    { return "invite";   }
+
 		void passed();
 
 	  public:
@@ -48,6 +56,8 @@ namespace vote
 
 	class Topic : public Vote
 	{
+		const char *type() const    { return "topic";    }
+
 		void passed();
 
 	  public:
@@ -56,6 +66,8 @@ namespace vote
 
 	class Opine : public Vote
 	{
+		const char *type() const    { return "opine";    }
+
 		void passed();
 
 	  public:
