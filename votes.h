@@ -73,8 +73,8 @@ inline
 void vote::Kick::passed()
 {
 	Chan &chan = get_chan();
-	const User &user = get_users().get(get_issue());
 	const Adoc &cfg = get_cfg();
+	const User &user = get_users().get(get_issue());
 
 	if(cfg["kick.if_away"] == "0" && user.is_away())
 		throw Exception("The user is currently away and config.vote.kick.if_away == 0");

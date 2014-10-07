@@ -34,25 +34,31 @@ struct DefaultConfig : public Adoc
 
 class Vote
 {
+  public:
+	using id_t = size_t;
+	enum Stat                                   { ADDED, CHANGED,                                   };
+	enum Ballot                                 { YAY, NAY,                                         };
+
+  private:
 	const Sess &sess;
 	Chans &chans;
 	Users &users;
 
+	id_t id;                                    // Index id of this vote
 	Adoc cfg;                                   // Configuration of this vote
 	time_t began;                               // Time vote was constructed
 	std::string chan;                           // Name of the channel
-	std::string user;                           // Initiating user ($a name)
+	std::string user;                           // $a name of initiating user
 	std::string issue;                          // "Issue" input of the vote
 	std::set<std::string> yay;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
 
   public:
-	enum Stat                                   { ADDED, CHANGED,                                   };
-	enum Ballot                                 { YAY, NAY,                                         };
-
+	auto &get_id() const                        { return id;                                        }
 	auto &get_cfg() const                       { return cfg;                                       }
-	auto &get_chan() const                      { return chans.get(chan);                           }
-	auto &get_user() const                      { return user;                                      }
+	auto &get_chan_name() const                 { return chan;                                      }
+	auto &get_user_acct() const                 { return user;                                      }
+	auto &get_chan() const                      { return chans.get(get_chan_name());                }
 	auto &get_began() const                     { return began;                                     }
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yay() const                       { return yay;                                       }
@@ -76,7 +82,7 @@ class Vote
 	auto &get_sess() const                      { return sess;                                      }
 	auto &get_users()                           { return users;                                     }
 	auto &get_chans()                           { return chans;                                     }
-	auto &get_chan()                            { return chans.get(chan);                           }
+	auto &get_chan()                            { return chans.get(get_chan_name());                }
 
 	// Subclass throws from these for abortions
 	virtual void passed() {}
@@ -94,13 +100,14 @@ class Vote
 	void finish();
 	void start();
 
-	Vote(const Sess &sess, Chans &chans, Users &users, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
+	Vote(const id_t &id, const Sess &sess, Chans &chans, Users &users, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
 	virtual ~Vote() = default;
 };
 
 
 inline
-Vote::Vote(const Sess &sess,
+Vote::Vote(const id_t &id,
+           const Sess &sess,
            Chans &chans,
            Users &users,
            Chan &chan,
@@ -110,6 +117,7 @@ Vote::Vote(const Sess &sess,
 sess(sess),
 chans(chans),
 users(users),
+id(id),
 cfg([&]() -> Adoc
 {
 	if(cfg.empty())
@@ -136,12 +144,12 @@ void Vote::start()
 	starting();
 
 	auto &chan = get_chan();
-	chan << BOLD << "Voting has started!" << OFF
+	chan << BOLD << "Voting has started!" << OFF << " Issue " << BOLD << "#" << get_id() << OFF << "."
 	     << " You have " << BOLD << get_duration() << OFF << " seconds to vote! "
 	     << "Type: "
-	     << BOLD << FG::GREEN << "!vote y" << OFF
+	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
 	     << " or "
-	     << BOLD << FG::RED << "!vote n" << OFF
+	     << BOLD << FG::RED << "!vote n" << OFF << " " << BOLD << get_id() << OFF
 	     << flush;
 }
 
