@@ -124,6 +124,7 @@ try
 		case LIBIRC_RFC_RPL_WHOWASUSER:           handle_whowasuser(msg);              return;
 		case LIBIRC_RFC_RPL_CHANNELMODEIS:        handle_channelmodeis(msg);           return;
 		case LIBIRC_RFC_RPL_TOPIC:                handle_topic(msg);                   return;
+		case LIBIRC_RFC_RPL_NOTOPIC:              handle_notopic(msg);                 return;
 		case 333     /* RPL_TOPICWHOTIME */:      handle_topicwhotime(msg);            return;
 		case 329     /* RPL_CREATIONTIME */:      handle_creationtime(msg);            return;
 		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 return;
@@ -580,6 +581,18 @@ void Bot::handle_topic(const Msg &msg)
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
 	std::get<Chan::Topic::TEXT>(chan.get_topic()) = msg[TEXT];
+}
+
+
+void Bot::handle_notopic(const Msg &msg)
+{
+	using namespace fmt::NOTOPIC;
+
+	log_handle(msg,"NOTOPIC");
+
+	Chans &chans = get_chans();
+	Chan &chan = chans.get(msg[CHANNAME]);
+	chan.get_topic() = Chan::Topic{};
 }
 
 

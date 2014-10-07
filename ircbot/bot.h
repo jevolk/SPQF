@@ -134,6 +134,7 @@ class Bot : public std::mutex
 	void handle_banlist(const Msg &m);
 	void handle_cnotice(const Msg &m);
 	void handle_chanmsg(const Msg &m);
+	void handle_notopic(const Msg &m);
 	void handle_topic(const Msg &m);
 	void handle_mode(const Msg &m);
 	void handle_kick(const Msg &m);
