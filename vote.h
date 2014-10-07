@@ -20,6 +20,8 @@ struct DefaultConfig : public Adoc
 	DefaultConfig()
 	{
 		// config.vote
+		put("max_active",16);
+		put("max_per_user",2);
 		put("min_votes",1);
 		put("min_yay",1);
 		put("min_turnout",0.00);
@@ -57,6 +59,7 @@ class Vote
 	auto &get_chan_name() const                 { return chan;                                      }
 	auto &get_user_acct() const                 { return user;                                      }
 	auto &get_chan() const                      { return chans.get(get_chan_name());                }
+	auto &get_user() const                      { return users.get(get_user_acct());                }
 	auto &get_began() const                     { return began;                                     }
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yay() const                       { return yay;                                       }
@@ -64,7 +67,6 @@ class Vote
 	auto get_plurality() const                  { return cfg.get<float>("plurality");               }
 	auto get_min_votes() const                  { return cfg.get<size_t>("min_votes");              }
 	auto get_min_yay() const                    { return cfg.get<size_t>("min_yay");                }
-	auto get_min_turnout() const                { return cfg.get<size_t>("min_turnout");            }
 	auto get_duration() const                   { return cfg.get<time_t>("duration");               }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
 	auto remaining() const                      { return get_duration() - elapsed();                }
@@ -83,7 +85,6 @@ class Vote
 	auto &get_sess() const                      { return sess;                                      }
 	auto &get_users()                           { return users;                                     }
 	auto &get_chans()                           { return chans;                                     }
-	auto &get_chan()                            { return chans.get(get_chan_name());                }
 
 	// Subclass throws from these for abortions
 	virtual void passed() {}
@@ -97,9 +98,9 @@ class Vote
 	Stat vote(const Ballot &ballot, User &user);
 
 	// Called by the asynchronous Voting worker only
+	void start(const size_t &num_votes, const size_t &num_for_chan, const size_t &num_for_user);
 	void cancel();
 	void finish();
-	void start();
 
 	Vote(const id_t &id, const Sess &sess, Chans &chans, Users &users, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
 	virtual ~Vote() = default;
@@ -138,12 +139,21 @@ issue(issue)
 
 
 inline
-void Vote::start()
+void Vote::start(const size_t &num_votes,
+                 const size_t &num_for_chan,
+                 const size_t &num_for_user)
 {
 	using namespace colors;
+	using limits = std::numeric_limits<size_t>;
 
 	if(disabled())
 		throw Exception("Votes of this type are disabled by the configuration.");
+
+	if(num_for_chan > cfg.get("max_active",limits::max()))
+		throw Exception("Too many active votes for this channel.");
+
+	if(num_for_user > cfg.get("max_per_user",limits::max()))
+		throw Exception("Too many active votes started by you on this channel.");
 
 	starting();
 
