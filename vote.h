@@ -64,7 +64,6 @@ class Vote
 	auto &get_chan_name() const                 { return chan;                                      }
 	auto &get_user_acct() const                 { return user;                                      }
 	auto &get_chan() const                      { return chans.get(get_chan_name());                }
-	auto &get_user() const                      { return users.get(get_user_acct());                }
 	auto &get_began() const                     { return began;                                     }
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yea() const                       { return yea;                                       }
