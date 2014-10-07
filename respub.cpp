@@ -139,7 +139,7 @@ void ResPublica::handle_vote(const Msg &msg,
 	const std::string subcmd = toks.size()? *toks.at(0) : "help";
 
 	// Handle pattern for voting on config
-	if(subcmd.find("config.") == 0)
+	if(subcmd.find("config") == 0)
 	{
 		handle_vote_config(msg,chan,user,toks);
 		return;
@@ -170,7 +170,6 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("poll"):     handle_vote_poll(msg,chan,user,subtoks);                  break;
 		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);                  break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);                break;
-		case hash("config"):   handle_vote_config_dump(msg,chan,user,toks);              break;
 
 		// Actual vote types
 		case hash("kick"):     handle_vote_kick(msg,chan,user,subtoks);                  break;
@@ -322,21 +321,6 @@ catch(const Exception &e)
 }
 
 
-void ResPublica::handle_vote_config_dump(const Msg &msg,
-                                         Chan &chan,
-                                         User &user,
-                                         const Tokens &toks)
-{
-	const Adoc cfg = chan.get("config.vote");
-	if(cfg.empty())
-	{
-		chan << "Channel has no voting configuration." << flush;
-		return;
-	}
-
-	chan << cfg << flush;
-}
-
 
 void ResPublica::handle_vote_config(const Msg &msg,
                                     Chan &chan,
@@ -344,7 +328,21 @@ void ResPublica::handle_vote_config(const Msg &msg,
                                     const Tokens &toks)
 {
 	const std::string issue = detokenize(toks);
-	voting.motion<vote::Config>(chan,user,issue);
+
+	if(issue.find("=") != std::string::npos)
+	{
+		voting.motion<vote::Config>(chan,user,issue);
+		return;
+	}
+
+	const Adoc cfg = chan.get(issue);
+	if(cfg.empty())
+	{
+		chan << "No configuration found here." << flush;
+		return;
+	}
+
+	chan << cfg << flush;
 }
 
 

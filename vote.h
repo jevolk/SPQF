@@ -25,9 +25,6 @@ struct DefaultConfig : public Adoc
 		put("min_turnout",0.00);
 		put("duration",30);
 		put("plurality",0.51);
-
-		// config.vote.kick
-		put("kick.if_away",1);
 	}
 };
 

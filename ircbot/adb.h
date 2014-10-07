@@ -14,6 +14,8 @@ struct Adoc : public boost::property_tree::ptree
 	bool has_child(const std::string &key) const          { return count(key) > 0;                   }
 	bool has(const std::string &key) const                { return !get(key,std::string()).empty();  }
 
+	bool remove(const std::string &key);
+
 	Adoc(const std::string &str = "{}");
 	Adoc(boost::property_tree::ptree &&p):                boost::property_tree::ptree(std::move(p)) {}
 	Adoc(const boost::property_tree::ptree &p):           boost::property_tree::ptree(p) {}
@@ -207,6 +209,29 @@ boost::property_tree::ptree([&str]
 catch(const boost::property_tree::json_parser::json_parser_error &e)
 {
 	throw Exception(e.what());
+}
+
+
+inline
+bool Adoc::remove(const std::string &key)
+{
+	const size_t pos = key.rfind(".");
+	if(pos == std::string::npos)
+		return erase(key);
+
+	const std::string path = key.substr(0,pos);
+	const std::string skey = key.substr(pos+1);
+
+	if(skey.empty())
+		erase(path);
+
+	auto &doc = get_child(path);
+	const bool ret = doc.erase(skey);
+
+	if(doc.empty())
+		erase(path);
+
+	return ret;
 }
 
 

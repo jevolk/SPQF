@@ -96,8 +96,8 @@ void vote::Kick::passed()
 	const Adoc &cfg = get_cfg();
 	const User &user = get_users().get(get_issue());
 
-	if(cfg["kick.if_away"] == "0" && user.is_away())
-		throw Exception("The user is currently away and config.vote.kick.if_away == 0");
+	if(cfg["kick.ignore_away"] == "1" && user.is_away())
+		throw Exception("The user is currently away and config.vote.kick.ignore_away == 1");
 
 	chan.kick(user,"Voted off the island");
 }
@@ -152,30 +152,42 @@ Vote(std::forward<Args>(args)...)
 	static const delim sep("=");
 	const boost::tokenizer<delim> exprs(get_issue(),sep);
 	std::vector<std::string> tokens(exprs.begin(),exprs.end());
-	if(tokens.size() != 2 || tokens.at(0).empty() || tokens.at(1).empty())
-		throw Exception("Invalid syntax to assign a configuration variable.");
 
-	key = tokens.at(0);
-	if(key.back() == ' ')
-		key.pop_back();
+	if(tokens.size() > 8)
+		throw Exception("Path nesting too deep.");
 
-	val = tokens.at(1);
-	if(val.front() == ' ')
-		val.erase(val.begin());
+	if(tokens.size() > 0)
+	{
+		const auto it = std::remove(tokens.at(0).begin(),tokens.at(0).end(),' ');
+		tokens.at(0).erase(it,tokens.at(0).end());
+		key = tokens.at(0);
+	}
+	else throw Exception("Invalid syntax to assign a configuration variable.");
+
+	if(tokens.size() > 1)
+	{
+		const auto it = std::remove(tokens.at(1).begin(),tokens.at(1).end(),' ');
+		tokens.at(1).erase(it,tokens.at(1).end());
+		val = tokens.at(1);
+	}
 }
 
 
 inline
 void vote::Config::starting()
 {
-	const Chan &chan = get_chan();
+	using namespace colors;
+
+	Chan &chan = get_chan();
 	const Adoc &cfg = chan.get();
 
-	if(!cfg.has(key))
-		throw Exception("Variable not found in channel's configuration.");
-
-	if(cfg[key] == val)
+	if(!val.empty() && cfg[key] == val)
 		throw Exception("Variable already set to that value.");
+
+	if(val.empty())
+		chan << "Note: vote deletes variable [" << BOLD << key << OFF << "] "
+		     << BOLD << "and all child variables" << OFF << "."
+		     << flush;
 }
 
 
@@ -184,6 +196,11 @@ void vote::Config::passed()
 {
 	Chan &chan = get_chan();
 	Adoc cfg = chan.get();
-	cfg.put(key,val);
+
+	if(!val.empty())
+		cfg.put(key,val);
+	else if(!cfg.remove(key))
+		throw Exception("The configuration key was not found.");
+
 	chan.set(cfg);
 }
