@@ -11,10 +11,10 @@ extern const char *const help_vote = \
 "*** Voting System:\n"\
 "*** usage:    !vote    <command | issue>       : Initiate a vote for an issue or supply a command...\n"\
 "***           help     [topic]                 : Show this help system.\n"\
-"***           config   [variable ...]          : Show whole config.vote configuration or one or more variables.\n"\
 "***           poll     [#ID]                   : Show the status of a vote, either by ID or the current active motion in the channel.\n"\
 "***           cancel   [#ID]                   : Cancel your vote by ID or whatever you initiated; only if it has not been voted on.\n"\
-"*** issue:    <config.* = value>               : Vote on the voting configuration in this channel.\n"\
+"***           config.$                         : View the configuration of this channel.\n"\
+"*** issue:    config.$ <= [value]>             : Vote on the voting configuration in this channel.\n"\
 "*** issue:    <mode>   [target ...]            : Vote on setting modes for channel or target exactly as if you were an operator.\n"\
 "*** issue:    kick     <nickname>              : Vote to kick a victim from the channel.\n"\
 "*** issue:    invite   <nickname>              : Vote to invite a user to the channel.\n"\
@@ -23,10 +23,12 @@ extern const char *const help_vote = \
 
 extern const char *const help_vote_config = \
 "** Vote on changing various configuration settings.\n"\
-"** The syntax for initiating a vote is: <variable> = <new value>\n"\
-"** The syntax for printing information is: <variable> [variable ...]\n"\
+"** The syntax for printing information is: <variable>\n"\
+"** The syntax for initiating a vote to set: <variable> = <new value>\n"\
+"** The syntax for initiating a vote to delete: <variable> =\n"\
 "** Configuration variables are addressed as config.foo.bar... Voting configuration is config.vote.*"\
 "** Example: !vote config.vote.duration = 10    : Set the duration of a vote to be 10 seconds.\n"\
+"** Example: !vote config.vote.duration =       : Deletes this variable and all children.\n"\
 ;
 
 extern const char *const help_vote_kick = \
