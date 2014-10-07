@@ -24,6 +24,7 @@ class Voting
 	auto has_vote(const Chan &chan) const -> bool       { return chanidx.count(chan.get_name());   }
 	auto has_vote(const User &user) const -> bool       { return useridx.count(user.get_acct());   }
 	auto has_vote(const id_t &id) const -> bool         { return votes.count(id);                  }
+
 	auto num_votes(const Chan &chan) const              { return chanidx.count(chan.get_name());   }
 	auto num_votes(const User &user) const              { return useridx.count(user.get_acct());   }
 	auto num_votes() const                              { return votes.size();                     }
@@ -47,10 +48,6 @@ class Voting
 	std::thread thread;
 
   public:
-	Vote &get(const id_t &id);
-	Vote &get(const Chan &chan)                         { return get(get_id(chan));               }
-	Vote &get(const User &user)                         { return get(get_id(user));               }
-
 	void for_each(const Chan &chan, const std::function<void (const Vote &vote)> &closure) const;
 	void for_each(const User &user, const std::function<void (const Vote &vote)> &closure) const;
 	void for_each(const std::function<void (const Vote &vote)> &closure) const;
@@ -58,6 +55,10 @@ class Voting
 	void for_each(const Chan &chan, const std::function<void (Vote &vote)> &closure);
 	void for_each(const User &user, const std::function<void (Vote &vote)> &closure);
 	void for_each(const std::function<void (Vote &vote)> &closure);
+
+	Vote &get(const id_t &id);
+	Vote &get(const Chan &chan)                         { return get(get_id(chan));               }
+	Vote &get(const User &user)                         { return get(get_id(user));               }
 
 	void cancel(const id_t &id, const Chan &chan, const User &user);
 
@@ -90,7 +91,11 @@ try
 		Vote &vote = dynamic_cast<Vote &>(*iit.first->second);
 		chanidx.emplace(vote.get_chan_name(),id);
 		useridx.emplace(vote.get_user_acct(),id);
-		vote.start();
+
+		const Chan &chan = vote.get_chan();
+		const User &user = vote.get_user();
+		vote.start(num_votes(),num_votes(chan),num_votes(user));
+
 		sem.notify_one();
 		return vote;
 	}
