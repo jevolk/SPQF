@@ -217,7 +217,7 @@ void ResPublica::handle_vote_poll(const Msg &msg,
 		return;
 	}
 
-	const auto &id = boost::lexical_cast<Vote::id_t>(toks.at(0));
+	const auto &id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
 	handle_vote_poll(msg,chan,user,subtoks,id);
 }
 
