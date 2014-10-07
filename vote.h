@@ -23,7 +23,7 @@ struct DefaultConfig : public Adoc
 		put("max_active",16);
 		put("max_per_user",1);
 		put("min_votes",1);
-		put("min_yay",1);
+		put("min_yea",1);
 		put("min_turnout",0.00);
 		put("duration",30);
 		put("plurality",0.51);
@@ -41,7 +41,7 @@ class Vote
   public:
 	using id_t = size_t;
 	enum Stat                                   { ADDED, CHANGED,                                   };
-	enum Ballot                                 { YAY, NAY,                                         };
+	enum Ballot                                 { YEA, NAY,                                         };
 
   private:
 	const Sess &sess;
@@ -54,7 +54,7 @@ class Vote
 	std::string chan;                           // Name of the channel
 	std::string user;                           // $a name of initiating user
 	std::string issue;                          // "Issue" input of the vote
-	std::set<std::string> yay;                  // Accounts voting Yes
+	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
 
   public:
@@ -67,19 +67,19 @@ class Vote
 	auto &get_user() const                      { return users.get(get_user_acct());                }
 	auto &get_began() const                     { return began;                                     }
 	auto &get_issue() const                     { return issue;                                     }
-	auto &get_yay() const                       { return yay;                                       }
+	auto &get_yea() const                       { return yea;                                       }
 	auto &get_nay() const                       { return nay;                                       }
 	auto get_plurality() const                  { return cfg.get<float>("plurality");               }
 	auto get_min_votes() const                  { return cfg.get<size_t>("min_votes");              }
-	auto get_min_yay() const                    { return cfg.get<size_t>("min_yay");                }
+	auto get_min_yea() const                    { return cfg.get<size_t>("min_yea");                }
 	auto get_duration() const                   { return cfg.get<time_t>("duration");               }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
 	auto remaining() const                      { return get_duration() - elapsed();                }
-	auto tally() const -> std::pair<uint,uint>  { return {yay.size(),nay.size()};                   }
-	auto total() const                          { return yay.size() + nay.size();                   }
+	auto tally() const -> std::pair<uint,uint>  { return {yea.size(),nay.size()};                   }
+	auto total() const                          { return yea.size() + nay.size();                   }
 	auto plurality() const -> size_t            { return ceil(float(total()) * get_plurality());    }
-	auto minimum() const                        { return std::max(get_min_votes(),get_min_yay());   }
-	auto required() const                       { return std::max(get_min_yay(),plurality());       }
+	auto minimum() const                        { return std::max(get_min_votes(),get_min_yea());   }
+	auto required() const                       { return std::max(get_min_yea(),plurality());       }
 	bool disabled() const;
 
 	friend Locutor &operator<<(Locutor &l, const Vote &v);    // Appends formatted #ID to channel stream
@@ -198,14 +198,14 @@ try
 		return;
 	}
 
-	if(yay.size() < get_min_yay())
+	if(yea.size() < get_min_yea())
 	{
 		if(cfg.get<bool>("result_ack_chan"))
 			chan << (*this) << ": "
 			     << "Failed to reach minimum number of yes votes: "
-			     << FG::GREEN << yay.size() << OFF
+			     << FG::GREEN << yea.size() << OFF
 			     << " of "
-			     << FG::GREEN << BOLD << get_min_yay() << OFF
+			     << FG::GREEN << BOLD << get_min_yea() << OFF
 			     << " required."
 			     << flush;
 
@@ -213,14 +213,14 @@ try
 		return;
 	}
 
-	if(yay.size() < required())
+	if(yea.size() < required())
 	{
 		if(cfg.get<bool>("result_ack_chan"))
 			chan << (*this) << ": "
 			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF << "."
-			     << " Yays: " << FG::GREEN << yay.size() << OFF << "."
+			     << " Yeas: " << FG::GREEN << yea.size() << OFF << "."
 			     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
-			     << " Required at least: " << BOLD << required() << OFF << " yays."
+			     << " Required at least: " << BOLD << required() << OFF << " yeas."
 			     << flush;
 
 		failed();
@@ -229,8 +229,8 @@ try
 
 	if(cfg.get<bool>("result_ack_chan"))
 		chan << (*this) << ": "
-		     << FG::WHITE << BG::GREEN << BOLD << "The yays have it." << OFF
-		     << " Yays: " << FG::GREEN << BOLD << yay.size() << OFF << "."
+		     << FG::WHITE << BG::GREEN << BOLD << "The yeas have it." << OFF
+		     << " Yeas: " << FG::GREEN << BOLD << yea.size() << OFF << "."
 		     << " Nays: " << FG::RED << nay.size() << OFF << "."
 		     << flush;
 
@@ -315,13 +315,13 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 	const std::string &acct = user.get_acct();
 	switch(ballot)
 	{
-		case YAY:
-			return !yay.emplace(acct).second?  throw Exception("You have already voted yay."):
+		case YEA:
+			return !yea.emplace(acct).second?  throw Exception("You have already voted yea."):
 			       nay.erase(acct)?            CHANGED:
 			                                   ADDED;
 		case NAY:
 			return !nay.emplace(acct).second?  throw Exception("You have already voted nay."):
-			       yay.erase(acct)?            CHANGED:
+			       yea.erase(acct)?            CHANGED:
 			                                   ADDED;
 		default:
 			throw Exception("Ballot type not accepted.");
