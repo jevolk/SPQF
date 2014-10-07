@@ -60,6 +60,7 @@ class Voting
 	Vote &get(const Chan &chan)                         { return get(get_id(chan));               }
 	Vote &get(const User &user)                         { return get(get_id(user));               }
 
+	void cancel(Vote &vote, const Chan &chan, const User &user);
 	void cancel(const id_t &id, const Chan &chan, const User &user);
 
 	// Initiate a vote
@@ -133,7 +134,15 @@ void Voting::cancel(const id_t &id,
                     const User &user)
 {
 	Vote &vote = get(id);
+	cancel(vote,chan,user);
+}
 
+
+inline
+void Voting::cancel(Vote &vote,
+                    const Chan &chan,
+                    const User &user)
+{
 	if(user.get_acct() != vote.get_user_acct())
 	{
 		std::stringstream ss;
@@ -145,7 +154,7 @@ void Voting::cancel(const id_t &id,
 		throw Exception("You can't cancel after a vote has been cast.");
 
 	vote.cancel();
-	del(id);
+	del(vote.get_id());
 }
 
 
