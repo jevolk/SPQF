@@ -334,17 +334,23 @@ void ResPublica::handle_vote_config(const Msg &msg,
                                     const Tokens &toks)
 {
 	const std::string issue = detokenize(toks);
-
 	if(issue.find("=") != std::string::npos)
 	{
 		voting.motion<vote::Config>(chan,user,issue);
 		return;
 	}
 
-	const Adoc cfg = chan.get(issue);
+	const Adoc &cfg = chan.get(*toks.at(0));
 	if(cfg.empty())
 	{
-		chan << "No configuration found here." << flush;
+		const Adoc &cfg = chan.get();
+		const std::string &val = cfg[*toks.at(0)];
+
+		if(val.empty())
+			chan << "No configuration found here." << flush;
+		else
+			chan << *toks.at(0) << " = " << val << flush;
+
 		return;
 	}
 
