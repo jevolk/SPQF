@@ -73,7 +73,109 @@ namespace vote
 	  public:
 		template<class... Args> Opine(Args&&... args): Vote(std::forward<Args>(args)...) {}
 	};
+
+	class Ban : public Vote
+	{
+		const char *type() const    { return "ban";      }
+
+		void starting();
+		void passed();
+
+	  public:
+		template<class... Args> Ban(Args&&... args): Vote(std::forward<Args>(args)...) {}
+	};
+
+	class Quiet : public Vote
+	{
+		const char *type() const    { return "quiet";    }
+
+		void starting();
+		void passed();
+
+	  public:
+		template<class... Args> Quiet(Args&&... args): Vote(std::forward<Args>(args)...) {}
+	};
+
+	class UnQuiet : public Vote
+	{
+		const char *type() const    { return "unquiet";  }
+
+		void starting();
+		void passed();
+
+	  public:
+		template<class... Args> UnQuiet(Args&&... args): Vote(std::forward<Args>(args)...) {}
+	};
 }
+
+
+inline
+void vote::UnQuiet::starting()
+{
+	const std::string &victim = get_issue();
+	User &user = get_users().get(victim);
+	user.whois();
+}
+
+
+inline
+void vote::UnQuiet::passed()
+{
+	Chan &chan = get_chan();
+	const Adoc &cfg = get_cfg();
+	const User &user = get_users().get(get_issue());
+	chan.unquiet(user);
+}
+
+
+
+inline
+void vote::Quiet::starting()
+{
+	const std::string &victim = get_issue();
+	User &user = get_users().get(victim);
+
+	if(user.is_myself())
+		throw Exception("http://en.wikipedia.org/wiki/Areopagitica");
+
+	user.whois();
+}
+
+
+inline
+void vote::Quiet::passed()
+{
+	Chan &chan = get_chan();
+	const Adoc &cfg = get_cfg();
+	const User &user = get_users().get(get_issue());
+	chan.quiet(user);
+}
+
+
+
+inline
+void vote::Ban::starting()
+{
+	const std::string &victim = get_issue();
+	User &user = get_users().get(victim);
+
+	if(user.is_myself())
+		throw Exception("http://en.wikipedia.org/wiki/Leviathan_(book)");
+
+	user.whois();
+}
+
+
+inline
+void vote::Ban::passed()
+{
+	Chan &chan = get_chan();
+	const Adoc &cfg = get_cfg();
+	const User &user = get_users().get(get_issue());
+	chan.ban(user);
+	chan.kick(user,"And I ain't even mad");
+}
+
 
 
 inline
@@ -86,6 +188,7 @@ void vote::Opine::passed()
 	     << BOLD << get_issue() << OFF
 	     << flush;
 }
+
 
 
 inline
