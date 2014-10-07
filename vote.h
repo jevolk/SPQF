@@ -76,6 +76,8 @@ class Vote
 	auto minimum() const                        { return std::max(get_min_votes(),get_min_yay());   }
 	auto required() const                       { return std::max(get_min_yay(),plurality());       }
 
+	friend Locutor &operator<<(Locutor &l, const Vote &v);    // Appends formatted #ID to channel stream
+
   protected:
 	static constexpr auto &flush = Locutor::flush;
 
@@ -144,8 +146,8 @@ void Vote::start()
 	starting();
 
 	auto &chan = get_chan();
-	chan << BOLD << "Voting has started!" << OFF << " Issue " << BOLD << "#" << get_id() << OFF << "."
-	     << " You have " << BOLD << get_duration() << OFF << " seconds to vote! "
+	chan << BOLD << "Voting has started!" << OFF << " Issue " << BOLD << "#" << get_id() << OFF << ": "
+	     << "You have " << BOLD << get_duration() << OFF << " seconds to vote! "
 	     << "Type: "
 	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
 	     << " or "
@@ -164,7 +166,8 @@ try
 
 	if(total() < get_min_votes())
 	{
-		chan << "Failed to reach minimum number of votes: "
+		chan << (*this) << ": "
+		     << "Failed to reach minimum number of votes: "
 		     << BOLD << total() << OFF
 		     << " of "
 		     << BOLD << get_min_votes() << OFF
@@ -177,7 +180,8 @@ try
 
 	if(yay.size() < get_min_yay())
 	{
-		chan << "Failed to reach minimum number of yes votes: "
+		chan << (*this) << ": "
+		     << "Failed to reach minimum number of yes votes: "
 		     << FG::GREEN << yay.size() << OFF
 		     << " of "
 		     << FG::GREEN << BOLD << get_min_yay() << OFF
@@ -190,7 +194,8 @@ try
 
 	if(yay.size() < required())
 	{
-		chan << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF << "."
+		chan << (*this) << ": "
+		     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF << "."
 		     << " Yays: " << FG::GREEN << yay.size() << OFF << "."
 		     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
 		     << " Required at least: " << BOLD << required() << OFF << " yays."
@@ -202,7 +207,8 @@ try
 
 	passed();
 
-	chan << FG::WHITE << BG::GREEN << BOLD << "The yays have it." << OFF
+	chan << (*this) << ": "
+	     << FG::WHITE << BG::GREEN << BOLD << "The yays have it." << OFF
 	     << " Yays: " << FG::GREEN << BOLD << yay.size() << OFF << "."
 	     << " Nays: " << FG::RED << nay.size() << OFF << "."
 	     << flush;
@@ -210,7 +216,7 @@ try
 catch(const Exception &e)
 {
 	auto &chan = get_chan();
-	chan << "The vote was rejected: " << e << flush;
+	chan << "The vote " << (*this) << " was rejected: " << e << flush;
 	return;
 }
 
@@ -219,7 +225,9 @@ inline
 void Vote::cancel()
 {
 	canceled();
-	get_chan() << "The vote has been canceled." << flush;
+
+	Chan &chan = get_chan();
+	chan << "The vote " << (*this) << " has been canceled." << flush;
 }
 
 
@@ -249,6 +257,17 @@ Vote::Stat Vote::vote(const Ballot &ballot,
 		default:
 			throw Exception("Ballot type not accepted.");
 	}
+}
+
+
+inline
+Locutor &operator<<(Locutor &locutor,
+                    const Vote &vote)
+{
+	using namespace colors;
+
+	locutor << "#" << BOLD << vote.get_id() << OFF;
+	return locutor;
 }
 
 
