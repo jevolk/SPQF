@@ -105,7 +105,7 @@ class Vote
 	void vote(const Ballot &ballot, User &user);
 
 	// Called by the asynchronous Voting worker only
-	void start(const size_t &num_votes, const size_t &num_for_chan, const size_t &num_for_user);
+	void start();
 	void cancel();
 	void finish();
 
@@ -146,21 +146,9 @@ issue(issue)
 
 
 inline
-void Vote::start(const size_t &num_votes,
-                 const size_t &num_for_chan,
-                 const size_t &num_for_user)
+void Vote::start()
 {
 	using namespace colors;
-	using limits = std::numeric_limits<size_t>;
-
-	if(disabled())
-		throw Exception("Votes of this type are disabled by the configuration.");
-
-	if(num_for_chan > cfg.get("max_active",limits::max()))
-		throw Exception("Too many active votes for this channel.");
-
-	if(num_for_user > cfg.get("max_per_user",limits::max()))
-		throw Exception("Too many active votes started by you on this channel.");
 
 	starting();
 

@@ -88,14 +88,26 @@ try
 
 	if(inserted) try
 	{
+	    using limits = std::numeric_limits<size_t>;
+
 		Vote &vote = dynamic_cast<Vote &>(*iit.first->second);
 		chanidx.emplace(vote.get_chan_name(),id);
 		useridx.emplace(vote.get_user_acct(),id);
 
+		const Adoc &cfg = vote.get_cfg();
 		const Chan &chan = vote.get_chan();
 		const User &user = vote.get_user();
-		vote.start(num_votes(),num_votes(chan),num_votes(user));
 
+		if(vote.disabled())
+			throw Exception("Votes of this type are disabled by the configuration.");
+
+		if(num_votes(chan) > cfg.get("max_active",limits::max()))
+			throw Exception("Too many active votes for this channel.");
+
+		if(num_votes(user) > cfg.get("max_per_user",limits::max()))
+			throw Exception("Too many active votes started by you on this channel.");
+
+		vote.start();
 		sem.notify_one();
 		return vote;
 	}
