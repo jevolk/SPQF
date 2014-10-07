@@ -90,11 +90,11 @@ try
 }
 catch(const Exception &e)
 {
-	chan << user << "Failed: " << e << flush;
+	user << "Failed: " << e << flush;
 }
 catch(const std::out_of_range &e)
 {
-	chan << user << "You did not supply required arguments. Use the help command." << flush;
+	user << "You did not supply required arguments. Use the help command." << flush;
 }
 
 
@@ -189,48 +189,10 @@ void ResPublica::handle_vote_ballot(const Msg &msg,
                                     const Tokens &toks,
                                     const Vote::Ballot &ballot)
 {
-	if(!toks.empty())
-	{
-		const auto &id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
-		auto &vote = voting.get(id);
-		handle_vote_ballot(msg,chan,user,toks,ballot,vote);
-	} else {
-		auto &vote = voting.get(chan);
-		handle_vote_ballot(msg,chan,user,toks,ballot,vote);
-	}
-}
-
-
-void ResPublica::handle_vote_ballot(const Msg &msg,
-                                    Chan &chan,
-                                    User &user,
-                                    const Tokens &toks,
-                                    const Vote::Ballot &ballot,
-                                    Vote &vote)
-try
-{
-	using namespace colors;
-
-	switch(vote.vote(ballot,user))
-	{
-		case Vote::ADDED:
-			chan << user << "Thanks for casting your vote on #" << BOLD << vote.get_id() << OFF << "!";
-			break;
-
-		case Vote::CHANGED:
-			chan << user << "You have changed your vote on #" << BOLD << vote.get_id() << OFF << "!";
-			break;
-	}
-
-	chan << flush;
-}
-catch(const Exception &e)
-{
-	using namespace colors;
-
-	chan << user << "Your vote was not accepted for #" << BOLD << vote.get_id() << OFF
-	             << ": " << e << flush;
-	return;
+	static constexpr auto&& id_cast = boost::lexical_cast<Vote::id_t,std::string>;
+	auto &vote = !toks.empty()? voting.get(id_cast(*toks.at(0))):
+	                            voting.get(chan);
+	vote.vote(ballot,user);
 }
 
 

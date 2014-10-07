@@ -21,12 +21,17 @@ struct DefaultConfig : public Adoc
 	{
 		// config.vote
 		put("max_active",16);
-		put("max_per_user",2);
+		put("max_per_user",1);
 		put("min_votes",1);
 		put("min_yay",1);
 		put("min_turnout",0.00);
 		put("duration",30);
 		put("plurality",0.51);
+		put("ballot_ack_chan",0);
+		put("ballot_ack_priv",1);
+		put("ballot_rej_chan",0);
+		put("ballot_rej_priv",1);
+		put("result_ack_chan",1);
 	}
 };
 
@@ -93,9 +98,11 @@ class Vote
 	virtual void proffer(const Ballot &b, User &u) {}
 	virtual void starting() {}
 
+	Stat cast(const Ballot &ballot, User &user);
+
   public:
 	// Called by Bot handlers
-	Stat vote(const Ballot &ballot, User &user);
+	void vote(const Ballot &ballot, User &user);
 
 	// Called by the asynchronous Voting worker only
 	void start(const size_t &num_votes, const size_t &num_for_chan, const size_t &num_for_user);
@@ -178,13 +185,14 @@ try
 
 	if(total() < get_min_votes())
 	{
-		chan << (*this) << ": "
-		     << "Failed to reach minimum number of votes: "
-		     << BOLD << total() << OFF
-		     << " of "
-		     << BOLD << get_min_votes() << OFF
-		     << " required."
-		     << flush;
+		if(cfg.get<bool>("result_ack_chan"))
+			chan << (*this) << ": "
+			     << "Failed to reach minimum number of votes: "
+			     << BOLD << total() << OFF
+			     << " of "
+			     << BOLD << get_min_votes() << OFF
+			     << " required."
+			     << flush;
 
 		failed();
 		return;
@@ -192,13 +200,14 @@ try
 
 	if(yay.size() < get_min_yay())
 	{
-		chan << (*this) << ": "
-		     << "Failed to reach minimum number of yes votes: "
-		     << FG::GREEN << yay.size() << OFF
-		     << " of "
-		     << FG::GREEN << BOLD << get_min_yay() << OFF
-		     << " required."
-		     << flush;
+		if(cfg.get<bool>("result_ack_chan"))
+			chan << (*this) << ": "
+			     << "Failed to reach minimum number of yes votes: "
+			     << FG::GREEN << yay.size() << OFF
+			     << " of "
+			     << FG::GREEN << BOLD << get_min_yay() << OFF
+			     << " required."
+			     << flush;
 
 		failed();
 		return;
@@ -206,30 +215,34 @@ try
 
 	if(yay.size() < required())
 	{
-		chan << (*this) << ": "
-		     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF << "."
-		     << " Yays: " << FG::GREEN << yay.size() << OFF << "."
-		     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
-		     << " Required at least: " << BOLD << required() << OFF << " yays."
-		     << flush;
+		if(cfg.get<bool>("result_ack_chan"))
+			chan << (*this) << ": "
+			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF << "."
+			     << " Yays: " << FG::GREEN << yay.size() << OFF << "."
+			     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
+			     << " Required at least: " << BOLD << required() << OFF << " yays."
+			     << flush;
 
 		failed();
 		return;
 	}
 
-	chan << (*this) << ": "
-	     << FG::WHITE << BG::GREEN << BOLD << "The yays have it." << OFF
-	     << " Yays: " << FG::GREEN << BOLD << yay.size() << OFF << "."
-	     << " Nays: " << FG::RED << nay.size() << OFF << "."
-	     << flush;
+	if(cfg.get<bool>("result_ack_chan"))
+		chan << (*this) << ": "
+		     << FG::WHITE << BG::GREEN << BOLD << "The yays have it." << OFF
+		     << " Yays: " << FG::GREEN << BOLD << yay.size() << OFF << "."
+		     << " Nays: " << FG::RED << nay.size() << OFF << "."
+		     << flush;
 
 	passed();
 }
 catch(const Exception &e)
 {
-	auto &chan = get_chan();
-	chan << "The vote " << (*this) << " was rejected: " << e << flush;
-	return;
+	if(cfg.get<bool>("result_ack_chan"))
+	{
+		auto &chan = get_chan();
+		chan << "The vote " << (*this) << " was rejected: " << e << flush;
+	}
 }
 
 
@@ -238,13 +251,60 @@ void Vote::cancel()
 {
 	canceled();
 
-	Chan &chan = get_chan();
-	chan << "The vote " << (*this) << " has been canceled." << flush;
+	if(cfg.get<bool>("result_ack_chan"))
+	{
+		Chan &chan = get_chan();
+		chan << "The vote " << (*this) << " has been canceled." << flush;
+	}
 }
 
 
 inline
-Vote::Stat Vote::vote(const Ballot &ballot,
+void Vote::vote(const Ballot &ballot,
+                User &user)
+try
+{
+	using namespace colors;
+
+	Chan &chan = get_chan();
+	switch(cast(ballot,user))
+	{
+		case ADDED:
+			if(cfg.get<bool>("ballot_ack_chan"))
+				chan << user << "Thanks for casting your vote on " << (*this) << "!" << flush;
+
+			if(cfg.get<bool>("ballot_ack_priv"))
+				user << "Thanks for casting your vote on " << (*this) << "!" << flush;
+
+			break;
+
+		case CHANGED:
+			if(cfg.get<bool>("ballot_ack_chan"))
+				chan << user << "You have changed your vote on " << (*this) << "!" << flush;
+
+			if(cfg.get<bool>("ballot_ack_priv"))
+				user << "You have changed your vote on " << (*this) << "!" << flush;
+
+			break;
+	}
+}
+catch(const Exception &e)
+{
+	using namespace colors;
+
+	if(cfg.get<bool>("ballot_rej_chan"))
+	{
+		Chan &chan = get_chan();
+		chan << user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
+	}
+
+	if(cfg.get<bool>("ballot_rej_priv"))
+		user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
+}
+
+
+inline
+Vote::Stat Vote::cast(const Ballot &ballot,
                       User &user)
 {
 	if(!user.is_logged_in())
@@ -252,20 +312,17 @@ Vote::Stat Vote::vote(const Ballot &ballot,
 
 	proffer(ballot,user);
 
+	const std::string &acct = user.get_acct();
 	switch(ballot)
 	{
 		case YAY:
-			if(!yay.emplace(user.get_acct()).second)
-				throw Exception("You have already voted yay.");
-
-			return nay.erase(user.get_acct())? CHANGED : ADDED;
-
+			return !yay.emplace(acct).second?  throw Exception("You have already voted yay."):
+			       nay.erase(acct)?            CHANGED:
+			                                   ADDED;
 		case NAY:
-			if(!nay.emplace(user.get_acct()).second)
-				throw Exception("You have already voted nay.");
-
-			return yay.erase(user.get_acct())? CHANGED : ADDED;
-
+			return !nay.emplace(acct).second?  throw Exception("You have already voted nay."):
+			       yay.erase(acct)?            CHANGED:
+			                                   ADDED;
 		default:
 			throw Exception("Ballot type not accepted.");
 	}

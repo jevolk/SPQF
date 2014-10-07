@@ -36,7 +36,6 @@ class ResPublica : public irc::bot::Bot
 	void handle_vote_help(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_poll(const Msg &m, Chan &c, User &u, const Tokens &t, const id_t &id);
 	void handle_vote_poll(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_ballot(const Msg &m, Chan &c, User &u, const Tokens &t, const Vote::Ballot &b, Vote &vote);
 	void handle_vote_ballot(const Msg &m, Chan &c, User &u, const Tokens &t, const Vote::Ballot &b);
 	void handle_vote(const Msg &m, Chan &c, User &u, const Tokens &t);
 
