@@ -28,6 +28,7 @@ SPQF_FMT( UMODEIS,           NICKNAME, DELTASTR                                 
 SPQF_FMT( INVITE,            SELFNAME, CHANNAME,                                                             )
 SPQF_FMT( NOTOPIC,           CHANNAME, INFO,                                                                 )
 SPQF_FMT( TOPIC,             CHANNAME, TEXT,                                                                 )
+SPQF_FMT( RPLTOPIC,          SELFNAME, CHANNAME, TEXT,                                                       )
 SPQF_FMT( CHANNELMODEIS,     NICKNAME, CHANNAME, DELTASTR                                                    )
 SPQF_FMT( CHANOPRIVSNEEDED,  NICKNAME, CHANNAME, REASON                                                      )
 SPQF_FMT( KICK,              CHANNAME, TARGET,   REASON                                                      )
