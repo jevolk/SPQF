@@ -38,22 +38,16 @@ class ResPublica : public irc::bot::Bot
 	void handle_vote_poll(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_ballot(const Msg &m, Chan &c, User &u, const Tokens &t, const Vote::Ballot &b);
 	void handle_vote(const Msg &m, Chan &c, User &u, const Tokens &t);
-
 	void handle_config(const Msg &m, Chan &c, User &u, const Tokens &toks);
+	void handle_cmd(const Msg &m, Chan &c, User &u);
 
-	// Cmd prefix dispatch; default: '!'
-	void handle_chanmsg_cmd(const Msg &m, Chan &c, User &u);
+	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Vote::Ballot &b);
+	void handle_vote(const Msg &m, User &u, const Tokens &t);
+	void handle_cmd(const Msg &m, User &u);
 
 	// Primary dispatch
-	void handle_privmsg(const Msg &m, User &u) override;
-	void handle_notice(const Msg &m, User &u) override;
 	void handle_chanmsg(const Msg &m, Chan &c, User &u) override;
-	void handle_cnotice(const Msg &m, Chan &c, User &u) override;
-	void handle_kick(const Msg &m, Chan &c, User &u) override;
-	void handle_part(const Msg &m, Chan &c, User &u) override;
-	void handle_join(const Msg &m, Chan &c, User &u) override;
-	void handle_mode(const Msg &m, Chan &c, User &u) override;
-	void handle_mode(const Msg &m, Chan &c) override;
+	void handle_privmsg(const Msg &m, User &u) override;
 
   public:
 	template<class... Args> ResPublica(Args&&... args);

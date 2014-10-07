@@ -22,51 +22,87 @@ using namespace irc::bot;
 #include "respub.h"
 
 
-void ResPublica::handle_mode(const Msg &msg,
-                             Chan &chan)
-{
-
-}
-
-
-void ResPublica::handle_mode(const Msg &msg,
-                             Chan &chan,
-                             User &user)
-{
-
-}
-
-
-void ResPublica::handle_join(const Msg &msg,
-                             Chan &chan,
-                             User &user)
-{
-
-
-}
-
-
-void ResPublica::handle_part(const Msg &msg,
-                             Chan &chan,
-                             User &user)
-{
-
-}
-
-
-void ResPublica::handle_kick(const Msg &msg,
-                             Chan &chan,
-                             User &user)
-{
-
-}
-
-
-void ResPublica::handle_cnotice(const Msg &msg,
-                                Chan &chan,
+void ResPublica::handle_privmsg(const Msg &msg,
                                 User &user)
+try
 {
+	const std::string &text = msg[PRIVMSG::TEXT];
 
+	// Discard empty without exception
+	if(text.empty())
+		return;
+
+	handle_cmd(msg,user);
+}
+catch(const Exception &e)
+{
+	user << "Failed: " << e << flush;
+}
+catch(const std::out_of_range &e)
+{
+	user << "You did not supply required arguments. Use the help command." << flush;
+}
+
+
+void ResPublica::handle_cmd(const Msg &msg,
+                            User &user)
+{
+	using delim = boost::char_separator<char>;
+	static const delim sep(" ");
+
+	const std::string &text = msg[CHANMSG::TEXT];
+	const boost::tokenizer<delim> tokenize(text,sep);
+	const std::vector<std::string> tokens(tokenize.begin(),tokenize.end());
+	const Tokens subtoks = subtokenize(tokens);
+
+	const std::string &cmd = tokens.at(0).at(0) == COMMAND_PREFIX? tokens.at(0).substr(1):
+	                                                               tokens.at(0);
+	switch(hash(cmd))
+	{
+		case hash("vote"):     handle_vote(msg,user,subtoks);    break;
+		default:                                                 break;
+	}
+}
+
+
+void ResPublica::handle_vote(const Msg &msg,
+                             User &user,
+                             const Tokens &toks)
+{
+	const std::string subcmd = *toks.at(0);
+	const Tokens subtoks = subtokenize(toks);
+	switch(hash(subcmd))
+	{
+		// Ballot
+		case hash("yea"):
+		case hash("yay"):
+		case hash("yes"):
+		case hash("Y"):
+		case hash("y"):        handle_vote_ballot(msg,user,subtoks,Vote::YEA);      break;
+		case hash("nay"):
+		case hash("no"):
+		case hash("N"):
+		case hash("n"):        handle_vote_ballot(msg,user,subtoks,Vote::NAY);      break;
+	}
+}
+
+
+void ResPublica::handle_vote_ballot(const Msg &msg,
+                                    User &user,
+                                    const Tokens &toks,
+                                    const Vote::Ballot &ballot)
+try
+{
+	auto &vote = voting.get(boost::lexical_cast<Vote::id_t>(*toks.at(0)));
+	vote.vote(ballot,user);
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw Exception("You must supply the vote ID as a number.");
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("You must supply the vote ID given in the channel.");
 }
 
 
@@ -84,8 +120,8 @@ try
 	// Dispatch based on first character
 	switch(text.at(0))
 	{
-		case COMMAND_PREFIX:   handle_chanmsg_cmd(msg,chan,user);             break;
-		default:                                                              break;
+		case COMMAND_PREFIX:   handle_cmd(msg,chan,user);             break;
+		default:                                                      break;
 	}
 }
 catch(const Exception &e)
@@ -98,9 +134,9 @@ catch(const std::out_of_range &e)
 }
 
 
-void ResPublica::handle_chanmsg_cmd(const Msg &msg,
-                                    Chan &chan,
-                                    User &user)
+void ResPublica::handle_cmd(const Msg &msg,
+                            Chan &chan,
+                            User &user)
 {
 	using delim = boost::char_separator<char>;
 	static const delim sep(" ");
@@ -113,9 +149,9 @@ void ResPublica::handle_chanmsg_cmd(const Msg &msg,
 	// Chop off cmd character and dispatch
 	switch(hash(tokens.at(0).substr(1)))
 	{
-		case hash("vote"):     handle_vote(msg,chan,user,subtoks);            break;
-		case hash("config"):   handle_config(msg,chan,user,subtoks);          break;
-		default:                                                              break;
+		case hash("vote"):     handle_vote(msg,chan,user,subtoks);    break;
+		case hash("config"):   handle_config(msg,chan,user,subtoks);  break;
+		default:                                                      break;
 	}
 }
 
@@ -394,24 +430,6 @@ void ResPublica::handle_vote_topic(const Msg &msg,
 }
 
 
-
-
-void ResPublica::handle_notice(const Msg &msg,
-                               User &user)
-{
-
-
-}
-
-
-void ResPublica::handle_privmsg(const Msg &msg,
-                                User &user)
-{
-
-
-}
-
-
 std::string ResPublica::detokenize(const Tokens &tokens)
 {
 	std::stringstream str;
@@ -460,4 +478,3 @@ ResPublica::Selection ResPublica::karma_tokens(const Tokens &tokens,
 
 	return ret;
 }
-
