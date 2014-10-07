@@ -89,7 +89,8 @@ Sess::Sess(const Ident &ident,
 ident(ident),
 cbs(cbs),
 sess(sess? sess : irc_create_session(get_cbs())),
-nick(ident["nickname"])
+nick(ident["nickname"]),
+identified(false)
 {
 
 
