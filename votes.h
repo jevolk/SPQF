@@ -303,6 +303,16 @@ void vote::Config::starting()
 		chan << "Note: vote deletes variable [" << BOLD << key << OFF << "] "
 		     << BOLD << "and all child variables" << OFF << "."
 		     << flush;
+
+	if(!val.empty()) try
+	{
+		// Only use numerical values for now, throw otherwise
+		boost::lexical_cast<size_t>(val);
+	}
+	catch(const boost::bad_lexical_cast &e)
+	{
+		throw Exception("Must use a numerical value for this key.");
+	}
 }
 
 
