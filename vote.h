@@ -6,12 +6,6 @@
  */
 
 
-extern const char *const help_vote;             // help.cpp
-extern const char *const help_vote_config;      // help.cpp
-extern const char *const help_vote_kick;        // help.cpp
-extern const char *const help_vote_mode;        // help.cpp
-
-
 struct DefaultConfig : public Adoc
 {
 	static size_t configure(Adoc &doc);

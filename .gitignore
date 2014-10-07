@@ -1,4 +1,5 @@
 spqf
+helpgen
 *.o
 *.a
 db_*
