@@ -383,8 +383,8 @@ void ResPublica::handle_vote_opine(const Msg &msg,
                                    User &user,
                                    const Tokens &toks)
 {
-
-
+	const std::string issue = detokenize(toks);
+	voting.motion<vote::Opine>(chan,user,issue);
 }
 
 

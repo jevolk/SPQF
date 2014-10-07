@@ -53,8 +53,27 @@ namespace vote
 	  public:
 		template<class... Args> Topic(Args&&... args): Vote(std::forward<Args>(args)...) {}
 	};
+
+	class Opine : public Vote
+	{
+		void passed();
+
+	  public:
+		template<class... Args> Opine(Args&&... args): Vote(std::forward<Args>(args)...) {}
+	};
 }
 
+
+inline
+void vote::Opine::passed()
+{
+	using namespace colors;
+
+	Chan &chan = get_chan();
+	chan << "The People of " << chan.get_name() << " decided "
+	     << BOLD << get_issue() << OFF
+	     << flush;
+}
 
 
 inline
