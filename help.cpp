@@ -17,6 +17,9 @@ extern const char *const help_vote = \
 "*** issue:    config.$ <= [value]>             : Vote on the voting configuration in this channel.\n"\
 "*** issue:    <mode>   [target ...]            : Vote on setting modes for channel or target exactly as if you were an operator.\n"\
 "*** issue:    kick     <nickname>              : Vote to kick a victim from the channel.\n"\
+"*** issue:    quiet    <nickname>              : Vote to quiet.\n"\
+"*** issue:    unquiet  <nickname>              : Vote to unquiet.\n"\
+"*** issue:    ban      <nickname>              : Vote to kick-ban.\n"\
 "*** issue:    invite   <nickname>              : Vote to invite a user to the channel.\n"\
 "*** issue:    topic    <message>               : Vote to change the topic.\n"\
 ;
@@ -42,6 +45,6 @@ extern const char *const help_vote_mode = \
 "** The syntax for initiating a vote is: <mode string> [target ...]\n"\
 "** Example: !vote +q $a:foobar     : Quiets based on the account foobar.\n"\
 "** Example: !vote +r               : Set the channel for registered users only.\n"\
-"** Example: !vote +b <nickname>    : Kick-ban based on a nickname's $a: and/or *!*@host all in one.\n"\
-"** Example: !vote +b <*!*@host>    : Set ban based *!*@host mask, and kick any matches currently in the channel.\n"\
+"** Example: !vote +b <nickname>    : Ban based on a nickname's $a: and/or *!*@host all in one.\n"\
+"** Example: !vote +b <*!*@host>    : Set ban based *!*@host mask.\n"\
 ;
