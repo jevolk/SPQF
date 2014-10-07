@@ -26,7 +26,7 @@ namespace vote
 		void starting();
 
 	  public:
-		template<class... Args> Mode(Args&&... args);
+		template<class... Args> Mode(Args&&... args): Vote(std::forward<Args>(args)...) {}
 	};
 
 	class Kick : public Vote
@@ -35,7 +35,7 @@ namespace vote
 		void passed();
 
 	  public:
-		template<class... Args> Kick(Args&&... args);
+		template<class... Args> Kick(Args&&... args): Vote(std::forward<Args>(args)...) {}
 	};
 
 	class Invite : public Vote
@@ -43,25 +43,18 @@ namespace vote
 		void passed();
 
 	  public:
-		template<class... Args> Invite(Args&&... args);
+		template<class... Args> Invite(Args&&... args): Vote(std::forward<Args>(args)...) {}
 	};
 
-	class Topic: public Vote
+	class Topic : public Vote
 	{
 		void passed();
 
 	  public:
-		template<class... Args> Topic(Args&&... args);
+		template<class... Args> Topic(Args&&... args): Vote(std::forward<Args>(args)...) {}
 	};
 }
 
-
-template<class... Args>
-vote::Kick::Kick(Args&&... args):
-Vote(std::forward<Args>(args)...)
-{
-
-}
 
 
 inline
@@ -92,14 +85,6 @@ void vote::Kick::passed()
 
 
 
-template<class... Args>
-vote::Invite::Invite(Args&&... args):
-Vote(std::forward<Args>(args)...)
-{
-
-}
-
-
 inline
 void vote::Invite::passed()
 {
@@ -108,14 +93,6 @@ void vote::Invite::passed()
 	chan.invite(get_issue());
 }
 
-
-
-template<class... Args>
-vote::Mode::Mode(Args&&... args):
-Vote(std::forward<Args>(args)...)
-{
-
-}
 
 
 inline
@@ -136,14 +113,6 @@ void vote::Mode::starting()
 	Chan &chan = get_chan();
 }
 
-
-
-template<class... Args>
-vote::Topic::Topic(Args&&... args):
-Vote(std::forward<Args>(args)...)
-{
-
-}
 
 
 inline
