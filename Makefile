@@ -48,7 +48,7 @@ clean:
 libircbot:
 	$(MAKE) -C ircbot
 
-spqf: main.o respub.o voting.o help.o
+spqf: main.o respub.o voting.o
 	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
 
 
