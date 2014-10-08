@@ -6,7 +6,6 @@
  */
 
 
-// libstd
 #include <forward_list>
 #include <condition_variable>
 #include <thread>

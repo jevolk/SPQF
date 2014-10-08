@@ -6,7 +6,6 @@
  */
 
 
-// libstd
 #include <signal.h>
 #include <forward_list>
 #include <condition_variable>
