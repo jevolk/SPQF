@@ -65,9 +65,13 @@ class Logs
 
 	void for_each(const std::string &path, const Closure &closure) const;
 	void for_each(const std::string &path, const Filter &filter, const Closure &closure) const;
+	size_t count(const std::string &path, const Filter &filter) const;
+	bool exists(const std::string &path, const Filter &filter) const;
 
 	void for_each(const Chan &chan, const Closure &closure) const;
 	void for_each(const Chan &chan, const Filter &filter, const Closure &closure) const;
+	size_t count(const Chan &chan, const Filter &filter) const;
+	bool exists(const Chan &chan, const Filter &filter) const;
 
 	Logs(Chans &chans, Users &users, std::mutex &bot);
 
@@ -85,6 +89,28 @@ bot(bot)
 {
 
 
+}
+
+
+inline
+bool Logs::exists(const Chan &chan,
+                  const Filter &filter)
+const
+{
+	const Log &clog = chan.get_log();
+	const std::string &path = clog.get_path();
+	return exists(path,filter);
+}
+
+
+inline
+size_t Logs::count(const Chan &chan,
+                   const Filter &filter)
+const
+{
+	const Log &clog = chan.get_log();
+	const std::string &path = clog.get_path();
+	return count(path,filter);
 }
 
 
@@ -108,6 +134,40 @@ const
 	const Log &clog = chan.get_log();
 	const std::string &path = clog.get_path();
 	for_each(path,closure);
+}
+
+
+inline
+bool Logs::exists(const std::string &path,
+                  const Filter &filter)
+const
+{
+	//TODO: !!!!!!!!!!!!!!!!!!
+	bool ret = false;
+	for_each(path,[&filter,&ret]
+	(const ClosureArgs &a)
+	{
+		if(filter(a))
+			ret = true;
+	});
+
+	return ret;
+}
+
+
+inline
+size_t Logs::count(const std::string &path,
+                    const Filter &filter)
+const
+{
+	size_t ret = 0;
+	for_each(path,[&filter,&ret]
+	(const ClosureArgs &a)
+	{
+		ret += filter(a);
+	});
+
+	return ret;
 }
 
 
