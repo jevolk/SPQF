@@ -292,7 +292,7 @@ void Chan::remove(const User &user,
 {
 	Sess &sess = get_sess();
 	const std::string &targ = user.get_nick();
-	sess.quote("REMOVE %s %s %s",get_name().c_str(),targ.c_str(),reason.c_str());
+	sess.quote("REMOVE %s %s :%s",get_name().c_str(),targ.c_str(),reason.c_str());
 }
 
 
