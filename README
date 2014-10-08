@@ -1,4 +1,21 @@
 
+
+                    SENATVS POPVLVS QVE FREENODUS
+
+           The Senate and The People of Freenode ( #SPQF )
+
+
+SPQF is a robust democratic channel management system with the goal of 
+replacing the need for channel operators to be present, or even exist. 
+The primary design parameter is the resistance to sybil from botnets and 
+spam, in addtion to various other noise and abuse seen regularly on IRC. 
+A versatile configuration can be customized on a per-channel basis to 
+ensure any action by the bot reflects the true and fair intent of the 
+channel's participants and community.
+
+
+
+
 GETTING STARTED:
 
 Requirements:
