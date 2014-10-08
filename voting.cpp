@@ -23,11 +23,13 @@ using namespace irc::bot;
 Voting::Voting(Bot &bot,
                Sess &sess,
                Chans &chans,
-               Users &users):
+               Users &users,
+               Logs &logs):
 bot(bot),
 sess(sess),
 chans(chans),
 users(users),
+logs(logs),
 thread(&Voting::worker,this)
 {
 

@@ -26,6 +26,7 @@ class Vote
 	const Sess &sess;
 	Chans &chans;
 	Users &users;
+	Logs &logs;
 
 	id_t id;                                    // Index id of this vote
 	Adoc cfg;                                   // Configuration of this vote
@@ -64,6 +65,7 @@ class Vote
 	auto &get_sess() const                      { return sess;                                      }
 	auto &get_users()                           { return users;                                     }
 	auto &get_chans()                           { return chans;                                     }
+	auto &get_logs()                            { return logs;                                      }
 
 	// Subclass throws from these for abortions
 	virtual void passed() {}
@@ -83,7 +85,7 @@ class Vote
 	void cancel();
 	void finish();
 
-	Vote(const id_t &id, const Sess &sess, Chans &chans, Users &users, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
+	Vote(const id_t &id, const Sess &sess, Chans &chans, Users &users, Logs &logs, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
 	virtual ~Vote() = default;
 };
 
@@ -93,6 +95,7 @@ Vote::Vote(const id_t &id,
            const Sess &sess,
            Chans &chans,
            Users &users,
+           Logs &logs,
            Chan &chan,
            User &user,
            const std::string &issue,
@@ -100,6 +103,7 @@ Vote::Vote(const id_t &id,
 sess(sess),
 chans(chans),
 users(users),
+logs(logs),
 id(id),
 cfg([&]() -> Adoc
 {
