@@ -86,6 +86,7 @@ try
 			case hash("ACCOUNT"):          handle_account(msg);             return;
 			case hash("INVITE"):           handle_invite(msg);              return;
 			case hash("NOTICE"):           handle_notice(msg);              return;
+			case hash("ACTION"):           handle_action(msg);              return;
 			case hash("PRIVMSG"):          handle_privmsg(msg);             return;
 			case hash("CHANNEL"):          handle_chanmsg(msg);             return;
 			case hash("KICK"):             handle_kick(msg);                return;
@@ -672,7 +673,7 @@ void Bot::handle_cnotice(const Msg &msg)
 {
 	using namespace fmt::CNOTICE;
 
-	log_handle(msg,"CHANNEL NOTICE");
+	log_handle(msg,"CHAN NOTICE");
 
 	Chans &chans = get_chans();
 	Users &users = get_users();
@@ -718,6 +719,41 @@ void Bot::handle_notice(const Msg &msg)
 	Users &users = get_users();
 	User &user = users.get(msg.get_nick());
 	handle_notice(msg,user);
+}
+
+
+void Bot::handle_caction(const Msg &msg)
+{
+	using namespace fmt::CACTION;
+
+	log_handle(msg,"CHAN ACTION");
+
+	Chans &chans = get_chans();
+	Users &users = get_users();
+
+	User &user = users.get(msg.get_nick());
+	Chan &chan = chans.get(msg[CHANNAME]);
+	chan.log(user,msg[TEXT]);
+
+	handle_caction(msg,chan,user);
+}
+
+
+void Bot::handle_action(const Msg &msg)
+{
+	using namespace fmt::ACTION;
+
+	log_handle(msg,"ACTION");
+
+	if(!my_nick(msg[SELFNAME]))
+	{
+		handle_caction(msg);
+		return;
+	}
+
+	Users &users = get_users();
+	User &user = users.get(msg.get_nick());
+	handle_action(msg,user);
 }
 
 

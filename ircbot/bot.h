@@ -110,7 +110,9 @@ class Bot : public std::mutex
 	// [RECV] Main interface for users of this library
 	virtual void handle_privmsg(const Msg &m, User &u) {}
 	virtual void handle_notice(const Msg &m, User &u) {}
+	virtual void handle_action(const Msg &m, User &u) {}
 	virtual void handle_chanmsg(const Msg &m, Chan &c, User &u) {}
+	virtual void handle_caction(const Msg &m, Chan &c, User &u) {}
 	virtual void handle_cnotice(const Msg &m, Chan &c, User &u) {}
 	virtual void handle_kick(const Msg &m, Chan &c, User &u) {}
 	virtual void handle_part(const Msg &m, Chan &c, User &u) {}
@@ -134,6 +136,7 @@ class Bot : public std::mutex
 	void handle_quietlist(const Msg &m);
 	void handle_banlist(const Msg &m);
 	void handle_cnotice(const Msg &m);
+	void handle_caction(const Msg &m);
 	void handle_chanmsg(const Msg &m);
 	void handle_notopic(const Msg &m);
 	void handle_rpltopic(const Msg &m);
@@ -163,6 +166,7 @@ class Bot : public std::mutex
 	void handle_umodeis(const Msg &m);
 	void handle_notice(const Msg &m);
 	void handle_privmsg(const Msg &m);
+	void handle_action(const Msg &m);
 	void handle_invite(const Msg &m);
 	void handle_umode(const Msg &m);
 	void handle_away(const Msg &m);
