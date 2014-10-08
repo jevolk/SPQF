@@ -6,28 +6,12 @@
  */
 
 
-struct DefaultConfig : public Adoc
+struct DefaultConfig : Adoc
 {
 	static uint configure(Adoc &doc);
 	static Adoc configure(Chan &chan);
 
-	DefaultConfig()
-	{
-		// config.vote
-		put("max_active",16);
-		put("max_per_user",1);
-		put("min_votes",1);
-		put("min_yea",1);
-		put("min_turnout",0.00);
-		put("min_motions",1);
-		put("duration",30);
-		put("plurality",0.51);
-		put("ballot.ack_chan",0);
-		put("ballot.ack_priv",1);
-		put("ballot.rej_chan",0);
-		put("ballot.rej_priv",1);
-		put("result.ack_chan",1);
-	}
+	DefaultConfig();
 };
 
 
@@ -356,6 +340,26 @@ Locutor &operator<<(Locutor &locutor,
 
 	locutor << "#" << BOLD << vote.get_id() << OFF;
 	return locutor;
+}
+
+
+
+inline
+DefaultConfig::DefaultConfig()
+{
+	// config.vote
+	put("max_active",16);
+	put("max_per_user",1);
+	put("min_votes",1);
+	put("min_yea",1);
+	put("min_turnout",0.00);
+	put("duration",30);
+	put("plurality",0.51);
+	put("ballot.ack_chan",0);
+	put("ballot.ack_priv",1);
+	put("ballot.rej_chan",0);
+	put("ballot.rej_priv",1);
+	put("result.ack_chan",1);
 }
 
 
