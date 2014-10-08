@@ -64,9 +64,9 @@ class Logs
 	using Closure = std::function<void (const ClosureArgs &)>;
 
 	void for_each(const std::string &path, const Closure &closure) const;
-	void for_each(const Chan &chan, const Closure &closure) const;
-
 	void for_each(const std::string &path, const Filter &filter, const Closure &closure) const;
+
+	void for_each(const Chan &chan, const Closure &closure) const;
 	void for_each(const Chan &chan, const Filter &filter, const Closure &closure) const;
 
 	Logs(Chans &chans, Users &users, std::mutex &bot);

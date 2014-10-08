@@ -313,6 +313,11 @@ void vote::Config::starting()
 	{
 		throw Exception("Must use a numerical value for this key.");
 	}
+
+	chan << "Note: "
+	     << UNDER2 << "Changing the configuration can be " << BOLD << "DANGEROUS" << OFF << ", "
+	     << "potentially breaking the ability for future votes to revert this change."
+	     << flush;
 }
 
 

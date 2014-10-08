@@ -8,7 +8,7 @@
 
 struct DefaultConfig : public Adoc
 {
-	static size_t configure(Adoc &doc);
+	static uint configure(Adoc &doc);
 	static Adoc configure(Chan &chan);
 
 	DefaultConfig()
@@ -19,13 +19,14 @@ struct DefaultConfig : public Adoc
 		put("min_votes",1);
 		put("min_yea",1);
 		put("min_turnout",0.00);
+		put("min_motions",1);
 		put("duration",30);
 		put("plurality",0.51);
-		put("ballot_ack_chan",0);
-		put("ballot_ack_priv",1);
-		put("ballot_rej_chan",0);
-		put("ballot_rej_priv",1);
-		put("result_ack_chan",1);
+		put("ballot.ack_chan",0);
+		put("ballot.ack_priv",1);
+		put("ballot.rej_chan",0);
+		put("ballot.rej_priv",1);
+		put("result.ack_chan",1);
 	}
 };
 
@@ -62,17 +63,13 @@ class Vote
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yea() const                       { return yea;                                       }
 	auto &get_nay() const                       { return nay;                                       }
-	auto get_plurality() const                  { return cfg.get<float>("plurality");               }
-	auto get_min_votes() const                  { return cfg.get<size_t>("min_votes");              }
-	auto get_min_yea() const                    { return cfg.get<size_t>("min_yea");                }
-	auto get_duration() const                   { return cfg.get<time_t>("duration");               }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
-	auto remaining() const                      { return get_duration() - elapsed();                }
+	auto remaining() const                      { return cfg.get<uint>("duration") - elapsed();     }
 	auto tally() const -> std::pair<uint,uint>  { return {yea.size(),nay.size()};                   }
 	auto total() const                          { return yea.size() + nay.size();                   }
-	auto plurality() const -> size_t            { return ceil(float(total()) * get_plurality());    }
-	auto minimum() const                        { return std::max(get_min_votes(),get_min_yea());   }
-	auto required() const                       { return std::max(get_min_yea(),plurality());       }
+	uint plurality() const;
+	uint minimum() const;
+	uint required() const;
 	bool disabled() const;
 
 	friend Locutor &operator<<(Locutor &l, const Vote &v);    // Appends formatted #ID to channel stream
@@ -147,8 +144,8 @@ void Vote::start()
 
 	auto &chan = get_chan();
 	chan << BOLD << "Voting has started!" << OFF << " Issue " << BOLD << "#" << get_id() << OFF << ": "
-	     << "You have " << BOLD << get_duration() << OFF << " seconds to vote! "
-	     << "Type: "
+	     << "You have " << BOLD << cfg.get<uint>("duration") << OFF << " seconds to vote! "
+	     << "Type or PM: "
 	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
 	     << " or "
 	     << BOLD << FG::RED << "!vote n" << OFF << " " << BOLD << get_id() << OFF
@@ -164,14 +161,14 @@ try
 
 	auto &chan = get_chan();
 
-	if(total() < get_min_votes())
+	if(total() < minimum())
 	{
-		if(cfg.get<bool>("result_ack_chan"))
+		if(cfg.get<bool>("result.ack_chan"))
 			chan << (*this) << ": "
 			     << "Failed to reach minimum number of votes: "
 			     << BOLD << total() << OFF
 			     << " of "
-			     << BOLD << get_min_votes() << OFF
+			     << BOLD << minimum() << OFF
 			     << " required."
 			     << flush;
 
@@ -179,14 +176,14 @@ try
 		return;
 	}
 
-	if(yea.size() < get_min_yea())
+	if(yea.size() < cfg.get<uint>("min_yea"))
 	{
-		if(cfg.get<bool>("result_ack_chan"))
+		if(cfg.get<bool>("result.ack_chan"))
 			chan << (*this) << ": "
 			     << "Failed to reach minimum number of yes votes: "
 			     << FG::GREEN << yea.size() << OFF
 			     << " of "
-			     << FG::GREEN << BOLD << get_min_yea() << OFF
+			     << FG::GREEN << BOLD << cfg.get<uint>("min_yea") << OFF
 			     << " required."
 			     << flush;
 
@@ -196,7 +193,7 @@ try
 
 	if(yea.size() < required())
 	{
-		if(cfg.get<bool>("result_ack_chan"))
+		if(cfg.get<bool>("result.ack_chan"))
 			chan << (*this) << ": "
 			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF << "."
 			     << " Yeas: " << FG::GREEN << yea.size() << OFF << "."
@@ -208,7 +205,7 @@ try
 		return;
 	}
 
-	if(cfg.get<bool>("result_ack_chan"))
+	if(cfg.get<bool>("result.ack_chan"))
 		chan << (*this) << ": "
 		     << FG::WHITE << BG::GREEN << BOLD << "The yeas have it." << OFF
 		     << " Yeas: " << FG::GREEN << BOLD << yea.size() << OFF << "."
@@ -219,7 +216,7 @@ try
 }
 catch(const Exception &e)
 {
-	if(cfg.get<bool>("result_ack_chan"))
+	if(cfg.get<bool>("result.ack_chan"))
 	{
 		auto &chan = get_chan();
 		chan << "The vote " << (*this) << " was rejected: " << e << flush;
@@ -232,7 +229,7 @@ void Vote::cancel()
 {
 	canceled();
 
-	if(cfg.get<bool>("result_ack_chan"))
+	if(cfg.get<bool>("result.ack_chan"))
 	{
 		Chan &chan = get_chan();
 		chan << "The vote " << (*this) << " has been canceled." << flush;
@@ -251,19 +248,19 @@ try
 	switch(cast(ballot,user))
 	{
 		case ADDED:
-			if(cfg.get<bool>("ballot_ack_chan"))
+			if(cfg.get<bool>("ballot.ack_chan"))
 				chan << user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
-			if(cfg.get<bool>("ballot_ack_priv"))
+			if(cfg.get<bool>("ballot.ack_priv"))
 				user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
 			break;
 
 		case CHANGED:
-			if(cfg.get<bool>("ballot_ack_chan"))
+			if(cfg.get<bool>("ballot.ack_chan"))
 				chan << user << "You have changed your vote on " << (*this) << "!" << flush;
 
-			if(cfg.get<bool>("ballot_ack_priv"))
+			if(cfg.get<bool>("ballot.ack_priv"))
 				user << "You have changed your vote on " << (*this) << "!" << flush;
 
 			break;
@@ -273,13 +270,13 @@ catch(const Exception &e)
 {
 	using namespace colors;
 
-	if(cfg.get<bool>("ballot_rej_chan"))
+	if(cfg.get<bool>("ballot.rej_chan"))
 	{
 		Chan &chan = get_chan();
 		chan << user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
 	}
 
-	if(cfg.get<bool>("ballot_rej_priv"))
+	if(cfg.get<bool>("ballot.rej_priv"))
 		user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
 }
 
@@ -307,6 +304,36 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 		default:
 			throw Exception("Ballot type not accepted.");
 	}
+}
+
+
+inline
+uint Vote::required()
+const
+{
+	const auto plura = plurality();
+	const auto min_yea = cfg.get<uint>("min_yea");
+	return std::max(min_yea,plura);
+}
+
+
+inline
+uint Vote::minimum()
+const
+{
+	const auto min_votes = cfg.get<uint>("min_votes");
+	const auto min_yea = cfg.get<uint>("min_yea");
+	return std::max(min_votes,min_yea);
+}
+
+
+inline
+uint Vote::plurality()
+const
+{
+	const float total = this->total();
+	const auto plura = cfg.get<float>("plurality");
+	return ceil(total * plura);
 }
 
 
@@ -349,14 +376,14 @@ Adoc DefaultConfig::configure(Chan &chan)
 
 
 inline
-size_t DefaultConfig::configure(Adoc &cfg)
+uint DefaultConfig::configure(Adoc &cfg)
 {
 	static const DefaultConfig default_config;
 
 	const std::function<size_t (const Adoc &def, Adoc &cfg)> recurse = [&]
-	(const Adoc &def, Adoc &cfg) -> size_t
+	(const Adoc &def, Adoc &cfg) -> uint
 	{
-		size_t ret = 0;
+		uint ret = 0;
 		for(const auto &pair : def)
 		{
 			const std::string &key = pair.first;
