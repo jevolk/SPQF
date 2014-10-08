@@ -63,6 +63,7 @@ namespace bot {
 #include "sess.h"
 #include "locutor.h"
 #include "user.h"
+#include "log.h"
 #include "chan.h"
 #include "users.h"
 #include "chans.h"

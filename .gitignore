@@ -4,5 +4,6 @@ helpgen
 *.a
 db_*
 db
+logs
 core
 vgcore*

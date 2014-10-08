@@ -652,6 +652,8 @@ void Bot::handle_chanmsg(const Msg &msg)
 
 	User &user = users.get(msg.get_nick());
 	Chan &chan = chans.get(msg[CHANNAME]);
+	chan.log(user,msg[TEXT]);
+
 	handle_chanmsg(msg,chan,user);
 }
 
@@ -677,6 +679,7 @@ void Bot::handle_cnotice(const Msg &msg)
 
 	User &user = users.get(msg.get_nick());
 	Chan &chan = chans.get(msg[CHANNAME]);
+	chan.log(user,msg[TEXT]);
 
 	handle_cnotice(msg,chan,user);
 }

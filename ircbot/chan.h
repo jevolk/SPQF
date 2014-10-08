@@ -25,6 +25,7 @@ class Chan : public Locutor,
 	using Userv = std::tuple<User *, Mode>;
 	using Users = std::unordered_map<std::string, Userv>;
 
+	Log _log;
 	Topic _topic;
 	Mode _mode;
 	time_t creation;
@@ -36,6 +37,7 @@ class Chan : public Locutor,
   public:
 	// Observers
 	const std::string &get_name() const                     { return Locutor::get_target();         }
+	const Log &get_log() const                              { return _log;                          }
 	const Topic &get_topic() const                          { return _topic;                        }
 	const Mode &get_mode() const                            { return _mode;                         }
 	const time_t &get_creation() const                      { return creation;                      }
@@ -63,12 +65,14 @@ class Chan : public Locutor,
 
 	// [RECV] Bot:: handler's call these to update state
 	friend class Bot;
+	Log &get_log()                                          { return _log;                          }
 	Topic &get_topic()                                      { return _topic;                        }
 	void set_joined(const bool &joined)                     { this->joined = joined;                }
 	void set_creation(const time_t &creation)               { this->creation = creation;            }
 	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
 	bool delta_mode(const std::string &d, const Mask &m);
 	bool rename(const User &user, const std::string &old_nick);
+	void log(const User &user, const std::string &msg)      { _log(user,msg);                       }
 	bool add(User &user, const Mode &mode = {});
 	bool del(User &user);
 
@@ -107,6 +111,7 @@ Chan::Chan(Adb &adb,
            const std::string &name):
 Locutor(sess,name),
 Acct(adb,Locutor::get_target()),
+_log(sess,name),
 joined(false)
 {
 
@@ -527,6 +532,7 @@ std::ostream &operator<<(std::ostream &s,
                          const Chan &c)
 {
 	s << "name:       \t" << c.get_name() << std::endl;
+	s << "logfile:    \t" << c.get_log().get_path() << std::endl;
 	s << "mode:       \t" << c.get_mode() << std::endl;
 	s << "creation:   \t" << c.get_creation() << std::endl;
 	s << "joined:     \t" << std::boolalpha << c.is_joined() << std::endl;
