@@ -9,10 +9,8 @@
 #ifndef LIBIRCBOT_INCLUDE
 #define LIBIRCBOT_INCLUDE
 
-// stdc
-#include <stdint.h>
 
-// stdc++
+#include <stdint.h>
 #include <set>
 #include <map>
 #include <list>
