@@ -57,7 +57,7 @@ class ResPublica : public irc::bot::Bot
 template<class... Args>
 ResPublica::ResPublica(Args&&... args):
 irc::bot::Bot(std::forward<Args>(args)...),
-voting(*this,get_sess(),get_chans(),get_users())
+voting(*this,get_sess(),get_chans(),get_users(),get_logs())
 {
 
 

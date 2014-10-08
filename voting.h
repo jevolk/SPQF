@@ -14,6 +14,7 @@ class Voting
 	Sess &sess;
 	Chans &chans;
 	Users &users;
+	Logs &logs;
 
 	std::map<id_t, std::unique_ptr<Vote>> votes;        // Standing votes  : id => vote
 	std::multimap<std::string, id_t> chanidx;           // Index of votes  : chan => id
@@ -66,7 +67,7 @@ class Voting
 	// Initiate a vote
 	template<class Vote, class... Args> Vote &motion(Args&&... args);
 
-	Voting(Bot &bot, Sess &sess, Chans &chans, Users &users);
+	Voting(Bot &bot, Sess &sess, Chans &chans, Users &users, Logs &logs);
 	Voting(const Voting &) = delete;
 	Voting &operator=(const Voting &) = delete;
 	~Voting() noexcept;
@@ -84,7 +85,7 @@ try
 	}
 	while(has_vote(id));
 
-	const auto iit = votes.emplace(id,std::make_unique<Vote>(id,sess,chans,users,std::forward<Args>(args)...));
+	const auto iit = votes.emplace(id,std::make_unique<Vote>(id,sess,chans,users,logs,std::forward<Args>(args)...));
 	const bool &inserted = iit.second;
 
 	if(inserted) try
