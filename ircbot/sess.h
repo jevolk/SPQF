@@ -18,7 +18,7 @@ class Sess
 	// Server data
 	Server server;                                     // Filled at connection time
 	std::set<std::string> caps;                        // registered extended capabilities
-	std::string nick;                                  // NICK reply
+	std::string _nick;                                 // NICK reply
 	Mode mode;                                         // UMODE
 	bool identified;                                   // Identified to services
 
@@ -28,7 +28,7 @@ class Sess
 
 	// Bot handler access
 	friend class Bot;
-	void set_nick(const std::string &nick)             { this->nick = nick;                         }
+	void set_nick(const std::string &nick)             { this->_nick = nick;                        }
 	void delta_mode(const std::string &str)            { mode.delta(str);                           }
 	void set_identified(const bool &identified)        { this->identified = identified;             }
 	void authenticate(const std::string &str);         // IRCv3 AUTHENTICATE
@@ -44,11 +44,11 @@ class Sess
 
 	// IRC Observers
 	const Server &get_server() const                   { return server;                             }
-	const std::string &get_nick() const                { return nick;                               }
+	const std::string &get_nick() const                { return _nick;                              }
 	const Mode &get_mode() const                       { return mode;                               }
 	const bool &is_identified() const                  { return identified;                         }
 	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
-	bool is_desired_nick() const                       { return nick == ident["nickname"];          }
+	bool is_desired_nick() const                       { return _nick == ident["nickname"];         }
 	bool is_conn() const;
 
 	// [SEND] libircclient call wrapper
@@ -59,6 +59,7 @@ class Sess
 	template<class... VA_LIST> void quote(const char *const &fmt, VA_LIST&&... ap);
 
 	// [SEND] Primary commands
+	void nick(const std::string &nick);
 	void help(const std::string &topic);               // IRCd response goes to console
 	void chanserv(const std::string &str);             // /cs
 	void nickserv(const std::string &str);             // /ns
@@ -71,7 +72,12 @@ class Sess
 	void conn();
 
 	// [SEND] Baked commands
+	void ghost(const std::string &nick, const std::string &pass);
+	void regain(const std::string &nick, const std::string &pass = "");
 	void identify(const std::string &acct, const std::string &pass);
+	void ghost();
+	void regain();
+	void identify();
 
 	Sess(const Ident &id, Callbacks &cbs, irc_session_t *const &sess = nullptr);
 	Sess(const Sess &) = delete;
@@ -89,7 +95,7 @@ Sess::Sess(const Ident &ident,
 ident(ident),
 cbs(cbs),
 sess(sess? sess : irc_create_session(get_cbs())),
-nick(ident["nickname"]),
+_nick(ident["nickname"]),
 identified(false)
 {
 
@@ -106,12 +112,56 @@ Sess::~Sess() noexcept
 
 
 inline
+void Sess::identify()
+{
+	const Ident &id = get_ident();
+	identify(ident["ns_acct"],ident["ns_pass"]);
+}
+
+
+inline
+void Sess::ghost()
+{
+	const Ident &id = get_ident();
+	ghost(ident["nickname"],ident["ns_pass"]);
+}
+
+
+inline
+void Sess::regain()
+{
+	const Ident &id = get_ident();
+	regain(ident["nickname"],ident["ns_pass"]);
+}
+
+
+inline
 void Sess::identify(const std::string &acct,
                     const std::string &pass)
 {
 	std::stringstream ss;
 	ss << "identify" << " " << acct << " " << pass;
 	nickserv(ss.str());
+}
+
+
+inline
+void Sess::ghost(const std::string &nick,
+                 const std::string &pass)
+{
+	std::stringstream gs;
+	gs << "ghost" << " " << nick << " " << pass;
+	nickserv(gs.str());
+}
+
+
+inline
+void Sess::regain(const std::string &nick,
+                  const std::string &pass)
+{
+	std::stringstream gs;
+	gs << "regain" << " " << nick << " " << pass;
+	nickserv(gs.str());
 }
 
 
@@ -175,6 +225,12 @@ inline
 void Sess::help(const std::string &topic)
 {
 	quote("HELP %s",topic.c_str());
+}
+
+inline
+void Sess::nick(const std::string &n)
+{
+	call(irc_cmd_nick,n.c_str());
 }
 
 
@@ -286,7 +342,7 @@ std::ostream &operator<<(std::ostream &s,
 	s << "irc_session_t:   " << ss.sess << std::endl;
 	s << "server:          " << ss.server << std::endl;
 	s << "Ident:           " << ss.ident << std::endl;
-	s << "nick:            " << ss.nick << std::endl;
+	s << "nick:            " << ss.get_nick() << std::endl;
 	s << "mode:            " << ss.mode << std::endl;
 	s << "caps:            ";
 	for(const auto &cap : ss.caps)
