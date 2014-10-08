@@ -306,8 +306,14 @@ uint Vote::minimum()
 const
 {
 	const auto min_votes = cfg.get<uint>("min_votes");
-	const auto min_yea = cfg.get<uint>("min_yea");
-	return std::max(min_votes,min_yea);
+	const float turnout = cfg.get<float>("turnout");
+	if(turnout <= 0.0)
+		return min_votes;
+
+	const Chan &chan = get_chan();
+	const float eligible = chan.count_logged_in();
+	const uint req = ceil(eligible * turnout);
+	return std::max(min_votes,req);
 }
 
 
@@ -352,7 +358,7 @@ DefaultConfig::DefaultConfig()
 	put("max_per_user",1);
 	put("min_votes",1);
 	put("min_yea",1);
-	put("min_turnout",0.00);
+	put("turnout",0.00);
 	put("duration",30);
 	put("plurality",0.51);
 	put("ballot.ack_chan",0);
