@@ -307,7 +307,7 @@ void vote::Config::starting()
 	if(!val.empty()) try
 	{
 		// Only use numerical values for now, throw otherwise
-		boost::lexical_cast<size_t>(val);
+		boost::lexical_cast<float>(val);
 	}
 	catch(const boost::bad_lexical_cast &e)
 	{
