@@ -35,7 +35,7 @@ SPQF_FMT( KICK,              CHANNAME, TARGET,   REASON                         
 SPQF_FMT( CHANMSG,           CHANNAME, TEXT                                                                  )
 SPQF_FMT( CNOTICE,           CHANNAME, TEXT                                                                  )
 SPQF_FMT( PRIVMSG,           NICKNAME, TEXT                                                                  )
-SPQF_FMT( NOTICE,            NICKNAME, TEXT                                                                  )
+SPQF_FMT( NOTICE,            SELFNAME, TEXT                                                                  )
 SPQF_FMT( NAMREPLY,          NICKNAME, TYPE,     CHANNAME, NAMELIST                                          )
 SPQF_FMT( WHOREPLY,          SELFNAME, CHANNAME, USERNAME, HOSTNAME, SERVNAME, NICKNAME, FLAGS,    ADDL      )
 SPQF_FMT( WHOISIDLE,         SELFNAME, NICKNAME, SECONDS,  SIGNON,   REMARKS                                 )

@@ -85,7 +85,6 @@ try
 			case hash("CTCP_REQ"):         handle_ctcp_req(msg);            return;
 			case hash("ACCOUNT"):          handle_account(msg);             return;
 			case hash("INVITE"):           handle_invite(msg);              return;
-			case hash("CHANNEL_NOTICE"):   handle_cnotice(msg);             return;
 			case hash("NOTICE"):           handle_notice(msg);              return;
 			case hash("PRIVMSG"):          handle_privmsg(msg);             return;
 			case hash("CHANNEL"):          handle_chanmsg(msg);             return;
@@ -657,6 +656,16 @@ void Bot::handle_chanmsg(const Msg &msg)
 }
 
 
+void Bot::handle_privmsg(const Msg &msg)
+{
+	log_handle(msg,"PRIVMSG");
+
+	Users &users = get_users();
+	User &user = users.get(msg.get_nick());
+	handle_privmsg(msg,user);
+}
+
+
 void Bot::handle_cnotice(const Msg &msg)
 {
 	using namespace fmt::CNOTICE;
@@ -666,19 +675,10 @@ void Bot::handle_cnotice(const Msg &msg)
 	Chans &chans = get_chans();
 	Users &users = get_users();
 
+	User &user = users.get(msg.get_nick());
 	Chan &chan = chans.get(msg[CHANNAME]);
-	User &user = users.get(msg.get_nick());
+
 	handle_cnotice(msg,chan,user);
-}
-
-
-void Bot::handle_privmsg(const Msg &msg)
-{
-	log_handle(msg,"PRIVMSG");
-
-	Users &users = get_users();
-	User &user = users.get(msg.get_nick());
-	handle_privmsg(msg,user);
 }
 
 
@@ -690,6 +690,12 @@ void Bot::handle_notice(const Msg &msg)
 
 	if(msg.from_server())
 		return;
+
+	if(!my_nick(msg[SELFNAME]))
+	{
+		handle_cnotice(msg);
+		return;
+	}
 
 	if(msg.from_nickserv())
 	{
@@ -707,7 +713,7 @@ void Bot::handle_notice(const Msg &msg)
 	}
 
 	Users &users = get_users();
-	User &user = users.get(msg[NICKNAME]);
+	User &user = users.get(msg.get_nick());
 	handle_notice(msg,user);
 }
 
