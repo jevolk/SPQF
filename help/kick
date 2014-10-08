@@ -1,0 +1,3 @@
+Vote to kick user(s) from the channel.
+The syntax for initiating a vote is: [target ...]
+Example: !vote kick fred                           : Starts a single vote to kick fred

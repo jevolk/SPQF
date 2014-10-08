@@ -16,7 +16,6 @@
 
 // SPQF
 using namespace irc::bot;
-#include "help.h"
 #include "vote.h"
 #include "votes.h"
 #include "voting.h"

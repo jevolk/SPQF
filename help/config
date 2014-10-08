@@ -1,0 +1,8 @@
+Vote on changing various configuration settings.
+The syntax for printing information is: <variable>
+The syntax for initiating a vote to set: <variable> = <new value>
+The syntax for initiating a vote to delete: <variable> =
+Configuration variables are addressed as config.foo.bar... Voting configuration is config.vote.*
+
+Example: !vote config.vote.duration = 10    : Set the duration of a vote to be 10 seconds.
+Example: !vote config.vote.duration =       : Deletes this variable and all children.

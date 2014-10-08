@@ -35,7 +35,7 @@ LDFLAGS = -lircbot -lircclient -lleveldb -lboost_locale -lpthread
 LIBPATH = -Lircbot/
 
 LIBRARIES = libircbot
-TARGETS = spqf helpgen
+TARGETS = spqf
 
 
 all:  $(LIBRARIES) $(TARGETS)
@@ -51,9 +51,6 @@ libircbot:
 spqf: main.o respub.o voting.o help.o
 	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
 
-helpgen: helpgen.o help.o
-	$(CC) -o $@ $(CCFLAGS) $^ $(WFLAGS)
-
 
 main.o: main.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
@@ -62,10 +59,4 @@ respub.o: respub.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 voting.o: voting.cpp *.h
-	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
-
-help.o: help.cpp help.h
-	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
-
-helpgen.o: helpgen.cpp help.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
