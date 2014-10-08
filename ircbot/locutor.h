@@ -73,6 +73,8 @@ class Locutor
 	void mode(const std::string &mode);                 // Raw mode command
 
 	// [SEND] Controls / Utils
+	void mode(const Deltas &deltas)                     { mode(string(deltas));                      }
+	void mode(const Delta &delta)                       { mode(string(delta));                       }
 	void whois();                                       // Sends whois query
 	void mode();                                        // Sends mode query
 

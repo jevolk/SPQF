@@ -49,7 +49,7 @@ class Chan : public Locutor,
 	const Mode &get_mode(const User &user) const;
 	bool has_nick(const std::string &nick) const            { return users.count(nick);             }
 	bool has(const User &user) const                        { return has_nick(user.get_nick());     }
-	size_t num_users() const                                { return users.size();                  }
+	uint num_users() const                                  { return users.size();                  }
 	bool is_op() const;
 
 	// Closures
@@ -90,12 +90,15 @@ class Chan : public Locutor,
 	void invite(const std::string &nick);
 	void topic(const std::string &topic);
 	void kick(const User &user, const std::string &reason = "");
+	void remove(const User &user, const std::string &reason = "");
+	void devoice(const User &user);
+	void voice(const User &user);
+	uint unquiet(const User &user);
 	bool quiet(const User &user, const Quiet::Type &type);
 	bool quiet(const User &user);
+	uint unban(const User &user);
 	bool ban(const User &user, const Ban::Type &type);
 	bool ban(const User &user);
-	size_t unquiet(const User &user);
-	size_t unban(const User &user);
 	void part();                                            // Leave channel
 	void join();                                            // Enter channel
 
@@ -178,7 +181,7 @@ void Chan::who(const std::string &flags)
 
 
 inline
-size_t Chan::unquiet(const User &u)
+uint Chan::unquiet(const User &u)
 {
 	Deltas deltas;
 
@@ -191,13 +194,13 @@ size_t Chan::unquiet(const User &u)
 	if(u.is_logged_in() && quiets.has(u.mask(Mask::ACCT)))
 		deltas.emplace_back('-','q',u.mask(Mask::ACCT));
 
-	mode(string(deltas));
+	mode(deltas);
 	return deltas.size();
 }
 
 
 inline
-size_t Chan::unban(const User &u)
+uint Chan::unban(const User &u)
 {
 	Deltas deltas;
 
@@ -210,7 +213,7 @@ size_t Chan::unban(const User &u)
 	if(u.is_logged_in() && bans.has(u.mask(Mask::ACCT)))
 		deltas.emplace_back('-','b',u.mask(Mask::ACCT));
 
-	mode(string(deltas));
+	mode(deltas);
 	return deltas.size();
 }
 
@@ -224,7 +227,7 @@ bool Chan::ban(const User &u)
 	if(u.is_logged_in())
 		deltas.emplace_back('+','b',u.mask(Mask::ACCT));
 
-	mode(string(deltas));
+	mode(deltas);
 	return true;
 }
 
@@ -238,7 +241,7 @@ bool Chan::quiet(const User &u)
 	if(u.is_logged_in())
 		deltas.emplace_back('+','q',u.mask(Mask::ACCT));
 
-	mode(string(deltas));
+	mode(deltas);
 	return true;
 }
 
@@ -247,8 +250,8 @@ inline
 bool Chan::ban(const User &user,
                const Ban::Type &type)
 {
-	Delta delta('+','b',user.mask(type));
-	mode(string(delta));
+	const Delta delta('+','b',user.mask(type));
+	mode(delta);
 	return true;
 }
 
@@ -257,9 +260,39 @@ inline
 bool Chan::quiet(const User &user,
                  const Quiet::Type &type)
 {
-	Delta delta('+','q',user.mask(type));
-	mode(string(delta));
+	const Delta delta('+','q',user.mask(type));
+	mode(delta);
 	return true;
+}
+
+
+inline
+void Chan::voice(const User &user)
+{
+	Sess &sess = get_sess();
+	const std::string &targ = user.get_nick();
+	const Delta delta('+','v',targ);
+	mode(delta);
+}
+
+
+inline
+void Chan::devoice(const User &user)
+{
+	Sess &sess = get_sess();
+	const std::string &targ = user.get_nick();
+	const Delta delta('-','v',targ);
+	mode(delta);
+}
+
+
+inline
+void Chan::remove(const User &user,
+                  const std::string &reason)
+{
+	Sess &sess = get_sess();
+	const std::string &targ = user.get_nick();
+	sess.quote("REMOVE %s %s %s",get_name().c_str(),targ.c_str(),reason.c_str());
 }
 
 

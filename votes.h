@@ -173,7 +173,7 @@ void vote::Ban::passed()
 	const Adoc &cfg = get_cfg();
 	const User &user = get_users().get(get_issue());
 	chan.ban(user);
-	chan.kick(user,"And I ain't even mad");
+	chan.remove(user,"And I ain't even mad");
 }
 
 
