@@ -126,9 +126,9 @@ class Bot : public std::mutex
 
   private:
 	void log_handle(const Msg &m, const std::string &name = "") const;
-
-	// [RECV] Handlers update internal state first, then call user's handler^
 	void handle_unhandled(const Msg &m);
+
+	void handle_notice_nickserv(const Msg &m);
 
 	void handle_bannedfromchan(const Msg &m);
 	void handle_chanoprivsneeded(const Msg &m);
@@ -153,8 +153,8 @@ class Bot : public std::mutex
 	void handle_ctcp_act(const Msg &m);
 	void handle_ctcp_rep(const Msg &m);
 	void handle_ctcp_req(const Msg &m);
-
 	void handle_unknownmode(const Msg &m);
+	void handle_nicknameinuse(const Msg &m);
 	void handle_erroneusnickname(const Msg &m);
 	void handle_nosuchnick(const Msg &m);
 	void handle_whowasuser(const Msg &m);
@@ -176,7 +176,6 @@ class Bot : public std::mutex
 	void handle_away(const Msg &m);
 	void handle_nick(const Msg &m);
 	void handle_quit(const Msg &m);
-
 	void handle_authenticate(const Msg &m);
 	void handle_account(const Msg &m);
 	void handle_cap(const Msg &m);

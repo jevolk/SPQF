@@ -131,6 +131,7 @@ try
 		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 return;
 		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               return;
 
+		case LIBIRC_RFC_ERR_NICKNAMEINUSE:        handle_nicknameinuse(msg);           return;
 		case LIBIRC_RFC_ERR_UNKNOWNMODE:          handle_unknownmode(msg);             return;
 		case LIBIRC_RFC_ERR_CHANOPRIVSNEEDED:     handle_chanoprivsneeded(msg);        return;
 		case LIBIRC_RFC_ERR_ERRONEUSNICKNAME:     handle_erroneusnickname(msg);        return;
@@ -152,12 +153,12 @@ void Bot::handle_conn(const Msg &msg)
 	log_handle(msg,"CONNECT");
 
 	Sess &sess = get_sess();
+	const Ident &id = sess.get_ident();
 
 	sess.cap_ls();
 	sess.cap_req("account-notify extended-join");
 	sess.cap_end();
 
-	const Ident &id = sess.get_ident();
 	if(!id["ns_acct"].empty() && !id["ns_pass"].empty())
 	{
 		sess.identify(id["ns_acct"],id["ns_pass"]);
@@ -313,10 +314,14 @@ void Bot::handle_nick(const Msg &msg)
 	const std::string old_nick = msg.get_nick();
 	const std::string &new_nick = msg[NICKNAME];
 
+	Sess &sess = get_sess();
 	if(my_nick(old_nick))
 	{
-		Sess &sess = get_sess();
+		const bool regained = !sess.is_desired_nick();
 		sess.set_nick(new_nick);
+
+		if(regained)  // Nick was regained on connect; nothing will exists in Users/chans.
+			return;
 	}
 
 	Users &users = get_users();
@@ -416,6 +421,13 @@ void Bot::handle_mode(const Msg &msg)
 		return;
 	}
 
+	// Our UMODE coming as MODE formatted as UMODEIS (was this protocol designed by committee?)
+	if(my_nick(msg.get_nick()))
+	{
+		handle_umodeis(msg);
+		return;
+	}
+
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
 
@@ -474,7 +486,7 @@ void Bot::handle_umodeis(const Msg &msg)
 
 	log_handle(msg,"UMODEIS");
 
-	if(!my_nick(msg[NICKNAME]))
+	if(!my_nick(msg[SELFNAME]))
 		throw Exception("Server sent us umodeis for a different nickname");
 
 	Sess &sess = get_sess();
@@ -696,30 +708,34 @@ void Bot::handle_notice(const Msg &msg)
 	if(msg.from_server())
 		return;
 
+	if(msg.from_nickserv())
+	{
+		handle_notice_nickserv(msg);
+		return;
+	}
+
 	if(!my_nick(msg[SELFNAME]))
 	{
 		handle_cnotice(msg);
 		return;
 	}
 
-	if(msg.from_nickserv())
-	{
-		Sess &sess = get_sess();
-		if(!sess.is_identified() &&
-		   msg[1].find("You are now identified") != std::string::npos)
-		{
-			sess.set_identified(true);
-
-			Chans &chans = get_chans();
-			chans.autojoin();
-		}
-
-		return;
-	}
-
 	Users &users = get_users();
 	User &user = users.get(msg.get_nick());
 	handle_notice(msg,user);
+}
+
+
+void Bot::handle_notice_nickserv(const Msg &msg)
+{
+	Sess &sess = get_sess();
+
+	if(!sess.is_identified() && msg[1].find("You are now identified") != std::string::npos)
+	{
+		Chans &chans = get_chans();
+		sess.set_identified(true);
+		chans.autojoin();
+	}
 }
 
 
@@ -838,6 +854,24 @@ void Bot::handle_bannedfromchan(const Msg &msg)
 void Bot::handle_unknownmode(const Msg &msg)
 {
 	log_handle(msg,"UNKNOWN MODE");
+}
+
+
+void Bot::handle_nicknameinuse(const Msg &msg)
+{
+	log_handle(msg,"NICK IN USE");
+
+	Sess &sess = get_sess();
+	const Ident &id = sess.get_ident();
+
+	if(!id["ns_acct"].empty() && !id["ns_pass"].empty())
+	{
+		const std::string randy(randstr(14));
+		sess.nick(randy);
+		sess.set_nick(randy);
+		sess.regain();
+		return;
+	}
 }
 
 

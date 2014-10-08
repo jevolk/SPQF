@@ -39,6 +39,21 @@ std::string tolower(const std::string &str)
 }
 
 
+inline
+std::string randstr(const size_t &len)
+{
+	std::string buf;
+	buf.resize(len);
+	std::generate(buf.begin(),buf.end(),[]
+	{
+		static const char *const randy = "abcdefghijklmnopqrstuvwxyz";
+		return randy[rand() % strlen(randy)];
+	});
+
+	return buf;
+}
+
+
 struct scope
 {
 	typedef std::function<void ()> Func;
