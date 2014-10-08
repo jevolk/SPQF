@@ -58,6 +58,9 @@ class Chan : public Locutor,
 	void for_each(const std::function<void (User &, Mode &)> &c);
 	void for_each(const std::function<void (User &)> &c);
 
+	// Closure recipes
+	size_t count_logged_in() const;
+
   private:
 	User &get_user(const std::string &nick);
 	Mode &get_mode(const std::string &nick);
@@ -367,14 +370,17 @@ bool Chan::add(User &user,
 
 
 inline
-bool Chan::is_op()
+size_t Chan::count_logged_in()
 const
 {
-	const Sess &sess = get_sess();
-	const std::string &nick = sess.get_nick();
-	const User &user = get_user(nick);
-	const Mode &mode = get_mode(user);
-	return mode.has('o');
+	size_t ret = 0;
+	for_each([&ret]
+	(const User &user)
+	{
+		ret += user.is_logged_in();
+	});
+
+	return ret;
 }
 
 
@@ -431,6 +437,18 @@ const
 		const Mode &mode = std::get<1>(val);
 		c(user,mode);
 	}
+}
+
+
+inline
+bool Chan::is_op()
+const
+{
+	const Sess &sess = get_sess();
+	const std::string &nick = sess.get_nick();
+	const User &user = get_user(nick);
+	const Mode &mode = get_mode(user);
+	return mode.has('o');
 }
 
 
