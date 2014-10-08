@@ -17,6 +17,7 @@ adb(ident["dbdir"]),
 sess(ident,callbacks),
 chans(adb,sess),
 users(adb,sess),
+logs(chans,users,*this),
 dispatch_thread(&Bot::dispatch_worker,this)
 {
 	irc_set_ctx(sess,this);

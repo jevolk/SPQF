@@ -67,6 +67,7 @@ namespace bot {
 #include "chan.h"
 #include "users.h"
 #include "chans.h"
+#include "logs.h"
 
 /**
  * Primary libircbot object
@@ -90,12 +91,14 @@ class Bot : public std::mutex
 	Sess sess;
 	Chans chans;
 	Users users;
+	Logs logs;
 
   public:
 	const Adb &get_adb() const                              { return adb;                         }
 	const Sess &get_sess() const                            { return sess;                        }
 	const Chans &get_chans() const                          { return chans;                       }
 	const Users &get_users() const                          { return users;                       }
+	const Logs &get_logs() const                            { return logs;                        }
 
 	bool ready() const                                      { return get_sess().is_conn();        }
 	const std::string &get_nick() const                     { return get_sess().get_nick();       }
@@ -106,6 +109,7 @@ class Bot : public std::mutex
 	Sess &get_sess()                                        { return sess;                        }
 	Chans &get_chans()                                      { return chans;                       }
 	Users &get_users()                                      { return users;                       }
+	Logs &get_logs()                                        { return logs;                        }
 
 	// [RECV] Main interface for users of this library
 	virtual void handle_privmsg(const Msg &m, User &u) {}

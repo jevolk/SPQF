@@ -34,11 +34,10 @@ path([&]
 	const std::string &dir = id["logdir"];
 	mkdir(dir.c_str(),0777);
 	return dir + "/" + name;
-}()),
-file(path,std::ios_base::app)
+}())
 {
 	file.exceptions(std::ios_base::badbit|std::ios_base::failbit);
-	file.clear();
+	file.open(path,std::ios_base::app);
 }
 catch(const std::exception &e)
 {
