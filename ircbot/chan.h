@@ -75,7 +75,7 @@ class Chan : public Locutor,
 	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
 	bool delta_mode(const std::string &d, const Mask &m);
 	bool rename(const User &user, const std::string &old_nick);
-	void log(const User &user, const std::string &msg)      { _log(user,msg);                       }
+	void log(const User &user, const Msg &msg)              { _log(user,msg);                       }
 	bool add(User &user, const Mode &mode = {});
 	bool del(User &user);
 

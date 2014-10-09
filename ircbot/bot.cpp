@@ -297,9 +297,10 @@ void Bot::handle_quit(const Msg &msg)
 	User &user = users.get(nick);
 
 	Chans &chans = get_chans();
-	chans.for_each([&user]
+	chans.for_each([&user,&msg]
 	(Chan &chan)
 	{
+		chan.log(user,msg);
 		chan.del(user);
 	});
 }
@@ -365,6 +366,7 @@ void Bot::handle_join(const Msg &msg)
 
 	Chan &chan = chans.add(msg[CHANNAME]);
 	chan.add(user);
+	chan.log(user,msg);
 
 	if(my_nick(msg.get_nick()))
 	{
@@ -390,6 +392,7 @@ void Bot::handle_part(const Msg &msg)
 
 	User &user = users.get(msg.get_nick());
 	Chan &chan = chans.get(msg[CHANNAME]);
+	chan.log(user,msg);
 	chan.del(user);
 
 	if(my_nick(msg.get_nick()))
@@ -631,6 +634,7 @@ void Bot::handle_kick(const Msg &msg)
 	const std::string &kickee = msg.num_params() > 1? msg[KICK::TARGET] : kicker;
 
 	Chans &chans = get_chans();
+	Users &users = get_users();
 
 	if(my_nick(kickee))
 	{
@@ -639,10 +643,9 @@ void Bot::handle_kick(const Msg &msg)
 		return;
 	}
 
-	Users &users = get_users();
-
 	User &user = users.get(kickee);
 	Chan &chan = chans.get(msg[CHANNAME]);
+	chan.log(user,msg);
 	chan.del(user);
 
 	const scope free([&]
@@ -666,7 +669,7 @@ void Bot::handle_chanmsg(const Msg &msg)
 
 	User &user = users.get(msg.get_nick());
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.log(user,msg[TEXT]);
+	chan.log(user,msg);
 
 	handle_chanmsg(msg,chan,user);
 }
@@ -693,7 +696,7 @@ void Bot::handle_cnotice(const Msg &msg)
 
 	User &user = users.get(msg.get_nick());
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.log(user,msg[TEXT]);
+	chan.log(user,msg);
 
 	handle_cnotice(msg,chan,user);
 }
@@ -750,7 +753,7 @@ void Bot::handle_caction(const Msg &msg)
 
 	User &user = users.get(msg.get_nick());
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.log(user,msg[TEXT]);
+	chan.log(user,msg);
 
 	handle_caction(msg,chan,user);
 }

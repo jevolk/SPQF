@@ -16,9 +16,9 @@ class Logs
 	struct ClosureArgs
 	{
 		const time_t &time;
-		const std::string &acct;
-		const std::string &nick;
-		const std::string &msg;
+		const char *const &acct;
+		const char *const &nick;
+		const char *const &type;
 	};
 
 	struct Filter
@@ -57,6 +57,7 @@ class Logs
 		std::pair<time_t,time_t> time {0,0};
 		std::string acct;
 		std::string nick;
+		std::string type;
 
 		bool operator()(const ClosureArgs &args) const override;
 	};
@@ -197,21 +198,31 @@ const try
 
 	while(1)
 	{
-		std::string buf;
-		std::getline(file,buf);
-		if(file.fail() || file.eof())
+		char buf[64] alignas(16);
+		file.getline(buf,sizeof(buf));
+		if(file.fail())
 			break;
 
-		const size_t t_a_sep = buf.find(' ');
-		const size_t a_n_sep = buf.find(' ',t_a_sep+1);
-		const size_t n_m_sep = buf.find(' ',a_n_sep+1);
+		std::array<const char *, Log::_NUM_FIELDS> field;
+		std::fill(field.begin()+1,field.end(),nullptr);
+		field[0] = buf;
+		for(size_t i = 0, p = 1; buf[i] && p < field.size(); i++)
+		{
+			if(buf[i] != ' ')
+				continue;
 
-		const time_t &time = boost::lexical_cast<time_t>(buf.substr(0,t_a_sep));
-		const std::string &acct = buf.substr(t_a_sep+1,a_n_sep - t_a_sep - 1);
-		const std::string &nick = buf.substr(a_n_sep+1,n_m_sep - a_n_sep - 1);
-		const std::string &msg = buf.substr(n_m_sep+1);
+			field[p++] = &buf[i+1];
+			buf[i] = 0x00;
+		}
 
-		const ClosureArgs args {time,acct,nick,msg};
+		const ClosureArgs args
+		{
+			atoll(field[Log::TIME]),
+			field[Log::ACCT],
+			field[Log::NICK],
+			field[Log::TYPE],
+		};
+
 		closure(args);
 	}
 }
@@ -236,6 +247,9 @@ const
 		return false;
 
 	if(!nick.empty() && nick != args.nick)
+		return false;
+
+	if(!type.empty() && type != args.type)
 		return false;
 
 	return true;

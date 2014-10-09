@@ -13,11 +13,21 @@ class Log
 	std::ofstream file;
 
   public:
-	const std::string &get_path() const          { return path;             }
+	enum Field
+	{
+		VERS        = 0,     // Version/format of this line
+		TIME        = 1,     // Epoch time in seconds
+		ACCT        = 2,     // NickServ account name
+		NICK        = 3,     // Nickname
+		TYPE        = 4,     // Event type
 
-	auto flush() -> decltype(file.flush())       { return file.flush();     }
+		_NUM_FIELDS
+	};
 
-	void operator()(const User &user, const std::string &msg);
+	const std::string &get_path() const                        { return path;             }
+
+	void operator()(const User &user, const Msg &msg);
+	auto flush() -> decltype(file.flush())                     { return file.flush();     }
 
 	Log(const Sess &sess, const std::string &name);
 };
@@ -48,16 +58,24 @@ catch(const std::exception &e)
 
 inline
 void Log::operator()(const User &user,
-                     const std::string &msg)
+                     const Msg &msg)
 try
 {
+	static const uint VERSION = 0;
 	static time_t time;
 	std::time(&time);
 
-	file << time << " "
-	     << (user.is_logged_in()? user.get_acct() : "*") << " "
-	     << user.get_nick() << " "
-	     << msg << "\n";
+	const std::string &acct = user.is_logged_in()? user.get_acct() : "*";
+	const std::string &nick = user.get_nick();
+	const std::string &type = !msg.get_code()? msg.get_name().substr(0,3):
+	                                           boost::lexical_cast<std::string>(msg.get_code());
+
+	file << VERSION   << " "
+	     << time      << " "
+	     << acct      << " "
+	     << nick      << " "
+	     << type      << " "
+	     << "\n";
 
 	flush();
 }
