@@ -196,6 +196,7 @@ catch(const Exception &e)
 Vote::Stat Vote::cast(const Ballot &ballot,
                       User &user)
 {
+	enfranchise(ballot,user);
 	proffer(ballot,user);
 
 	const std::string &acct = user.get_acct();
@@ -215,6 +216,26 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 }
 
 
+void Vote::enfranchise(const Ballot &ballot,
+                       User &user)
+{
+	Logs &logs = get_logs();
+	Chan &chan = get_chan();
+	const Adoc &cfg = get_cfg();
+	const time_t eftime = cfg.get<time_t>("enfranchise.time");
+	const size_t eflines = cfg.get<size_t>("enfranchise.lines");
+
+	Logs::SimpleFilter filter;
+	filter.acct = user.get_acct();
+	filter.time.first = get_began() - eftime;
+	filter.time.second = get_began();
+	filter.type = "CHA";
+
+	if(!logs.atleast(chan,filter,eflines))
+		throw Exception("You have not been active enough to participate in this vote");
+}
+
+
 uint Vote::required()
 const
 {
@@ -227,15 +248,19 @@ const
 uint Vote::minimum()
 const
 {
-	const auto min_votes = cfg.get<uint>("min_votes");
-	const float turnout = cfg.get<float>("turnout");
-	if(turnout <= 0.0)
-		return min_votes;
+	std::vector<uint> sel
+	{{
+		cfg.get<uint>("min_yea"),
+		cfg.get<uint>("min_votes"),
+	}};
+
+	if(cfg.get<float>("turnout") <= 0.0)
+		return *std::max_element(sel.begin(),sel.end());
 
 	const Chan &chan = get_chan();
 	const float eligible = chan.count_logged_in();
-	const uint req = ceil(eligible * turnout);
-	return std::max(min_votes,req);
+	sel.emplace_back(ceil(eligible * cfg.get<float>("turnout")));
+	return *std::max_element(sel.begin(),sel.end());
 }
 
 
@@ -279,12 +304,12 @@ DefaultConfig::DefaultConfig()
 	put("turnout",0.00);
 	put("duration",30);
 	put("plurality",0.51);
+	put("enfranchise.time",900);
+	put("enfranchise.lines",3);
 	put("ballot.ack_chan",0);
 	put("ballot.ack_priv",1);
 	put("ballot.rej_chan",0);
 	put("ballot.rej_priv",1);
-	put("ballot.last_spoke",900);
-	put("ballot.first_spoke",1800);
 	put("result.ack_chan",1);
 }
 
