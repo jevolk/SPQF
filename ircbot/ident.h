@@ -33,12 +33,33 @@ struct Ident : public std::map<std::string,std::string>
 	std::list<std::string> autojoin;
 
 	// Direct access to the config
-	const std::string &operator[](const std::string &key) const  { return this->at(key); }
-	std::string &operator[](const std::string &key)              { return this->at(key); }
+	const std::string &operator[](const std::string &key) const;
+	std::string &operator[](const std::string &key);
 
 	// Output this info
 	friend std::ostream &operator<<(std::ostream &s, const Ident &id);
 };
+
+
+inline
+std::string &Ident::operator[](const std::string &key)
+{
+	const auto it = find(key);
+	return it == end()? emplace(key,std::string()).first->second:
+	                    it->second;
+}
+
+
+inline
+const std::string &Ident::operator[](const std::string &key)
+const
+{
+	const auto it = find(key);
+	if(it == end())
+		throw std::out_of_range("Key not found");
+
+	return it->second;
+}
 
 
 inline
