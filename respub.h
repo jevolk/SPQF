@@ -34,6 +34,7 @@ class ResPublica : public irc::bot::Bot
 	void handle_vote_config(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_cancel(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_help(const Msg &m, Chan &c, User &u, const Tokens &t);
+	void handle_vote_list(const Msg &m, User &u, Locutor &out, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_ballot(const Msg &m, Chan &c, User &u, const Tokens &t, const Vote::Ballot &b);
@@ -44,6 +45,7 @@ class ResPublica : public irc::bot::Bot
 
 	// !vote privmsg command stack
 	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Vote::Ballot &b);
+	void handle_vote_list(const Msg &m, User &u, const Tokens &t);
 	void handle_config(const Msg &m, User &u, const Tokens &toks);
 	void handle_vote(const Msg &m, User &u, const Tokens &t);
 

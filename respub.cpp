@@ -70,6 +70,7 @@ void ResPublica::handle_cmd(const Msg &msg,
 void ResPublica::handle_config(const Msg &msg,
                                User &user,
                                const Tokens &toks)
+try
 {
 	Chans &chans = get_chans();
 	const Chan &chan = chans.get(*toks.at(0));
@@ -84,6 +85,10 @@ void ResPublica::handle_config(const Msg &msg,
 		user << doc << flush;
 	}
 	else user << key << " = " << val << flush;
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("Need a channel name because this is PM.");
 }
 
 
@@ -105,7 +110,40 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("no"):
 		case hash("N"):
 		case hash("n"):        handle_vote_ballot(msg,user,subtoks,Vote::NAY);      break;
+		case hash("list"):     handle_vote_list(msg,user,subtoks);                  break;
 	}
+}
+
+
+void ResPublica::handle_vote_list(const Msg &msg,
+                                  User &user,
+                                  const Tokens &toks)
+try
+{
+	Chans &chans = get_chans();
+	const Chan &chan = chans.get(*toks.at(0));
+	const Tokens subtoks = subtokenize(toks);
+
+	if(subtoks.empty())
+	{
+		voting.for_each(chan,[&]
+		(const Vote &vote)
+		{
+			const auto &id = vote.get_id();
+			handle_vote_list(msg,user,user,subtoks,id);
+		});
+	} else {
+		const auto &id = boost::lexical_cast<Vote::id_t>(*subtoks.at(0));
+		handle_vote_list(msg,user,user,subtoks,id);
+	}
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw Exception("You supplied a bad ID number.");
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("Need a channel name because this is PM.");
 }
 
 
@@ -256,8 +294,6 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   User &user,
                                   const Tokens &toks)
 {
-	using namespace colors;
-
 	const Tokens subtoks = subtokenize(toks);
 
 	if(toks.empty())
@@ -281,24 +317,42 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   const Tokens &toks,
                                   const id_t &id)
 {
+	const Adoc &cfg = chan.get("config.vote.list");
+	const bool ack_chan = cfg["ack_chan"] == "1";
+	Locutor &out = ack_chan? static_cast<Locutor &>(chan) : static_cast<Locutor &>(user);
+	handle_vote_list(msg,user,out,toks,id);
+}
+
+
+void ResPublica::handle_vote_list(const Msg &msg,
+                                  User &user,
+                                  Locutor &out,
+                                  const Tokens &toks,
+                                  const id_t &id)
+{
 	using namespace colors;
 
 	const auto &vote = voting.get(id);
 	const auto tally = vote.tally();
 
-	const Adoc &cfg = chan.get("config.vote.list");
-	const bool ack_chan = cfg["ack_chan"] == "1";
-	Locutor &out = ack_chan? static_cast<Locutor &>(chan) : static_cast<Locutor &>(user);
+	out << vote << ": ";
+	out << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " ";
+	out << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " ";
+	out << BOLD << "YOU" << OFF << ": ";
 
-	out << "Current tally #" << BOLD << id << OFF << ": "
-	    << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " "
-	    << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " "
-	    << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
+	if(!vote.voted(user))
+		out << BOLD << FG::BLACK << "---" << OFF << " ";
+	else if(vote.position(user) == Vote::YEA)
+		out << BOLD << UNDER2 << FG::WHITE << BG::GREEN << "YEA" << OFF << " ";
+	else if(vote.position(user) == Vote::NAY)
+		out << BOLD << UNDER2 << FG::WHITE << BG::RED << "NAY" << OFF << " ";
+
+	out << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
 
 	if(vote.total() < vote.minimum())
 		out << BOLD << (vote.minimum() - vote.total()) << OFF << " more votes are required. ";
 	else if(tally.first < vote.required())
-		out << BOLD << (vote.required() < tally.first) << OFF << " more yeas are required to pass. ";
+		out << BOLD << (vote.required() - tally.first) << OFF << " more yeas are required to pass. ";
 	else
 		out << "As it stands, the motion will pass.";
 
