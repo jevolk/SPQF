@@ -49,6 +49,8 @@ try
 		return -1;
 	}
 
+	srand(getpid());
+
 	Ident id;
 	id["hostname"] = argv[1];
 	id["port"] = argc > 2? argv[2] : "6667";
