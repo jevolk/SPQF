@@ -82,8 +82,8 @@ class Vote
 
 	// Called by the asynchronous Voting worker only
 	void start();
-	void cancel();
 	void finish();
+	void cancel();
 
 	Vote(const id_t &id, const Sess &sess, Chans &chans, Users &users, Logs &logs, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
 	virtual ~Vote() = default;

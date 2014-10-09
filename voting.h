@@ -42,7 +42,6 @@ class Voting
 	void del(const id_t &id);
 
 	void call_finish(Vote &vote) noexcept;
-	void poll_motions();
 	void poll_votes();
 	void sleep();
 	void worker();

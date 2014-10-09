@@ -200,14 +200,13 @@ const try
 		char buf[64] alignas(16);
 		file.getline(buf,sizeof(buf));
 		const size_t len = strlen(buf);
+		std::replace(buf,buf+len,' ','\0');
 		if(!len)
 			return true;
 
-		std::array<const char *, Log::_NUM_FIELDS> field;
-		std::replace(buf,buf+len,' ','\0');
-
 		size_t i = 0;
 		const char *ptr = buf, *const end = buf + len;
+		std::array<const char *, Log::_NUM_FIELDS> field;
 		while(ptr < end)
 		{
 			field[i++] = ptr;
