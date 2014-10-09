@@ -425,7 +425,7 @@ void Bot::handle_mode(const Msg &msg)
 	}
 
 	// Our UMODE coming as MODE formatted as UMODEIS (was this protocol designed by committee?)
-	if(my_nick(msg.get_nick()))
+	if(my_nick(msg.get_nick()) && my_nick(msg[CHANNAME]))
 	{
 		handle_umodeis(msg);
 		return;
