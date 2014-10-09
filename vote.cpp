@@ -106,7 +106,7 @@ try
 	{
 		if(cfg.get<bool>("result.ack_chan"))
 			chan << (*this) << ": "
-			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF << "."
+			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF
 			     << " Yeas: " << FG::GREEN << yea.size() << OFF << "."
 			     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
 			     << " Required at least: " << BOLD << required() << OFF << " yeas."
