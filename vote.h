@@ -71,9 +71,10 @@ class Vote
 	virtual void passed() {}
 	virtual void failed() {}
 	virtual void canceled() {}
-	virtual void proffer(const Ballot &b, User &u) {}
+	virtual void proffer(const Ballot &b, User &user) {}
 	virtual void starting() {}
 
+	void enfranchise(const Ballot &b, User &user);
 	Stat cast(const Ballot &ballot, User &user);
 
   public:
