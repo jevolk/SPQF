@@ -11,16 +11,16 @@ struct Ident : public std::map<std::string,std::string>
 	Ident(): std::map<std::string,std::string>
 	{
 		// Client info
-		{"nickname",   "SPQF"                         },
-		{"username",   "SPQF"                         },
-		{"fullname",   "Senate & People of Freenode"  },
+		{"nick",       "SPQF"                         },
+		{"user",       "SPQF"                         },
+		{"gecos",      "Senate & People of Freenode"  },
 
 		// Nickserv identification
 		{"ns-acct",    ""                             },
 		{"ns-pass",    ""                             },
 
 		// Server info
-		{"hostname",   "chat.freenode.net"            },
+		{"host",       ""                             },
 		{"port",       "6667"                         },
 		{"pass",       ""                             },
 

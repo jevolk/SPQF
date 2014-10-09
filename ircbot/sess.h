@@ -48,7 +48,7 @@ class Sess
 	const Mode &get_mode() const                       { return mode;                               }
 	const bool &is_identified() const                  { return identified;                         }
 	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
-	bool is_desired_nick() const                       { return _nick == ident["nickname"];         }
+	bool is_desired_nick() const                       { return _nick == ident["nick"];             }
 	bool is_conn() const;
 
 	// [SEND] libircclient call wrapper
@@ -95,7 +95,7 @@ Sess::Sess(const Ident &ident,
 ident(ident),
 cbs(cbs),
 sess(sess? sess : irc_create_session(get_cbs())),
-_nick(ident["nickname"]),
+_nick(ident["nick"]),
 identified(false)
 {
 
@@ -123,7 +123,7 @@ inline
 void Sess::ghost()
 {
 	const Ident &id = get_ident();
-	ghost(ident["nickname"],ident["ns-pass"]);
+	ghost(ident["nick"],ident["ns-pass"]);
 }
 
 
@@ -131,7 +131,7 @@ inline
 void Sess::regain()
 {
 	const Ident &id = get_ident();
-	regain(ident["nickname"],ident["ns-pass"]);
+	regain(ident["nick"],ident["ns-pass"]);
 }
 
 
@@ -170,12 +170,12 @@ void Sess::conn()
 {
 	const Ident &id = get_ident();
 	call(irc_connect,
-	     id["hostname"].c_str(),
+	     id["host"].c_str(),
 	     boost::lexical_cast<uint16_t>(id["port"]),
 	     id["pass"].empty()? nullptr : id["pass"].c_str(),
-	     id["nickname"].c_str(),
-	     id["username"].c_str(),
-	     id["fullname"].c_str());
+	     id["nick"].c_str(),
+	     id["user"].c_str(),
+	     id["gecos"].c_str());
 }
 
 
