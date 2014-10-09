@@ -232,7 +232,7 @@ void Vote::enfranchise(const Ballot &ballot,
 	filter.type = "CHA";
 
 	if(!logs.atleast(chan,filter,eflines))
-		throw Exception("You have not been active enough to participate in this vote");
+		throw Exception("You have not been active enough to participate in this vote.");
 }
 
 

@@ -45,15 +45,6 @@ int main(int argc, char **argv) try
 {
 	Ident id;
 
-	if(argc < 2)
-	{
-		printf("usage: %s [ --cfg-var=val | --join=chan ] [...]\n\ndefaults:\n",argv[0]);
-		for(const auto &kv : id)
-			printf("\t--%s=\"%s\"\n",kv.first.c_str(),kv.second.c_str());
-
-		return -1;
-	}
-
 	while(argc-- > 1)
 	{
 		const std::string str(argv[argc]);
@@ -67,6 +58,16 @@ int main(int argc, char **argv) try
 			id.autojoin.emplace_back(val);
 		else
 			id[key] = val;
+	}
+
+	if(id["host"].empty())
+	{
+		fprintf(stderr,"usage: %s [ --var=val | --join=chan ] [...]\n",argv[0]);
+		fprintf(stderr,"\ndefaults:\n");
+		for(const auto &kv : id)
+			fprintf(stderr,"\t--%s=\"%s\"\n",kv.first.c_str(),kv.second.c_str());
+
+		return -1;
 	}
 
 	printf("****** \033[1mSENATVS POPVLVS QVE FREENODUS\033[0m ******\n");
