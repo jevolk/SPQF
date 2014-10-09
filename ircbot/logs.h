@@ -68,11 +68,13 @@ class Logs
 	bool for_each(const std::string &path, const Closure &closure) const;
 	bool for_each(const std::string &path, const Filter &filter, const Closure &closure) const;
 	size_t count(const std::string &path, const Filter &filter) const;
+	bool atleast(const std::string &path, const Filter &filter, const size_t &count) const;
 	bool exists(const std::string &path, const Filter &filter) const;
 
 	bool for_each(const Chan &chan, const Closure &closure) const;
 	bool for_each(const Chan &chan, const Filter &filter, const Closure &closure) const;
 	size_t count(const Chan &chan, const Filter &filter) const;
+	bool atleast(const Chan &chan, const Filter &filter, const size_t &count) const;
 	bool exists(const Chan &chan, const Filter &filter) const;
 
 	Logs(Chans &chans, Users &users, std::mutex &bot);
@@ -106,6 +108,18 @@ const
 
 
 inline
+bool Logs::atleast(const Chan &chan,
+                   const Filter &filter,
+                   const size_t &count)
+const
+{
+	const Log &clog = chan.get_log();
+	const std::string &path = clog.get_path();
+	return atleast(path,filter,count);
+}
+
+
+inline
 size_t Logs::count(const Chan &chan,
                    const Filter &filter)
 const
@@ -130,8 +144,24 @@ const
 
 
 inline
+bool Logs::atleast(const std::string &path,
+                   const Filter &filter,
+                   const size_t &count)
+const
+{
+	size_t ret = 0;
+	return !for_each(path,[&filter,&ret,&count]
+	(const ClosureArgs &a) -> bool
+	{
+		ret += filter(a);
+		return ret < count;
+	});
+}
+
+
+inline
 size_t Logs::count(const std::string &path,
-                    const Filter &filter)
+                   const Filter &filter)
 const
 {
 	size_t ret = 0;
