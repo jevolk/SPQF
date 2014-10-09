@@ -96,8 +96,8 @@ void ResPublica::handle_vote(const Msg &msg,
                              User &user,
                              const Tokens &toks)
 {
+	const std::string subcmd = toks.size()? *toks.at(0) : "help";
 	const Tokens subtoks = subtokenize(toks);
-	const std::string subcmd = *toks.at(0);
 	switch(hash(subcmd))
 	{
 		// Ballot
@@ -110,8 +110,11 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("no"):
 		case hash("N"):
 		case hash("n"):        handle_vote_ballot(msg,user,subtoks,Vote::NAY);      break;
+
 		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,user,subtoks);                  break;
+		default:
+		case hash("help"):     handle_vote_help(msg,user,subtoks);                  break;
 	}
 }
 
@@ -258,7 +261,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		// Administrative
 		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,chan,user,subtoks);                  break;
-		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);                  break;
+		case hash("help"):     handle_vote_help(msg,user,subtoks);                       break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);                break;
 
 		// Actual vote types
@@ -357,26 +360,6 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		out << BOLD << (vote.required() - tally.first) << OFF << " more yeas are required to pass. ";
 	else
 		out << "As it stands, the motion will pass.";
-
-	out << flush;
-}
-
-
-void ResPublica::handle_vote_help(const Msg &msg,
-                                  Chan &chan,
-                                  User &user,
-                                  const Tokens &toks)
-{
-	const std::string &what = toks.size()? *toks.at(0) : "";
-	const Tokens subtoks = subtokenize(toks);
-
-	Locutor &out = user;
-
-	switch(hash(what))
-	{
-
-		default:        out << "http://pastebin.com/W6ZmqBG5";     break;
-	}
 
 	out << flush;
 }
@@ -504,6 +487,15 @@ void ResPublica::handle_vote_topic(const Msg &msg,
 {
 	const std::string issue = detokenize(toks);
 	voting.motion<vote::Topic>(chan,user,issue);
+}
+
+
+void ResPublica::handle_vote_help(const Msg &msg,
+                                  Locutor &out,
+                                  const Tokens &toks)
+{
+	out << "http://pastebin.com/W6ZmqBG5";
+	out << flush;
 }
 
 

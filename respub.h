@@ -9,7 +9,6 @@
 class ResPublica : public irc::bot::Bot
 {
 	using Meth = Locutor::Method;
-
 	using Tokens = std::vector<const std::string *>;
 	using Selection = std::forward_list<Tokens::const_iterator>;
 
@@ -22,6 +21,9 @@ class ResPublica : public irc::bot::Bot
 
 	Voting voting;
 
+	// !vote abstract stack
+	void handle_vote_help(const Msg &m, Locutor &out, const Tokens &t);
+
 	// !vote channel command stack
 	void handle_vote_opine(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_topic(const Msg &m, Chan &c, User &u, const Tokens &toks);
@@ -33,7 +35,6 @@ class ResPublica : public irc::bot::Bot
 	void handle_vote_mode(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_config(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_cancel(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_help(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_list(const Msg &m, User &u, Locutor &out, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t);
