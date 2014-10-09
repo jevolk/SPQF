@@ -305,10 +305,8 @@ void ResPublica::handle_vote_help(const Msg &msg,
 
 	switch(hash(what))
 	{
-		//case hash("config"):   out << help_vote_config;                 break;
-		//case hash("kick"):     out << help_vote_kick;                   break;
-		//case hash("mode"):     out << help_vote_mode;                   break;
-		default:               out << "http://pastebin.com/W6ZmqBG5";   break;
+
+		default:        out << "http://pastebin.com/W6ZmqBG5";     break;
 	}
 
 	out << flush;
@@ -330,7 +328,6 @@ catch(const Exception &e)
 {
 	chan << user << e << flush;
 }
-
 
 
 void ResPublica::handle_vote_config(const Msg &msg,

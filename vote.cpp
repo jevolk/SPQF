@@ -51,6 +51,18 @@ issue(issue)
 }
 
 
+void Vote::cancel()
+{
+	canceled();
+
+	if(cfg.get<bool>("result.ack_chan"))
+	{
+		Chan &chan = get_chan();
+		chan << "The vote " << (*this) << " has been canceled." << flush;
+	}
+}
+
+
 void Vote::start()
 {
 	using namespace colors;
@@ -134,18 +146,6 @@ catch(const Exception &e)
 	{
 		auto &chan = get_chan();
 		chan << "The vote " << (*this) << " was rejected: " << e << flush;
-	}
-}
-
-
-void Vote::cancel()
-{
-	canceled();
-
-	if(cfg.get<bool>("result.ack_chan"))
-	{
-		Chan &chan = get_chan();
-		chan << "The vote " << (*this) << " has been canceled." << flush;
 	}
 }
 
