@@ -70,7 +70,7 @@ void Vote::start()
 	starting();
 
 	auto &chan = get_chan();
-	chan << BOLD << "Voting has started!" << OFF << " Issue " << BOLD << "#" << get_id() << OFF << ": "
+	chan << BOLD << "Voting has started!" << OFF << " Issue " << (*this) << ": "
 	     << "You have " << BOLD << cfg.get<uint>("duration") << OFF << " seconds to vote! "
 	     << "Type or PM: "
 	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
