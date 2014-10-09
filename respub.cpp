@@ -217,7 +217,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("n"):        handle_vote_ballot(msg,chan,user,subtoks,Vote::NAY);      break;
 
 		// Administrative
-		case hash("poll"):     handle_vote_poll(msg,chan,user,subtoks);                  break;
+		case hash("list"):     handle_vote_list(msg,chan,user,subtoks);                  break;
 		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);                  break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);                break;
 
@@ -251,7 +251,7 @@ catch(const boost::bad_lexical_cast &e)
 }
 
 
-void ResPublica::handle_vote_poll(const Msg &msg,
+void ResPublica::handle_vote_list(const Msg &msg,
                                   Chan &chan,
                                   User &user,
                                   const Tokens &toks)
@@ -266,16 +266,16 @@ void ResPublica::handle_vote_poll(const Msg &msg,
 		(const Vote &vote)
 		{
 			const auto &id = vote.get_id();
-			handle_vote_poll(msg,chan,user,subtoks,id);
+			handle_vote_list(msg,chan,user,subtoks,id);
 		});
 	} else {
 		const auto &id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
-		handle_vote_poll(msg,chan,user,subtoks,id);
+		handle_vote_list(msg,chan,user,subtoks,id);
 	}
 }
 
 
-void ResPublica::handle_vote_poll(const Msg &msg,
+void ResPublica::handle_vote_list(const Msg &msg,
                                   Chan &chan,
                                   User &user,
                                   const Tokens &toks,
@@ -286,7 +286,7 @@ void ResPublica::handle_vote_poll(const Msg &msg,
 	const auto &vote = voting.get(id);
 	const auto tally = vote.tally();
 
-	const Adoc &cfg = chan.get("config.vote.poll");
+	const Adoc &cfg = chan.get("config.vote.list");
 	const bool ack_chan = cfg["ack_chan"] == "1";
 	Locutor &out = ack_chan? static_cast<Locutor &>(chan) : static_cast<Locutor &>(user);
 
