@@ -33,6 +33,8 @@ struct Delta : std::tuple<bool,char,Mask>
 	void validate_chan(const Server &s) const;
 	void validate_user(const Server &s) const;
 
+	operator std::string() const;
+
 	Delta(const bool &sign, const char &mode, const Mask &mask);
 	Delta(const char &sign, const char &mode, const Mask &mask);
 	Delta(const std::string &mode_delta, const Mask &mask);
@@ -47,6 +49,8 @@ struct Deltas : std::vector<Delta>
 	bool too_many(const Server &s) const;
 	void validate_chan(const Server &s) const;
 	void validate_user(const Server &s) const;
+
+	operator std::string() const;
 
 	Deltas() = default;
 	Deltas(std::vector<Delta> &&vec):       std::vector<Delta>(std::move(vec)) {}
@@ -143,6 +147,14 @@ const
 	const std::string &max_modes_s = s.cfg.at("MODES");
 	const size_t max_modes = boost::lexical_cast<size_t>(max_modes_s);
 	return size() > max_modes;
+}
+
+
+inline
+Deltas::operator std::string()
+const
+{
+	return string(*this);
 }
 
 
@@ -314,6 +326,14 @@ bool Delta::sign(const char &s)
 	return s == '+'? true:
 	       s == '-'? false:
 	                 throw Exception("Invalid +/- sign character.");
+}
+
+
+inline
+Delta::operator std::string()
+const
+{
+	return string(*this);
 }
 
 

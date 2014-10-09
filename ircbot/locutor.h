@@ -68,13 +68,11 @@ class Locutor
 	std::ostringstream &get_sendq()                     { return sendq;                              }
 	void set_target(const std::string &target)          { this->target = target;                     }
 
-  public:
 	// [SEND] Raw interface                             // Should attempt to specify in a subclasses
-	void mode(const std::string &mode);                 // Raw mode command
 
+  public:
 	// [SEND] Controls / Utils
-	void mode(const Deltas &deltas)                     { mode(string(deltas));                      }
-	void mode(const Delta &delta)                       { mode(string(delta));                       }
+	void mode(const std::string &mode);                 // Raw mode command
 	void whois();                                       // Sends whois query
 	void mode();                                        // Sends mode query
 
