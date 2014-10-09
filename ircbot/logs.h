@@ -62,15 +62,16 @@ class Logs
 		bool operator()(const ClosureArgs &args) const override;
 	};
 
-	using Closure = std::function<void (const ClosureArgs &)>;
+	using Closure = std::function<bool (const ClosureArgs &)>;
 
-	void for_each(const std::string &path, const Closure &closure) const;
-	void for_each(const std::string &path, const Filter &filter, const Closure &closure) const;
+	// returns false if break early - "remain true to the end"
+	bool for_each(const std::string &path, const Closure &closure) const;
+	bool for_each(const std::string &path, const Filter &filter, const Closure &closure) const;
 	size_t count(const std::string &path, const Filter &filter) const;
 	bool exists(const std::string &path, const Filter &filter) const;
 
-	void for_each(const Chan &chan, const Closure &closure) const;
-	void for_each(const Chan &chan, const Filter &filter, const Closure &closure) const;
+	bool for_each(const Chan &chan, const Closure &closure) const;
+	bool for_each(const Chan &chan, const Filter &filter, const Closure &closure) const;
 	size_t count(const Chan &chan, const Filter &filter) const;
 	bool exists(const Chan &chan, const Filter &filter) const;
 
@@ -116,43 +117,15 @@ const
 
 
 inline
-void Logs::for_each(const Chan &chan,
-                    const Filter &filter,
-                    const Closure &closure)
-const
-{
-	const Log &clog = chan.get_log();
-	const std::string &path = clog.get_path();
-	for_each(path,filter,closure);
-}
-
-
-inline
-void Logs::for_each(const Chan &chan,
-                    const Closure &closure)
-const
-{
-	const Log &clog = chan.get_log();
-	const std::string &path = clog.get_path();
-	for_each(path,closure);
-}
-
-
-inline
 bool Logs::exists(const std::string &path,
                   const Filter &filter)
 const
 {
-	//TODO: !!!!!!!!!!!!!!!!!!
-	bool ret = false;
-	for_each(path,[&filter,&ret]
-	(const ClosureArgs &a)
+	return !for_each(path,[&filter]
+	(const ClosureArgs &a) -> bool
 	{
-		if(filter(a))
-			ret = true;
+		return !filter(a);
 	});
-
-	return ret;
 }
 
 
@@ -163,9 +136,10 @@ const
 {
 	size_t ret = 0;
 	for_each(path,[&filter,&ret]
-	(const ClosureArgs &a)
+	(const ClosureArgs &a) -> bool
 	{
 		ret += filter(a);
+		return true;
 	});
 
 	return ret;
@@ -173,22 +147,47 @@ const
 
 
 inline
-void Logs::for_each(const std::string &path,
+bool Logs::for_each(const Chan &chan,
                     const Filter &filter,
                     const Closure &closure)
 const
 {
-	for_each(path,[&filter,&closure]
+	const Log &clog = chan.get_log();
+	const std::string &path = clog.get_path();
+	return for_each(path,filter,closure);
+}
+
+
+inline
+bool Logs::for_each(const Chan &chan,
+                    const Closure &closure)
+const
+{
+	const Log &clog = chan.get_log();
+	const std::string &path = clog.get_path();
+	return for_each(path,closure);
+}
+
+
+inline
+bool Logs::for_each(const std::string &path,
+                    const Filter &filter,
+                    const Closure &closure)
+const
+{
+	return for_each(path,[&filter,&closure]
 	(const ClosureArgs &a)
 	{
-		if(filter(a))
-			closure(a);
+		if(!filter(a))
+			return true;
+
+		return closure(a);
 	});
 }
 
 
 inline
-void Logs::for_each(const std::string &path,
+bool Logs::for_each(const std::string &path,
                     const Closure &closure)
 const try
 {
@@ -200,20 +199,23 @@ const try
 	{
 		char buf[64] alignas(16);
 		file.getline(buf,sizeof(buf));
-		if(file.fail())
-			break;
+		const size_t len = strlen(buf);
+		if(!len)
+			return true;
 
 		std::array<const char *, Log::_NUM_FIELDS> field;
-		std::fill(field.begin()+1,field.end(),nullptr);
-		field[0] = buf;
-		for(size_t i = 0, p = 1; buf[i] && p < field.size(); i++)
-		{
-			if(buf[i] != ' ')
-				continue;
+		std::replace(buf,buf+len,' ','\0');
 
-			field[p++] = &buf[i+1];
-			buf[i] = 0x00;
+		size_t i = 0;
+		const char *ptr = buf, *const end = buf + len;
+		while(ptr < end)
+		{
+			field[i++] = ptr;
+			ptr += strlen(ptr) + 1;
 		}
+
+		while(i < field.size())
+			field[i++] = nullptr;
 
 		const ClosureArgs args
 		{
@@ -223,14 +225,14 @@ const try
 			field[Log::TYPE],
 		};
 
-		closure(args);
+		if(!closure(args))
+			return false;
 	}
 }
 catch(const std::ios_base::failure &e)
 {
 	throw Exception(e.what());
 }
-
 
 
 inline
