@@ -286,19 +286,23 @@ void ResPublica::handle_vote_poll(const Msg &msg,
 	const auto &vote = voting.get(id);
 	const auto tally = vote.tally();
 
-	chan << "Current tally #" << BOLD << id << OFF << ": "
-	     << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " "
-	     << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " "
-	     << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
+	const Adoc &cfg = chan.get("config.vote.poll");
+	const bool ack_chan = cfg["ack_chan"] == "1";
+	Locutor &out = ack_chan? static_cast<Locutor &>(chan) : static_cast<Locutor &>(user);
+
+	out << "Current tally #" << BOLD << id << OFF << ": "
+	    << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " "
+	    << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " "
+	    << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
 
 	if(vote.total() < vote.minimum())
-		chan << BOLD << (vote.minimum() - vote.total()) << OFF << " more votes are required. ";
+		out << BOLD << (vote.minimum() - vote.total()) << OFF << " more votes are required. ";
 	else if(tally.first < vote.required())
-		chan << BOLD << (vote.required() < tally.first) << OFF << " more yeas are required to pass. ";
+		out << BOLD << (vote.required() < tally.first) << OFF << " more yeas are required to pass. ";
 	else
-		chan << "As it stands, the motion will pass.";
+		out << "As it stands, the motion will pass.";
 
-	chan << flush;
+	out << flush;
 }
 
 
