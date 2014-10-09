@@ -58,6 +58,8 @@ class Vote
 	bool disabled() const;
 
 	friend Locutor &operator<<(Locutor &l, const Vote &v);    // Appends formatted #ID to channel stream
+	Ballot position(const User &user) const;                  // Throws if user hasn't taken a position
+	bool voted(const User &user) const;
 
   protected:
 	static constexpr auto &flush = Locutor::flush;

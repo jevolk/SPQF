@@ -221,6 +221,24 @@ void Vote::enfranchise(const Ballot &ballot,
 }
 
 
+bool Vote::voted(const User &user)
+const
+{
+	const std::string &acct = user.get_acct();
+	return yea.count(acct) || nay.count(acct);
+}
+
+
+Vote::Ballot Vote::position(const User &user)
+const
+{
+	const std::string &acct = user.get_acct();
+	return yea.count(acct)? YEA:
+	       nay.count(acct)? NAY:
+	                        throw Exception("No position taken.");
+}
+
+
 uint Vote::required()
 const
 {
