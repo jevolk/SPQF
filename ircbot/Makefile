@@ -8,7 +8,7 @@
 TARGET = libircbot.a
 
 CC = g++
-CCFLAGS = -std=c++11
+CCFLAGS += -std=c++11
 WFLAGS = -pedantic                             \
          -Wall                                 \
          -Wextra                               \

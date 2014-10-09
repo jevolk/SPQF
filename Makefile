@@ -30,7 +30,7 @@ WFLAGS = -pedantic                             \
          -Wsuggest-attribute=format
          #-Wsuggest-attribute=noreturn
 
-CCFLAGS = -std=c++14
+CCFLAGS += -std=c++14
 LDFLAGS = -lircbot -lircclient -lleveldb -lboost_locale -lpthread
 LIBPATH = -Lircbot/
 
