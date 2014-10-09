@@ -102,21 +102,6 @@ try
 		return;
 	}
 
-	if(yea.size() < cfg.get<uint>("min_yea"))
-	{
-		if(cfg.get<bool>("result.ack_chan"))
-			chan << (*this) << ": "
-			     << "Failed to reach minimum number of yes votes: "
-			     << FG::GREEN << yea.size() << OFF
-			     << " of "
-			     << FG::GREEN << BOLD << cfg.get<uint>("min_yea") << OFF
-			     << " required."
-			     << flush;
-
-		failed();
-		return;
-	}
-
 	if(yea.size() < required())
 	{
 		if(cfg.get<bool>("result.ack_chan"))
