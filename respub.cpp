@@ -7,8 +7,6 @@
 
 
 #include <forward_list>
-#include <condition_variable>
-#include <thread>
 
 // libircbot irc::bot::
 #include "ircbot/bot.h"
