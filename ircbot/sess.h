@@ -115,7 +115,7 @@ inline
 void Sess::identify()
 {
 	const Ident &id = get_ident();
-	identify(ident["ns_acct"],ident["ns_pass"]);
+	identify(ident["ns-acct"],ident["ns-pass"]);
 }
 
 
@@ -123,7 +123,7 @@ inline
 void Sess::ghost()
 {
 	const Ident &id = get_ident();
-	ghost(ident["nickname"],ident["ns_pass"]);
+	ghost(ident["nickname"],ident["ns-pass"]);
 }
 
 
@@ -131,7 +131,7 @@ inline
 void Sess::regain()
 {
 	const Ident &id = get_ident();
-	regain(ident["nickname"],ident["ns_pass"]);
+	regain(ident["nickname"],ident["ns-pass"]);
 }
 
 

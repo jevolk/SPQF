@@ -159,9 +159,9 @@ void Bot::handle_conn(const Msg &msg)
 	sess.cap_req("account-notify extended-join");
 	sess.cap_end();
 
-	if(!id["ns_acct"].empty() && !id["ns_pass"].empty())
+	if(!id["ns-acct"].empty() && !id["ns-pass"].empty())
 	{
-		sess.identify(id["ns_acct"],id["ns_pass"]);
+		sess.identify(id["ns-acct"],id["ns-pass"]);
 		return;
 	}
 
@@ -867,7 +867,7 @@ void Bot::handle_nicknameinuse(const Msg &msg)
 	Sess &sess = get_sess();
 	const Ident &id = sess.get_ident();
 
-	if(!id["ns_acct"].empty() && !id["ns_pass"].empty())
+	if(!id["ns-acct"].empty() && !id["ns-pass"].empty())
 	{
 		const std::string randy(randstr(14));
 		sess.nick(randy);
