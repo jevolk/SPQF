@@ -23,13 +23,14 @@ using namespace irc::bot;
 // Pointer to instance for signals
 static Bot *instance;
 
+
 static
 void handle_sig(const int sig)
 {
 	switch(sig)
 	{
-		case SIGINT:   printf("INTERRUPT...\n");  break;
-		case SIGTERM:  printf("TERMINATE...\n");  break;
+		case SIGINT:    std::cout << "INTERRUPT..." << std::endl;   break;
+		case SIGTERM:   std::cout << "TERMINATE..." << std::endl;   break;
 	}
 
 	if(instance)
@@ -40,24 +41,39 @@ void handle_sig(const int sig)
 }
 
 
-int main(int argc, char **argv)
-try
+int main(int argc, char **argv) try
 {
+	Ident id;
+
 	if(argc < 2)
 	{
-		printf("usage: %s <host> [port] [nick] [chan]...\n",argv[0]);
+		printf("usage: %s [ --cfg-var=val | --join=chan ] [...]\n\ndefaults:\n",argv[0]);
+		for(const auto &kv : id)
+			printf("\t--%s=\"%s\"\n",kv.first.c_str(),kv.second.c_str());
+
 		return -1;
 	}
 
+	while(argc-- > 1)
+	{
+		const std::string str(argv[argc]);
+		const size_t eqp = str.find('=');
+		if(eqp == str.npos)
+			throw Exception("Missing '=' in an argument");
+
+		const std::string key = str.substr(2,eqp-2);
+		const std::string val = str.substr(eqp+1);
+		if(key == "join")
+			id.autojoin.emplace_back(val);
+		else
+			id[key] = val;
+	}
+
+	printf("****** \033[1mSENATVS POPVLVS QVE FREENODUS\033[0m ******\n");
+	printf("** The Senate and The People of Freenode **\n\n");
+	std::cout << id << std::endl;
+
 	srand(getpid());
-
-	Ident id;
-	id["hostname"] = argv[1];
-	id["port"] = argc > 2? argv[2] : "6667";
-	id["nickname"] = argc > 3? argv[3] : "SPQF";
-	for(int i = 4; i < argc; i++)
-		id.autojoin.emplace_back(argv[i]);
-
 	ResPublica instance(id);                   // Create instance of the bot
 	::instance = &instance;                    // Set pointer for sighandlers
 	signal(SIGINT,&handle_sig);                // Register handler for ctrl-c
