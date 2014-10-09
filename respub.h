@@ -22,7 +22,7 @@ class ResPublica : public irc::bot::Bot
 
 	Voting voting;
 
-	// Vote cmd stack
+	// !vote channel command stack
 	void handle_vote_opine(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_topic(const Msg &m, Chan &c, User &u, const Tokens &toks);
 	void handle_vote_invite(const Msg &m, Chan &c, User &u, const Tokens &t);
@@ -38,11 +38,16 @@ class ResPublica : public irc::bot::Bot
 	void handle_vote_poll(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_ballot(const Msg &m, Chan &c, User &u, const Tokens &t, const Vote::Ballot &b);
 	void handle_vote(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_config(const Msg &m, Chan &c, User &u, const Tokens &toks);
+
+	// channel command stack
 	void handle_cmd(const Msg &m, Chan &c, User &u);
 
+	// !vote privmsg command stack
 	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Vote::Ballot &b);
+	void handle_config(const Msg &m, User &u, const Tokens &toks);
 	void handle_vote(const Msg &m, User &u, const Tokens &t);
+
+	// privmsg command stack
 	void handle_cmd(const Msg &m, User &u);
 
 	// Primary dispatch

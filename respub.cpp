@@ -61,8 +61,29 @@ void ResPublica::handle_cmd(const Msg &msg,
 	switch(hash(cmd))
 	{
 		case hash("vote"):     handle_vote(msg,user,subtoks);    break;
+		case hash("config"):   handle_config(msg,user,subtoks);  break;
 		default:                                                 break;
 	}
+}
+
+
+void ResPublica::handle_config(const Msg &msg,
+                               User &user,
+                               const Tokens &toks)
+{
+	Chans &chans = get_chans();
+	const Chan &chan = chans.get(*toks.at(0));
+	const std::string &key = toks.size() > 1? *toks.at(1) : "";
+
+	const Adoc &cfg = chan.get();
+	const std::string &val = cfg[key];
+
+	if(val.empty())
+	{
+		const Adoc &doc = cfg.get_child(key,Adoc());
+		user << doc << flush;
+	}
+	else user << key << " = " << val << flush;
 }
 
 
@@ -70,8 +91,8 @@ void ResPublica::handle_vote(const Msg &msg,
                              User &user,
                              const Tokens &toks)
 {
-	const std::string subcmd = *toks.at(0);
 	const Tokens subtoks = subtokenize(toks);
+	const std::string subcmd = *toks.at(0);
 	switch(hash(subcmd))
 	{
 		// Ballot
@@ -155,20 +176,8 @@ void ResPublica::handle_cmd(const Msg &msg,
 	switch(hash(tokens.at(0).substr(1)))
 	{
 		case hash("vote"):     handle_vote(msg,chan,user,subtoks);    break;
-		case hash("config"):   handle_config(msg,chan,user,subtoks);  break;
 		default:                                                      break;
 	}
-}
-
-
-void ResPublica::handle_config(const Msg &msg,
-                               Chan &chan,
-                               User &user,
-                               const Tokens &toks)
-{
-	const Adoc doc = chan.get();
-	std::cout << doc << std::endl;
-	chan << doc << flush;
 }
 
 
@@ -342,21 +351,19 @@ void ResPublica::handle_vote_config(const Msg &msg,
 		return;
 	}
 
-	const Adoc &cfg = chan.get(*toks.at(0));
-	if(cfg.empty())
+	const Adoc &cfg = chan.get();
+	const bool ack_chan = cfg["config.config.ack_chan"] == "1";
+	Locutor &out = ack_chan? static_cast<Locutor &>(chan) : static_cast<Locutor &>(user);
+
+	const std::string &key = *toks.at(0);
+	const std::string &val = cfg[key];
+
+	if(val.empty())
 	{
-		const Adoc &cfg = chan.get();
-		const std::string &val = cfg[*toks.at(0)];
-
-		if(val.empty())
-			chan << "No configuration found here." << flush;
-		else
-			chan << *toks.at(0) << " = " << val << flush;
-
-		return;
+		const Adoc &doc = cfg.get_child(key,Adoc());
+		out << doc << flush;
 	}
-
-	chan << cfg << flush;
+	else out << key << " = " << val << flush;
 }
 
 
