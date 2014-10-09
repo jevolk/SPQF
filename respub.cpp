@@ -110,6 +110,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("no"):
 		case hash("N"):
 		case hash("n"):        handle_vote_ballot(msg,user,subtoks,Vote::NAY);      break;
+		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,user,subtoks);                  break;
 	}
 }
@@ -255,6 +256,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("n"):        handle_vote_ballot(msg,chan,user,subtoks,Vote::NAY);      break;
 
 		// Administrative
+		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,chan,user,subtoks);                  break;
 		case hash("help"):     handle_vote_help(msg,chan,user,subtoks);                  break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtoks);                break;
