@@ -99,11 +99,10 @@ void Voting::del(const decltype(votes.begin()) &it)
 {
 	const Vote &vote = *it->second;
 	const Vote::id_t &id = it->first;
-	const std::string &user = vote.get_user_acct();
-	const std::string &chan = vote.get_chan_name();
-
+	const auto deindex = [&id]
+	(auto &map, const auto &ent)
 	{
-		const auto pit = chanidx.equal_range(chan);
+		const auto pit = map.equal_range(ent);
 		const auto it = std::find_if(pit.first,pit.second,[&id]
 		(const auto &it)
 		{
@@ -112,21 +111,10 @@ void Voting::del(const decltype(votes.begin()) &it)
 		});
 
 		if(it != pit.second)
-			chanidx.erase(it);
-	}
+			map.erase(it);
+	};
 
-	{
-		const auto pit = useridx.equal_range(user);
-		const auto it = std::find_if(pit.first,pit.second,[&id]
-		(const auto &it)
-		{
-			const id_t &idx = it.second;
-			return idx == id;
-		});
-
-		if(it != pit.second)
-			useridx.erase(it);
-	}
-
+	deindex(chanidx,vote.get_chan_name());
+	deindex(useridx,vote.get_user_acct());
 	votes.erase(it);
 }
