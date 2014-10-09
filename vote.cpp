@@ -204,8 +204,6 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 void Vote::enfranchise(const Ballot &ballot,
                        User &user)
 {
-	Logs &logs = get_logs();
-	Chan &chan = get_chan();
 	const Adoc &cfg = get_cfg();
 	const time_t eftime = cfg.get<time_t>("enfranchise.time");
 	const size_t eflines = cfg.get<size_t>("enfranchise.lines");
@@ -216,6 +214,8 @@ void Vote::enfranchise(const Ballot &ballot,
 	filter.time.second = get_began();
 	filter.type = "CHA";
 
+	Logs &logs = get_logs();
+	Chan &chan = get_chan();
 	if(!logs.atleast(chan,filter,eflines))
 		throw Exception("You have not been active enough to participate in this vote.");
 }
@@ -270,7 +270,7 @@ const
 uint Vote::plurality()
 const
 {
-	const float total = this->total();
+	const float &total = this->total();
 	const auto plura = cfg.get<float>("plurality");
 	return ceil(total * plura);
 }
