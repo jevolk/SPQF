@@ -31,6 +31,10 @@ try
 	if(text.empty())
 		return;
 
+	// Silently drop the background noise
+	if(!user.is_logged_in())
+		return;
+
 	handle_cmd(msg,user);
 }
 catch(const Exception &e)
@@ -114,6 +118,10 @@ try
 
 	// Discard empty without exception
 	if(text.empty())
+		return;
+
+	// Silently drop the background noise
+	if(!user.is_logged_in())
 		return;
 
 	// Dispatch based on first character
