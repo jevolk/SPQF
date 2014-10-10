@@ -181,7 +181,12 @@ catch(const Exception &e)
 Vote::Stat Vote::cast(const Ballot &ballot,
                       User &user)
 {
-	enfranchise(ballot,user);
+	if(!enfranchised(user))
+		throw Exception("You are not yet enfranchised in this channel.");
+
+	if(!qualified(user))
+		throw Exception("You have not been active enough qualify for this vote.");
+
 	proffer(ballot,user);
 
 	const std::string &acct = user.get_acct();
@@ -201,38 +206,48 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 }
 
 
-void Vote::enfranchise(const Ballot &ballot,
-                       User &user)
+bool Vote::enfranchised(const std::string &acct)
+const
 {
+	const Chan &chan = get_chan();
 	const Adoc &cfg = get_cfg();
-	const time_t eftime = cfg.get<time_t>("enfranchise.time");
-	const size_t eflines = cfg.get<size_t>("enfranchise.lines");
 
-	Logs::SimpleFilter filter;
-	filter.acct = user.get_acct();
-	filter.time.first = get_began() - eftime;
-	filter.time.second = get_began();
-	filter.type = "CHA";
+	Logs::SimpleFilter filt;
+	filt.acct = acct;
+	filt.time.first = 0;
+	filt.time.second = get_began() - cfg.get<uint>("enfranchise.age");
+	filt.type = "CHA";
 
-	Logs &logs = get_logs();
-	Chan &chan = get_chan();
-	if(!logs.atleast(chan,filter,eflines))
-		throw Exception("You have not been active enough to participate in this vote.");
+	return logs.atleast(chan,filt,cfg.get<uint>("enfranchise.lines"));
 }
 
 
-bool Vote::voted(const User &user)
+bool Vote::qualified(const std::string &acct)
 const
 {
-	const std::string &acct = user.get_acct();
+	const Chan &chan = get_chan();
+	const Adoc &cfg = get_cfg();
+
+	Logs::SimpleFilter filt;
+	filt.acct = acct;
+	filt.time.first = get_began() - cfg.get<uint>("qualify.age");
+	filt.time.second = get_began();
+	filt.type = "CHA";
+
+	return logs.atleast(chan,filt,cfg.get<uint>("qualify.lines"));
+}
+
+
+bool Vote::voted(const std::string &acct)
+const
+{
 	return yea.count(acct) || nay.count(acct);
 }
 
 
-Vote::Ballot Vote::position(const User &user)
+Vote::Ballot Vote::position(const std::string &acct)
 const
 {
-	const std::string &acct = user.get_acct();
 	return yea.count(acct)? YEA:
 	       nay.count(acct)? NAY:
 	                        throw Exception("No position taken.");
@@ -307,8 +322,10 @@ DefaultConfig::DefaultConfig()
 	put("turnout",0.00);
 	put("duration",30);
 	put("plurality",0.51);
-	put("enfranchise.time",900);
-	put("enfranchise.lines",3);
+	put("enfranchise.age",1800);
+	put("enfranchise.lines",6);
+	put("qualify.age",900);
+	put("qualify.lines",3);
 	put("ballot.ack_chan",0);
 	put("ballot.ack_priv",1);
 	put("ballot.rej_chan",0);

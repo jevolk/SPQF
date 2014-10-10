@@ -17,17 +17,17 @@ struct DefaultConfig : Adoc
 
 class Vote
 {
+	const Sess &sess;
+	Chans &chans;
+	Users &users;
+	Logs &logs;
+
   public:
 	using id_t = size_t;
 	enum Stat                                   { ADDED, CHANGED,                                   };
 	enum Ballot                                 { YEA, NAY,                                         };
 
   private:
-	const Sess &sess;
-	Chans &chans;
-	Users &users;
-	Logs &logs;
-
 	id_t id;                                    // Index id of this vote
 	Adoc cfg;                                   // Configuration of this vote
 	time_t began;                               // Time vote was constructed
@@ -57,9 +57,16 @@ class Vote
 	uint required() const;
 	bool disabled() const;
 
-	friend Locutor &operator<<(Locutor &l, const Vote &v);    // Appends formatted #ID to channel stream
-	Ballot position(const User &user) const;                  // Throws if user hasn't taken a position
-	bool voted(const User &user) const;
+	friend Locutor &operator<<(Locutor &l, const Vote &v);  // Appends formatted #ID to the stream
+	bool enfranchised(const std::string &acct) const;
+	bool qualified(const std::string &acct) const;
+	Ballot position(const std::string &acct) const;         // Throws if user hasn't taken a position
+	bool voted(const std::string &acct) const;
+
+	bool enfranchised(const User &user) const   { return enfranchised(user.get_acct());             }
+	bool qualified(const User &user) const      { return qualified(user.get_acct());                }
+	Ballot position(const User &user) const     { return position(user.get_acct());                 }
+	bool voted(const User &user) const          { return voted(user.get_acct());                    }
 
   protected:
 	static constexpr auto &flush = Locutor::flush;
@@ -76,8 +83,8 @@ class Vote
 	virtual void proffer(const Ballot &b, User &user) {}
 	virtual void starting() {}
 
-	void enfranchise(const Ballot &b, User &user);
-	Stat cast(const Ballot &ballot, User &user);
+  private:
+	Stat cast(const Ballot &ballot, User &u);
 
   public:
 	// Called by Bot handlers

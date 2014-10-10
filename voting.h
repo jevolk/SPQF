@@ -109,6 +109,9 @@ try
 		if(useridx.count(acct_name) > cfg.get("max_per_user",limits::max()))
 			throw Exception("Too many active votes started by you on this channel.");
 
+		if(!vote.enfranchised(acct_name))
+			throw Exception("You are not yet enfranchised in this channel.");
+
 		vote.start();
 		sem.notify_one();
 		return vote;
