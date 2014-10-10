@@ -272,7 +272,7 @@ const
 	std::vector<uint> sel
 	{{
 		cfg.get<uint>("min_yea"),
-		cfg.get<uint>("min_votes"),
+		cfg.get<uint>("min_ballots"),
 	}};
 
 	if(cfg.get<float>("turnout") <= 0.0)
@@ -320,7 +320,7 @@ DefaultConfig::DefaultConfig()
 	// config.vote
 	put("max_active",16);
 	put("max_per_user",1);
-	put("min_votes",1);
+	put("min_ballots",1);
 	put("min_yea",1);
 	put("turnout",0.00);
 	put("duration",30);
