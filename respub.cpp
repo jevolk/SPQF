@@ -154,7 +154,8 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("kick"):     handle_vote_kick(msg,chan,user,subtok(toks));               break;
 		case hash("invite"):   handle_vote_invite(msg,chan,user,subtok(toks));             break;
 		case hash("topic"):    handle_vote_topic(msg,chan,user,subtok(toks));              break;
-		default:               handle_vote_opine(msg,chan,user,toks);                      break;
+		case hash("opine"):    handle_vote_opine(msg,chan,user,toks);                      break;
+		default:               throw Exception("Unrecognized command or issue type.");     break;
 	}
 }
 
