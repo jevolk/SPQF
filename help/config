@@ -40,9 +40,9 @@ This should be set very low.
 
 
 
-config.vote.min_votes = <int>
+config.vote.min_ballots = <int>
 
-The minimum number of votes that must be cast (whether yea or nay) for the result to not be
+The minimum number of ballots that must be cast (whether yea or nay) for the result to not be
 summarily tossed.
 
 Is is recommended this be set to at least 1 or 2.
