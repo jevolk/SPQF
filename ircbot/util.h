@@ -31,6 +31,37 @@ std::string string(const T &t)
 }
 
 
+template<class R,
+         class I>
+R pointers(I&& begin,
+           I&& end)
+{
+	R ret;
+	std::transform(begin,end,std::inserter(ret,ret.end()),[]
+	(typename std::iterator_traits<I>::reference t)
+	{
+		return &t;
+	});
+
+	return ret;
+}
+
+
+template<class R,
+         class C>
+R pointers(C&& c)
+{
+	R ret;
+	std::transform(c.begin(),c.end(),std::inserter(ret,ret.end()),[]
+	(typename C::iterator::value_type &t)
+	{
+		return &t;
+	});
+
+	return ret;
+}
+
+
 inline
 std::string tolower(const std::string &str)
 {
