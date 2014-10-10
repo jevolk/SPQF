@@ -65,8 +65,16 @@ R pointers(C&& c)
 inline
 std::string tolower(const std::string &str)
 {
-	static const std::locale locale = boost::locale::generator().generate("en_US.UTF-8");
-	return boost::locale::to_lower(str.c_str(),locale);
+	static const std::locale locale("en_US.UTF-8");
+
+	std::string ret;
+	std::transform(str.begin(),str.end(),std::back_inserter(ret),[]
+	(const char &c)
+	{
+		return std::tolower(c,locale);
+	});
+
+	return ret;
 }
 
 
