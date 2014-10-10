@@ -36,6 +36,7 @@ class Vote
 	std::string issue;                          // "Issue" input of the vote
 	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
+	std::set<std::string> hosts;                // Hostnames that have voted
 
   public:
 	virtual const char *type() const            { return "";                                        }
@@ -48,6 +49,7 @@ class Vote
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yea() const                       { return yea;                                       }
 	auto &get_nay() const                       { return nay;                                       }
+	auto &get_hosts() const                     { return hosts;                                     }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
 	auto remaining() const                      { return cfg.get<uint>("duration") - elapsed();     }
 	auto tally() const -> std::pair<uint,uint>  { return {yea.size(),nay.size()};                   }
@@ -61,12 +63,13 @@ class Vote
 	bool enfranchised(const std::string &acct) const;
 	bool qualified(const std::string &acct) const;
 	Ballot position(const std::string &acct) const;         // Throws if user hasn't taken a position
-	bool voted(const std::string &acct) const;
+	uint voted_host(const std::string &host) const;
+	bool voted_acct(const std::string &acct) const;
 
 	bool enfranchised(const User &user) const   { return enfranchised(user.get_acct());             }
 	bool qualified(const User &user) const      { return qualified(user.get_acct());                }
 	Ballot position(const User &user) const     { return position(user.get_acct());                 }
-	bool voted(const User &user) const          { return voted(user.get_acct());                    }
+	bool voted(const User &user) const;
 
   protected:
 	static constexpr auto &flush = Locutor::flush;
