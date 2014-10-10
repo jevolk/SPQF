@@ -31,7 +31,7 @@ WFLAGS = -pedantic                             \
          #-Wsuggest-attribute=noreturn
 
 CCFLAGS += -std=c++14
-LDFLAGS = -lircbot -lircclient -lleveldb -lboost_locale -lpthread
+LDFLAGS = -lircbot -lircclient -lleveldb -lpthread
 LIBPATH = -Lircbot/
 
 LIBRARIES = libircbot

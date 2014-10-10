@@ -28,7 +28,6 @@ Requirements:
 		* tokenizer
 		* lexical_cast
 		* property_tree, json_parser
-		* locale (linkage required)
 
 	* libircclient >= 1.8 (linkage required)
 
