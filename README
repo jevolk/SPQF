@@ -13,6 +13,9 @@ A versatile configuration can be customized on a per-channel basis to
 ensure any action by the bot reflects the true and fair intent of the 
 channel's participants and community.
 
+Join irc.freenode.net/#SPQF for feedback, suggestions and help.
+We are open to all feature requests, especially reports of how attempts
+are made to abuse the bot or conduct takeovers.
 
 
 
@@ -37,3 +40,9 @@ Requirements:
 Compile:
 	1. type `make`
 	2. type `make` again if necessary
+
+
+Run:
+	./spqf
+
+	./spqf --host=chat.freenode.net --nick=mynick --join="#SPQF"
