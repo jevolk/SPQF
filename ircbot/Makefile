@@ -36,8 +36,7 @@ WFLAGS = -pedantic                             \
          -Wmissing-format-attribute            \
          -Wno-unused-parameter                 \
          -Wno-unused-label                     \
-         -Wsuggest-attribute=format            \
-         #-Wsuggest-attribute=noreturn
+         -Wsuggest-attribute=format
 
 
 all: $(TARGET)
