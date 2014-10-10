@@ -466,7 +466,7 @@ void ResPublica::handle_vote_help(const Msg &msg,
                                   Locutor &out,
                                   const Tokens &toks)
 {
-	out << "http://pastebin.com/W6ZmqBG5";
+	out << "https://github.com/jevolk/SPQF/blob/master/help/vote";
 	out << flush;
 }
 
