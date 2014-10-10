@@ -148,6 +148,8 @@ try
 	switch(cast(ballot,user))
 	{
 		case ADDED:
+			hosts.emplace(user.get_host());
+
 			if(cfg.get<bool>("ballot.ack_chan"))
 				chan << user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
@@ -184,6 +186,9 @@ catch(const Exception &e)
 Vote::Stat Vote::cast(const Ballot &ballot,
                       User &user)
 {
+	if(voted_host(user.get_host()) > 0)
+		throw Exception("You can not cast another vote from this hostname.");
+
 	if(!enfranchised(user))
 		throw Exception("You are not yet enfranchised in this channel.");
 
@@ -206,6 +211,14 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 		default:
 			throw Exception("Ballot type not accepted.");
 	}
+}
+
+
+bool Vote::voted(const User &user)
+const
+{
+	return voted_acct(user.get_acct()) ||
+	       voted_host(user.get_host());
 }
 
 
@@ -241,7 +254,14 @@ const
 }
 
 
-bool Vote::voted(const std::string &acct)
+uint Vote::voted_host(const std::string &host)
+const
+{
+	return hosts.count(host);
+}
+
+
+bool Vote::voted_acct(const std::string &acct)
 const
 {
 	return yea.count(acct) || nay.count(acct);
