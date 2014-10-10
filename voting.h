@@ -94,14 +94,10 @@ try
 		Vote &vote = dynamic_cast<Vote &>(*iit.first->second);
 		const std::string &chan_name = vote.get_chan_name();
 		const std::string &acct_name = vote.get_user_acct();
+		const Adoc &cfg = vote.get_cfg();
 
 		chanidx.emplace(chan_name,id);
 		useridx.emplace(acct_name,id);
-
-		const Adoc &cfg = vote.get_cfg();
-
-		if(vote.disabled())
-			throw Exception("Votes of this type are disabled by the configuration.");
 
 		if(chanidx.count(chan_name) > cfg.get("max_active",limits::max()))
 			throw Exception("Too many active votes for this channel.");
@@ -111,6 +107,9 @@ try
 
 		if(!vote.enfranchised(acct_name))
 			throw Exception("You are not yet enfranchised in this channel.");
+
+		if(!vote.qualified(acct_name))
+			throw Exception("You have not been participating enough to start a vote.");
 
 		vote.start();
 		sem.notify_one();
