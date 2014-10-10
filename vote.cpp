@@ -46,8 +46,11 @@ chan(chan.get_name()),
 user(user.get_acct()),
 issue(issue)
 {
+	if(disabled())
+		throw Exception("Votes of this type are disabled by the configuration.");
 
-
+	// Initiation implies yes vote
+	yea.emplace(get_user_acct());
 }
 
 
