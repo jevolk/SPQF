@@ -120,7 +120,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		return;
 	}
 
-	// Handle pattern for voting on modes
+	// Handle pattern for voting on modes directly
 	if(subcmd.at(0) == '+' || subcmd.at(0) == '-')
 	{
 		handle_vote_mode(msg,chan,user,toks);
@@ -147,6 +147,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtok(toks));             break;
 
 		// Actual vote types
+		case hash("mode"):     handle_vote_mode(msg,chan,user,subtok(toks));               break;
 		case hash("ban"):      handle_vote_ban(msg,chan,user,subtok(toks));                break;
 		case hash("unquiet"):  handle_vote_unquiet(msg,chan,user,subtok(toks));            break;
 		case hash("quiet"):    handle_vote_quiet(msg,chan,user,subtok(toks));              break;
