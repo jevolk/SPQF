@@ -6,25 +6,36 @@
  */
 
 
+using Tokens = std::vector<const std::string *>;
+using Selection = std::forward_list<Tokens::const_iterator>;
+
+Selection karma_tokens(const Tokens &tokens, const Chan &c, const std::string &oper = "++");
+std::string detok(const Tokens &tokens);
+Tokens subtok(const std::vector<std::string> &tokens);
+Tokens subtok(const Tokens &tokens);
+
+
 class ResPublica : public irc::bot::Bot
 {
 	using Meth = Locutor::Method;
-	using Tokens = std::vector<const std::string *>;
-	using Selection = std::forward_list<Tokens::const_iterator>;
 
 	static const char COMMAND_PREFIX = '!';
 	static constexpr auto &flush = Locutor::flush;
-	static Selection karma_tokens(const Tokens &tokens, const Chan &c, const std::string &oper);
-	static Tokens subtokenize(const std::vector<std::string> &tokens);
-	static Tokens subtokenize(const Tokens &tokens);
-	static std::string detokenize(const Tokens &tokens);
 
 	Voting voting;
 
 	// !vote abstract stack
+	void handle_vote_list(const Msg &m, User &u, Locutor &out, const Tokens &t, const id_t &id);
 	void handle_vote_help(const Msg &m, Locutor &out, const Tokens &t);
 
-	// !vote channel command stack
+	// Privmsg stack
+	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Vote::Ballot &b);
+	void handle_vote_list(const Msg &m, User &u, const Tokens &t);
+	void handle_config(const Msg &m, User &u, const Tokens &toks);
+	void handle_vote(const Msg &m, User &u, const Tokens &t);
+	void handle_cmd(const Msg &m, User &u);
+
+	// !vote channel stack
 	void handle_vote_opine(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_topic(const Msg &m, Chan &c, User &u, const Tokens &toks);
 	void handle_vote_invite(const Msg &m, Chan &c, User &u, const Tokens &t);
@@ -34,24 +45,12 @@ class ResPublica : public irc::bot::Bot
 	void handle_vote_kick(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_mode(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_config(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_cancel(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_list(const Msg &m, User &u, Locutor &out, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_ballot(const Msg &m, Chan &c, User &u, const Tokens &t, const Vote::Ballot &b);
+	void handle_vote_cancel(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote(const Msg &m, Chan &c, User &u, const Tokens &t);
-
-	// channel command stack
 	void handle_cmd(const Msg &m, Chan &c, User &u);
-
-	// !vote privmsg command stack
-	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Vote::Ballot &b);
-	void handle_vote_list(const Msg &m, User &u, const Tokens &t);
-	void handle_config(const Msg &m, User &u, const Tokens &toks);
-	void handle_vote(const Msg &m, User &u, const Tokens &t);
-
-	// privmsg command stack
-	void handle_cmd(const Msg &m, User &u);
 
 	// Primary dispatch
 	void handle_chanmsg(const Msg &m, Chan &c, User &u) override;

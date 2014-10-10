@@ -105,7 +105,7 @@ class Chan : public Locutor,
 	friend Chan &operator<<(Chan &c, const User &user);     // append "nickname: " to locutor stream
 
 	Chan(Adb &adb, Sess &sess, const std::string &name);
-	~Chan() = default;
+	virtual ~Chan() = default;
 
 	friend std::ostream &operator<<(std::ostream &s, const Chan &chan);
 };
