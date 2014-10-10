@@ -241,10 +241,14 @@ inline
 void vote::Mode::starting()
 {
 	const Sess &sess = get_sess();
+	const Users &users = get_users();
 	const Server &serv = sess.get_server();
-	const Deltas deltas(get_issue(),serv);
+	const User &myself = users.get(sess.get_nick());
 
-	Chan &chan = get_chan();
+	const Deltas deltas(get_issue(),serv);
+	for(const Delta delta : deltas)
+		if(myself.is_myself(std::get<Delta::MASK>(delta)))
+			throw Exception("One of the mode deltas matches myself.");
 }
 
 

@@ -38,6 +38,7 @@ class User : public Locutor,
 	bool is_myself() const                             { return get_nick() == get_sess().get_nick(); }
 	bool is_logged_in() const;
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
+	bool is_myself(const Mask &mask) const;            // Test if mask can match us
 
 	// Mutators used by Bot handlers
 	void set_nick(const std::string &nick)             { Locutor::set_target(nick);                  }
@@ -92,6 +93,34 @@ const
 	return !acct.empty() &&
 	       acct != "0"   &&
 	       acct != "*";
+}
+
+
+inline
+bool User::is_myself(const Mask &mask)
+const
+{
+	switch(mask.get_form())
+	{
+		case Mask::CANONICAL:
+			if(mask.has_all_wild())
+				return true;
+
+			if(mask.get_host() == get_host())
+				return true;
+
+			if(mask.get_nick() == get_nick())
+				return true;
+
+		case Mask::EXTENDED:
+			return mask.get_mask() == get_acct();
+
+		case Mask::INVALID:
+			return mask == get_nick();
+
+		default:
+			throw Exception("Mask format unrecognized.");
+	}
 }
 
 

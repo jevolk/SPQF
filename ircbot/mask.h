@@ -14,10 +14,17 @@ struct Mask : public std::string
 	std::string get_nick() const         { return substr(0,find('!'));                           }
 	std::string get_user() const         { return substr(find('!')+1,find('@') - find('!') - 1); }
 	std::string get_host() const         { return substr(find('@')+1,npos);                      }
+	bool has_ident() const               { return get_user().at(0) == '~';                       }
 	bool has_wild_nick() const           { return get_nick() == "*";                             }
 	bool has_wild_user() const           { return get_user() == "*";                             }
 	bool has_wild_host() const           { return get_host() == "*";                             }
-	bool has_ident() const               { return get_user().at(0) == '~';                       }
+	bool has_all_wild() const
+	{
+		return has_wild_nick() &&
+		       has_wild_user() &&
+		       has_wild_host();
+	}
+
 	bool is_canonical() const
 	{
 		return find('!') != npos &&
