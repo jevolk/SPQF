@@ -13,7 +13,7 @@ usage:
 Commands:
 
   help       [topic]               : Show this help system.
-  poll       [#ID]                 : Show the status of a vote, either by ID or the current active motion in the channel.
+  list       [#ID]                 : Show the status of a vote, either by ID or the current active motion in the channel.
   cancel     [#ID]                 : Cancel your vote by ID or whatever you initiated; only if it has not been voted on.
   config.$                         : View the configuration of this channel.
 
@@ -22,8 +22,9 @@ Issues:
   config.$   <= [value]>           : Vote on the voting configuration in this channel.
   <mode>     [target ...]          : Vote on setting modes for channel or target exactly as if you were an operator.
   kick       <nickname>            : Vote to kick a victim from the channel.
+  ban        <nickname>            : Vote to kick-ban.
   quiet      <nickname>            : Vote to quiet.
   unquiet    <nickname>            : Vote to unquiet.
-  ban        <nickname>            : Vote to kick-ban.
   invite     <nickname>            : Vote to invite a user to the channel.
   topic      <message>             : Vote to change the topic.
+  <issue>                          : Vote on an opinion with no effects.

@@ -1,8 +1,185 @@
 Vote on changing various configuration settings.
-The syntax for printing information is: <variable>
-The syntax for initiating a vote to set: <variable> = <new value>
-The syntax for initiating a vote to delete: <variable> =
+
+The syntax for printing information is:       <variable>
+The syntax for initiating a vote to set:      <variable> = <new value>
+The syntax for initiating a vote to delete:   <variable> =
+
 Configuration variables are addressed as config.foo.bar... Voting configuration is config.vote.*
 
 Example: !vote config.vote.duration = 10    : Set the duration of a vote to be 10 seconds.
 Example: !vote config.vote.duration =       : Deletes this variable and all children.
+
+
+
+
+Configuration variables:
+
+
+
+REQUIRED VARIABLES:
+
+These are variables that are required to conduct any voting. If you erase them,
+they will reappear with default values at the start of the next vote.
+
+
+
+config.vote.max_active = <int>
+
+The hard maximum number of votes active in a channel at any given time.
+
+It is recommended this number be set high (double digits) for now. If the channel happens
+to be spammed with new votes, you want room to create additional votes to ban the spammers.
+
+
+
+config.vote.max_per_user = <int>
+
+The maximum number of votes a user can initiate at the same time.
+
+This should be set very low.
+
+
+
+config.vote.min_votes = <int>
+
+The minimum number of votes that must be cast (whether yea or nay) for the result to not be
+summarily tossed.
+
+Is is recommended this be set to at least 1 or 2.
+
+
+
+config.vote.min_yea = <int>
+
+The minimum number of yes votes that must be cast for any result to not be summarily tossed.
+
+It is recommended this be set to at least 1 or 2.
+
+
+
+config.vote.turnout = <real> [0.00 - 1.00]
+
+The percentage of all users in the channel who are logged in to nickserv that must vote
+for any result to not be summarily tossed.
+
+It is recommended this be set to 0 unless you have special requirements.
+In the future, this will be more useful as a temporary parameter on a per-vote basis.
+
+
+
+config.vote.duration = <int> [seconds]
+
+The amount of time a vote lasts in seconds.
+
+
+
+config.vote.plurality = <real> [0.00 - 1.00]
+
+The percentage of YEA votes of the total votes cast which constitutes a winning majority.
+
+This is generally set to 0.51 but some channels may enjoy 0.66.
+
+
+
+config.vote.enfranchise.age = <int> [seconds]
+
+If the user has no activity in the channel before this many seconds ago, no other
+config.vote.enfranchisement rules have effect. For example, if the age is set to 86400
+(one day), we analyze the history of this user BEFORE one day ago, and ignore everything
+from today. Thus, if the user first appeared in the channel today he will not be eligible
+to vote.
+
+It is recommended this be set to something like two weeks.
+Note that if you set this to two weeks when first installing the bot you won't be able to
+vote at all for two weeks; consider raising it later.
+
+
+
+config.vote.enfranchise.lines = <int>
+
+The minimum number of lines sent to the channel in order to gain voting eligibility within
+the rest of the config.vote.enfranchisement ruleset. For example, if the enfranchisement.age
+is set to one day, the user must have said at least this many lines at any time before one
+day ago.
+
+It is recommended this be set at a few dozen or even much greater to prevent sybil attacks
+by low-profile lurkers and idle plants.
+
+
+
+config.vote.qualify.age = <int> [seconds]
+
+The window of time starting back from the beginning of the vote for which config.vote.qualify
+rules apply. For example, if set to 300 (5 minutes) we analyze a user starting 5 minutes
+ago and stopping at the point the vote was initiated. The qualify ruleset is a short-term
+contrast to the long-term enfranchisement ruleset.
+
+It is recommended this be set to the conversational cadence of your channel; the goal is
+to prevent voting from people who aren't participating in the conversation, as well as attacks
+from sockpuppets who randomly show up once a vote has started.
+
+
+
+config.vote.qualify.lines = <int>
+
+The amount of lines a user must have transmitted as part of the qualify ruleset. For example,
+if the qualify.age is 300 and the qualify.lines is 3: a user must have said at least 3 things
+within the last 300 seconds to cast a ballot this time.
+
+It is recommended this be set to at least 1. See the qualify.age recommendation.
+
+
+
+config.vote.ballot.ack_chan = <bool> [0 - 1]
+config.vote.ballot.ack_priv = <bool> [0 - 1]
+config.vote.ballot.rej_chan = <bool> [0 - 1]
+config.vote.ballot.rej_priv = <bool> [0 - 1]
+
+Reply settings for a user indicating that their ballot was accepted or rejected via the
+channel or pm.
+
+It is recommended channel ack and rej are turned off to reduce noise.
+
+
+
+config.vote.result.ack_chan = <bool> [0 - 1]
+
+Broadcasts the result of a vote to the channel at its completion. If this is set to 0,
+the effects of the vote will simply happen. Until future versions when vote history is stored,
+the result tally of the vote will never be known if this is turned off.
+
+
+
+
+OPTIONAL VARIABLES:
+
+These are variables that have an effect if set, but won't be written to the configuration
+by default at the first vote and thus remain unset.
+
+
+
+config.vote.*.disable = <bool> [0 - 1]
+
+For any Vote type, setting this to 1 will disable any votes of that type. For example,
+config.vote.ban.disable = 1 will disable the ban module. Note that if you set
+config.vote.config.disable = 1, you will not be able to vote on changing the config.
+
+
+
+config.vote.list.ack_chan = <bool> [0 - 1]
+
+Indicates whether responses to "!vote list" should be output to the channel,
+otherwise they are PM'ed to the user.
+
+
+
+config.config.ack_chan = <bool> [0 - 1]
+
+Indicates configuration responses / dumps should be output to the channel,
+otherwise they are PM'ed to the user.
+
+
+
+config.vote.kick.ignore_away = <bool> [0 - 1]
+
+Feature requested by Luke-Jr to allow users who set /away to escape a kick.
