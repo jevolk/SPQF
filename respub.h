@@ -26,7 +26,7 @@ class ResPublica : public irc::bot::Bot
 
 	// !vote abstract stack
 	void handle_vote_list(const Msg &m, User &u, Locutor &out, const Tokens &t, const id_t &id);
-	void handle_vote_help(const Msg &m, Locutor &out, const Tokens &t);
+	void handle_help(const Msg &m, Locutor &out, const Tokens &t);
 
 	// Privmsg stack
 	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Vote::Ballot &b);

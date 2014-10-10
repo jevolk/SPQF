@@ -141,9 +141,10 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("n"):        handle_vote_ballot(msg,chan,user,subtok(toks),Vote::NAY);   break;
 
 		// Administrative
+		default:
+		case hash("help"):     handle_help(msg,user,subtok(toks));                         break;
 		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,chan,user,subtok(toks));               break;
-		case hash("help"):     handle_vote_help(msg,user,subtok(toks));                    break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtok(toks));             break;
 
 		// Actual vote types
@@ -155,7 +156,6 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("invite"):   handle_vote_invite(msg,chan,user,subtok(toks));             break;
 		case hash("topic"):    handle_vote_topic(msg,chan,user,subtok(toks));              break;
 		case hash("opine"):    handle_vote_opine(msg,chan,user,toks);                      break;
-		default:               throw Exception("Unrecognized command or issue type.");     break;
 	}
 }
 
@@ -351,6 +351,7 @@ void ResPublica::handle_cmd(const Msg &msg,
 	switch(hash(cmd))
 	{
 		case hash("vote"):     handle_vote(msg,user,subtok(tokens));     break;
+		case hash("help"):     handle_help(msg,user,subtok(tokens));     break;
 		case hash("config"):   handle_config(msg,user,subtok(tokens));   break;
 		default:                                                         break;
 	}
@@ -401,7 +402,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,user,subtok(toks));                break;
 		default:
-		case hash("help"):     handle_vote_help(msg,user,subtok(toks));                break;
+		case hash("help"):     handle_help(msg,user,subtok(toks));                     break;
 	}
 }
 
@@ -463,11 +464,20 @@ catch(const std::out_of_range &e)
 //   Abstract handlers
 //
 
-void ResPublica::handle_vote_help(const Msg &msg,
-                                  Locutor &out,
-                                  const Tokens &toks)
+void ResPublica::handle_help(const Msg &msg,
+                             Locutor &out,
+                             const Tokens &toks)
 {
-	out << "https://github.com/jevolk/SPQF/blob/master/help/vote";
+	const std::string topic = !toks.empty()? *toks.at(0) : "";
+	switch(hash(topic))
+	{
+		case hash("config"):  out << "https://github.com/jevolk/SPQF/blob/master/help/config";  break;
+		case hash("mode"):    out << "https://github.com/jevolk/SPQF/blob/master/help/mode";    break;
+		case hash("kick"):    out << "https://github.com/jevolk/SPQF/blob/master/help/kick";    break;
+		default:
+		case hash("vote"):    out << "https://github.com/jevolk/SPQF/blob/master/help/vote";    break;
+	}
+
 	out << flush;
 }
 

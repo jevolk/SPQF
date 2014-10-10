@@ -27,4 +27,4 @@ Issues:
   unquiet    <nickname>            : Vote to unquiet.
   invite     <nickname>            : Vote to invite a user to the channel.
   topic      <message>             : Vote to change the topic.
-  <issue>                          : Vote on an opinion with no effects.
+  opine      <issue>               : Vote on an opinion with no effects.
