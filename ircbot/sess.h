@@ -290,8 +290,8 @@ template<class Func,
 void Sess::call(Func&& func,
                 Args&&... args)
 {
-	static const uint32_t CALL_MAX_ATTEMPTS = 50;
-	static constexpr std::chrono::milliseconds CALL_THROTTLE {200};
+	static const uint32_t CALL_MAX_ATTEMPTS = 25;
+	static constexpr std::chrono::milliseconds CALL_THROTTLE {750};
 
 	// Loop to reattempt for certain library errors
 	for(size_t i = 0; i < CALL_MAX_ATTEMPTS; i++) try
