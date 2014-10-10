@@ -218,16 +218,11 @@ void ResPublica::handle_vote_cancel(const Msg &msg,
                                     Chan &chan,
                                     User &user,
                                     const Tokens &toks)
-try
 {
 	static constexpr auto&& id_cast = boost::lexical_cast<Vote::id_t,std::string>;
 	auto &vote = !toks.empty()? voting.get(id_cast(*toks.at(0))):
 	                            voting.get(chan);
 	voting.cancel(vote,chan,user);
-}
-catch(const Exception &e)
-{
-	chan << user << e << flush;
 }
 
 
