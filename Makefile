@@ -28,7 +28,6 @@ WFLAGS = -pedantic                             \
          -Wno-unused-parameter                 \
          -Wno-unused-label                     \
          -Wsuggest-attribute=format
-         #-Wsuggest-attribute=noreturn
 
 CCFLAGS += -std=c++14
 LDFLAGS = -lircbot -lircclient -lleveldb -lpthread
