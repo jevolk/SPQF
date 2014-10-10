@@ -60,8 +60,8 @@ void Voting::cancel(Vote &vote,
 		throw Exception(ss.str());
 	}
 
-	if(vote.total() > 0)
-		throw Exception("You can't cancel after a vote has been cast.");
+	if(vote.total() > 1)
+		throw Exception("You can't cancel after someone else has voted.");
 
 	vote.cancel();
 	del(vote.get_id());
