@@ -393,7 +393,6 @@ void ResPublica::handle_vote(const Msg &msg,
 	{
 		// Ballot
 		case hash("yea"):
-		case hash("yay"):
 		case hash("yes"):
 		case hash("Y"):
 		case hash("y"):        handle_vote_ballot(msg,user,subtok(toks),Vote::YEA);    break;
