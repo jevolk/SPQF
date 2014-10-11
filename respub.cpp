@@ -55,22 +55,23 @@ void ResPublica::handle_chanmsg(const Msg &msg,
                                 User &user)
 try
 {
-	const std::string &text = msg[CHANMSG::TEXT];
+	using namespace fmt::CHANMSG;
 
 	// Discard empty without exception
-	if(text.empty())
+	if(msg[TEXT].empty())
 		return;
 
 	// Silently drop the background noise
 	if(!user.is_logged_in())
 		return;
 
-	// Dispatch based on first character
-	switch(text.at(0))
-	{
-		case COMMAND_PREFIX:   handle_cmd(msg,chan,user);             break;
-		default:                                                      break;
-	}
+	// Discard everything not starting with command prefix
+	const Sess &sess = get_sess();
+	const Ident &id = sess.get_ident();
+	if(msg[TEXT].find(id["prefix"]) != 0)
+		return;
+
+	handle_cmd(msg,chan,user);
 }
 catch(const Exception &e)
 {
@@ -91,14 +92,17 @@ void ResPublica::handle_cmd(const Msg &msg,
                             Chan &chan,
                             User &user)
 {
+	using namespace fmt::CHANMSG;
 	using delim = boost::char_separator<char>;
 
 	static const delim sep(" ");
-	const boost::tokenizer<delim> tokenize(msg[CHANMSG::TEXT],sep);
+	const boost::tokenizer<delim> tokenize(msg[TEXT],sep);
 	const std::vector<std::string> tok(tokenize.begin(),tokenize.end());
 
-	// Chop off cmd character and dispatch
-	switch(hash(tok.at(0).substr(1)))
+	// Chop off cmd prefix and dispatch
+	const Sess &sess = get_sess();
+	const Ident &id = sess.get_ident();
+	switch(hash(tok.at(0).substr(id["prefix"].size())))
 	{
 		case hash("vote"):     handle_vote(msg,chan,user,subtok(tok));    break;
 		default:                                                          break;
@@ -346,8 +350,12 @@ void ResPublica::handle_cmd(const Msg &msg,
 	static const delim sep(" ");
 	const boost::tokenizer<delim> tokenize(msg[PRIVMSG::TEXT],sep);
 	const std::vector<std::string> tokens(tokenize.begin(),tokenize.end());
-	const std::string &cmd = tokens.at(0).at(0) == COMMAND_PREFIX? tokens.at(0).substr(1):
-	                                                               tokens.at(0);
+
+	// Strip off the command prefix if given
+	const Sess &sess = get_sess();
+	const Ident &id = sess.get_ident();
+	const bool has_prefix = tokens.at(0).find(id["prefix"]) != std::string::npos;
+	const std::string cmd = has_prefix? tokens.at(0).substr(id["prefix"].size()) : tokens.at(0);
 	switch(hash(cmd))
 	{
 		case hash("vote"):     handle_vote(msg,user,subtok(tokens));     break;
