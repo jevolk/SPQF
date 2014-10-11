@@ -67,6 +67,7 @@ class Locutor
 	Sess &get_sess()                                    { return sess;                               }
 	std::ostringstream &get_sendq()                     { return sendq;                              }
 	void set_target(const std::string &target)          { this->target = target;                     }
+	void clear_sendq();
 
 	// [SEND] Raw interface                             // Should attempt to specify in a subclasses
 
@@ -82,7 +83,7 @@ class Locutor
 	void me(const std::string &msg);
 
 	// [SEND] stream interface                          // Defaults back to MSG after every flush
-	Locutor &operator<<(const flush_t f);               // Flush stream to channel
+	virtual Locutor &operator<<(const flush_t f);       // Flush stream to endpoint
 	Locutor &operator<<(const Method &method);          // Set method for this message
 	Locutor &operator<<(const colors::FG &fg);          // Insert foreground color
 	Locutor &operator<<(const colors::BG &fg);          // Insert background color
@@ -156,8 +157,7 @@ Locutor &Locutor::operator<<(const flush_t f)
 {
 	const scope reset_stream([&]
 	{
-		sendq.clear();
-		sendq.str(std::string());
+		clear_sendq();
 		meth = DEFAULT_METHOD;
 	});
 
@@ -229,4 +229,12 @@ void Locutor::mode(const std::string &str)
 {
 	//NOTE: libircclient irc_cmd_channel_mode is just: %s %s
 	sess.call(irc_cmd_channel_mode,get_target().c_str(),str.c_str());
+}
+
+
+inline
+void Locutor::clear_sendq()
+{
+	sendq.clear();
+	sendq.str(std::string());
 }

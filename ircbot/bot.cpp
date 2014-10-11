@@ -17,6 +17,8 @@ adb(ident["dbdir"]),
 sess(*this,ident,callbacks),
 chans(adb,sess),
 users(adb,sess),
+ns(adb,sess,users),
+cs(adb,sess,chans),
 logs(chans,users,*this),
 dispatch_thread(&Bot::dispatch_worker,this)
 {
@@ -733,12 +735,17 @@ void Bot::handle_notice_nickserv(const Msg &msg)
 {
 	Sess &sess = get_sess();
 
+	// Special case for joining
 	if(!sess.is_identified() && msg[1].find("You are now identified") != std::string::npos)
 	{
 		Chans &chans = get_chans();
 		sess.set_identified(true);
 		chans.autojoin();
+		return;
 	}
+
+	NickServ &ns = get_ns();
+	ns.handle(msg);
 }
 
 

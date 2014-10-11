@@ -59,11 +59,14 @@ namespace bot {
 #include "adb.h"
 #include "sess.h"
 #include "locutor.h"
+#include "service.h"
 #include "user.h"
 #include "log.h"
 #include "chan.h"
 #include "users.h"
 #include "chans.h"
+#include "nickserv.h"
+#include "chanserv.h"
 #include "logs.h"
 
 /**
@@ -88,6 +91,8 @@ class Bot : public std::mutex
 	Sess sess;
 	Chans chans;
 	Users users;
+	NickServ ns;
+	ChanServ cs;
 	Logs logs;
 
   public:
@@ -95,6 +100,8 @@ class Bot : public std::mutex
 	const Sess &get_sess() const                            { return sess;                        }
 	const Chans &get_chans() const                          { return chans;                       }
 	const Users &get_users() const                          { return users;                       }
+	const NickServ &get_ns() const                          { return ns;                          }
+	const ChanServ &get_cs() const                          { return cs;                          }
 	const Logs &get_logs() const                            { return logs;                        }
 
 	bool ready() const                                      { return get_sess().is_conn();        }
@@ -106,6 +113,8 @@ class Bot : public std::mutex
 	Sess &get_sess()                                        { return sess;                        }
 	Chans &get_chans()                                      { return chans;                       }
 	Users &get_users()                                      { return users;                       }
+	NickServ &get_ns()                                      { return ns;                          }
+	ChanServ &get_cs()                                      { return cs;                          }
 	Logs &get_logs()                                        { return logs;                        }
 
 	// [RECV] Main interface for users of this library
