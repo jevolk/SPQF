@@ -19,7 +19,6 @@ class ResPublica : public irc::bot::Bot
 {
 	using Meth = Locutor::Method;
 
-	static const char COMMAND_PREFIX = '!';
 	static constexpr auto &flush = Locutor::flush;
 
 	Voting voting;

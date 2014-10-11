@@ -27,6 +27,7 @@ struct Ident : public std::map<std::string,std::string>
 		// Misc configuration
 		{"dbdir",      "db"                           },
 		{"logdir",     "logs"                         },
+		{"prefix",     "!"                            },
 	}{}
 
 	// Channels to join on connect
