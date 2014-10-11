@@ -63,6 +63,38 @@ R pointers(C&& c)
 
 
 inline
+std::string chomp(const std::string &str,
+                  const std::string &c = " ")
+{
+	const size_t pos = str.find_last_not_of(c);
+	return pos == std::string::npos? str : str.substr(0,pos+1);
+}
+
+
+inline
+std::pair<std::string, std::string> split(const std::string &str,
+                                          const std::string &delim = " ")
+{
+	const size_t pos = str.find(delim);
+	return pos == std::string::npos?
+	              std::make_pair(str,std::string()):
+	              std::make_pair(str.substr(0,pos), str.substr(pos+delim.size()));
+}
+
+
+inline
+std::vector<std::string> tokens(const std::string &str,
+                                const char *const &sep = " ")
+{
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim> tk(str,d);
+	return {tk.begin(),tk.end()};
+}
+
+
+inline
 std::string tolower(const std::string &str)
 {
 	static const std::locale locale("en_US.UTF-8");
@@ -74,6 +106,29 @@ std::string tolower(const std::string &str)
 		return std::tolower(c,locale);
 	});
 
+	return ret;
+}
+
+
+inline
+std::string decolor(const std::string &str)
+{
+	std::string ret(str);
+	const auto end = std::remove_if(ret.begin(),ret.end(),[]
+	(const char &c)
+	{
+		switch(c)
+		{
+			case '\x02':
+			case '\x03':
+				return true;
+
+			default:
+				return false;
+		}
+	});
+
+	ret.erase(end,ret.end());
 	return ret;
 }
 
