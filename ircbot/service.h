@@ -32,23 +32,11 @@ class Service : public Locutor
   public:
 	void handle(const Msg &msg);
 
-	Service(Adb &adb, Sess &sess, const std::string &name);
-	virtual ~Service() = default;
+	Service(Adb &adb, Sess &sess, const std::string &name):
+	        Locutor(sess,name), adb(adb) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const Service &srv);
 };
-
-
-inline
-Service::Service(Adb &adb,
-                 Sess &sess,
-                 const std::string &name):
-Locutor(sess,name),
-adb(adb)
-{
-
-
-}
 
 
 inline
