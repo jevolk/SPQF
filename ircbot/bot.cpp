@@ -14,7 +14,7 @@ using namespace irc::bot;
 Bot::Bot(const Ident &ident)
 try:
 adb(ident["dbdir"]),
-sess(ident,callbacks),
+sess(*this,ident,callbacks),
 chans(adb,sess),
 users(adb,sess),
 logs(chans,users,*this),

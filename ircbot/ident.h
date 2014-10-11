@@ -25,6 +25,7 @@ struct Ident : public std::map<std::string,std::string>
 		{"pass",       ""                             },
 
 		// Misc configuration
+		{"locale",     "en_US.UTF-8"                  },
 		{"dbdir",      "db"                           },
 		{"logdir",     "logs"                         },
 		{"prefix",     "!"                            },

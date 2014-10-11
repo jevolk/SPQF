@@ -8,8 +8,11 @@
 
 class Sess
 {
+	std::mutex &mutex;                                 // Bot's main mutex or "session mutex"
+
 	// Our constant data
 	Ident ident;
+	std::locale locale;
 
 	// libircclient
 	Callbacks cbs;
@@ -36,8 +39,13 @@ class Sess
 	void cap_end();                                    // IRCv3 CAP END
 
   public:
+	// mutable session mutex convenience access
+	std::mutex &get_mutex() const                      { return const_cast<std::mutex &>(mutex);    }
+	std::mutex &get_mutex()                            { return mutex;                              }
+
 	// State observers
 	const Ident &get_ident() const                     { return ident;                              }
+	const std::locale &get_locale() const              { return locale;                             }
 	const irc_callbacks_t *get_cbs() const             { return &cbs;                               }
 	const irc_session_t *get() const                   { return sess;                               }
 	operator const irc_session_t *() const             { return get();                              }
@@ -79,7 +87,7 @@ class Sess
 	void regain();
 	void identify();
 
-	Sess(const Ident &id, Callbacks &cbs, irc_session_t *const &sess = nullptr);
+	Sess(std::mutex &mutex, const Ident &id, Callbacks &cbs, irc_session_t *const &sess = nullptr);
 	Sess(const Sess &) = delete;
 	Sess &operator=(const Sess &) = delete;
 	~Sess() noexcept;
@@ -89,13 +97,16 @@ class Sess
 
 
 inline
-Sess::Sess(const Ident &ident,
+Sess::Sess(std::mutex &mutex,
+           const Ident &ident,
            Callbacks &cbs,
            irc_session_t *const &sess):
+mutex(mutex),
 ident(ident),
+locale(this->ident["locale"].c_str()),
 cbs(cbs),
 sess(sess? sess : irc_create_session(get_cbs())),
-_nick(ident["nick"]),
+_nick(this->ident["nick"]),
 identified(false)
 {
 
