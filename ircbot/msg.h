@@ -77,6 +77,9 @@ class Msg
 	bool from_server() const                                { return get_nick() == get_host();  }
 	bool from_nickserv() const                              { return get_nick() == "NickServ";  }
 	bool from_chanserv() const                              { return get_nick() == "ChanServ";  }
+	bool from_memoserv() const                              { return get_nick() == "MemoServ";  }
+	bool from_operserv() const                              { return get_nick() == "OperServ";  }
+	bool from_botserv() const                               { return get_nick() == "BotServ";   }
 
 	Msg(const uint32_t &code, const std::string &origin, const Params &params);
 	Msg(const uint32_t &code, const char *const &origin, const char **const &params, const size_t &count);

@@ -67,10 +67,13 @@ class Sess
 	template<class... VA_LIST> void quote(const char *const &fmt, VA_LIST&&... ap);
 
 	// [SEND] Primary commands
-	void nick(const std::string &nick);
+	void nickserv(const std::string &str)              { quote("ns %s",str.c_str());                }
+	void chanserv(const std::string &str)              { quote("cs %s",str.c_str());                }
+	void memoserv(const std::string &str)              { quote("ms %s",str.c_str());                }
+	void operserv(const std::string &str)              { quote("os %s",str.c_str());                }
+	void botserv(const std::string &str)               { quote("bs %s",str.c_str());                }
 	void help(const std::string &topic);               // IRCd response goes to console
-	void chanserv(const std::string &str);             // /cs
-	void nickserv(const std::string &str);             // /ns
+	void nick(const std::string &nick)                 { call(irc_cmd_nick,nick.c_str());           }
 	void umode(const std::string &mode);               // Send umode update
 	void umode();                                      // Request this->mode to be updated
 	void cap_list();                                   // IRCv3 update our capabilities list
@@ -212,20 +215,6 @@ void Sess::umode()
 
 
 inline
-void Sess::nickserv(const std::string &str)
-{
-	quote("ns %s",str.c_str());
-}
-
-
-inline
-void Sess::chanserv(const std::string &str)
-{
-	quote("cs %s",str.c_str());
-}
-
-
-inline
 void Sess::umode(const std::string &mode)
 {
 	call(irc_cmd_user_mode,mode.c_str());
@@ -236,12 +225,6 @@ inline
 void Sess::help(const std::string &topic)
 {
 	quote("HELP %s",topic.c_str());
-}
-
-inline
-void Sess::nick(const std::string &n)
-{
-	call(irc_cmd_nick,n.c_str());
 }
 
 

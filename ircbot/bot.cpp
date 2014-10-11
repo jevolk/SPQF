@@ -719,6 +719,13 @@ void Bot::handle_notice(const Msg &msg)
 		return;
 	}
 
+	if(msg.from_chanserv())
+	{
+		ChanServ &cs = get_cs();
+		cs.handle(msg);
+		return;
+	}
+
 	if(!my_nick(msg[SELFNAME]))
 	{
 		handle_cnotice(msg);
