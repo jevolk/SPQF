@@ -38,6 +38,7 @@ class Chan : public Locutor,
   public:
 	// Observers
 	const std::string &get_name() const                     { return Locutor::get_target();         }
+	const ChanServ &get_cs() const                          { return cs;                            }
 	const Log &get_log() const                              { return _log;                          }
 	const Topic &get_topic() const                          { return _topic;                        }
 	const Mode &get_mode() const                            { return _mode;                         }
@@ -87,7 +88,24 @@ class Chan : public Locutor,
 	void banlist();                                         // Updates banlist state of channel
 	void names();                                           // Update user list of channel (goes into this->users)
 
-	// [SEND] Control interface to channel
+	// [SEND] ChanServ interface to channel
+	void csclear(const Mode &mode = "bq");                  // clear a list with a Mode vector
+	void akick_del(const Mask &mask);
+	void akick_del(const User &user);
+	void akick(const Mask &mask, const std::string &ts = "", const std::string &reason = "");
+	void akick(const User &user, const std::string &ts = "", const std::string &reason = "");
+	void csunquiet(const Mask &mask);
+	void csunquiet(const User &user);
+	void csquiet(const Mask &user);
+	void csquiet(const User &user);
+	void csdeop(const User &user);
+	void csop(const User &user);
+	void recover();                                         // recovery procedure
+	void unban();                                           // unban self
+	void csdeop();                                          // target is self
+	void op();                                              // target is self
+
+	// [SEND] Direct interface to channel
 	void invite(const std::string &nick);
 	void topic(const std::string &topic);
 	void kick(const User &user, const std::string &reason = "");
@@ -326,6 +344,138 @@ void Chan::topic(const std::string &topic)
 
 
 inline
+void Chan::op()
+{
+	Locutor &cs = this->cs;
+	const Sess &sess = get_sess();
+	cs << "OP " << get_name() << " " << sess.get_nick() << flush;
+}
+
+
+inline
+void Chan::csdeop()
+{
+	Locutor &cs = this->cs;
+	const Sess &sess = get_sess();
+	cs << "DEOP " << get_name() << " " << sess.get_nick() << flush;
+}
+
+
+inline
+void Chan::unban()
+{
+	Locutor &cs = this->cs;
+	cs << "UNBAN " << get_name() << flush;
+}
+
+
+inline
+void Chan::recover()
+{
+	Locutor &cs = this->cs;
+	cs << "RECOVER " << get_name() << flush;
+}
+
+
+inline
+void Chan::csop(const User &user)
+{
+	Locutor &cs = this->cs;
+	cs << "OP " << get_name() << " " << user.get_nick() << flush;
+}
+
+
+inline
+void Chan::csdeop(const User &user)
+{
+	Locutor &cs = this->cs;
+	cs << "DEOP " << get_name() << " " << user.get_nick() << flush;
+}
+
+
+inline
+void Chan::csquiet(const User &user)
+{
+	csquiet(user.mask(Mask::HOST));
+
+	if(user.is_logged_in())
+		csquiet(user.mask(Mask::ACCT));
+}
+
+
+inline
+void Chan::csunquiet(const User &user)
+{
+	csunquiet(user.mask(Mask::HOST));
+
+	if(user.is_logged_in())
+		csunquiet(user.mask(Mask::ACCT));
+}
+
+
+inline
+void Chan::csquiet(const Mask &mask)
+{
+	Locutor &cs = this->cs;
+	cs << "QUIET " << get_name() << " " << mask << flush;
+}
+
+
+inline
+void Chan::csunquiet(const Mask &mask)
+{
+	Locutor &cs = this->cs;
+	cs << "UNQUIET " << get_name() << " " << mask << flush;
+}
+
+
+inline
+void Chan::akick(const User &user,
+                 const std::string &ts,
+                 const std::string &reason)
+{
+	akick(user.mask(Mask::HOST),ts,reason);
+
+	if(user.is_logged_in())
+		akick(user.mask(Mask::ACCT),ts,reason);
+}
+
+
+inline
+void Chan::akick(const Mask &mask,
+                 const std::string &ts,
+                 const std::string &reason)
+{
+	Locutor &cs = this->cs;
+	cs << "AKICK " << get_name() << " ADD " << mask;
+
+	if(!ts.empty())
+		cs << " !T " << ts;
+	else
+		cs << " !P";
+
+	cs << " " << reason;
+	cs << flush;
+}
+
+
+inline
+void Chan::akick_del(const Mask &mask)
+{
+	Locutor &cs = this->cs;
+	cs << "AKICK " << get_name() << " DEL " << mask << flush;
+}
+
+
+inline
+void Chan::csclear(const Mode &mode)
+{
+	Locutor &cs = this->cs;
+	cs << "clear " << get_name() << " BANS " << mode << flush;
+}
+
+
+inline
 bool Chan::delta_mode(const std::string &delta,
                       const Mask &mask)
 {
@@ -481,8 +631,7 @@ bool Chan::is_op()
 const
 {
 	const Sess &sess = get_sess();
-	const std::string &nick = sess.get_nick();
-	const User &user = get_user(nick);
+	const User &user = get_user(sess.get_nick());
 	const Mode &mode = get_mode(user);
 	return mode.has('o');
 }
