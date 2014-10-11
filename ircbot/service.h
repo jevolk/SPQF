@@ -8,18 +8,20 @@
 
 class Service : public Locutor
 {
-  protected:
-	using Capture = std::list<std::string>;
-
-  private:
 	Adb &adb;
-	Capture capture;                              // State of the current capture
+	std::list<std::string> capture;               // State of the current capture
 	std::deque<std::string> queue;                // Queue of terminators
 
-  protected:
-	Adb &get_adb()                                 { return adb;                    }
+  public:
+	const Adb &get_adb() const                     { return adb;                    }
 	size_t queue_size() const                      { return queue.size();           }
 	size_t capture_size() const                    { return capture.size();         }
+
+  protected:
+	using Capture = decltype(capture);
+
+	Adb &get_adb()                                 { return adb;                    }
+	const std::string &get_terminator() const      { return queue.front();          }
 
 	// Add expected terminator every send
 	void next_terminator(const std::string &str)   { queue.emplace_back(str);       }
@@ -51,6 +53,7 @@ adb(adb)
 
 inline
 void Service::handle(const Msg &msg)
+try
 {
 	using namespace fmt::NOTICE;
 
@@ -69,10 +72,12 @@ void Service::handle(const Msg &msg)
 		});
 
 		captured(capture);
-		return;
 	}
-
-	capture.emplace_back(decolor(msg[TEXT]));
+	else capture.emplace_back(decolor(msg[TEXT]));
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("Range error in Service::handle");
 }
 
 

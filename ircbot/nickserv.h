@@ -45,23 +45,13 @@ void NickServ::query_info(const std::string &acct)
 
 inline
 void NickServ::captured(const Capture &msg)
-try
 {
-	if(msg.empty())
-		throw Exception("Empty NickServ capture.");
-
 	const std::string &header = msg.front();
+
 	if(header.find("Information on") == 0)
 		handle_info(msg);
 	else
 		throw Exception("Unhandled NickServ capture.");
-}
-catch(const std::out_of_range &e)
-{
-	for(const auto &str : msg)
-		std::cerr << "[" << str << "]" << std::endl;
-
-	throw Exception("Parse error NickServ::captured()");
 }
 
 
@@ -69,12 +59,12 @@ inline
 void NickServ::handle_info(const Capture &msg)
 {
 	const std::vector<std::string> tok = tokens(msg.front());
-	const auto &acct = tolower(tok.at(2));
+	const auto &name = tolower(tok.at(2));
 	const auto &primary = tolower(tok.at(4).substr(0,tok.at(4).size()-2));  // Chop off "):]"
 
-	Adb &adb = get_adb();
-	Adoc doc = adb.get(std::nothrow,acct);
-	Adoc adoc = doc.get_child("info",Adoc());
+	Acct acct(get_adb(),name);
+	Adoc info = acct.get("info");
+	info.put("account",primary);
 
 	auto it = msg.begin();
 	for(++it; it != msg.end(); ++it)
@@ -82,12 +72,10 @@ void NickServ::handle_info(const Capture &msg)
 		const auto kv = split(*it," : ");
 		const std::string &key = chomp(chomp(kv.first),".");
 		const std::string &val = kv.second;
-		adoc.put(key,val);
+		info.put(key,val);
 	}
 
-	doc.put_child("info",adoc);
-	doc.put("account",primary);
-	adb.set(acct,doc);
+	acct.set("info",info);
 }
 
 
