@@ -143,6 +143,8 @@ class Bot : public std::mutex
 	void handle_creationtime(const Msg &m);
 	void handle_endofnames(const Msg &m);
 	void handle_namreply(const Msg &m);
+	void handle_invitelist(const Msg &m);
+	void handle_exceptlist(const Msg &m);
 	void handle_quietlist(const Msg &m);
 	void handle_banlist(const Msg &m);
 	void handle_cnotice(const Msg &m);

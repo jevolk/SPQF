@@ -20,6 +20,8 @@ class Chan : public Locutor,
 	struct Topic : std::tuple<std::string, Mask, time_t>    { enum { TEXT, MASK, TIME };            };
 	using Quiets = Masks<Quiet>;
 	using Bans = Masks<Ban>;
+	using Excepts = Masks<Except>;
+	using Invites = Masks<Invite>;
 
   private:
 	using Userv = std::tuple<User *, Mode>;
@@ -31,6 +33,8 @@ class Chan : public Locutor,
 	Mode _mode;
 	time_t creation;
 	Users users;
+	Invites invites;
+	Excepts excepts;
 	Quiets quiets;
 	Bans bans;
 	bool joined;                                            // State the server has sent us
@@ -44,6 +48,8 @@ class Chan : public Locutor,
 	const Mode &get_mode() const                            { return _mode;                         }
 	const time_t &get_creation() const                      { return creation;                      }
 	const bool &is_joined() const                           { return joined;                        }
+	const Invites &get_invites() const                      { return invites;                       }
+	const Excepts &get_excepts() const                      { return excepts;                       }
 	const Quiets &get_quiets() const                        { return quiets;                        }
 	const Bans &get_bans() const                            { return bans;                          }
 
@@ -83,10 +89,13 @@ class Chan : public Locutor,
 
   public:
 	// [SEND] State update interface
-	void who(const std::string &fl = User::WHO_FORMAT);     // Updates state of users in channel (goes into Users->User)
-	void quietlist();                                       // Updates quietlist state of channel
-	void banlist();                                         // Updates banlist state of channel
+	void who(const std::string &fl = User::WHO_FORMAT);     // Update state of users in channel (goes into Users->User)
+	void invitelist()                                       { mode("+I");                           }
+	void exceptlist()                                       { mode("+e");                           }
+	void quietlist()                                        { mode("+q");                           }
+	void banlist()                                          { mode("+b");                           }
 	void names();                                           // Update user list of channel (goes into this->users)
+	void info()                                             { cs.query_info(get_name());            }
 
 	// [SEND] ChanServ interface to channel
 	void csclear(const Mode &mode = "bq");                  // clear a list with a Mode vector
@@ -176,20 +185,6 @@ void Chan::names()
 {
 	Sess &sess = get_sess();
 	sess.call(irc_cmd_names,get_name().c_str());
-}
-
-
-inline
-void Chan::quietlist()
-{
-	mode("+q");
-}
-
-
-inline
-void Chan::banlist()
-{
-	mode("+b");
 }
 
 
@@ -492,6 +487,14 @@ bool Chan::delta_mode(const std::string &delta,
 	// Target is a straight nickname, not a Mask
 	if(mask.get_form() == Mask::INVALID) try
 	{
+		const Sess &sess = get_sess();
+		if(mask == sess.get_nick() && delta == "+o")
+		{
+			// We have been op'ed, grab the privileged lists.
+			invitelist();
+			exceptlist();
+		}
+
 		Mode &mode = get_mode(mask);
 		return mode.delta(delta);
 	}

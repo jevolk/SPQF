@@ -35,3 +35,5 @@ class Ban
 };
 
 using Quiet = Ban;
+using Except = Ban;
+using Invite = Ban;

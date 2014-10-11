@@ -131,6 +131,8 @@ try
 		case 333     /* RPL_TOPICWHOTIME */:      handle_topicwhotime(msg);            return;
 		case 329     /* RPL_CREATIONTIME */:      handle_creationtime(msg);            return;
 		case LIBIRC_RFC_RPL_BANLIST:              handle_banlist(msg);                 return;
+		case LIBIRC_RFC_RPL_INVITELIST:           handle_invitelist(msg);              return;
+		case LIBIRC_RFC_RPL_EXCEPTLIST:           handle_exceptlist(msg);              return;
 		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               return;
 
 		case LIBIRC_RFC_ERR_NICKNAMEINUSE:        handle_nicknameinuse(msg);           return;
@@ -569,6 +571,30 @@ void Bot::handle_banlist(const Msg &msg)
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
 	chan.bans.add(msg[BANMASK],msg[OPERATOR],msg.get<time_t>(TIME));
+}
+
+
+void Bot::handle_invitelist(const Msg &msg)
+{
+	using namespace fmt::INVITELIST;
+
+	log_handle(msg,"INVITE LIST");
+
+	Chans &chans = get_chans();
+	Chan &chan = chans.get(msg[CHANNAME]);
+	chan.invites.add(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
+}
+
+
+void Bot::handle_exceptlist(const Msg &msg)
+{
+	using namespace fmt::EXCEPTLIST;
+
+	log_handle(msg,"EXEMPT LIST");
+
+	Chans &chans = get_chans();
+	Chan &chan = chans.get(msg[CHANNAME]);
+	chan.excepts.add(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
 }
 
 

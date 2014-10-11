@@ -52,6 +52,7 @@ class User : public Locutor,
 
 	// [SEND] Controls
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default
+	void info();                                       // Update acct["info"] from nickserv
 
 	User(Adb &adb, Sess &sess, NickServ &ns, const std::string &nick);
 

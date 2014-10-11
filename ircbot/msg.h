@@ -47,6 +47,8 @@ SPQF_FMT( WHOISACCOUNT,      SELFNAME, NICKNAME, ACCTNAME, REMARKS              
 SPQF_FMT( CREATIONTIME,      SELFNAME, CHANNAME, TIME,                                                       )
 SPQF_FMT( TOPICWHOTIME,      SELFNAME, CHANNAME, MASK,     TIME,                                             )
 SPQF_FMT( BANLIST,           SELFNAME, CHANNAME, BANMASK,  OPERATOR, TIME,                                   )
+SPQF_FMT( EXCEPTLIST,        SELFNAME, CHANNAME, MASK,  OPERATOR, TIME,                                      )
+SPQF_FMT( INVITELIST,        SELFNAME, CHANNAME, MASK,  OPERATOR, TIME,                                      )
 SPQF_FMT( QUIETLIST,         SELFNAME, CHANNAME, MODECODE, BANMASK,  OPERATOR, TIME,                         )
 }
 
