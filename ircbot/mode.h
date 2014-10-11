@@ -6,20 +6,22 @@
  */
 
 
-class Mode
+struct Mode : public std::string
 {
-	std::string mode;
+	bool has(const char &m) const    { return find(m) != std::string::npos; }
+	bool empty() const               { return empty();                      }
 
-	size_t pos(const char &m) const          { return mode.find(m);                }
+	void add(const char &m)
+	{
+		if(!has(m))
+			push_back(m);
+	}
 
-  public:
-	const std::string &get() const           { return mode;                        }
-	operator const std::string &() const     { return get();                       }
-
-	bool empty() const                       { return get().empty();               }
-	bool has(const char &m) const            { return pos(m) != std::string::npos; }
-	void add(const char &m)                  { if(!has(m)) mode.push_back(m);      }
-	void rm(const char &m)                   { if(has(m)) mode.erase(pos(m));      }
+	void rm(const char &m)
+	{
+		if(has(m))
+			erase(find(m));
+	}
 
 	bool delta(const std::string &str) try
 	{
@@ -37,12 +39,7 @@ class Mode
 		return false;
 	}
 
-	Mode(const std::string &mode = ""):
-	     mode(mode) {}
-
-	friend std::ostream &operator<<(std::ostream &s, const Mode &m)
-	{
-		s << m.get();
-		return s;
-	}
+	Mode(void): std::string() {}
+	Mode(const std::string &mode): std::string(mode) {}
+	Mode(const char *const &mode): std::string(mode) {}
 };
