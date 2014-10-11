@@ -203,7 +203,7 @@ void Sess::disconn()
 inline
 void Sess::quit()
 {
-	call(irc_cmd_quit,"Fiat justitia et pereat mundus.");
+	call(irc_cmd_quit,"Alea iacta est.");
 }
 
 
