@@ -67,12 +67,7 @@ inline
 Deltas::Deltas(const std::string &delts)
 try
 {
-	using delim = boost::char_separator<char>;
-
-	static const delim sep(" ");
-	const boost::tokenizer<delim> tokens(delts,sep);
-	const std::vector<std::string> tok(tokens.begin(),tokens.end());
-
+	const std::vector<std::string> tok = tokens(delts);
 	const bool sign = Delta::sign(tok.at(0).at(0));
 	for(size_t i = 1; i < tok.size(); i++)
 	{
@@ -92,12 +87,7 @@ Deltas::Deltas(const std::string &delts,
                const Server &serv)
 try
 {
-	using delim = boost::char_separator<char>;
-
-	static const delim sep(" ");
-	const boost::tokenizer<delim> tokens(delts,sep);
-	const std::vector<std::string> tok(tokens.begin(),tokens.end());
-
+	const std::vector<std::string> tok = tokens(delts);
 	const bool sign = Delta::sign(tok.at(0).at(0));
 	for(size_t i = 1, a = 1; i < tok.at(0).size(); i++)
 	{

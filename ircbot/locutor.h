@@ -176,11 +176,7 @@ Locutor &Locutor::operator<<(const flush_t f)
 inline
 void Locutor::me(const std::string &text)
 {
-	using delim = boost::char_separator<char>;
-	static const delim sep("\n");
-
-	const boost::tokenizer<delim> toks(text,sep);
-	for(const std::string &token : toks)
+	for(const std::string &token : tokens(text,"\n"))
 		sess.call(irc_cmd_me,get_target().c_str(),token.c_str());
 }
 
@@ -188,11 +184,7 @@ void Locutor::me(const std::string &text)
 inline
 void Locutor::msg(const std::string &text)
 {
-	using delim = boost::char_separator<char>;
-	static const delim sep("\n");
-
-	const boost::tokenizer<delim> toks(text,sep);
-	for(const std::string &token : toks)
+	for(const std::string &token : tokens(text,"\n"))
 		sess.call(irc_cmd_msg,get_target().c_str(),token.c_str());
 }
 
@@ -200,11 +192,7 @@ void Locutor::msg(const std::string &text)
 inline
 void Locutor::notice(const std::string &text)
 {
-	using delim = boost::char_separator<char>;
-	static const delim sep("\n");
-
-	const boost::tokenizer<delim> toks(text,sep);
-	for(const std::string &token : toks)
+	for(const std::string &token : tokens(text,"\n"))
 		sess.call(irc_cmd_notice,get_target().c_str(),token.c_str());
 }
 

@@ -244,13 +244,13 @@ void Bot::handle_authenticate(const Msg &msg)
 void Bot::handle_cap(const Msg &msg)
 {
 	using namespace fmt::CAP;
+	using delim = boost::char_separator<char>;
 
 	log_handle(msg,"CAP");
 
 	Sess &sess = get_sess();
 	Server &server = sess.server;
 
-	using delim = boost::char_separator<char>;
 	static const delim sep(" ");
 	const boost::tokenizer<delim> caps(msg[CAPLIST],sep);
 
@@ -840,10 +840,7 @@ void Bot::handle_namreply(const Msg &msg)
 	Chans &chans = get_chans();
 	Chan &chan = chans.add(msg[CHANNAME]);
 
-	using delim = boost::char_separator<char>;
-	static const delim sep(" ");
-	const boost::tokenizer<delim> tokens(msg[NAMELIST],sep);
-	for(const auto &nick: tokens)
+	for(const auto &nick : tokens(msg[NAMELIST]))
 	{
 		const char f = Chan::nick_flag(nick);
 		const char m = Chan::flag2mode(f);
