@@ -70,13 +70,12 @@ class Acct
 	bool has(const std::string &key) const                { return !get_val(key).empty();            }
 
 	// Set document
+	void set(const std::string &key, const Adoc &doc);
 	void set(const Adoc &doc);
 
 	// Convenience for single key => value
 	template<class T> void set_val(const std::string &key, const T &t);
 
-
-  protected:
 	Acct(Adb &adb, const std::string &acct);
 	virtual ~Acct() = default;
 };
@@ -99,6 +98,16 @@ void Acct::set_val(const std::string &key,
 	Adoc doc = adb.get(std::nothrow,get_acct());
 	doc.put(key,t);
 	set(doc);
+}
+
+
+inline
+void Acct::set(const std::string &key,
+               const Adoc &doc)
+{
+	Adoc main = get();
+	main.put_child(key,doc);
+	adb.set(get_acct(),main);
 }
 
 
