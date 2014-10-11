@@ -8,30 +8,17 @@
 
 class NickServ : public Service
 {
-	Users &users;
-
-    NickServ &operator<<(const flush_t f) override;
-
 	void handle_info(const Capture &capture);
 	void captured(const Capture &capture) override;        // Fully collected messages from Service
 
   public:
 	void query_info(const std::string &acct);
 
-	NickServ(Adb &adb, Sess &sess, Users &users);
+	NickServ &operator<<(const flush_t f) override;
+
+	NickServ(Adb &adb, Sess &sess):
+	         Service(adb,sess,"NickServ") {}
 };
-
-
-inline
-NickServ::NickServ(Adb &adb,
-                   Sess &sess,
-                   Users &users):
-Service(adb,sess,"NickServ"),
-users(users)
-{
-
-
-}
 
 
 inline

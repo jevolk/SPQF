@@ -8,10 +8,6 @@
 
 class ChanServ : public Service
 {
-	Chans &chans;
-
-	ChanServ &operator<<(const flush_t f) override;
-
 	void handle_flags(const Capture &capture);
 	void handle_info(const Capture &capture);
 	void captured(const Capture &capture) override;
@@ -21,20 +17,11 @@ class ChanServ : public Service
 	void query_flags(const std::string &name);
 	void query_info(const std::string &name);
 
-	ChanServ(Adb &adb, Sess &sess, Chans &chans);
+	ChanServ &operator<<(const flush_t f) override;
+
+	ChanServ(Adb &adb, Sess &sess):
+	         Service(adb,sess,"ChanServ") {}
 };
-
-
-inline
-ChanServ::ChanServ(Adb &adb,
-                   Sess &sess,
-                   Chans &chans):
-Service(adb,sess,"ChanServ"),
-chans(chans)
-{
-
-
-}
 
 
 inline

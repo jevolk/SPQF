@@ -9,7 +9,8 @@
 class User : public Locutor,
              public Acct
 {
-	// nick is Locutor::target                         // who 'n'
+	NickServ &ns;
+	// nick -> Locutor::target                         // who 'n'
 	std::string host;                                  // who 'h'
 	std::string acct;                                  // who 'a' (account name)
 	bool secure;                                       // WHOISSECURE (ssl)
@@ -52,7 +53,7 @@ class User : public Locutor,
 	// [SEND] Controls
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default
 
-	User(Adb &adb, Sess &sess, const std::string &nick);
+	User(Adb &adb, Sess &sess, NickServ &ns, const std::string &nick);
 
 	bool operator<(const User &o) const                { return get_nick() < o.get_nick();           }
 	bool operator==(const User &o) const               { return get_nick() == o.get_nick();          }
@@ -64,9 +65,11 @@ class User : public Locutor,
 inline
 User::User(Adb &adb,
            Sess &sess,
+           NickServ &ns,
            const std::string &nick):
 Locutor(sess,nick),
 Acct(adb,this->acct),
+ns(ns),
 secure(false),
 signon(0),
 idle(0),

@@ -15,10 +15,10 @@ Bot::Bot(const Ident &ident)
 try:
 adb(ident["dbdir"]),
 sess(*this,ident,callbacks),
-chans(adb,sess),
-users(adb,sess),
-ns(adb,sess,users),
-cs(adb,sess,chans),
+cs(adb,sess),
+ns(adb,sess),
+chans(adb,sess,cs),
+users(adb,sess,ns),
 logs(chans,users,*this),
 dispatch_thread(&Bot::dispatch_worker,this)
 {

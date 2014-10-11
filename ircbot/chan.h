@@ -25,6 +25,7 @@ class Chan : public Locutor,
 	using Userv = std::tuple<User *, Mode>;
 	using Users = std::unordered_map<std::string, Userv>;
 
+	ChanServ &cs;
 	Log _log;
 	Topic _topic;
 	Mode _mode;
@@ -104,7 +105,7 @@ class Chan : public Locutor,
 
 	friend Chan &operator<<(Chan &c, const User &user);     // append "nickname: " to locutor stream
 
-	Chan(Adb &adb, Sess &sess, const std::string &name);
+	Chan(Adb &adb, Sess &sess, ChanServ &cs, const std::string &name);
 	virtual ~Chan() = default;
 
 	friend std::ostream &operator<<(std::ostream &s, const Chan &chan);
@@ -114,9 +115,11 @@ class Chan : public Locutor,
 inline
 Chan::Chan(Adb &adb,
            Sess &sess,
+           ChanServ &cs,
            const std::string &name):
 Locutor(sess,name),
 Acct(adb,Locutor::get_target()),
+cs(cs),
 _log(sess,name),
 joined(false)
 {
