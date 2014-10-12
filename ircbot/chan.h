@@ -410,8 +410,8 @@ void Chan::csquiet(const User &user)
 {
 	csquiet(user.mask(Mask::HOST));
 
-	if(user.is_logged_in())
-		csquiet(user.mask(Mask::ACCT));
+//	if(user.is_logged_in())
+//		csquiet(user.get_acct());
 }
 
 
@@ -420,8 +420,8 @@ void Chan::csunquiet(const User &user)
 {
 	csunquiet(user.mask(Mask::HOST));
 
-	if(user.is_logged_in())
-		csunquiet(user.mask(Mask::ACCT));
+//	if(user.is_logged_in())
+//		csunquiet(user.get_acct());
 }
 
 
