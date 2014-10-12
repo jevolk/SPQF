@@ -9,7 +9,7 @@
 class User : public Locutor,
              public Acct
 {
-	NickServ &ns;
+	Service *ns;
 	// nick -> Locutor::target                         // who 'n'
 	std::string host;                                  // who 'h'
 	std::string acct;                                  // who 'a' (account name)
@@ -22,11 +22,14 @@ class User : public Locutor,
 	friend class Chan;
 	size_t chans;
 
+	Service &get_ns()                                  { return *ns;                                 }
+
   public:
 	static constexpr int WHO_RECIPE                    = 0;
 	static constexpr const char *const WHO_FORMAT      = "%tnha,0";       // ID must match WHO_RECIPE
 
 	// Observers
+	const Service &get_ns() const                      { return *ns;                                 }
 	const std::string &get_nick() const                { return Locutor::get_target();               }
 	const std::string &get_host() const                { return host;                                }
 	const std::string &get_acct() const                { return acct;                                }
@@ -41,7 +44,7 @@ class User : public Locutor,
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
 	bool is_myself(const Mask &mask) const;            // Test if mask can match us
 
-	// Mutators used by Bot handlers
+	// [RECV] Handlers may call to update state
 	void set_nick(const std::string &nick)             { Locutor::set_target(nick);                  }
 	void set_acct(const std::string &acct)             { this->acct = tolower(acct);                 }
 	void set_host(const std::string &host)             { this->host = host;                          }
@@ -54,7 +57,7 @@ class User : public Locutor,
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default
 	void info();                                       // Update acct["info"] from nickserv
 
-	User(Adb &adb, Sess &sess, NickServ &ns, const std::string &nick);
+	User(Adb &adb, Sess &sess, Service &ns, const std::string &nick);
 
 	bool operator<(const User &o) const                { return get_nick() < o.get_nick();           }
 	bool operator==(const User &o) const               { return get_nick() == o.get_nick();          }
@@ -66,11 +69,11 @@ class User : public Locutor,
 inline
 User::User(Adb &adb,
            Sess &sess,
-           NickServ &ns,
+           Service &ns,
            const std::string &nick):
 Locutor(sess,nick),
 Acct(adb,this->acct),
-ns(ns),
+ns(&ns),
 secure(false),
 signon(0),
 idle(0),
@@ -79,6 +82,15 @@ chans(0)
 {
 
 
+}
+
+
+inline
+void User::info()
+{
+	Service &out = get_ns();
+	out << "info " << acct << flush;
+	out.next_terminator("*** End of Info ***");
 }
 
 

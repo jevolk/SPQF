@@ -10,7 +10,7 @@ class Users
 {
 	Adb &adb;
 	Sess &sess;
-	NickServ &ns;
+	Service *ns;
 
 	std::unordered_map<std::string, std::unique_ptr<User>> users;
 
@@ -18,7 +18,7 @@ class Users
 	// Observers
 	const Adb &get_adb() const                         { return adb;                                }
 	const Sess &get_sess() const                       { return sess;                               }
-	const NickServ &get_ns() const                     { return ns;                                 }
+	const Service &get_ns() const                      { return *ns;                                }
 
 	const User &get(const std::string &nick) const;
 	bool has(const std::string &nick) const            { return users.count(nick);                  }
@@ -34,7 +34,10 @@ class Users
 	User &add(const std::string &nick);
 	bool del(const User &user);
 
-	Users(Adb &adb, Sess &sess, NickServ &ns):
+	// We construct before NickServ; Bot sets this
+	void set_service(Service &ns)                      { this->ns = &ns;                            }
+
+	Users(Adb &adb, Sess &sess, Service *const &ns = nullptr):
 	      adb(adb), sess(sess), ns(ns) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const Users &u);
@@ -52,7 +55,7 @@ bool Users::del(const User &user)
 inline
 User &Users::add(const std::string &nick)
 {
-	std::unique_ptr<User> user(new User(adb,sess,ns,nick));
+	std::unique_ptr<User> user(new User(adb,sess,*ns,nick));
 	const auto &iit = users.emplace(nick,std::move(user));
 	User &ret = *iit.first->second;
 	return ret;

@@ -18,40 +18,56 @@ class Chan : public Locutor,
 
 	// Substructures
 	struct Topic : std::tuple<std::string, Mask, time_t>    { enum { TEXT, MASK, TIME };            };
-	using Quiets = Masks<Quiet>;
+	using Info = std::map<std::string,std::string>;
 	using Bans = Masks<Ban>;
-	using Excepts = Masks<Except>;
+	using Quiets = Masks<Quiet>;
 	using Invites = Masks<Invite>;
+	using Excepts = Masks<Except>;
+	using Flags = Masks<Flag>;
+	using AKicks = Masks<AKick>;
 
   private:
 	using Userv = std::tuple<User *, Mode>;
 	using Users = std::unordered_map<std::string, Userv>;
 
-	ChanServ &cs;
+	// Facilities
+	Service *cs;
 	Log _log;
+
+	// Primary state
 	Topic _topic;
 	Mode _mode;
 	time_t creation;
-	Users users;
-	Invites invites;
-	Excepts excepts;
-	Quiets quiets;
+	bool joined;                                            // Indication the server has sent us
+
+	// Lists / extended data
+	Info info;
 	Bans bans;
-	bool joined;                                            // State the server has sent us
+	Quiets quiets;
+	Excepts excepts;
+	Invites invites;
+	Flags flags;
+	AKicks akicks;
+	Users users;
 
   public:
 	// Observers
-	const std::string &get_name() const                     { return Locutor::get_target();         }
-	const ChanServ &get_cs() const                          { return cs;                            }
+	const Service &get_cs() const                           { return *cs;                           }
 	const Log &get_log() const                              { return _log;                          }
+
+	const std::string &get_name() const                     { return Locutor::get_target();         }
 	const Topic &get_topic() const                          { return _topic;                        }
 	const Mode &get_mode() const                            { return _mode;                         }
 	const time_t &get_creation() const                      { return creation;                      }
 	const bool &is_joined() const                           { return joined;                        }
-	const Invites &get_invites() const                      { return invites;                       }
-	const Excepts &get_excepts() const                      { return excepts;                       }
-	const Quiets &get_quiets() const                        { return quiets;                        }
+
+	const Info &get_info() const                            { return info;                          }
 	const Bans &get_bans() const                            { return bans;                          }
+	const Quiets &get_quiets() const                        { return quiets;                        }
+	const Excepts &get_excepts() const                      { return excepts;                       }
+	const Invites &get_invites() const                      { return invites;                       }
+	const Flags &get_flags() const                          { return flags;                         }
+	const AKicks &get_akicks() const                        { return akicks;                        }
 
 	const User &get_user(const std::string &nick) const;
 	const Mode &get_mode(const User &user) const;
@@ -70,32 +86,43 @@ class Chan : public Locutor,
 	size_t count_logged_in() const;
 
   private:
-	User &get_user(const std::string &nick);
-	Mode &get_mode(const std::string &nick);
-	Mode &get_mode(const User &user);
-
-	// [RECV] Bot:: handler's call these to update state
+	// [RECV] Handler may call these to update state
 	friend class Bot;
+	friend class ChanServ;
+
+	Service &get_cs()                                       { return *cs;                           }
 	Log &get_log()                                          { return _log;                          }
 	Topic &get_topic()                                      { return _topic;                        }
+
+	void log(const User &user, const Msg &msg)              { _log(user,msg);                       }
 	void set_joined(const bool &joined)                     { this->joined = joined;                }
 	void set_creation(const time_t &creation)               { this->creation = creation;            }
 	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
 	bool delta_mode(const std::string &d, const Mask &m);
+
+	void set_info(const Info &info)                         { this->info = info;                    }
+	void set_flags(const Flags &flags)                      { this->flags = flags;                  }
+	void set_akicks(const AKicks &akicks)                   { this->akicks = akicks;                }
+
+	User &get_user(const std::string &nick);
+	Mode &get_mode(const std::string &nick);
+	Mode &get_mode(const User &user);
 	bool rename(const User &user, const std::string &old_nick);
-	void log(const User &user, const Msg &msg)              { _log(user,msg);                       }
 	bool add(User &user, const Mode &mode = {});
 	bool del(User &user);
 
   public:
 	// [SEND] State update interface
 	void who(const std::string &fl = User::WHO_FORMAT);     // Update state of users in channel (goes into Users->User)
+	void accesslist();                                      // ChanServ access list update
+	void flagslist();                                       // ChanServ flags list update
+	void akicklist();                                       // ChanServ akick list update
 	void invitelist()                                       { mode("+I");                           }
 	void exceptlist()                                       { mode("+e");                           }
 	void quietlist()                                        { mode("+q");                           }
 	void banlist()                                          { mode("+b");                           }
+	void csinfo();                                          // ChanServ info update
 	void names();                                           // Update user list of channel (goes into this->users)
-	void info()                                             { cs.query_info(get_name());            }
 
 	// [SEND] ChanServ interface to channel
 	void csclear(const Mode &mode = "bq");                  // clear a list with a Mode vector
@@ -132,7 +159,7 @@ class Chan : public Locutor,
 
 	friend Chan &operator<<(Chan &c, const User &user);     // append "nickname: " to locutor stream
 
-	Chan(Adb &adb, Sess &sess, ChanServ &cs, const std::string &name);
+	Chan(Adb &adb, Sess &sess, Service &cs, const std::string &name);
 	virtual ~Chan() = default;
 
 	friend std::ostream &operator<<(std::ostream &s, const Chan &chan);
@@ -142,11 +169,11 @@ class Chan : public Locutor,
 inline
 Chan::Chan(Adb &adb,
            Sess &sess,
-           ChanServ &cs,
+           Service &cs,
            const std::string &name):
 Locutor(sess,name),
 Acct(adb,Locutor::get_target()),
-cs(cs),
+cs(&cs),
 _log(sess,name),
 joined(false)
 {
@@ -177,22 +204,6 @@ void Chan::part()
 {
 	Sess &sess = get_sess();
 	sess.call(irc_cmd_part,get_name().c_str());
-}
-
-
-inline
-void Chan::names()
-{
-	Sess &sess = get_sess();
-	sess.call(irc_cmd_names,get_name().c_str());
-}
-
-
-inline
-void Chan::who(const std::string &flags)
-{
-	Sess &sess = get_sess();
-	sess.quote("who %s %s",get_name().c_str(),flags.c_str());
 }
 
 
@@ -341,50 +352,56 @@ void Chan::topic(const std::string &topic)
 inline
 void Chan::op()
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	const Sess &sess = get_sess();
 	cs << "OP " << get_name() << " " << sess.get_nick() << flush;
+	cs.null_terminator();
 }
 
 
 inline
 void Chan::csdeop()
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	const Sess &sess = get_sess();
 	cs << "DEOP " << get_name() << " " << sess.get_nick() << flush;
+	cs.null_terminator();
 }
 
 
 inline
 void Chan::unban()
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	cs << "UNBAN " << get_name() << flush;
+	cs.null_terminator();
 }
 
 
 inline
 void Chan::recover()
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	cs << "RECOVER " << get_name() << flush;
+	cs.null_terminator();
 }
 
 
 inline
 void Chan::csop(const User &user)
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	cs << "OP " << get_name() << " " << user.get_nick() << flush;
+	cs.null_terminator();
 }
 
 
 inline
 void Chan::csdeop(const User &user)
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	cs << "DEOP " << get_name() << " " << user.get_nick() << flush;
+	cs.null_terminator();
 }
 
 
@@ -411,16 +428,18 @@ void Chan::csunquiet(const User &user)
 inline
 void Chan::csquiet(const Mask &mask)
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	cs << "QUIET " << get_name() << " " << mask << flush;
+	cs.null_terminator();
 }
 
 
 inline
 void Chan::csunquiet(const Mask &mask)
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	cs << "UNQUIET " << get_name() << " " << mask << flush;
+	cs.null_terminator();
 }
 
 
@@ -441,7 +460,7 @@ void Chan::akick(const Mask &mask,
                  const std::string &ts,
                  const std::string &reason)
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	cs << "AKICK " << get_name() << " ADD " << mask;
 
 	if(!ts.empty())
@@ -451,22 +470,89 @@ void Chan::akick(const Mask &mask,
 
 	cs << " " << reason;
 	cs << flush;
+	cs.null_terminator();
 }
 
 
 inline
 void Chan::akick_del(const Mask &mask)
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	cs << "AKICK " << get_name() << " DEL " << mask << flush;
+	cs.null_terminator();
 }
 
 
 inline
 void Chan::csclear(const Mode &mode)
 {
-	Locutor &cs = this->cs;
+	Service &cs = get_cs();
 	cs << "clear " << get_name() << " BANS " << mode << flush;
+	cs.null_terminator();
+}
+
+
+inline
+void Chan::csinfo()
+{
+	Service &out = get_cs();
+	out << "info " << get_name() << flush;
+	out.next_terminator("*** End of Info ***");
+}
+
+
+inline
+void Chan::names()
+{
+	Sess &sess = get_sess();
+	sess.call(irc_cmd_names,get_name().c_str());
+}
+
+
+inline
+void Chan::flagslist()
+{
+	Service &out = get_cs();
+	out << "flags " << get_name() << flush;
+
+	std::stringstream ss;
+	ss << "End of " << get_name() << " FLAGS listing.";
+	out.next_terminator(ss.str());
+}
+
+
+inline
+void Chan::accesslist()
+{
+	Service &out = get_cs();
+	out << "access " << get_name() << " list" << flush;
+
+	std::stringstream ss;
+	ss << "End of " << get_name() << " FLAGS listing.";
+	out.next_terminator(ss.str());
+}
+
+
+inline
+void Chan::akicklist()
+{
+	//TODO:  
+	return;
+
+	Service &out = get_cs();
+	out << "akick " << get_name() << " list" << flush;
+
+	std::stringstream ss;
+	ss << "End of " << get_name() << " FLAGS listing.";
+	out.next_terminator(ss.str());
+}
+
+
+inline
+void Chan::who(const std::string &flags)
+{
+	Sess &sess = get_sess();
+	sess.quote("who %s %s",get_name().c_str(),flags.c_str());
 }
 
 
@@ -493,6 +579,8 @@ bool Chan::delta_mode(const std::string &delta,
 			// We have been op'ed, grab the privileged lists.
 			invitelist();
 			exceptlist();
+			flagslist();
+			akicklist();
 		}
 
 		Mode &mode = get_mode(mask);
@@ -747,6 +835,34 @@ std::ostream &operator<<(std::ostream &s,
 	s << "topic by:   \t" << std::get<Chan::Topic::MASK>(c.get_topic()) << std::endl;
 	s << "topic time: \t" << std::get<Chan::Topic::TIME>(c.get_topic()) << std::endl;
 
+	s << "info:       \t" << c.info.size() << std::endl;
+	for(const auto &kv : c.info)
+		s << "\t" << kv.first << ":\t => " << kv.second << std::endl;
+
+	s << "bans:      \t" << c.bans.size() << std::endl;
+	for(const auto &b : c.bans)
+		s << "\t+b " << b << std::endl;
+
+	s << "quiets:    \t" << c.quiets.size() << std::endl;
+	for(const auto &q : c.quiets)
+		s << "\t+q " << q << std::endl;
+
+	s << "excepts:   \t" << c.excepts.size() << std::endl;
+	for(const auto &e : c.excepts)
+		s << "\t+e " << e << std::endl;
+
+	s << "invites:   \t" << c.invites.size() << std::endl;
+	for(const auto &i : c.invites)
+		s << "\t+I " << i << std::endl;
+
+	s << "flags:     \t" << c.flags.size() << std::endl;
+	for(const auto &f : c.flags)
+		s << "\t"<< f << std::endl;
+
+	s << "akicks:    \t" << c.akicks.size() << std::endl;
+	for(const auto &a : c.akicks)
+		s << "akick: \t"<< a << std::endl;
+
 	s << "users:      \t" << c.num_users() << std::endl;
 	for(const auto &userp : c.users)
 	{
@@ -758,16 +874,6 @@ std::ostream &operator<<(std::ostream &s,
 
 		s << "\t" << userp.first << std::endl;;
 	}
-	s << std::endl;
-
-	s << "bans:      \t" << c.bans.num() << std::endl;
-	for(const auto &b : c.bans)
-		s << "\t+b " << b << std::endl;
-
-	s << "quiets:    \t" << c.quiets.num() << std::endl;
-	for(const auto &q : c.quiets)
-		s << "\t+q " << q << std::endl;
-
 	s << std::endl;
 	return s;
 }

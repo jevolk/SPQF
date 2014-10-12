@@ -15,15 +15,17 @@ Bot::Bot(const Ident &ident)
 try:
 adb(ident["dbdir"]),
 sess(*this,ident,callbacks),
-cs(adb,sess),
-ns(adb,sess),
-chans(adb,sess,cs),
-users(adb,sess,ns),
+users(adb,sess),
+chans(adb,sess),
+ns(adb,sess,users),
+cs(adb,sess,chans),
 logs(chans,users,*this),
 dispatch_thread(&Bot::dispatch_worker,this)
 {
-	irc_set_ctx(sess,this);
+	users.set_service(ns);
+	chans.set_service(cs);
 
+	irc_set_ctx(sess,this);
 }
 catch(const Exception &e)
 {
@@ -377,6 +379,7 @@ void Bot::handle_join(const Msg &msg)
 		chan.set_joined(true);
 		chan.mode();
 		chan.who();
+		chan.csinfo();
 		chan.banlist();
 		chan.quietlist();
 	}

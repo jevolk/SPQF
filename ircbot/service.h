@@ -13,23 +13,25 @@ class Service : public Locutor
 	std::deque<std::string> queue;                // Queue of terminators
 
   public:
-	const Adb &get_adb() const                     { return adb;                    }
-	size_t queue_size() const                      { return queue.size();           }
-	size_t capture_size() const                    { return capture.size();         }
+	const Adb &get_adb() const                     { return adb;                          }
+	size_t queue_size() const                      { return queue.size();                 }
+	size_t capture_size() const                    { return capture.size();               }
 
   protected:
 	using Capture = decltype(capture);
 
-	Adb &get_adb()                                 { return adb;                    }
-	const std::string &get_terminator() const      { return queue.front();          }
-
-	// Add expected terminator every send
-	void next_terminator(const std::string &str)   { queue.emplace_back(str);       }
+	Adb &get_adb()                                 { return adb;                          }
+	const std::string &get_terminator() const      { return queue.front();                }
 
 	// Passes a complete multipart message to subclass once terminated
 	virtual void captured(const Capture &capture) = 0;
 
   public:
+	// [SEND] Add expected terminator every send
+	void next_terminator(const std::string &str)   { queue.emplace_back(str);             }
+	void null_terminator()                         { queue.emplace_back(std::string());   }
+
+	// [RECV] Called by Bot handlers
 	void handle(const Msg &msg);
 
 	Service(Adb &adb, Sess &sess, const std::string &name):
@@ -51,7 +53,7 @@ try
 	if(msg.get_name() != "NOTICE")
 		throw Exception("Service handler only reads NOTICE.");
 
-	if(decolor(msg[TEXT]) == queue.front())
+	if(queue.front().empty() || tolower(queue.front()) == tolower(decolor(msg[TEXT])))
 	{
 		const scope reset([&]
 		{

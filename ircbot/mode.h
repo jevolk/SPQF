@@ -9,7 +9,6 @@
 struct Mode : public std::string
 {
 	bool has(const char &m) const    { return find(m) != std::string::npos; }
-	bool empty() const               { return empty();                      }
 
 	void add(const char &m)
 	{

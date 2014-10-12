@@ -55,18 +55,20 @@ namespace bot {
 #include "server.h"
 #include "delta.h"
 #include "ban.h"
+#include "flag.h"
+#include "akick.h"
 #include "msg.h"
 #include "adb.h"
 #include "sess.h"
 #include "locutor.h"
 #include "service.h"
-#include "chanserv.h"
-#include "nickserv.h"
 #include "user.h"
 #include "log.h"
 #include "chan.h"
 #include "users.h"
 #include "chans.h"
+#include "nickserv.h"
+#include "chanserv.h"
 #include "logs.h"
 
 /**
@@ -89,19 +91,19 @@ class Bot : public std::mutex
 {
 	Adb adb;
 	Sess sess;
-	ChanServ cs;
-	NickServ ns;
-	Chans chans;
 	Users users;
+	Chans chans;
+	NickServ ns;
+	ChanServ cs;
 	Logs logs;
 
   public:
 	const Adb &get_adb() const                              { return adb;                         }
 	const Sess &get_sess() const                            { return sess;                        }
-	const ChanServ &get_cs() const                          { return cs;                          }
-	const NickServ &get_ns() const                          { return ns;                          }
-	const Chans &get_chans() const                          { return chans;                       }
 	const Users &get_users() const                          { return users;                       }
+	const Chans &get_chans() const                          { return chans;                       }
+	const NickServ &get_ns() const                          { return ns;                          }
+	const ChanServ &get_cs() const                          { return cs;                          }
 	const Logs &get_logs() const                            { return logs;                        }
 
 	bool ready() const                                      { return get_sess().is_conn();        }
@@ -111,10 +113,10 @@ class Bot : public std::mutex
   protected:
 	Adb &get_adb()                                          { return adb;                         }
 	Sess &get_sess()                                        { return sess;                        }
-	ChanServ &get_cs()                                      { return cs;                          }
-	NickServ &get_ns()                                      { return ns;                          }
-	Chans &get_chans()                                      { return chans;                       }
 	Users &get_users()                                      { return users;                       }
+	Chans &get_chans()                                      { return chans;                       }
+	NickServ &get_ns()                                      { return ns;                          }
+	ChanServ &get_cs()                                      { return cs;                          }
 	Logs &get_logs()                                        { return logs;                        }
 
 	// [RECV] Main interface for users of this library

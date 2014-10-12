@@ -10,7 +10,7 @@ class Chans
 {
 	Adb &adb;
 	Sess &sess;
-	ChanServ &cs;
+	Service *cs;
 
 	std::map<std::string, Chan> chans;
 
@@ -18,7 +18,7 @@ class Chans
 	// Observers
 	const Adb &get_adb() const                         { return adb;                                }
 	const Sess &get_sess() const                       { return sess;                               }
-	const ChanServ &get_cs() const                     { return cs;                                 }
+	const Service &get_cs() const                      { return *cs;                                }
 
 	const Chan &get(const std::string &name) const     { return chans.at(tolower(name));            }
 	bool has(const std::string &name) const            { return chans.count(tolower(name));         }
@@ -36,7 +36,10 @@ class Chans
 	bool del(const Chan &chan)                         { return del(chan.get_name());               }
 	void autojoin();                                   // Joins all channels in the autojoin list
 
-	Chans(Adb &adb, Sess &sess, ChanServ &cs):
+	// We construct before ChanServ; Bot sets this
+	void set_service(Service &cs)                      { this->cs = &cs;                            }
+
+	Chans(Adb &adb, Sess &sess, Service *const &cs = nullptr):
 	      adb(adb), sess(sess), cs(cs) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const Chans &c);
@@ -80,7 +83,7 @@ Chan &Chans::add(const std::string &name)
 {
 	auto iit = chans.emplace(std::piecewise_construct,
 	                         std::forward_as_tuple(tolower(name)),
-	                         std::forward_as_tuple(adb,sess,cs,tolower(name)));
+	                         std::forward_as_tuple(adb,sess,*cs,tolower(name)));
 
 	Chan &chan = iit.first->second;
 	return chan;
