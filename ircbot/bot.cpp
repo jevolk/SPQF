@@ -774,6 +774,10 @@ void Bot::handle_notice_nickserv(const Msg &msg)
 	// Special case for joining
 	if(!sess.is_identified() && msg[1].find("You are now identified") != std::string::npos)
 	{
+		NickServ &ns = get_ns();
+		ns.clear_capture();
+		ns.listchans();
+
 		Chans &chans = get_chans();
 		sess.set_identified(true);
 		chans.autojoin();

@@ -10,14 +10,26 @@ class NickServ : public Service
 {
 	Users &users;
 
+	void handle_listchans(const Capture &capture);
 	void handle_info(const Capture &capture);
 	void captured(const Capture &capture) override;        // Fully collected messages from Service
 	NickServ &operator<<(const flush_t f) override;
 
   public:
+	void listchans();
+
 	NickServ(Adb &adb, Sess &sess, Users &users):
 	         Service(adb,sess,"NickServ"), users(users) {}
 };
+
+
+inline
+void NickServ::listchans()
+{
+	Locutor &out = *this;
+	out << "LISTCHANS" << flush;
+	next_terminator("channel access match for the nickname");
+}
 
 
 inline
@@ -27,6 +39,8 @@ void NickServ::captured(const Capture &msg)
 
 	if(header.find("Information on") == 0)
 		handle_info(msg);
+	else if(header.find("Access flag(s)") == 0)
+		handle_listchans(msg);
 	else
 		throw Exception("Unhandled NickServ capture.");
 }
@@ -53,6 +67,21 @@ void NickServ::handle_info(const Capture &msg)
 	}
 
 	acct.set("info",info);
+}
+
+
+inline
+void NickServ::handle_listchans(const Capture &msg)
+{
+	Sess &sess = get_sess();
+
+	for(const auto &line : msg)
+	{
+		const std::vector<std::string> tok = tokens(line);
+		const Mode flags = tok.at(2).substr(1); // chop leading +
+		const std::string chan = tok.at(4);
+		sess.access[chan] = flags;
+	}
 }
 
 

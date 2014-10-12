@@ -24,19 +24,22 @@ class Sess
 	std::string _nick;                                 // NICK reply
 	Mode mode;                                         // UMODE
 	bool identified;                                   // Identified to services
+	std::map<std::string,Mode> access;                 // Our channel access (/ns LISTCHANS)
 
 	irc_session_t *get()                               { return sess;                               }
 	operator irc_session_t *()                         { return get();                              }
 	irc_callbacks_t *get_cbs()                         { return &cbs;                               }
 
-	// Bot handler access
+	// Handler accesses
 	friend class Bot;
+	friend class NickServ;
 	void set_nick(const std::string &nick)             { this->_nick = nick;                        }
 	void delta_mode(const std::string &str)            { mode.delta(str);                           }
 	void set_identified(const bool &identified)        { this->identified = identified;             }
 	void authenticate(const std::string &str);         // IRCv3 AUTHENTICATE
 	void cap_req(const std::string &cap);              // IRCv3 CAP REQ
 	void cap_end();                                    // IRCv3 CAP END
+
 
   public:
 	// mutable session mutex convenience access
@@ -55,6 +58,7 @@ class Sess
 	const std::string &get_nick() const                { return _nick;                              }
 	const Mode &get_mode() const                       { return mode;                               }
 	const bool &is_identified() const                  { return identified;                         }
+	auto get_access() const -> decltype(access)        { return access;                             }
 	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
 	bool is_desired_nick() const                       { return _nick == ident["nick"];             }
 	bool is_conn() const;
@@ -335,13 +339,17 @@ std::ostream &operator<<(std::ostream &s,
 	s << "Cbs:             " << ss.get_cbs() << std::endl;
 	s << "irc_session_t:   " << ss.sess << std::endl;
 	s << "server:          " << ss.server << std::endl;
-	s << "Ident:           " << ss.ident << std::endl;
+	s << "Ident:           " << std::endl << ss.ident << std::endl;
 	s << "nick:            " << ss.get_nick() << std::endl;
 	s << "mode:            " << ss.mode << std::endl;
+
 	s << "caps:            ";
 	for(const auto &cap : ss.caps)
 		s << "[" << cap << "]";
 	s << std::endl;
+
+	for(const auto &p : ss.access)
+		s << "access:          " << p.second << "\t => " << p.first << std::endl;
 
 	return s;
 }

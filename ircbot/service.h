@@ -27,6 +27,9 @@ class Service : public Locutor
 	virtual void captured(const Capture &capture) = 0;
 
   public:
+	void clear_capture()                           { capture.clear();                     }
+	void clear_queue()                             { queue.clear();                       }
+
 	// [SEND] Add expected terminator every send
 	void next_terminator(const std::string &str)   { queue.emplace_back(str);             }
 	void null_terminator()                         { queue.emplace_back(std::string());   }
@@ -53,10 +56,10 @@ try
 	if(msg.get_name() != "NOTICE")
 		throw Exception("Service handler only reads NOTICE.");
 
-	// Compare if msg starts with the terminator
+	// Compare if msg CONTAINS the terminator
 	const std::string term = tolower(queue.front());
-	const std::string text = tolower(decolor(msg[TEXT])).substr(0,term.size());
-	if(term == text)
+	const std::string text = tolower(decolor(msg[TEXT]));
+	if(text.find(term) != std::string::npos)
 	{
 		const scope reset([&]
 		{
