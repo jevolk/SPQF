@@ -53,7 +53,10 @@ try
 	if(msg.get_name() != "NOTICE")
 		throw Exception("Service handler only reads NOTICE.");
 
-	if(queue.front().empty() || tolower(queue.front()) == tolower(decolor(msg[TEXT])))
+	// Compare if msg starts with the terminator
+	const std::string term = tolower(queue.front());
+	const std::string text = tolower(decolor(msg[TEXT])).substr(0,term.size());
+	if(term == text)
 	{
 		const scope reset([&]
 		{

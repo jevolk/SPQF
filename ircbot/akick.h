@@ -21,7 +21,7 @@ class AKick
 	const Mask &get_mask() const                  { return mask;               }
 	const std::string &get_oper() const           { return oper;               }
 	const std::string &get_reason_pub() const     { return reason_pub;         }
-	const std::string &get_reason_priv() const    { return reason_pub;         }
+	const std::string &get_reason_priv() const    { return reason_priv;        }
 	const time_t &get_expires() const             { return expires;            }
 	const time_t &get_modified() const            { return modified;           }
 
@@ -48,8 +48,8 @@ class AKick
 	{
 		s << std::setw(64) << std::left << a.get_mask();
 		s << " by: " << std::setw(16) << std::left <<  a.get_oper();
-		s << " reason (pub): " << a.get_reason_pub();
-		s << " reason (priv): " << a.get_reason_priv();
+		s << " reason (public): \"" << a.get_reason_pub() << "\"";
+		s << " reason (private): \"" << a.get_reason_priv() << "\"";
 		s << " expires: " << a.get_expires();
 		s << " modified: " << a.get_modified();
 		return s;

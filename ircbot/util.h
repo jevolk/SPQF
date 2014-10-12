@@ -83,6 +83,17 @@ std::pair<std::string, std::string> split(const std::string &str,
 
 
 inline
+std::string between(const std::string &str,
+                    const std::string &a = "(",
+                    const std::string &b = ")")
+{
+	const auto p0 = split(str,a);
+	const auto p1 = split(p0.second,b);
+	return p1.first;
+}
+
+
+inline
 std::vector<std::string> tokens(const std::string &str,
                                 const char *const &sep = " ")
 {

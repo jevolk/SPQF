@@ -536,14 +536,12 @@ void Chan::accesslist()
 inline
 void Chan::akicklist()
 {
-	//TODO:  
-	return;
-
 	Service &out = get_cs();
 	out << "akick " << get_name() << " list" << flush;
 
+	// This is the best we can do right now
 	std::stringstream ss;
-	ss << "End of " << get_name() << " FLAGS listing.";
+	ss << "Total of ";
 	out.next_terminator(ss.str());
 }
 
@@ -861,7 +859,7 @@ std::ostream &operator<<(std::ostream &s,
 
 	s << "akicks:    \t" << c.akicks.size() << std::endl;
 	for(const auto &a : c.akicks)
-		s << "akick: \t"<< a << std::endl;
+		s << "\t"<< a << std::endl;
 
 	s << "users:      \t" << c.num_users() << std::endl;
 	for(const auto &userp : c.users)

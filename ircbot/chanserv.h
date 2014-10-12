@@ -10,7 +10,8 @@ class ChanServ : public Service
 {
 	Chans &chans;
 
-	void handle_flags(const Capture &capture);
+	void handle_akicklist(const Capture &capture);
+	void handle_flagslist(const Capture &capture);
 	void handle_info(const Capture &capture);
 	void captured(const Capture &capture) override;
 	ChanServ &operator<<(const flush_t f) override;
@@ -29,7 +30,9 @@ void ChanServ::captured(const Capture &msg)
 	if(header.find("Information on") == 0)
 		handle_info(msg);
 	else if(header.find("Entry") == 0)
-		handle_flags(msg);
+		handle_flagslist(msg);
+	else if(header.find("AKICK") == 0)
+		handle_akicklist(msg);
 	else
 		throw Exception("Unhandled ChanServ capture.");
 }
@@ -57,7 +60,7 @@ void ChanServ::handle_info(const Capture &msg)
 
 
 inline
-void ChanServ::handle_flags(const Capture &msg)
+void ChanServ::handle_flagslist(const Capture &msg)
 {
 	const std::string name = tolower(tokens(get_terminator()).at(2));
 
@@ -78,11 +81,43 @@ void ChanServ::handle_flags(const Capture &msg)
 		for(size_t i = 3; i < toks.size(); i++)
 			addl << toks.at(i) << (i == toks.size() - 1? "" : " ");
 
-		flags.add(user,list,0,founder);
+		flags.add(user,list,0,founder);   //TODO: times
 	}
 
 	Chan &chan = chans.get(name);
 	chan.set_flags(flags);
+}
+
+
+inline
+void ChanServ::handle_akicklist(const Capture &msg)
+{
+	Chan::AKicks akicks;
+
+	auto it = msg.begin();
+	const size_t ns = tokens(*it).at(3).size() - 1;
+	const std::string name = tolower(tokens(*it).at(3).substr(0,ns));
+	++it;
+
+	auto end = msg.begin();
+	std::advance(end,msg.size());
+	for(; it != end; ++it)
+	{
+		const std::string &str = *it;
+		const std::vector<std::string> toks = tokens(str," ");
+		const std::string &num = toks.at(0);
+		const std::string &mask = toks.at(1);
+		const std::pair<std::string,std::string> reason = split(between(str,"(",")")," | ");
+		const std::string details = between(str,"[","]");
+		const std::string setter = between(details,"setter: ",",");
+		const std::string expires = between(details,"expires: ",",");    //TODO: 
+		const std::string modified = between(details,"modified: ",",");  //TODO: 
+
+		akicks.add(mask,setter,reason.first,reason.second,0,0); //TODO: times
+	}
+
+	Chan &chan = chans.get(name);
+	chan.set_akicks(akicks);
 }
 
 
