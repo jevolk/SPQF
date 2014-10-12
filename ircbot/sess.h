@@ -26,9 +26,9 @@ class Sess
 	bool identified;                                   // Identified to services
 	std::map<std::string,Mode> access;                 // Our channel access (/ns LISTCHANS)
 
-	irc_session_t *get()                               { return sess;                               }
-	operator irc_session_t *()                         { return get();                              }
-	irc_callbacks_t *get_cbs()                         { return &cbs;                               }
+	auto get()                                         { return sess;                               }
+	auto get_cbs()                                     { return &cbs;                               }
+	operator auto ()                                   { return get();                              }
 
 	// Handler accesses
 	friend class Bot;
@@ -36,29 +36,28 @@ class Sess
 	void set_nick(const std::string &nick)             { this->_nick = nick;                        }
 	void delta_mode(const std::string &str)            { mode.delta(str);                           }
 	void set_identified(const bool &identified)        { this->identified = identified;             }
-	void authenticate(const std::string &str);         // IRCv3 AUTHENTICATE
-	void cap_req(const std::string &cap);              // IRCv3 CAP REQ
-	void cap_end();                                    // IRCv3 CAP END
 
 
   public:
 	// mutable session mutex convenience access
-	std::mutex &get_mutex() const                      { return const_cast<std::mutex &>(mutex);    }
-	std::mutex &get_mutex()                            { return mutex;                              }
+	auto &get_mutex() const                            { return const_cast<std::mutex &>(mutex);    }
+	auto &get_mutex()                                  { return mutex;                              }
 
-	// State observers
-	const Ident &get_ident() const                     { return ident;                              }
-	const std::locale &get_locale() const              { return locale;                             }
-	const irc_callbacks_t *get_cbs() const             { return &cbs;                               }
-	const irc_session_t *get() const                   { return sess;                               }
-	operator const irc_session_t *() const             { return get();                              }
+	// Local data observers
+	auto &get_ident() const                            { return ident;                              }
+	auto &get_locale() const                           { return locale;                             }
 
-	// IRC Observers
-	const Server &get_server() const                   { return server;                             }
-	const std::string &get_nick() const                { return _nick;                              }
-	const Mode &get_mode() const                       { return mode;                               }
-	const bool &is_identified() const                  { return identified;                         }
-	auto get_access() const -> decltype(access)        { return access;                             }
+	// libircclient direct
+	auto get_cbs() const                               { return &cbs;                               }
+	auto get() const                                   { return sess;                               }
+	operator auto () const                             { return get();                              }
+
+	// Server data
+	auto &get_server() const                           { return server;                             }
+	auto &get_nick() const                             { return _nick;                              }
+	auto &get_mode() const                             { return mode;                               }
+	auto &is_identified() const                        { return identified;                         }
+	auto get_access() const                            { return access;                             }
 	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
 	bool is_desired_nick() const                       { return _nick == ident["nick"];             }
 	bool is_conn() const;
@@ -70,20 +69,25 @@ class Sess
 	// [SEND] Raw send
 	template<class... VA_LIST> void quote(const char *const &fmt, VA_LIST&&... ap);
 
+	// [SEND] IRCv3 commands
+	void authenticate(const std::string &str)          { quote("AUTHENTICATE %s",str.c_str());      }
+	void cap_req(const std::string &cap)               { quote("CAP REQ :%s",cap.c_str());          }
+	void cap_list()                                    { quote("CAP LIST");                         }
+	void cap_end()                                     { quote("CAP END");                          }
+	void cap_ls()                                      { quote("CAP LS");                           }
+
 	// [SEND] Primary commands
 	void nickserv(const std::string &str)              { quote("ns %s",str.c_str());                }
 	void chanserv(const std::string &str)              { quote("cs %s",str.c_str());                }
 	void memoserv(const std::string &str)              { quote("ms %s",str.c_str());                }
 	void operserv(const std::string &str)              { quote("os %s",str.c_str());                }
 	void botserv(const std::string &str)               { quote("bs %s",str.c_str());                }
-	void help(const std::string &topic);               // IRCd response goes to console
+	void help(const std::string &topic)                { quote("HELP %s",topic.c_str());            }
 	void nick(const std::string &nick)                 { call(irc_cmd_nick,nick.c_str());           }
-	void umode(const std::string &mode);               // Send umode update
-	void umode();                                      // Request this->mode to be updated
-	void cap_list();                                   // IRCv3 update our capabilities list
-	void cap_ls();                                     // IRCv3 update server capabilities list
+	void umode(const std::string &mode)                { call(irc_cmd_user_mode,mode.c_str());      }
+	void umode()                                       { call(irc_cmd_user_mode,nullptr);           }
 	void quit();                                       // Quit to server
-	void disconn();
+	void disconn()                                     { irc_disconnect(get());                     }
 	void conn();
 
 	// [SEND] Baked commands
@@ -198,13 +202,6 @@ void Sess::conn()
 
 
 inline
-void Sess::disconn()
-{
-	irc_disconnect(get());
-}
-
-
-inline
 void Sess::quit()
 {
 	call(irc_cmd_quit,"Alea iacta est.");
@@ -212,66 +209,10 @@ void Sess::quit()
 
 
 inline
-void Sess::umode()
-{
-	call(irc_cmd_user_mode,nullptr);
-}
-
-
-inline
-void Sess::umode(const std::string &mode)
-{
-	call(irc_cmd_user_mode,mode.c_str());
-}
-
-
-inline
-void Sess::help(const std::string &topic)
-{
-	quote("HELP %s",topic.c_str());
-}
-
-
-inline
-void Sess::cap_ls()
-{
-	quote("CAP LS");
-}
-
-
-inline
-void Sess::cap_list()
-{
-	quote("CAP LIST");
-}
-
-
-inline
-void Sess::cap_req(const std::string &cap)
-{
-	quote("CAP REQ :%s",cap.c_str());
-}
-
-
-inline
-void Sess::authenticate(const std::string &str)
-{
-	quote("AUTHENTICATE %s",str.c_str());
-}
-
-
-inline
-void Sess::cap_end()
-{
-	quote("CAP END");
-}
-
-
-inline
 bool Sess::is_conn()
 const
 {
-	return irc_is_connected(const_cast<irc_session_t *>(get()));
+	return irc_is_connected(const_cast<decltype(sess)>(get()));
 }
 
 

@@ -16,13 +16,13 @@ class Chans
 
   public:
 	// Observers
-	const Adb &get_adb() const                         { return adb;                                }
-	const Sess &get_sess() const                       { return sess;                               }
-	const Service &get_cs() const                      { return *cs;                                }
+	auto &get_adb() const                              { return adb;                                }
+	auto &get_sess() const                             { return sess;                               }
+	auto &get_cs() const                               { return *cs;                                }
 
 	const Chan &get(const std::string &name) const     { return chans.at(tolower(name));            }
 	bool has(const std::string &name) const            { return chans.count(tolower(name));         }
-	size_t num() const                                 { return chans.size();                       }
+	auto num() const                                   { return chans.size();                       }
 
 	// Closures
 	void for_each(const std::function<void (const Chan &)> &c) const;
@@ -49,8 +49,7 @@ class Chans
 inline
 void Chans::autojoin()
 {
-	const Ident &id = sess.get_ident();
-	for(const auto &chan : id.autojoin)
+	for(const auto &chan : sess.get_ident().autojoin)
 		join(chan);
 }
 
@@ -84,9 +83,7 @@ Chan &Chans::add(const std::string &name)
 	auto iit = chans.emplace(std::piecewise_construct,
 	                         std::forward_as_tuple(tolower(name)),
 	                         std::forward_as_tuple(adb,sess,*cs,tolower(name)));
-
-	Chan &chan = iit.first->second;
-	return chan;
+	return iit.first->second;
 }
 
 
@@ -94,10 +91,7 @@ inline
 void Chans::for_each(const std::function<void (Chan &)> &closure)
 {
 	for(auto &chanp : chans)
-	{
-		Chan &chan = chanp.second;
-		closure(chan);
-	}
+		closure(chanp.second);
 }
 
 
@@ -106,10 +100,7 @@ void Chans::for_each(const std::function<void (const Chan &)> &closure)
 const
 {
 	for(const auto &chanp : chans)
-	{
-		const Chan &chan = chanp.second;
-		closure(chan);
-	}
+		closure(chanp.second);
 }
 
 

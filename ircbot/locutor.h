@@ -59,13 +59,13 @@ class Locutor
 	colors::FG fg;                                      // Stream state for foreground color
 
   public:
-	const Sess &get_sess() const                        { return sess;                               }
-	const std::string &get_target() const               { return target;                             }
-	const std::ostringstream &get_sendq() const         { return sendq;                              }
+	auto &get_sess() const                              { return sess;                               }
+	auto &get_target() const                            { return target;                             }
+	auto &get_sendq() const                             { return sendq;                              }
 
   protected:
-	Sess &get_sess()                                    { return sess;                               }
-	std::ostringstream &get_sendq()                     { return sendq;                              }
+	auto &get_sess()                                    { return sess;                               }
+	auto &get_sendq()                                   { return sendq;                              }
 	void set_target(const std::string &target)          { this->target = target;                     }
 	void clear_sendq();
 

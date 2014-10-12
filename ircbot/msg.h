@@ -63,16 +63,16 @@ class Msg
 	Params params;
 
   public:
-	const uint32_t &get_code() const                        { return code;                      }
-	const std::string &get_name() const                     { return name;                      }
-	const std::string &get_origin() const                   { return origin;                    }
-	const Params &get_params() const                        { return params;                    }
-	size_t num_params() const                               { return get_params().size();       }
+	auto &get_code() const                                  { return code;                      }
+	auto &get_name() const                                  { return name;                      }
+	auto &get_origin() const                                { return origin;                    }
+	auto &get_params() const                                { return params;                    }
+	auto num_params() const                                 { return get_params().size();       }
 
-	const std::string &get(const size_t &i) const           { return get_params().at(i);        }
-	const std::string &operator[](const size_t &i) const;   // returns empty str for outofrange
+	auto &get(const size_t &i) const                        { return get_params().at(i);        }
+	auto &operator[](const size_t &i) const;                // returns empty str for outofrange
 	template<class R> R get(const size_t &i) const;         // throws for range or bad cast
-	template<class R> R operator[](const size_t &i) const;  // throws for range or bad cast
+	template<class R> R operator[](const size_t &i) const   { return get<R>(i);                 }
 
 	std::string get_nick() const;
 	std::string get_host() const;
@@ -164,26 +164,16 @@ const
 	return buf;
 }
 
-
-template<class R>
-R Msg::operator[](const size_t &i)
-const
-{
-	return get<R>(i);
-}
-
-
 template<class R>
 R Msg::get(const size_t &i)
 const
 {
-	const std::string &str = params.at(i);
-	return boost::lexical_cast<R>(str);
+	return boost::lexical_cast<R>(params.at(i));
 }
 
 
 inline
-const std::string &Msg::operator[](const size_t &i)
+auto &Msg::operator[](const size_t &i)
 const try
 {
 	return get(i);

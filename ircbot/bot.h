@@ -98,26 +98,26 @@ class Bot : public std::mutex
 	Logs logs;
 
   public:
-	const Adb &get_adb() const                              { return adb;                         }
-	const Sess &get_sess() const                            { return sess;                        }
-	const Users &get_users() const                          { return users;                       }
-	const Chans &get_chans() const                          { return chans;                       }
-	const NickServ &get_ns() const                          { return ns;                          }
-	const ChanServ &get_cs() const                          { return cs;                          }
-	const Logs &get_logs() const                            { return logs;                        }
+	auto &get_adb() const                             { return adb;                         }
+	auto &get_sess() const                            { return sess;                        }
+	auto &get_users() const                           { return users;                       }
+	auto &get_chans() const                           { return chans;                       }
+	auto &get_ns() const                              { return ns;                          }
+	auto &get_cs() const                              { return cs;                          }
+	auto &get_logs() const                            { return logs;                        }
 
-	bool ready() const                                      { return get_sess().is_conn();        }
-	const std::string &get_nick() const                     { return get_sess().get_nick();       }
-	bool my_nick(const std::string &nick) const             { return get_nick() == nick;          }
+	bool ready() const                                { return get_sess().is_conn();        }
+	auto &get_nick() const                            { return get_sess().get_nick();       }
+	bool my_nick(const std::string &nick) const       { return get_nick() == nick;          }
 
   protected:
-	Adb &get_adb()                                          { return adb;                         }
-	Sess &get_sess()                                        { return sess;                        }
-	Users &get_users()                                      { return users;                       }
-	Chans &get_chans()                                      { return chans;                       }
-	NickServ &get_ns()                                      { return ns;                          }
-	ChanServ &get_cs()                                      { return cs;                          }
-	Logs &get_logs()                                        { return logs;                        }
+	auto &get_adb()                                   { return adb;                         }
+	auto &get_sess()                                  { return sess;                        }
+	auto &get_users()                                 { return users;                       }
+	auto &get_chans()                                 { return chans;                       }
+	auto &get_ns()                                    { return ns;                          }
+	auto &get_cs()                                    { return cs;                          }
+	auto &get_logs()                                  { return logs;                        }
 
 	// [RECV] Main interface for users of this library
 	virtual void handle_privmsg(const Msg &m, User &u) {}
@@ -210,9 +210,9 @@ class Bot : public std::mutex
 	template<class... Msg> void operator()(Msg&&... msg);
 
 	// Main controls
-	void join(const std::string &chan)                      { get_chans().join(chan);             }
-	void quit()                                             { get_sess().quit();                  }
-	void conn()                                             { get_sess().conn();                  }
+	void join(const std::string &chan)                { get_chans().join(chan);             }
+	void quit()                                       { get_sess().quit();                  }
+	void conn()                                       { get_sess().conn();                  }
 	void run();                                             // Run worker loop
 
 	Bot(void) = delete;
@@ -230,7 +230,7 @@ class Bot : public std::mutex
 template<class... Msg>
 void Bot::operator()(Msg&&... args)
 {
-    const std::lock_guard<std::mutex> lock(dispatch_mutex);
+    const std::lock_guard<decltype(dispatch_mutex)> lock(dispatch_mutex);
     dispatch_queue.emplace_back(std::forward<Msg>(args)...);
     dispatch_cond.notify_one();
 }
@@ -238,6 +238,5 @@ void Bot::operator()(Msg&&... args)
 
 }       // namespace bot
 }       // namespace irc
-
 
 #endif  // LIBIRCBOT_INCLUDE

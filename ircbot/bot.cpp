@@ -560,8 +560,8 @@ void Bot::handle_topicwhotime(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	std::get<Chan::Topic::MASK>(chan.get_topic()) = msg[MASK];
-	std::get<Chan::Topic::TIME>(chan.get_topic()) = msg.get<time_t>(TIME);
+	std::get<Mask>(chan.get_topic()) = msg[MASK];
+	std::get<time_t>(chan.get_topic()) = msg.get<time_t>(TIME);
 }
 
 
@@ -573,7 +573,7 @@ void Bot::handle_banlist(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.bans.add(msg[BANMASK],msg[OPERATOR],msg.get<time_t>(TIME));
+	chan.bans.emplace(msg[BANMASK],msg[OPERATOR],msg.get<time_t>(TIME));
 }
 
 
@@ -585,7 +585,7 @@ void Bot::handle_invitelist(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.invites.add(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
+	chan.invites.emplace(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
 }
 
 
@@ -597,7 +597,7 @@ void Bot::handle_exceptlist(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.excepts.add(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
+	chan.excepts.emplace(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
 }
 
 
@@ -615,7 +615,7 @@ void Bot::handle_quietlist(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.quiets.add(msg[BANMASK],msg[OPERATOR],msg.get<time_t>(TIME));
+	chan.quiets.emplace(msg[BANMASK],msg[OPERATOR],msg.get<time_t>(TIME));
 }
 
 
@@ -627,7 +627,7 @@ void Bot::handle_topic(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	std::get<Chan::Topic::TEXT>(chan.get_topic()) = msg[TEXT];
+	std::get<std::string>(chan.get_topic()) = msg[TEXT];
 }
 
 
@@ -639,7 +639,7 @@ void Bot::handle_rpltopic(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	std::get<Chan::Topic::TEXT>(chan.get_topic()) = msg[TEXT];
+	std::get<std::string>(chan.get_topic()) = msg[TEXT];
 }
 
 
@@ -651,7 +651,9 @@ void Bot::handle_notopic(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.get_topic() = Chan::Topic{};
+	std::get<0>(chan.get_topic()) = {};
+	std::get<1>(chan.get_topic()) = {};
+	std::get<2>(chan.get_topic()) = {};
 }
 
 

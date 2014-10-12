@@ -44,7 +44,9 @@ void ChanServ::handle_info(const Capture &msg)
 	const std::vector<std::string> tok = tokens(msg.front());
 	const std::string name = tolower(chomp(tok.at(2),":"));
 
-	Chan::Info info;
+	Chan &chan = chans.get(name);
+
+	decltype(chan.info) info;
 	auto it = msg.begin();
 	for(++it; it != msg.end(); ++it)
 	{
@@ -54,7 +56,6 @@ void ChanServ::handle_info(const Capture &msg)
 		info.emplace(key,val);
 	}
 
-	Chan &chan = chans.get(name);
 	chan.set_info(info);
 }
 
@@ -64,7 +65,9 @@ void ChanServ::handle_flagslist(const Capture &msg)
 {
 	const std::string name = tolower(tokens(get_terminator()).at(2));
 
-	Chan::Flags flags;
+	Chan &chan = chans.get(name);
+
+	decltype(chan.flags) flags;
 	auto it = msg.begin();
 	auto end = msg.begin();
 	std::advance(it,2);
@@ -81,10 +84,9 @@ void ChanServ::handle_flagslist(const Capture &msg)
 		for(size_t i = 3; i < toks.size(); i++)
 			addl << toks.at(i) << (i == toks.size() - 1? "" : " ");
 
-		flags.add(user,list,0,founder);   //TODO: times
+		flags.emplace(user,list,0,founder);   //TODO: times
 	}
 
-	Chan &chan = chans.get(name);
 	chan.set_flags(flags);
 }
 
@@ -92,12 +94,13 @@ void ChanServ::handle_flagslist(const Capture &msg)
 inline
 void ChanServ::handle_akicklist(const Capture &msg)
 {
-	Chan::AKicks akicks;
-
 	auto it = msg.begin();
 	const size_t ns = tokens(*it).at(3).size() - 1;
 	const std::string name = tolower(tokens(*it).at(3).substr(0,ns));
 	++it;
+
+	Chan &chan = chans.get(name);
+	decltype(chan.akicks) akicks;
 
 	auto end = msg.begin();
 	std::advance(end,msg.size());
@@ -113,10 +116,9 @@ void ChanServ::handle_akicklist(const Capture &msg)
 		const std::string expires = between(details,"expires: ",",");    //TODO: 
 		const std::string modified = between(details,"modified: ",",");  //TODO: 
 
-		akicks.add(mask,setter,reason.first,reason.second,0,0); //TODO: times
+		akicks.emplace(mask,setter,reason.first,reason.second,0,0); //TODO: times
 	}
 
-	Chan &chan = chans.get(name);
 	chan.set_akicks(akicks);
 }
 

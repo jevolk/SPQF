@@ -22,22 +22,22 @@ class User : public Locutor,
 	friend class Chan;
 	size_t chans;
 
-	Service &get_ns()                                  { return *ns;                                 }
+	auto &get_ns()                                     { return *ns;                                 }
 
   public:
 	static constexpr int WHO_RECIPE                    = 0;
 	static constexpr const char *const WHO_FORMAT      = "%tnha,0";       // ID must match WHO_RECIPE
 
 	// Observers
-	const Service &get_ns() const                      { return *ns;                                 }
-	const std::string &get_nick() const                { return Locutor::get_target();               }
-	const std::string &get_host() const                { return host;                                }
-	const std::string &get_acct() const                { return acct;                                }
-	const bool &is_secure() const                      { return secure;                              }
-	const bool &is_away() const                        { return away;                                }
-	const time_t &get_signon() const                   { return signon;                              }
-	const time_t &get_idle() const                     { return idle;                                }
-	const size_t &num_chans() const                    { return chans;                               }
+	auto &get_ns() const                               { return *ns;                                 }
+	auto &get_nick() const                             { return Locutor::get_target();               }
+	auto &get_host() const                             { return host;                                }
+	auto &get_acct() const                             { return acct;                                }
+	auto &is_secure() const                            { return secure;                              }
+	auto &is_away() const                              { return away;                                }
+	auto &get_signon() const                           { return signon;                              }
+	auto &get_idle() const                             { return idle;                                }
+	auto &num_chans() const                            { return chans;                               }
 
 	bool is_myself() const                             { return get_nick() == get_sess().get_nick(); }
 	bool is_logged_in() const;

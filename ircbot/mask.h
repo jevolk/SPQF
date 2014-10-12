@@ -57,22 +57,3 @@ struct Mask : public std::string
 
 	template<class... A> Mask(A&&... a): std::string(std::forward<A>(a)...) {}
 };
-
-
-template<class Mask>
-class Masks
-{
-	std::set<Mask> s;
-
-  public:
-	const auto begin() const -> decltype(s.begin())  { return s.begin();                                }
-	const auto end() const -> decltype(s.end())      { return s.end();                                  }
-
-	const Mask &get(const Mask &mask)                { return s.at(mask);                               }
-	bool has(const Mask &mask) const                 { return s.count(mask);                            }
-	size_t size() const                              { return s.size();                                 }
-	bool empty() const                               { return s.empty();                                }
-
-	template<class... A> bool add(A&&... a)          { return s.emplace(std::forward<A>(a)...).second;  }
-	bool del(const Mask &mask)                       { return s.erase(mask);                            }
-};

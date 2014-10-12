@@ -35,8 +35,8 @@ struct Ident : public std::map<std::string,std::string>
 	std::list<std::string> autojoin;
 
 	// Direct access to the config
-	const std::string &operator[](const std::string &key) const;
-	std::string &operator[](const std::string &key);
+	auto &operator[](const std::string &key) const;
+	auto &operator[](const std::string &key);
 
 	// Output this info
 	friend std::ostream &operator<<(std::ostream &s, const Ident &id);
@@ -44,7 +44,7 @@ struct Ident : public std::map<std::string,std::string>
 
 
 inline
-std::string &Ident::operator[](const std::string &key)
+auto &Ident::operator[](const std::string &key)
 {
 	const auto it = find(key);
 	return it == end()? emplace(key,std::string()).first->second:
@@ -53,7 +53,7 @@ std::string &Ident::operator[](const std::string &key)
 
 
 inline
-const std::string &Ident::operator[](const std::string &key)
+auto &Ident::operator[](const std::string &key)
 const
 {
 	const auto it = find(key);

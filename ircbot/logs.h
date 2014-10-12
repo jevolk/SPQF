@@ -78,8 +78,6 @@ class Logs
 	bool exists(const Chan &chan, const Filter &filter) const;
 
 	Logs(Chans &chans, Users &users, std::mutex &bot);
-
-	friend std::ostream &operator<<(std::ostream &s, const Logs &logs);
 };
 
 
@@ -323,14 +321,4 @@ const
 	{
 		return filter(args);
 	});
-}
-
-
-
-inline
-std::ostream &operator<<(std::ostream &s,
-                         const Logs &logs)
-{
-
-	return s;
 }

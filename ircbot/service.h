@@ -9,19 +9,19 @@
 class Service : public Locutor
 {
 	Adb &adb;
-	std::list<std::string> capture;               // State of the current capture
-	std::deque<std::string> queue;                // Queue of terminators
+	std::list<std::string> capture;                // State of the current capture
+	std::deque<std::string> queue;                 // Queue of terminators
 
   public:
-	const Adb &get_adb() const                     { return adb;                          }
-	size_t queue_size() const                      { return queue.size();                 }
-	size_t capture_size() const                    { return capture.size();               }
+	auto &get_adb() const                          { return adb;                          }
+	auto queue_size() const                        { return queue.size();                 }
+	auto capture_size() const                      { return capture.size();               }
 
   protected:
 	using Capture = decltype(capture);
 
-	Adb &get_adb()                                 { return adb;                          }
-	const std::string &get_terminator() const      { return queue.front();                }
+	auto &get_adb()                                { return adb;                          }
+	auto &get_terminator() const                   { return queue.front();                }
 
 	// Passes a complete multipart message to subclass once terminated
 	virtual void captured(const Capture &capture) = 0;

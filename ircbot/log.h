@@ -24,10 +24,10 @@ class Log
 		_NUM_FIELDS
 	};
 
-	const std::string &get_path() const                        { return path;             }
+	auto &get_path() const                               { return path;             }
 
 	void operator()(const User &user, const Msg &msg);
-	auto flush() -> decltype(file.flush())                     { return file.flush();     }
+	auto &flush()                                        { return file.flush();     }
 
 	Log(const Sess &sess, const std::string &name);
 };

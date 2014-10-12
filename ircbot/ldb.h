@@ -58,8 +58,8 @@ class Ldb
 		void seek(const leveldb::Slice &key)                  { it->Seek(key);                      }
 		void seek(const std::string &key)                     { it->Seek(key);                      }
 		void seek(const Seek &seek);
-		Iterator &operator++()                                { seek(NEXT); return *this;           }
-		Iterator &operator--()                                { seek(PREV); return *this;           }
+		auto &operator++()                                    { seek(NEXT); return *this;           }
+		auto &operator--()                                    { seek(PREV); return *this;           }
 
 		// Read current state, false on !valid()
 		bool next(const Closure &closure) const;              // no increment to next
@@ -153,8 +153,7 @@ inline
 std::string Ldb::get(const std::string &key)
 const
 {
-	const std::string ret = get(std::nothrow,key);
-	return ret;
+	return get(std::nothrow,key);
 }
 
 

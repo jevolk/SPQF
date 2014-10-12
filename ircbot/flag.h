@@ -16,15 +16,18 @@ class Flag
   public:
 	using Type = Mask::Type;
 
-	const Mask &get_mask() const           { return mask;               }
-	const Mode &get_flags() const          { return flags;              }
-	const time_t &get_time() const         { return time;               }
-	const bool &is_founder() const         { return founder;            }
+	auto &get_mask() const                  { return mask;               }
+	auto &get_flags() const                 { return flags;              }
+	auto &get_time() const                  { return time;               }
+	auto &is_founder() const                { return founder;            }
 
-	bool operator<(const Flag &o) const    { return mask < o.mask;      }
-	bool operator==(const Flag &o) const   { return mask == o.mask;     }
+	bool operator<(const Flag &o) const     { return mask < o.mask;      }
+	bool operator==(const Flag &o) const    { return mask == o.mask;     }
 
-	Flag(const Mask &mask, const Mode &flags, const time_t &time, const bool &founder = false):
+	Flag(const Mask &mask,
+	     const Mode &flags,
+	     const time_t &time,
+	     const bool &founder = false):
 	     mask(mask), flags(flags), time(time), founder(founder) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const Flag &f)

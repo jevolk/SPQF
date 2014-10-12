@@ -23,8 +23,7 @@ GETTING STARTED:
 
 Requirements:
 	* Development toolset:
-		* C++11 for libircbot   (tested: g++ 4.9.1)
-		* C++14 for SPQF        (tested: g++ 4.9.1)
+		* C++14                 (tested: g++ 4.9.1)
 		* libstdc++             (tested: 4.9)
 
 	* Boost:                    (tested: 1.54)

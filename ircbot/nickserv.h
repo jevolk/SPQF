@@ -49,7 +49,7 @@ void NickServ::captured(const Capture &msg)
 inline
 void NickServ::handle_info(const Capture &msg)
 {
-	const std::vector<std::string> tok = tokens(msg.front());
+	const auto tok = tokens(msg.front());
 	const auto &name = tolower(tok.at(2));
 	const auto &primary = tolower(tok.at(4).substr(0,tok.at(4).size()-2));  // Chop off "):]"
 
@@ -61,8 +61,8 @@ void NickServ::handle_info(const Capture &msg)
 	for(++it; it != msg.end(); ++it)
 	{
 		const auto kv = split(*it," : ");
-		const std::string &key = chomp(chomp(kv.first),".");
-		const std::string &val = kv.second;
+		const auto &key = chomp(chomp(kv.first),".");
+		const auto &val = kv.second;
 		info.put(key,val);
 	}
 
@@ -77,9 +77,9 @@ void NickServ::handle_listchans(const Capture &msg)
 
 	for(const auto &line : msg)
 	{
-		const std::vector<std::string> tok = tokens(line);
+		const auto tok = tokens(line);
 		const Mode flags = tok.at(2).substr(1); // chop leading +
-		const std::string chan = tok.at(4);
+		const auto chan = tok.at(4);
 		sess.access[chan] = flags;
 	}
 }
