@@ -15,10 +15,10 @@ struct Delta : std::tuple<bool,char,Mask>
 	static bool sign(const char &s);             // throws on not + or -
 	static bool needs_inv_mask(const char &m);   // Modes that take an argument which is not a Mask
 
-	bool need_mask_chan(const Server &s) const   { return s.chan_pmodes.has(std::get<MODE>(*this)); }
-	bool need_mask_user(const Server &s) const   { return s.user_pmodes.has(std::get<MODE>(*this)); }
-	bool exists_chan(const Server &s) const      { return s.chan_modes.has(std::get<MODE>(*this));  }
-	bool exists_user(const Server &s) const      { return s.user_modes.has(std::get<MODE>(*this));  }
+	bool need_mask_chan(const Server &s) const;
+	bool need_mask_user(const Server &s) const;
+	bool exists_chan(const Server &s) const;
+	bool exists_user(const Server &s) const;
 	bool valid_mask() const;
 
 	// returns reason
@@ -92,7 +92,7 @@ try
 	for(size_t i = 1, a = 1; i < tok.at(0).size(); i++)
 	{
 		const char &mode = tok.at(0).at(i);
-		if(serv.chan_pmodes.has(mode))
+		if(serv.chan_pmodes.find(mode) != std::string::npos)
 			emplace_back(sign,mode,tok.at(a++));
 		else
 			emplace_back(sign,mode,"");
@@ -291,6 +291,38 @@ bool Delta::valid_mask()
 const
 {
 	return std::get<MASK>(*this).get_form() != Mask::INVALID;
+}
+
+
+inline
+bool Delta::need_mask_chan(const Server &s)
+const
+{
+	return s.chan_pmodes.find(std::get<MODE>(*this)) != std::string::npos;
+}
+
+
+inline
+bool Delta::need_mask_user(const Server &s)
+const
+{
+	return s.user_pmodes.find(std::get<MODE>(*this)) != std::string::npos;
+}
+
+
+inline
+bool Delta::exists_chan(const Server &s)
+const
+{
+	return s.chan_modes.find(std::get<MODE>(*this)) != std::string::npos;
+}
+
+
+inline
+bool Delta::exists_user(const Server &s)
+const
+{
+	return s.user_modes.find(std::get<MODE>(*this)) != std::string::npos;
 }
 
 

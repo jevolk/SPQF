@@ -11,9 +11,9 @@ struct Server
 	std::string name;
 	std::string vers;
 
-	Mode user_modes, user_pmodes;
-	Mode chan_modes, chan_pmodes;
-	Mode serv_modes, serv_pmodes;
+	std::string user_modes, user_pmodes;
+	std::string chan_modes, chan_pmodes;
+	std::string serv_modes, serv_pmodes;
 
 	std::map<std::string,std::string> cfg;
 	std::set<std::string> caps;
