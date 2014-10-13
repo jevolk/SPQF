@@ -197,7 +197,7 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 {
 	const std::string &acct = user.get_acct();
 
-	if(ballot == position(user) && voted_host(user.get_host()) > 0)
+	if(!voted(user) && voted_host(user.get_host()) > 0)
 		throw Exception("You can not cast another vote from this hostname.");
 
 	if(!voted(user) && !enfranchised(user))
