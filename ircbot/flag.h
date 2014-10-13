@@ -20,14 +20,18 @@ class Flag
 	auto &get_flags() const                 { return flags;              }
 	auto &get_time() const                  { return time;               }
 	auto &is_founder() const                { return founder;            }
+	bool has(const char &c) const           { return flags.has(c);       }
 
 	bool operator<(const Flag &o) const     { return mask < o.mask;      }
 	bool operator==(const Flag &o) const    { return mask == o.mask;     }
 
-	Flag(const Mask &mask,
-	     const Mode &flags,
-	     const time_t &time,
-	     const bool &founder = false):
+	bool operator<(const Mask &o) const     { return mask < o;           }
+	bool operator==(const Mask &o) const    { return mask == o;          }
+
+	Flag(const Mask &mask     = Mask(),
+	     const Mode &flags    = Mode(),
+	     const time_t &time   = 0,
+	     const bool &founder  = false):
 	     mask(mask), flags(flags), time(time), founder(founder) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const Flag &f)
