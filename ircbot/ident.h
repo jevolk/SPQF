@@ -11,24 +11,26 @@ struct Ident : public std::map<std::string,std::string>
 	Ident(): std::map<std::string,std::string>
 	{
 		// Client info
-		{"nick",       "SPQF"                         },
-		{"user",       "SPQF"                         },
-		{"gecos",      "Senate & People of Freenode"  },
+		{"nick",                "SPQF"                         },
+		{"user",                "SPQF"                         },
+		{"gecos",               "Senate & People of Freenode"  },
 
 		// Nickserv identification
-		{"ns-acct",    ""                             },
-		{"ns-pass",    ""                             },
+		{"ns-acct",             ""                             },
+		{"ns-pass",             ""                             },
 
 		// Server info
-		{"host",       ""                             },
-		{"port",       "6667"                         },
-		{"pass",       ""                             },
+		{"host",                ""                             },
+		{"port",                "6667"                         },
+		{"pass",                ""                             },
 
 		// Misc configuration
-		{"locale",     "en_US.UTF-8"                  },
-		{"dbdir",      "db"                           },
-		{"logdir",     "logs"                         },
-		{"prefix",     "!"                            },
+		{"locale",              "en_US.UTF-8"                  },
+		{"dbdir",               "db"                           },
+		{"logdir",              "logs"                         },
+		{"prefix",              "!"                            },
+		{"invite",              ""                             },
+		{"invite-throttle",     "300"                          },
 	}{}
 
 	// Channels to join on connect

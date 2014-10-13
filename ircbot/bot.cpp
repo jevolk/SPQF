@@ -832,11 +832,22 @@ void Bot::handle_invite(const Msg &msg)
 
 	log_handle(msg,"INVITE");
 
-	// Temp hack to throttle invites to 10 minutes
-	static const time_t limit = 600;
+	const Sess &sess = get_sess();
+	const Ident &id = sess.get_ident();
+
+	if(!id.get<bool>("invite"))
+	{
+		std::cerr << "Attempt at INVITE was ignored by configuration." << std::endl;
+		return;
+	}
+
+	const time_t limit = id.get<time_t>("invite-throttle");
 	static time_t throttle = 0;
 	if(time(NULL) - limit < throttle)
+	{
+		std::cerr << "Attempt at INVITE was throttled by configuration." << std::endl;
 		return;
+	}
 
 	Chans &chans = get_chans();
 	chans.join(msg[CHANNAME]);
