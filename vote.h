@@ -37,6 +37,7 @@ class Vote
 	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
 	std::set<std::string> hosts;                // Hostnames that have voted
+	std::set<std::string> vetoes;               // Accounts voting No with intent to veto
 
   public:
 	virtual const char *type() const            { return "";                                        }
@@ -50,10 +51,13 @@ class Vote
 	auto &get_yea() const                       { return yea;                                       }
 	auto &get_nay() const                       { return nay;                                       }
 	auto &get_hosts() const                     { return hosts;                                     }
+	auto &get_vetoes() const                    { return vetoes;                                    }
+	auto num_vetoes() const                     { return vetoes.size();                             }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
 	auto remaining() const                      { return cfg.get<uint>("duration") - elapsed();     }
 	auto tally() const -> std::pair<uint,uint>  { return {yea.size(),nay.size()};                   }
 	auto total() const                          { return yea.size() + nay.size();                   }
+	bool interceded() const;
 	uint plurality() const;
 	uint minimum() const;
 	uint required() const;
@@ -66,6 +70,7 @@ class Vote
 	uint voted_host(const std::string &host) const;
 	bool voted_acct(const std::string &acct) const;
 
+	bool intercession(const User &user) const;
 	bool enfranchised(const User &user) const   { return enfranchised(user.get_acct());             }
 	bool qualified(const User &user) const      { return qualified(user.get_acct());                }
 	Ballot position(const User &user) const     { return position(user.get_acct());                 }
@@ -82,6 +87,7 @@ class Vote
 	// Subclass throws from these for abortions
 	virtual void passed() {}
 	virtual void failed() {}
+	virtual void vetoed() {}
 	virtual void canceled() {}
 	virtual void proffer(const Ballot &b, User &user) {}
 	virtual void starting() {}

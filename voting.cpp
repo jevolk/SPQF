@@ -91,7 +91,7 @@ void Voting::poll_votes()
 	for(auto it = votes.begin(); it != votes.end();)
 	{
 		Vote &vote = *it->second;
-		if(vote.remaining() <= 0)
+		if(vote.remaining() <= 0 || vote.interceded())
 		{
 			call_finish(vote);
 			del(it++);
