@@ -109,7 +109,7 @@ by low-profile lurkers and idle plants.
 
 config.vote.enfranchise.access = <string> [a-z]
 
-If set, a user will never become enfranchised unless they have any of the chanserv
+If set, a user will never become enfranchised unless they have any of the ChanServ
 access flags specified in this string. If set, no other config.enfranchise rules apply,
 and the matching users are instantly the only eligible voters.
 
@@ -144,12 +144,56 @@ It is recommended this be set to at least 1. See the qualify.age recommendation.
 
 config.vote.qualify.access = <string> [a-z]
 
-A user may bypass the config.vote.qualify rules if any of their chanserv access flags
+A user may bypass the config.vote.qualify rules if any of their ChanServ access flags
 match any of the flags in this string. If no match is found the user defaults to the
 config.vote.qualify ruleset as usual.
 
 Note: Omit any leading '+' in the mode string.
 This can prevent your trusted userbase from being locked out of votes for being afk.
+
+
+
+config.vote.veto.access = <string> [a-z]
+
+The restriction for veto power based on ChanServ access flags. If set, a user must
+have any one of these flags to gain veto power. If set, other settings in config.vote.veto
+may still restrict veto power. If both config.vote.veto.mode and this are unset, no veto
+power is possible at all.
+
+Note: Omit any leading '+' in the mode string.
+This is set to "v" by default, in conjunction with config.vote.veto.mode also being "v".
+
+
+
+config.vote.veto.mode = <string> [a-z]
+
+The restriction for a user's current mode in the channel (usually only +o, or +v is possible)
+for when their veto power will have effect. For example, if set to "v" and the user is voiced
+in the channel, their nay vote becomes a veto vote. If they are devoiced it is only a normal
+nay vote. This allows users matching config.vote.veto.access to toggle their veto power.
+If this is set and config.vote.veto.access is unset, a user will still have veto power when
+matching.
+
+Note: Omit any leading '+' in the mode string.
+This is set to "v" by default.
+
+
+
+config.vote.veto.min = <int>
+
+The minimum number of vetoes required to have an effective veto of the vote.
+
+This is useful for a channel with ubiquitous veto power.
+This is set to 1 by default. 0 is the same as 1.
+
+
+
+config.vote.veto.quick = <bool> [0 - 1]
+
+If set, a vote that has been effectively vetoed is ended immediately. If unset,
+the remaining roll is taken but the result will always be a veto.
+
+This is set to 1 by default.
 
 
 
