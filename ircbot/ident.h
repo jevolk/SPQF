@@ -38,9 +38,75 @@ struct Ident : public std::map<std::string,std::string>
 	auto &operator[](const std::string &key) const;
 	auto &operator[](const std::string &key);
 
+	template<class T> using non_num_t = typename std::enable_if<!std::is_arithmetic<T>(),T>::type;
+	template<class T> using num_t = typename std::enable_if<std::is_arithmetic<T>::value,T>::type;
+
+	template<class T> non_num_t<T> get(const std::string &key) const;
+	template<class T> num_t<T> get(const std::string &key) const;
+
 	// Output this info
 	friend std::ostream &operator<<(std::ostream &s, const Ident &id);
 };
+
+
+template<> inline
+bool Ident::get<bool>(const std::string &key)
+const try
+{
+	switch(hash(tolower(this->at(key))))
+	{
+		case hash("enable"):
+		case hash("true"):
+		case hash("one"):
+		case hash("1"):
+			return true;
+
+		default:
+			return false;
+	}
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	std::cerr << "Bad boolean value for configuration key: "
+	          << "[" << key << "] "
+	          << "(" << e.what() << ")"
+	          << std::endl;
+
+	return false;
+}
+catch(const std::out_of_range &e)
+{
+	return false;
+}
+
+
+template<class T>
+Ident::non_num_t<T> Ident::get(const std::string &key)
+const
+{
+	return boost::lexical_cast<T>(this->at(key));
+}
+
+
+template<class T>
+Ident::num_t<T> Ident::get(const std::string &key)
+const try
+{
+	return boost::lexical_cast<T>(this->at(key));
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	std::cerr << "Bad numerical value for configuration key: "
+	          << "[" << key << "] "
+	          << "(" << e.what() << ")"
+	          << std::endl;
+
+	return T(0);
+}
+catch(const std::out_of_range &e)
+{
+	return T(0);
+}
 
 
 inline
