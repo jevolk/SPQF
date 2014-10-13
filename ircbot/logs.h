@@ -148,7 +148,7 @@ bool Logs::atleast(const std::string &path,
 const
 {
 	size_t ret = 0;
-	return !for_each(path,[&filter,&ret,&count]
+	return !count || !for_each(path,[&filter,&ret,&count]
 	(const ClosureArgs &a) -> bool
 	{
 		ret += filter(a);
