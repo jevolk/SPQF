@@ -804,6 +804,9 @@ void Bot::handle_caction(const Msg &msg)
 	Chan &chan = chans.get(msg[CHANNAME]);
 	chan.log(user,msg);
 
+	if(!msg[TEXT].empty() && user.is_owner())
+		handle_caction_owner(msg,chan,user);
+
 	handle_caction(msg,chan,user);
 }
 
@@ -823,6 +826,25 @@ void Bot::handle_action(const Msg &msg)
 	Users &users = get_users();
 	User &user = users.get(msg.get_nick());
 	handle_action(msg,user);
+}
+
+
+void Bot::handle_caction_owner(const Msg &msg,
+                               Chan &chan,
+                               User &user)
+{
+	using namespace fmt::CACTION;
+
+	const auto tok = tokens(msg[TEXT]);
+	switch(hash(tolower(tok.at(0))))
+	{
+		case hash("proves"):
+			chan << Chan::PRIVMSG << user.get_nick() << ": I recognize you"
+			     << " ($a:" << user.get_acct() << ")"
+			     << " @ " << user.get_host()
+			     << Chan::flush;
+			break;
+	}
 }
 
 

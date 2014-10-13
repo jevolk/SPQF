@@ -31,6 +31,7 @@ struct Ident : public std::map<std::string,std::string>
 		{"prefix",              "!"                            },
 		{"invite",              ""                             },
 		{"invite-throttle",     "300"                          },
+		{"owner",               ""                             },
 	}{}
 
 	// Channels to join on connect

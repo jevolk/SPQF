@@ -100,6 +100,7 @@ class Bot : public std::mutex
   public:
 	auto &get_adb() const                             { return adb;                         }
 	auto &get_sess() const                            { return sess;                        }
+	auto &get_ident() const                           { return sess.get_ident();            }
 	auto &get_users() const                           { return users;                       }
 	auto &get_chans() const                           { return chans;                       }
 	auto &get_ns() const                              { return ns;                          }
@@ -131,6 +132,9 @@ class Bot : public std::mutex
 	virtual void handle_join(const Msg &m, Chan &c, User &u) {}
 	virtual void handle_mode(const Msg &m, Chan &c, User &u) {}
 	virtual void handle_mode(const Msg &m, Chan &c) {}
+
+	// [RECV] Special override interface
+	virtual void handle_caction_owner(const Msg &m, Chan &c, User &u);
 
   private:
 	void log_handle(const Msg &m, const std::string &name = "") const;

@@ -41,6 +41,7 @@ class User : public Locutor,
 
 	bool is_myself() const                             { return get_nick() == get_sess().get_nick(); }
 	bool is_logged_in() const;
+	bool is_owner() const;
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
 	bool is_myself(const Mask &mask) const;            // Test if mask can match us
 
@@ -99,6 +100,16 @@ void User::who(const std::string &flags)
 {
 	Sess &sess = get_sess();
 	sess.quote("who %s %s",get_nick().c_str(),flags.c_str());
+}
+
+
+inline
+bool User::is_owner()
+const
+{
+	Sess &sess = get_sess();
+	const auto &cfg = sess.get_ident();
+	return is_logged_in() && (get_acct() == cfg["owner"] || get_nick() == cfg["owner"]);
 }
 
 
