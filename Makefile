@@ -34,7 +34,7 @@ LDFLAGS = -lircbot -lircclient -lleveldb -lpthread
 LIBPATH = -Lircbot/
 
 LIBRARIES = libircbot
-TARGETS = spqf
+TARGETS = spqf cfgedit
 
 
 all:  $(LIBRARIES) $(TARGETS)
@@ -48,6 +48,9 @@ libircbot:
 	$(MAKE) -C ircbot
 
 spqf: main.o respub.o voting.o votes.o vote.o
+	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
+
+cfgedit: cfgedit.o
 	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
 
 
@@ -64,4 +67,8 @@ votes.o: votes.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 vote.o: vote.cpp *.h
+	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+
+
+cfgedit.o: cfgedit.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
