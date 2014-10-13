@@ -45,13 +45,22 @@ int main(int argc, char **argv) try
 	}
 
 	if(!eq.empty() && val.empty())
+	{
 		printf("DELETING THE KEY [%s] INSIDE [%s]\n",key.c_str(),dockey.c_str());
+		printf("Press any key to continue or ctrl-c to quit...\n");
+		std::cin.get();
+	}
 
 	Adb adb(id["dbdir"]);
 	if(!adb.exists(dockey))
 	{
-		printf("Document not found in database\n");
-		return -1;
+		printf("Document not found in database.\n");
+		if(key.empty())
+			return -1;
+
+		printf("It will be created.\n");
+		printf("Press any key to continue or ctrl-c to quit...\n");
+		std::cin.get();
 	}
 
 	Acct acct(adb,dockey);
