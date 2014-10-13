@@ -82,7 +82,7 @@ class Locutor
 	void msg(const std::string &msg);
 	void me(const std::string &msg);
 
-	// [SEND] stream interface                          // Defaults back to MSG after every flush
+	// [SEND] stream interface                          // Defaults back to DEFAULT_METHOD after flush
 	virtual Locutor &operator<<(const flush_t f);       // Flush stream to endpoint
 	Locutor &operator<<(const Method &method);          // Set method for this message
 	Locutor &operator<<(const colors::FG &fg);          // Insert foreground color
