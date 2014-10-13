@@ -44,21 +44,7 @@ void handle_sig(const int sig)
 int main(int argc, char **argv) try
 {
 	Ident id;
-
-	while(argc-- > 1)
-	{
-		const std::string str(argv[argc]);
-		const size_t eqp = str.find('=');
-		if(eqp == str.npos)
-			throw Exception("Missing '=' in an argument");
-
-		const std::string key = str.substr(2,eqp-2);
-		const std::string val = str.substr(eqp+1);
-		if(key == "join")
-			id.autojoin.emplace_back(val);
-		else
-			id[key] = val;
-	}
+	id.parse({argv+1,argv+argc});
 
 	if(id["host"].empty())
 	{

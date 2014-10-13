@@ -38,8 +38,8 @@ struct Ident : public std::map<std::string,std::string>
 	std::list<std::string> autojoin;
 
 	// Direct access to the config
-	auto &operator[](const std::string &key) const;
-	auto &operator[](const std::string &key);
+	const std::string &operator[](const std::string &key) const;
+	std::string &operator[](const std::string &key);
 
 	template<class T> using non_num_t = typename std::enable_if<!std::is_arithmetic<T>(),T>::type;
 	template<class T> using num_t = typename std::enable_if<std::is_arithmetic<T>::value,T>::type;
@@ -47,9 +47,45 @@ struct Ident : public std::map<std::string,std::string>
 	template<class T> non_num_t<T> get(const std::string &key) const;
 	template<class T> num_t<T> get(const std::string &key) const;
 
+	bool parse_arg(const std::string &arg);
+	uint parse(const std::vector<std::string> &argv);
+
 	// Output this info
 	friend std::ostream &operator<<(std::ostream &s, const Ident &id);
 };
+
+
+inline
+uint Ident::parse(const std::vector<std::string> &strs)
+{
+	uint ret = 0;
+	for(const auto &str : strs)
+		ret += parse_arg(str);
+
+	return ret;
+}
+
+
+inline
+bool Ident::parse_arg(const std::string &str)
+{
+	if(str.find("--") != 0)
+		return false;
+
+	const size_t eqp = str.find('=');
+	if(eqp == str.npos)
+		throw Exception("Missing '=' in an argument");
+
+	const std::string key = str.substr(2,eqp-2);
+	const std::string val = str.substr(eqp+1);
+
+	if(key == "join")
+		autojoin.emplace_back(val);
+	else
+		(*this)[key] = val;
+
+	return true;
+}
 
 
 template<> inline
@@ -113,7 +149,7 @@ catch(const std::out_of_range &e)
 
 
 inline
-auto &Ident::operator[](const std::string &key)
+std::string &Ident::operator[](const std::string &key)
 {
 	const auto it = find(key);
 	return it == end()? emplace(key,std::string()).first->second:
@@ -122,7 +158,7 @@ auto &Ident::operator[](const std::string &key)
 
 
 inline
-auto &Ident::operator[](const std::string &key)
+const std::string &Ident::operator[](const std::string &key)
 const
 {
 	const auto it = find(key);
