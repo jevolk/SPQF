@@ -228,6 +228,24 @@ const
 	const Chan &chan = get_chan();
 	const Adoc &cfg = get_cfg();
 
+	// Check if this channel uses access-flag enfranchisement,
+	// and the user has any one of the flags.
+	const std::string acc = cfg["enfranchise.access"];
+	if(!acc.empty())
+	{
+		const auto &cf = chan.get_flags();
+		const auto it = cf.find({acct});
+		if(it == cf.end())
+			return false;
+
+		const Flag &f = *it;
+		return std::any_of(acc.begin(),acc.end(),[&f]
+		(const char &a)
+		{
+			return f.has(a);
+		});
+	}
+
 	Logs::SimpleFilter filt;
 	filt.acct = acct;
 	filt.time.first = 0;
@@ -243,6 +261,18 @@ const
 {
 	const Chan &chan = get_chan();
 	const Adoc &cfg = get_cfg();
+
+	// Check if this channel uses access-flag qualification.
+	// If the user doesn't have a flag to always-qualify, process as normal.
+	const std::string acc = cfg["qualify.access"];
+	if(!acc.empty())
+	{
+		const auto &cf = chan.get_flags();
+		const auto it = cf.find({acct});
+		const Flag &f = it != cf.end()? *it : Flag();
+		if(std::any_of(acc.begin(),acc.end(),[&f](const char &a) { return f.has(a); }))
+			return true;
+	}
 
 	Logs::SimpleFilter filt;
 	filt.acct = acct;
@@ -347,8 +377,10 @@ DefaultConfig::DefaultConfig()
 	put("plurality",0.51);
 	put("enfranchise.age",1800);
 	put("enfranchise.lines",6);
+	put("enfranchise.access","");
 	put("qualify.age",900);
 	put("qualify.lines",3);
+	put("qualify.access","");
 	put("ballot.ack_chan",0);
 	put("ballot.ack_priv",1);
 	put("ballot.rej_chan",0);
