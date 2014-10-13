@@ -90,6 +90,15 @@ try
 
 	auto &chan = get_chan();
 
+	if(interceded())
+	{
+		if(cfg.get<bool>("result.ack_chan"))
+			chan << "The vote " << (*this) << " has been vetoed." << flush;
+
+		vetoed();
+		return;
+	}
+
 	if(total() < minimum())
 	{
 		if(cfg.get<bool>("result.ack_chan"))
@@ -186,6 +195,8 @@ catch(const Exception &e)
 Vote::Stat Vote::cast(const Ballot &ballot,
                       User &user)
 {
+	const std::string &acct = user.get_acct();
+
 	if(ballot == position(user) && voted_host(user.get_host()) > 0)
 		throw Exception("You can not cast another vote from this hostname.");
 
@@ -195,9 +206,11 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 	if(!voted(user) && !qualified(user))
 		throw Exception("You have not been active enough qualify for this vote.");
 
+	if(ballot == NAY && intercession(user))
+		vetoes.emplace(acct);
+
 	proffer(ballot,user);
 
-	const std::string &acct = user.get_acct();
 	switch(ballot)
 	{
 		case YEA:
@@ -284,6 +297,31 @@ const
 }
 
 
+bool Vote::intercession(const User &user)
+const
+{
+	const Chan &chan = get_chan();
+	const Adoc &cfg = get_cfg();
+
+	const std::string &af = cfg["veto.access"];
+	const std::string &mf = cfg["veto.mode"];
+
+	if(af.empty() && mf.empty())
+		return false;
+
+	const Mode &cur = chan.get_mode(user);
+	if(!mf.empty() && !cur.any(mf))
+		return false;
+
+	if(af.empty())
+		return true;
+
+	const auto &cf = chan.get_flags();
+	const auto it = cf.find({user.get_acct()});
+	return it != cf.end()? it->get_flags().any(af) : false;
+}
+
+
 uint Vote::voted_host(const std::string &host)
 const
 {
@@ -344,6 +382,18 @@ const
 }
 
 
+bool Vote::interceded()
+const
+{
+	const auto vmin = std::max(cfg.get<uint>("veto.min"),1U);
+	if(num_vetoes() < vmin)
+		return false;
+
+	const auto quick = cfg.get<bool>("veto.quick");
+	return quick? true : !remaining();
+}
+
+
 bool Vote::disabled()
 const
 {
@@ -375,6 +425,10 @@ DefaultConfig::DefaultConfig()
 	put("turnout",0.00);
 	put("duration",30);
 	put("plurality",0.51);
+	put("veto.access","v");
+	put("veto.mode","v");
+	put("veto.min",1);
+	put("veto.quick",1);
 	put("enfranchise.age",1800);
 	put("enfranchise.lines",6);
 	put("enfranchise.access","");
