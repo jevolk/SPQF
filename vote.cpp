@@ -248,15 +248,7 @@ const
 	{
 		const auto &cf = chan.get_flags();
 		const auto it = cf.find({acct});
-		if(it == cf.end())
-			return false;
-
-		const Flag &f = *it;
-		return std::any_of(acc.begin(),acc.end(),[&f]
-		(const char &a)
-		{
-			return f.has(a);
-		});
+		return it != cf.end()? it->get_flags().any(acc) : false;
 	}
 
 	Logs::SimpleFilter filt;
@@ -282,8 +274,8 @@ const
 	{
 		const auto &cf = chan.get_flags();
 		const auto it = cf.find({acct});
-		const Flag &f = it != cf.end()? *it : Flag();
-		if(std::any_of(acc.begin(),acc.end(),[&f](const char &a) { return f.has(a); }))
+		const Mode &f = it != cf.end()? it->get_flags() : Mode();
+		if(f.any(acc))
 			return true;
 	}
 
