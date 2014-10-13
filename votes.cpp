@@ -207,6 +207,7 @@ void vote::Config::starting()
 
 	Chan &chan = get_chan();
 	const Adoc &cfg = chan.get();
+	const auto &locale = get_sess().get_locale();
 
 	if(!val.empty() && cfg[key] == val)
 		throw Exception("Variable already set to that value.");
@@ -216,14 +217,21 @@ void vote::Config::starting()
 		     << BOLD << "and all child variables" << OFF << "."
 		     << flush;
 
-	if(!val.empty()) try
+	// Hack in manual type checking on a per-key basis
+	if(!val.empty()) switch(hash(key))
 	{
-		// Only use numerical values for now, throw otherwise
-		boost::lexical_cast<float>(val);
-	}
-	catch(const boost::bad_lexical_cast &e)
-	{
-		throw Exception("Must use a numerical value for this key.");
+		case hash("config.vote.qualify.access"):
+		case hash("config.vote.enfranchise.access"):
+			if(!std::all_of(val.begin(),val.end(),[&](auto&& c){ return std::isalpha(c,locale); }))
+				throw Exception("Must use letters only for value for this key.");
+
+			break;
+
+		default:
+			if(!std::all_of(val.begin(),val.end(),[&](auto&& c){ return std::isdigit(c,locale); }))
+				throw Exception("Must use a numerical value for this key.");
+
+			break;
 	}
 
 	chan << "Note: "

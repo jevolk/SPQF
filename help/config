@@ -83,11 +83,11 @@ This is generally set to 0.51 but some channels may enjoy 0.66.
 
 config.vote.enfranchise.age = <int> [seconds]
 
-If the user has no activity in the channel before this many seconds ago, no other
-config.vote.enfranchisement rules have effect. For example, if the age is set to 86400
-(one day), we analyze the history of this user BEFORE one day ago, and ignore everything
-from today. Thus, if the user first appeared in the channel today he will not be eligible
-to vote.
+The time window, which ends $age many seconds ago, that affects other
+config.vote.enfranchise rules, with the exception of the access flag special option.
+For example, if the age is set to 86400 (one day), we analyze the history of this user
+BEFORE one day ago, and ignore everything from today. Thus, if the user first appeared
+in the channel today he will not be eligible to vote.
 
 It is recommended this be set to something like two weeks.
 Note that if you set this to two weeks when first installing the bot you won't be able to
@@ -104,6 +104,18 @@ day ago.
 
 It is recommended this be set at a few dozen or even much greater to prevent sybil attacks
 by low-profile lurkers and idle plants.
+
+
+
+config.vote.enfranchise.access = <string> [a-z]
+
+If set, a user will never become enfranchised unless they have any of the chanserv
+access flags specified in this string. If set, no other config.enfranchise rules apply,
+and the matching users are instantly the only eligible voters.
+
+Note: Omit any leading '+' in the mode string.
+This feature is discouraged. It is regressive and undemocratic. We advise leveraging the
+veto system instead.
 
 
 
@@ -127,6 +139,17 @@ if the qualify.age is 300 and the qualify.lines is 3: a user must have said at l
 within the last 300 seconds to cast a ballot this time.
 
 It is recommended this be set to at least 1. See the qualify.age recommendation.
+
+
+
+config.vote.qualify.access = <string> [a-z]
+
+A user may bypass the config.vote.qualify rules if any of their chanserv access flags
+match any of the flags in this string. If no match is found the user defaults to the
+config.vote.qualify ruleset as usual.
+
+Note: Omit any leading '+' in the mode string.
+This can prevent your trusted userbase from being locked out of votes for being afk.
 
 
 
