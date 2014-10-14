@@ -79,6 +79,7 @@ class Chan : public Locutor,
 	void set_creation(const time_t &creation)               { this->creation = creation;            }
 	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
 	bool delta_mode(const std::string &d, const Mask &m);
+	void delta_flag(const std::string &d, const Mask &m);
 
 	void set_info(const decltype(info) &info)               { this->info = info;                    }
 	void set_flags(const decltype(flags) &flags)            { this->flags = flags;                  }
@@ -564,6 +565,20 @@ auto &Chan::get_mode(const User &user)
 const
 {
 	return std::get<1>(users.at(user.get_nick()));
+}
+
+
+inline
+void Chan::delta_flag(const std::string &delta,
+                      const Mask &mask)
+{
+	auto it = flags.find({mask});
+	if(it == flags.end())
+		it = flags.emplace(mask).first;
+
+	Flag &f = const_cast<Flag &>(*it);
+	f.delta(delta);
+	f.update(time(NULL));
 }
 
 

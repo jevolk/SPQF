@@ -13,27 +13,41 @@ struct Mode : public std::string
 	bool none(const Mode &m) const;
 	bool all(const Mode &m) const;
 	bool any(const Mode &m) const;
-	void add(const char &m);
-	void add(const Mode &m);
-	void add(const Delta &d);              // adding negative delta removes the mode
-	void rm(const char &m);
-	void rm(const Mode &m);
-	void rm(const Delta &d);               // rm of positive or negative delta always removes the mode
 
 	bool valid_chan(const Server &s) const;
 	bool valid_user(const Server &s) const;
 
-	bool delta(const std::string &str);
+	void add(const char &m) &;
+	void add(const Mode &m) &;
+	void add(const Delta &d) &;            // adding negative delta removes the mode
+	void add(const Deltas &d) &;           // ^
 
-	template<class T> Mode &operator+=(T&& m);   // add()
-	template<class T> Mode &operator-=(T&& m);   // rm()
-	template<class T> Mode operator+(T&& m);     // add()
-	template<class T> Mode operator-(T&& m);     // rm()
+	void rm(const char &m) &;
+	void rm(const Mode &m) &;
+	void rm(const Delta &d) &;             // rm of positive or negative delta always removes the mode
+	void rm(const Deltas &d) &;            // ^
+
+	bool delta(const std::string &str) &;
+
+	template<class T> Mode &operator+=(T&& m) &;  // add()
+	template<class T> Mode &operator-=(T&& m) &;  // rm()
+	template<class T> Mode operator+(T&& m);      // add()
+	template<class T> Mode operator-(T&& m);      // rm()
 
 	Mode(void): std::string() {}
-	Mode(const std::string &mode): std::string(mode) {}
-	Mode(const char *const &mode): std::string(mode) {}
+	Mode(const std::string &mode);
+	Mode(const char &mode): std::string(1,mode) {}
+	Mode(const char *const &mode): Mode(std::string(mode)) {}
 };
+
+
+inline
+Mode::Mode(const std::string &mode):
+std::string(!mode.empty() && (mode.at(0) == '+' || mode.at(0) == '-')? mode.substr(1) : mode)
+{
+
+
+}
 
 
 template<class T>
@@ -56,6 +70,7 @@ Mode Mode::operator+(T&& m)
 
 template<class T>
 Mode &Mode::operator-=(T&& m)
+&
 {
 	rm(std::forward<T>(m));
 	return *this;
@@ -63,7 +78,7 @@ Mode &Mode::operator-=(T&& m)
 
 
 template<class T>
-Mode &Mode::operator+=(T&& m)
+Mode &Mode::operator+=(T&& m) &
 {
 	add(std::forward<T>(m));
 	return *this;
@@ -72,7 +87,7 @@ Mode &Mode::operator+=(T&& m)
 
 inline
 bool Mode::delta(const std::string &str)
-try
+& try
 {
 	if(str.at(0) == '-')
 		for(size_t i = 1; i < str.size(); i++)
@@ -90,7 +105,17 @@ catch(const std::out_of_range &e)
 
 
 inline
+void Mode::add(const Deltas &deltas)
+&
+{
+	for(const Delta &d : deltas)
+		add(d);
+}
+
+
+inline
 void Mode::add(const Delta &d)
+&
 {
 	if(std::get<Delta::SIGN>(d))
 		add(std::get<Delta::MODE>(d));
@@ -101,6 +126,7 @@ void Mode::add(const Delta &d)
 
 inline
 void Mode::add(const Mode &m)
+&
 {
 	for(const char &c : m)
 		add(c);
@@ -109,6 +135,7 @@ void Mode::add(const Mode &m)
 
 inline
 void Mode::add(const char &m)
+&
 {
 	if(!has(m))
 		push_back(m);
@@ -116,7 +143,17 @@ void Mode::add(const char &m)
 
 
 inline
+void Mode::rm(const Deltas &deltas)
+&
+{
+	for(const Delta &d : deltas)
+		rm(d);
+}
+
+
+inline
 void Mode::rm(const Delta &d)
+&
 {
 	rm(std::get<Delta::MODE>(d));
 }
@@ -124,6 +161,7 @@ void Mode::rm(const Delta &d)
 
 inline
 void Mode::rm(const Mode &m)
+&
 {
 	for(const char &c : m)
 		rm(c);
@@ -132,6 +170,7 @@ void Mode::rm(const Mode &m)
 
 inline
 void Mode::rm(const char &m)
+&
 {
 	if(has(m))
 		erase(find(m));

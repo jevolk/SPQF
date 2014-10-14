@@ -729,10 +729,17 @@ void Bot::handle_cnotice(const Msg &msg)
 	log_handle(msg,"CHAN NOTICE");
 
 	Chans &chans = get_chans();
-	Users &users = get_users();
-
-	User &user = users.get(msg.get_nick());
 	Chan &chan = chans.get(msg[CHANNAME]);
+
+	if(msg.from_chanserv())
+	{
+		ChanServ &cs = get_cs();
+		cs.handle_cnotice(msg,chan);
+		return;
+	}
+
+	Users &users = get_users();
+	User &user = users.get(msg.get_nick());
 	chan.log(user,msg);
 
 	handle_cnotice(msg,chan,user);
@@ -748,6 +755,12 @@ void Bot::handle_notice(const Msg &msg)
 	if(msg.from_server())
 		return;
 
+	if(!my_nick(msg[SELFNAME]))
+	{
+		handle_cnotice(msg);
+		return;
+	}
+
 	if(msg.from_nickserv())
 	{
 		handle_notice_nickserv(msg);
@@ -758,12 +771,6 @@ void Bot::handle_notice(const Msg &msg)
 	{
 		ChanServ &cs = get_cs();
 		cs.handle(msg);
-		return;
-	}
-
-	if(!my_nick(msg[SELFNAME]))
-	{
-		handle_cnotice(msg);
 		return;
 	}
 

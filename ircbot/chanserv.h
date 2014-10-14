@@ -16,7 +16,11 @@ class ChanServ : public Service
 	void captured(const Capture &capture) override;
 	ChanServ &operator<<(const flush_t f) override;
 
+	void handle_set_flags(Chan &chan, const std::string &flags, const Mask &targ);
+
   public:
+	void handle_cnotice(const Msg &msg, Chan &chan);
+
 	ChanServ(Adb &adb, Sess &sess, Chans &chans):
 	         Service(adb,sess,"ChanServ"), chans(chans) {}
 };
@@ -35,6 +39,27 @@ void ChanServ::captured(const Capture &msg)
 		handle_akicklist(msg);
 	else
 		throw Exception("Unhandled ChanServ capture.");
+}
+
+
+inline
+void ChanServ::handle_cnotice(const Msg &msg,
+                              Chan &chan)
+{
+	using namespace fmt::CNOTICE;
+
+	const auto toks = tokens(decolor(msg[TEXT]));
+	if(toks.size() == 6 && toks.at(1) == "set" && toks.at(2) == "flags")
+		handle_set_flags(chan,toks.at(3),chomp(toks.at(5),"."));
+}
+
+
+inline
+void ChanServ::handle_set_flags(Chan &chan,
+                                const std::string &flags,
+                                const Mask &targ)
+{
+	chan.delta_flag(flags,targ);
 }
 
 
