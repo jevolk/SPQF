@@ -32,7 +32,8 @@ class Vote
 	Adoc cfg;                                   // Configuration of this vote
 	time_t began;                               // Time vote was constructed
 	std::string chan;                           // Name of the channel
-	std::string user;                           // $a name of initiating user
+	std::string nick;                           // Nick of initiating user (note: don't trust)
+	std::string acct;                           // $a name of initiating user
 	std::string issue;                          // "Issue" input of the vote
 	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
@@ -44,9 +45,10 @@ class Vote
 	auto &get_id() const                        { return id;                                        }
 	auto &get_cfg() const                       { return cfg;                                       }
 	auto &get_chan_name() const                 { return chan;                                      }
-	auto &get_user_acct() const                 { return user;                                      }
+	auto &get_user_acct() const                 { return acct;                                      }
+	auto &get_user_nick() const                 { return nick;                                      }
 	auto &get_chan() const                      { return chans.get(get_chan_name());                }
-	auto &get_user() const                      { return users.get(get_user_acct());                }
+	auto &get_user() const                      { return users.get(get_user_nick());                }
 	auto &get_began() const                     { return began;                                     }
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yea() const                       { return yea;                                       }

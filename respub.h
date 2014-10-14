@@ -35,14 +35,6 @@ class ResPublica : public irc::bot::Bot
 	void handle_cmd(const Msg &m, User &u);
 
 	// !vote channel stack
-	void handle_vote_opine(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_topic(const Msg &m, Chan &c, User &u, const Tokens &toks);
-	void handle_vote_invite(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_unquiet(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_quiet(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_ban(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_kick(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_mode(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_config(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t);

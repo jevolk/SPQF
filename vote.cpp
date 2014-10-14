@@ -43,7 +43,8 @@ cfg([&]() -> Adoc
 }()),
 began(time(NULL)),
 chan(chan.get_name()),
-user(user.get_acct()),
+nick(user.get_nick()),
+acct(user.get_acct()),
 issue(issue)
 {
 	if(disabled())
@@ -195,8 +196,6 @@ catch(const Exception &e)
 Vote::Stat Vote::cast(const Ballot &ballot,
                       User &user)
 {
-	const std::string &acct = user.get_acct();
-
 	if(!voted(user) && voted_host(user.get_host()) > 0)
 		throw Exception("You can not cast another vote from this hostname.");
 
@@ -207,20 +206,20 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 		throw Exception("You have not been active enough qualify for this vote.");
 
 	if(ballot == NAY && intercession(user))
-		vetoes.emplace(acct);
+		vetoes.emplace(user.get_acct());
 
 	proffer(ballot,user);
 
 	switch(ballot)
 	{
 		case YEA:
-			return !yea.emplace(acct).second?  throw Exception("You have already voted yea."):
-			       nay.erase(acct)?            CHANGED:
-			                                   ADDED;
+			return !yea.emplace(user.get_acct()).second?  throw Exception("You have already voted yea."):
+			       nay.erase(user.get_acct())?            CHANGED:
+			                                              ADDED;
 		case NAY:
-			return !nay.emplace(acct).second?  throw Exception("You have already voted nay."):
-			       yea.erase(acct)?            CHANGED:
-			                                   ADDED;
+			return !nay.emplace(user.get_acct()).second?  throw Exception("You have already voted nay."):
+			       yea.erase(user.get_acct())?            CHANGED:
+			                                              ADDED;
 		default:
 			throw Exception("Ballot type not accepted.");
 	}
@@ -238,11 +237,11 @@ const
 bool Vote::speaker(const User &user)
 const
 {
-	const Chan &chan = get_chan();
 	const Adoc &cfg = get_cfg();
-
-	const std::string &sa = cfg["speaker.access"];
+	const Chan &chan = get_chan();
 	const std::string &sm = cfg["speaker.mode"];
+	const std::string &sa = cfg["speaker.access"];
+
 	if(sa.empty() && sm.empty())
 		return true;
 
@@ -261,12 +260,10 @@ const
 bool Vote::qualified(const User &user)
 const
 {
-	const Chan &chan = get_chan();
 	const Adoc &cfg = get_cfg();
-
-	// Check if this channel uses access-flag qualification.
-	// If the user doesn't have a flag to always-qualify, process as normal.
+	const Chan &chan = get_chan();
 	const std::string acc = cfg["qualify.access"];
+
 	if(!acc.empty())
 	{
 		const auto &cf = chan.get_flags();
@@ -274,6 +271,8 @@ const
 		const Mode &f = it != cf.end()? it->get_flags() : Mode();
 		if(f.any(acc))
 			return true;
+
+		// If the user doesn't have a flag to always-qualify, process as normal.
 	}
 
 	Logs::SimpleFilter filt;
@@ -289,12 +288,10 @@ const
 bool Vote::enfranchised(const User &user)
 const
 {
-	const Chan &chan = get_chan();
 	const Adoc &cfg = get_cfg();
-
-	// Check if this channel uses access-flag enfranchisement,
-	// and the user has any one of the flags.
+	const Chan &chan = get_chan();
 	const std::string acc = cfg["enfranchise.access"];
+
 	if(!acc.empty())
 	{
 		const auto &cf = chan.get_flags();
@@ -315,11 +312,11 @@ const
 bool Vote::intercession(const User &user)
 const
 {
-	const Chan &chan = get_chan();
 	const Adoc &cfg = get_cfg();
-
-	const std::string &af = cfg["veto.access"];
+	const Chan &chan = get_chan();
 	const std::string &mf = cfg["veto.mode"];
+	const std::string &af = cfg["veto.access"];
+
 	if(af.empty() && mf.empty())
 		return false;
 
