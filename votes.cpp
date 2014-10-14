@@ -219,8 +219,12 @@ void vote::Config::starting()
 	// Hack in manual type checking on a per-key basis
 	if(!val.empty()) switch(hash(key))
 	{
-		case hash("config.vote.qualify.access"):
 		case hash("config.vote.enfranchise.access"):
+		case hash("config.vote.qualify.access"):
+		case hash("config.vote.speaker.access"):
+		case hash("config.vote.speaker.mode"):
+		case hash("config.vote.veto.access"):
+		case hash("config.vote.veto.mode"):
 			if(!std::all_of(val.begin(),val.end(),[&](auto&& c){ return std::isalpha(c,locale); }))
 				throw Exception("Must use letters only for value for this key.");
 
