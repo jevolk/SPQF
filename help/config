@@ -197,6 +197,29 @@ This is set to 1 by default.
 
 
 
+config.vote.speaker.access = <string> [a-z]
+
+Limits creation of votes to users who match any of the ChanServ access flags in this string.
+If unset, other config.vote.speaker restrictions may apply. If all are unset, the
+config.vote.enfranchise and config.vote.qualify rules may still limit the creation of votes.
+
+Note: Omit any leading '+' in the mode string.
+This is unset by default.
+
+
+
+config.vote.speaker.mode = <string> [a-z]
+
+Limits creation of votes to users who currently have a channel mode matching any of
+the modes in this string. If set, and config.vote.speaker.access is empty, toggling
+a user's mode in the channel will toggle their ability to start votes. Other
+config.vote.speaker restrictions may apply.
+
+Note: Omit any leading '+' in the mode string.
+This is unset by default.
+
+
+
 config.vote.ballot.ack_chan = <bool> [0 - 1]
 config.vote.ballot.ack_priv = <bool> [0 - 1]
 config.vote.ballot.rej_chan = <bool> [0 - 1]
