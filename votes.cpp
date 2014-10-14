@@ -207,7 +207,6 @@ void vote::Config::starting()
 
 	Chan &chan = get_chan();
 	const Adoc &cfg = chan.get();
-	const auto &locale = get_sess().get_locale();
 
 	if(!val.empty() && cfg[key] == val)
 		throw Exception("Variable already set to that value.");
