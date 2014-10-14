@@ -86,23 +86,26 @@ try
 		using limits = std::numeric_limits<size_t>;
 
 		Vote &vote = dynamic_cast<Vote &>(*iit.first->second);
-		const std::string &chan_name = vote.get_chan_name();
-		const std::string &acct_name = vote.get_user_acct();
+		const User &user = vote.get_user();
+		const Chan &chan = vote.get_chan();
 		const Adoc &cfg = vote.get_cfg();
 
-		chanidx.emplace(chan_name,id);
-		useridx.emplace(acct_name,id);
+		chanidx.emplace(chan.get_name(),id);
+		useridx.emplace(user.get_acct(),id);
 
-		if(chanidx.count(chan_name) > cfg.get("max_active",limits::max()))
+		if(chanidx.count(chan.get_name()) > cfg.get("max_active",limits::max()))
 			throw Exception("Too many active votes for this channel.");
 
-		if(useridx.count(acct_name) > cfg.get("max_per_user",limits::max()))
+		if(useridx.count(user.get_acct()) > cfg.get("max_per_user",limits::max()))
 			throw Exception("Too many active votes started by you on this channel.");
 
-		if(!vote.enfranchised(acct_name))
+		if(!vote.speaker(user))
+			throw Exception("You are not able to create votes on this channel.");
+
+		if(!vote.enfranchised(user))
 			throw Exception("You are not yet enfranchised in this channel.");
 
-		if(!vote.qualified(acct_name))
+		if(!vote.qualified(user))
 			throw Exception("You have not been participating enough to start a vote.");
 
 		vote.start();

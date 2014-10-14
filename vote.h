@@ -46,6 +46,7 @@ class Vote
 	auto &get_chan_name() const                 { return chan;                                      }
 	auto &get_user_acct() const                 { return user;                                      }
 	auto &get_chan() const                      { return chans.get(get_chan_name());                }
+	auto &get_user() const                      { return users.get(get_user_acct());                }
 	auto &get_began() const                     { return began;                                     }
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yea() const                       { return yea;                                       }
@@ -64,16 +65,18 @@ class Vote
 	bool disabled() const;
 
 	friend Locutor &operator<<(Locutor &l, const Vote &v);  // Appends formatted #ID to the stream
-	bool enfranchised(const std::string &acct) const;
-	bool qualified(const std::string &acct) const;
+
 	Ballot position(const std::string &acct) const;         // Throws if user hasn't taken a position
 	uint voted_host(const std::string &host) const;
 	bool voted_acct(const std::string &acct) const;
 
-	bool intercession(const User &user) const;
-	bool enfranchised(const User &user) const   { return enfranchised(user.get_acct());             }
-	bool qualified(const User &user) const      { return qualified(user.get_acct());                }
 	Ballot position(const User &user) const     { return position(user.get_acct());                 }
+	bool voted_host(const User &user) const     { return voted_host(user.get_acct());               }
+	bool voted_acct(const User &user) const     { return voted_acct(user.get_acct());               }
+	bool intercession(const User &user) const;
+	bool enfranchised(const User &user) const;
+	bool qualified(const User &user) const;
+	bool speaker(const User &user) const;
 	bool voted(const User &user) const;
 
   protected:
