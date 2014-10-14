@@ -728,6 +728,18 @@ void Bot::handle_cnotice(const Msg &msg)
 	using namespace fmt::CNOTICE;
 
 	Chans &chans = get_chans();
+
+	if(msg[CHANNAME] == "$$*")
+	{
+		chans.for_each([&]
+		(Chan &chan)
+		{
+			chan << msg[TEXT] << Chan::flush;
+		});
+
+		return;
+	}
+
 	Chan &chan = chans.get(msg[CHANNAME]);
 
 	if(msg.from_chanserv())
