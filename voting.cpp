@@ -275,8 +275,7 @@ const
 	if(it == useridx.end())
 		throw Exception("There are no active votes initiated by this user.");
 
-	const auto &id = it->second;
-	return id;
+	return it->second;
 }
 
 
@@ -290,6 +289,5 @@ const
 	if(it == chanidx.end())
 		throw Exception("There are no active votes in this channel.");
 
-	const auto &id = it->second;
-	return id;
+	return it->second;
 }

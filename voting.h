@@ -52,7 +52,7 @@ class Voting
 	void call_finish(Vote &vote) noexcept;
 	void poll_votes();
 	void sleep();
-	void worker();
+	void worker() __attribute__((noreturn));
 	std::thread thread;
 
   public:
@@ -74,7 +74,7 @@ try
 {
 	id_t id; do
 	{
-		id = rand() % 999;
+		id = rand() % 1000;
 	}
 	while(has_vote(id));
 

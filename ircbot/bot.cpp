@@ -726,8 +726,6 @@ void Bot::handle_cnotice(const Msg &msg)
 {
 	using namespace fmt::CNOTICE;
 
-	log_handle(msg,"CHAN NOTICE");
-
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
 
@@ -741,7 +739,6 @@ void Bot::handle_cnotice(const Msg &msg)
 	Users &users = get_users();
 	User &user = users.get(msg.get_nick());
 	chan.log(user,msg);
-
 	handle_cnotice(msg,chan,user);
 }
 
@@ -805,8 +802,6 @@ void Bot::handle_notice_nickserv(const Msg &msg)
 void Bot::handle_caction(const Msg &msg)
 {
 	using namespace fmt::CACTION;
-
-	log_handle(msg,"CHAN ACTION");
 
 	Chans &chans = get_chans();
 	Users &users = get_users();

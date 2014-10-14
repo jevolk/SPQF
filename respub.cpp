@@ -28,10 +28,10 @@ void ResPublica::handle_privmsg(const Msg &msg,
                                 User &user)
 try
 {
-	const std::string &text = msg[PRIVMSG::TEXT];
+	using namespace fmt::PRIVMSG;
 
 	// Discard empty without exception
-	if(text.empty())
+	if(msg[TEXT].empty())
 		return;
 
 	// Silently drop the background noise
@@ -93,15 +93,11 @@ void ResPublica::handle_cmd(const Msg &msg,
                             User &user)
 {
 	using namespace fmt::CHANMSG;
-	using delim = boost::char_separator<char>;
-
-	static const delim sep(" ");
-	const boost::tokenizer<delim> tokenize(msg[TEXT],sep);
-	const std::vector<std::string> tok(tokenize.begin(),tokenize.end());
 
 	// Chop off cmd prefix and dispatch
 	const Sess &sess = get_sess();
 	const Ident &id = sess.get_ident();
+	const std::vector<std::string> tok = tokens(msg[TEXT]);
 	switch(hash(tok.at(0).substr(id["prefix"].size())))
 	{
 		case hash("vote"):     handle_vote(msg,chan,user,subtok(tok));    break;
@@ -127,7 +123,7 @@ void ResPublica::handle_vote(const Msg &msg,
 	// Handle pattern for voting on modes directly
 	if(subcmd.at(0) == '+' || subcmd.at(0) == '-')
 	{
-		handle_vote_mode(msg,chan,user,toks);
+		voting.motion<vote::Mode>(chan,user,detok(toks));
 		return;
 	}
 
@@ -138,29 +134,30 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("yes"):
 		case hash("yea"):
 		case hash("Y"):
-		case hash("y"):        handle_vote_ballot(msg,chan,user,subtok(toks),Vote::YEA);   break;
+		case hash("y"):        handle_vote_ballot(msg,chan,user,subtok(toks),Vote::YEA);     break;
 		case hash("nay"):
 		case hash("no"):
 		case hash("N"):
-		case hash("n"):        handle_vote_ballot(msg,chan,user,subtok(toks),Vote::NAY);   break;
+		case hash("n"):        handle_vote_ballot(msg,chan,user,subtok(toks),Vote::NAY);     break;
 
 		// Administrative
 		default:
-		case hash("help"):     handle_help(msg,user,subtok(toks));                         break;
+		case hash("help"):     handle_help(msg,user,subtok(toks));                           break;
 		case hash("count"):
-		case hash("list"):     handle_vote_list(msg,chan,user,subtok(toks));               break;
-		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtok(toks));             break;
+		case hash("list"):     handle_vote_list(msg,chan,user,subtok(toks));                 break;
+		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtok(toks));               break;
 
 		// Actual vote types
-		case hash("mode"):     handle_vote_mode(msg,chan,user,subtok(toks));               break;
-		case hash("ban"):      handle_vote_ban(msg,chan,user,subtok(toks));                break;
-		case hash("unquiet"):  handle_vote_unquiet(msg,chan,user,subtok(toks));            break;
-		case hash("quiet"):    handle_vote_quiet(msg,chan,user,subtok(toks));              break;
-		case hash("kick"):     handle_vote_kick(msg,chan,user,subtok(toks));               break;
-		case hash("invite"):   handle_vote_invite(msg,chan,user,subtok(toks));             break;
-		case hash("topic"):    handle_vote_topic(msg,chan,user,subtok(toks));              break;
-		case hash("opine"):    handle_vote_opine(msg,chan,user,toks);                      break;
+		case hash("ban"):      voting.motion<vote::Ban>(chan,user,detok(subtok(toks)));      break;
+		case hash("kick"):     voting.motion<vote::Kick>(chan,user,detok(subtok(toks)));     break;
+		case hash("mode"):     voting.motion<vote::Mode>(chan,user,detok(subtok(toks)));     break;
+		case hash("quiet"):    voting.motion<vote::Quiet>(chan,user,detok(subtok(toks)));    break;
+		case hash("unquiet"):  voting.motion<vote::UnQuiet>(chan,user,detok(subtok(toks)));  break;
+		case hash("invite"):   voting.motion<vote::Invite>(chan,user,detok(subtok(toks)));   break;
+		case hash("topic"):    voting.motion<vote::Topic>(chan,user,detok(subtok(toks)));    break;
+		case hash("opine"):    voting.motion<vote::Opine>(chan,user,detok(subtok(toks)));    break;
 	}
+
 }
 
 
@@ -210,10 +207,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   const Tokens &toks,
                                   const id_t &id)
 {
-	const Adoc &cfg = chan.get("config.vote.list");
-	const bool ack_chan = cfg["ack_chan"] == "1";
-
-	if(ack_chan)
+	if(chan.get("config.vote.list")["ack_chan"] == "1")
 		handle_vote_list(msg,user,chan,toks,id);
 	else
 		handle_vote_list(msg,user,user,toks,id);
@@ -260,83 +254,6 @@ void ResPublica::handle_vote_config(const Msg &msg,
 }
 
 
-//////////////////////////////////////////////////////
-//
-//   Vote initiators
-//
-
-void ResPublica::handle_vote_mode(const Msg &msg,
-                                  Chan &chan,
-                                  User &user,
-                                  const Tokens &toks)
-{
-	voting.motion<vote::Mode>(chan,user,detok(toks));
-}
-
-
-void ResPublica::handle_vote_kick(const Msg &msg,
-                                  Chan &chan,
-                                  User &user,
-                                  const Tokens &toks)
-{
-	voting.motion<vote::Kick>(chan,user,detok(toks));
-}
-
-
-void ResPublica::handle_vote_ban(const Msg &msg,
-                                 Chan &chan,
-                                 User &user,
-                                 const Tokens &toks)
-{
-	voting.motion<vote::Ban>(chan,user,detok(toks));
-}
-
-
-void ResPublica::handle_vote_quiet(const Msg &msg,
-                                   Chan &chan,
-                                   User &user,
-                                   const Tokens &toks)
-{
-	voting.motion<vote::Quiet>(chan,user,detok(toks));
-}
-
-
-void ResPublica::handle_vote_unquiet(const Msg &msg,
-                                     Chan &chan,
-                                     User &user,
-                                     const Tokens &toks)
-{
-	voting.motion<vote::UnQuiet>(chan,user,detok(toks));
-}
-
-
-void ResPublica::handle_vote_invite(const Msg &msg,
-                                    Chan &chan,
-                                    User &user,
-                                    const Tokens &toks)
-{
-	voting.motion<vote::Invite>(chan,user,detok(toks));
-}
-
-
-void ResPublica::handle_vote_opine(const Msg &msg,
-                                   Chan &chan,
-                                   User &user,
-                                   const Tokens &toks)
-{
-	voting.motion<vote::Opine>(chan,user,detok(toks));
-}
-
-
-void ResPublica::handle_vote_topic(const Msg &msg,
-                                  Chan &chan,
-                                  User &user,
-                                  const Tokens &toks)
-{
-	voting.motion<vote::Topic>(chan,user,detok(toks));
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////////
 //
 //   Private message handlers
@@ -345,23 +262,22 @@ void ResPublica::handle_vote_topic(const Msg &msg,
 void ResPublica::handle_cmd(const Msg &msg,
                             User &user)
 {
-	using delim = boost::char_separator<char>;
+	using namespace fmt::PRIVMSG;
 
-	static const delim sep(" ");
-	const boost::tokenizer<delim> tokenize(msg[PRIVMSG::TEXT],sep);
-	const std::vector<std::string> tokens(tokenize.begin(),tokenize.end());
-
-	// Strip off the command prefix if given
 	const Sess &sess = get_sess();
 	const Ident &id = sess.get_ident();
-	const bool has_prefix = tokens.at(0).find(id["prefix"]) != std::string::npos;
-	const std::string cmd = has_prefix? tokens.at(0).substr(id["prefix"].size()) : tokens.at(0);
+
+	// Strip off the command prefix if given
+	const std::vector<std::string> toks = tokens(msg[TEXT]);
+	const bool has_prefix = toks.at(0).find(id["prefix"]) != std::string::npos;
+	const std::string cmd = has_prefix? toks.at(0).substr(id["prefix"].size()) : toks.at(0);
+
 	switch(hash(cmd))
 	{
-		case hash("vote"):     handle_vote(msg,user,subtok(tokens));     break;
-		case hash("help"):     handle_help(msg,user,subtok(tokens));     break;
-		case hash("config"):   handle_config(msg,user,subtok(tokens));   break;
-		default:                                                         break;
+		case hash("vote"):     handle_vote(msg,user,subtok(toks));     break;
+		case hash("help"):     handle_help(msg,user,subtok(toks));     break;
+		case hash("config"):   handle_config(msg,user,subtok(toks));   break;
+		default:                                                       break;
 	}
 }
 
@@ -395,6 +311,7 @@ void ResPublica::handle_vote(const Msg &msg,
                              const Tokens &toks)
 {
 	const std::string subcmd = !toks.empty()? *toks.at(0) : "help";
+
 	switch(hash(subcmd))
 	{
 		// Ballot
