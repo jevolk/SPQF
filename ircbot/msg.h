@@ -32,6 +32,7 @@ SPQF_FMT( RPLTOPIC,          SELFNAME, CHANNAME, TEXT,                          
 SPQF_FMT( CHANNELMODEIS,     NICKNAME, CHANNAME, DELTASTR                                                    )
 SPQF_FMT( CHANOPRIVSNEEDED,  NICKNAME, CHANNAME, REASON                                                      )
 SPQF_FMT( NICKNAMEINUSE,     ASTERISK, NICKNAME, REASON                                                      )
+SPQF_FMT( USERONCHANNEL,     SELFNAME, NICKNAME, CHANNAME, REASON                                            )
 SPQF_FMT( KICK,              CHANNAME, TARGET,   REASON                                                      )
 SPQF_FMT( CHANMSG,           CHANNAME, TEXT                                                                  )
 SPQF_FMT( CNOTICE,           CHANNAME, TEXT                                                                  )

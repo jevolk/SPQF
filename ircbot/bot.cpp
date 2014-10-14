@@ -141,6 +141,7 @@ try
 		case LIBIRC_RFC_RPL_EXCEPTLIST:           handle_exceptlist(msg);              return;
 		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               return;
 
+		case LIBIRC_RFC_ERR_USERONCHANNEL:        handle_useronchannel(msg);           return;
 		case LIBIRC_RFC_ERR_NICKNAMEINUSE:        handle_nicknameinuse(msg);           return;
 		case LIBIRC_RFC_ERR_UNKNOWNMODE:          handle_unknownmode(msg);             return;
 		case LIBIRC_RFC_ERR_CHANOPRIVSNEEDED:     handle_chanoprivsneeded(msg);        return;
@@ -942,6 +943,18 @@ void Bot::handle_bannedfromchan(const Msg &msg)
 void Bot::handle_unknownmode(const Msg &msg)
 {
 	log_handle(msg,"UNKNOWN MODE");
+}
+
+
+void Bot::handle_useronchannel(const Msg &msg)
+{
+	using namespace fmt::USERONCHANNEL;
+
+	log_handle(msg,"USER ON CHAN");
+
+	Chans &chans = get_chans();
+	Chan &chan = chans.get(msg[CHANNAME]);
+	chan << "It seems " << msg[NICKNAME] << " " << msg[REASON] << "." << Chan::flush;
 }
 
 

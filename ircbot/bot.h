@@ -147,6 +147,7 @@ class Bot : public std::mutex
 
 	void handle_bannedfromchan(const Msg &m);
 	void handle_chanoprivsneeded(const Msg &m);
+	void handle_useronchannel(const Msg &m);
 	void handle_channelmodeis(const Msg &m);
 	void handle_topicwhotime(const Msg &m);
 	void handle_creationtime(const Msg &m);
