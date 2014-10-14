@@ -108,8 +108,6 @@ std::vector<std::string> tokens(const std::string &str,
 inline
 std::string tolower(const std::string &str)
 {
-	static const std::locale locale("en_US.UTF-8");
-
 	std::string ret;
 	std::transform(str.begin(),str.end(),std::back_inserter(ret),[]
 	(const char &c)

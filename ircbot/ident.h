@@ -25,14 +25,22 @@ struct Ident : public std::map<std::string,std::string>
 		{"pass",                ""                             },
 
 		// Misc configuration
-		{"locale",              "en_US.UTF-8"                  },
+		{"locale",              ""                             },
 		{"dbdir",               "db"                           },
 		{"logdir",              "logs"                         },
 		{"prefix",              "!"                            },
 		{"invite",              ""                             },
 		{"invite-throttle",     "300"                          },
 		{"owner",               ""                             },
-	}{}
+	}
+	{
+		if(at("locale").empty())
+		{
+			const char *const loc = secure_getenv("LANG");
+			if(loc)
+				at("locale") = loc;
+		}
+	}
 
 	// Channels to join on connect
 	std::list<std::string> autojoin;

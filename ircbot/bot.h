@@ -46,6 +46,9 @@
 namespace irc {
 namespace bot {
 
+// bot.cpp based externs
+extern std::locale locale;
+
 #include "util.h"
 #include "callbacks.h"
 #include "ident.h"

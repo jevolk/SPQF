@@ -11,6 +11,10 @@
 using namespace irc::bot;
 
 
+// bot.h globals
+std::locale irc::bot::locale;
+
+
 Bot::Bot(const Ident &ident)
 try:
 adb(ident["dbdir"]),

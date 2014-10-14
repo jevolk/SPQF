@@ -12,7 +12,6 @@ class Sess
 
 	// Our constant data
 	Ident ident;
-	std::locale locale;
 
 	// libircclient
 	Callbacks cbs;
@@ -45,7 +44,6 @@ class Sess
 
 	// Local data observers
 	auto &get_ident() const                            { return ident;                              }
-	auto &get_locale() const                           { return locale;                             }
 
 	// libircclient direct
 	auto get_cbs() const                               { return &cbs;                               }
@@ -114,13 +112,14 @@ Sess::Sess(std::mutex &mutex,
            irc_session_t *const &sess):
 mutex(mutex),
 ident(ident),
-locale(this->ident["locale"].c_str()),
 cbs(cbs),
 sess(sess? sess : irc_create_session(get_cbs())),
 _nick(this->ident["nick"]),
 identified(false)
 {
-
+	// Use the same global locale for each session for now.
+	// Raise an issue if you have a case for this being a problem.
+	irc::bot::locale = std::locale(ident["locale"].c_str());
 
 }
 
