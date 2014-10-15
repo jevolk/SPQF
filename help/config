@@ -175,7 +175,9 @@ If this is set and config.vote.veto.access is unset, a user will still have veto
 matching.
 
 Note: Omit any leading '+' in the mode string.
-This is set to "v" by default. Careful when voting no with voice.
+This is set to "v" by default, thus cannot be erased. Careful when voting nay with voice.
+Note: This extra step of upgrading one's mode in order to veto is in congruence with
+Freenode's culture of only upgrading to authoritative powers when necessary.
 
 
 
