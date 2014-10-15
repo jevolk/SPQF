@@ -437,7 +437,7 @@ DefaultConfig::DefaultConfig()
 	put("plurality",0.51);
 	put("speaker.access","");
 	put("speaker.mode","");
-	put("veto.access","v");
+	put("veto.access","");
 	put("veto.mode","v");
 	put("veto.min",1);
 	put("veto.quick",1);
