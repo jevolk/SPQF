@@ -51,25 +51,25 @@ or conduct takeovers.
 * **Enfranchisement**
     * The minimum amount of time a user has to spend in a channel to begin voting at all.
     * The minimum number of lines a user has to say before being able to vote at all.
-    * ChanServ access flags potentially allowing only those with certain flags to vote.
+    * Reads ChanServ access flags potentially allowing only those with certain flags to vote.
 
 
 * **Qualification**
     * The minimum amount of time a user must be actively chatting to vote in this round.
     * The minimum number of lines that constitutes activity to vote in this round.
-    * ChanServ access flags allowing those with certain flags to always be able to vote.
+    * Reads ChanServ access flags allowing those with certain flags to always be able to vote.
 
 
 * **Veto Powers**
-    * ChanServ access flags allowing those with certain flags to have veto powers.
+    * Reads ChanServ access flags allowing those with certain flags to have veto powers.
     * Gaining veto powers by toggling your channel mode (+o/+v) and then voting no.
     * Minimum number of vetoes required for an effective veto.
     * Immediate ending after a veto, or continue to take the roll until the time runs out.
 
 
 * **Speaker Powers**
-    * ChanServ access flags allowing only those with certain flags to create votes.
-    * Granting vote creation power with a channel mode (+o/+v). 
+    * Reads ChanServ access flags allowing only those with certain flags to create votes.
+    * Granting vote creation power by toggling a channel mode (+o/+v).
 
 
 *see: help/config for detailed information.*
@@ -102,6 +102,7 @@ or conduct takeovers.
 
 * GNU C++ Compiler **4.9** &nbsp; *(tested: 4.9.1)*
 * GNU libstdc++ **4.9** 
+* GCC Locales **4.9**
 * Boost &nbsp; *(tested: 1.54)*
     * Tokenizer
     * Lexical Cast
