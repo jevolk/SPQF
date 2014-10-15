@@ -442,10 +442,10 @@ DefaultConfig::DefaultConfig()
 	put("veto.min",1);
 	put("veto.quick",1);
 	put("enfranchise.age",1800);
-	put("enfranchise.lines",6);
+	put("enfranchise.lines",0);
 	put("enfranchise.access","");
 	put("qualify.age",900);
-	put("qualify.lines",3);
+	put("qualify.lines",0);
 	put("qualify.access","");
 	put("ballot.ack_chan",0);
 	put("ballot.ack_priv",1);
