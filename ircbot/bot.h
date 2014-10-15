@@ -173,6 +173,13 @@ class Bot : public std::mutex
 	void handle_ctcp_act(const Msg &m);
 	void handle_ctcp_rep(const Msg &m);
 	void handle_ctcp_req(const Msg &m);
+
+	void handle_monlistfull(const Msg &m);
+	void handle_endofmonlist(const Msg &m);
+	void handle_monoffline(const Msg &m);
+	void handle_mononline(const Msg &m);
+	void handle_monlist(const Msg &m);
+
 	void handle_unknownmode(const Msg &m);
 	void handle_nicknameinuse(const Msg &m);
 	void handle_erroneusnickname(const Msg &m);

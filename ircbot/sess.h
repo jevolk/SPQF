@@ -67,13 +67,6 @@ class Sess
 	// [SEND] Raw send
 	template<class... VA_LIST> void quote(const char *const &fmt, VA_LIST&&... ap);
 
-	// [SEND] IRCv3 commands
-	void authenticate(const std::string &str)          { quote("AUTHENTICATE %s",str.c_str());      }
-	void cap_req(const std::string &cap)               { quote("CAP REQ :%s",cap.c_str());          }
-	void cap_list()                                    { quote("CAP LIST");                         }
-	void cap_end()                                     { quote("CAP END");                          }
-	void cap_ls()                                      { quote("CAP LS");                           }
-
 	// [SEND] Services commands
 	void nickserv(const std::string &str)              { quote("ns %s",str.c_str());                }
 	void chanserv(const std::string &str)              { quote("cs %s",str.c_str());                }
@@ -81,27 +74,45 @@ class Sess
 	void operserv(const std::string &str)              { quote("os %s",str.c_str());                }
 	void botserv(const std::string &str)               { quote("bs %s",str.c_str());                }
 
-	// [SEND] Primary commands
-	template<class It> void topics(const It &begin, const It &end, const std::string &server = "");
+	// [SEND] IRCv3 commands
+	void authenticate(const std::string &str)          { quote("AUTHENTICATE %s",str.c_str());      }
+	void cap_req(const std::string &cap)               { quote("CAP REQ :%s",cap.c_str());          }
+	void cap_list()                                    { quote("CAP LIST");                         }
+	void cap_end()                                     { quote("CAP END");                          }
+	void cap_ls()                                      { quote("CAP LS");                           }
+
+	// [SEND] Buddy commands
 	template<class It> void ison(const It &begin, const It &end);
+	void ison(const std::string &nick)                 { quote("ISON %s",nick.c_str());             }
+
+	void monitor(const std::string &cmd)               { quote("MONITOR %s",cmd.c_str());           }
+	template<class It> void monitor_add(const It &begin, const It &end);
+	template<class It> void monitor_del(const It &begin, const It &end);
+	void monitor_status()                              { monitor("S");                              }
+	void monitor_clear()                               { monitor("C");                              }
+	void monitor_list()                                { monitor("L");                              }
+
+	// [SEND] Content commands
+	template<class It> void topics(const It &begin, const It &end, const std::string &server = "");
 	void lusers(const std::string &mask = "", const std::string &server = "");
 	void list(const std::string &server = "")          { quote("LIST %s",server.c_str());           }
-	void ison(const std::string &nick)                 { quote("ISON %s",nick.c_str());             }
+
+	// [SEND] Baked commands
+	void identify(const std::string &acct, const std::string &pass);
+	void regain(const std::string &nick, const std::string &pass = "");
+	void ghost(const std::string &nick, const std::string &pass);
+	void identify();
+	void regain();
+	void ghost();
+
+	// [SEND] Primary commands
 	void help(const std::string &topic)                { quote("HELP %s",topic.c_str());            }
 	void nick(const std::string &nick)                 { call(irc_cmd_nick,nick.c_str());           }
 	void umode(const std::string &mode)                { call(irc_cmd_user_mode,mode.c_str());      }
 	void umode()                                       { call(irc_cmd_user_mode,nullptr);           }
-	void quit();                                       // Quit to server
 	void disconn()                                     { irc_disconnect(get());                     }
+	void quit();                                       // Quit to server
 	void conn();
-
-	// [SEND] Baked commands
-	void ghost(const std::string &nick, const std::string &pass);
-	void regain(const std::string &nick, const std::string &pass = "");
-	void identify(const std::string &acct, const std::string &pass);
-	void ghost();
-	void regain();
-	void identify();
 
 	Sess(std::mutex &mutex, const Ident &id, Callbacks &cbs, irc_session_t *const &sess = nullptr);
 	Sess(const Sess &) = delete;
@@ -242,6 +253,40 @@ void Sess::topics(const It &begin,
 	});
 
 	quote("LIST %s %s",ss.str().c_str(),server.c_str());
+}
+
+
+template<class It>
+void Sess::monitor_add(const It &begin,
+                       const It &end)
+{
+	std::stringstream ss;
+	ss << "+ ";
+
+	std::for_each(begin,end,[&ss]
+	(const auto &s)
+	{
+		ss << s << ",";
+	});
+
+	monitor(ss.str());
+}
+
+
+template<class It>
+void Sess::monitor_del(const It &begin,
+                       const It &end)
+{
+	std::stringstream ss;
+	ss << "+ ";
+
+	std::for_each(begin,end,[&ss]
+	(const auto &s)
+	{
+		ss << s << ",";
+	});
+
+	monitor(ss.str());
 }
 
 

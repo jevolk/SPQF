@@ -54,6 +54,9 @@ SPQF_FMT( BANLIST,           SELFNAME, CHANNAME, BANMASK,  OPERATOR, TIME,      
 SPQF_FMT( EXCEPTLIST,        SELFNAME, CHANNAME, MASK,     OPERATOR, TIME,                                   )
 SPQF_FMT( INVITELIST,        SELFNAME, CHANNAME, MASK,     OPERATOR, TIME,                                   )
 SPQF_FMT( QUIETLIST,         SELFNAME, CHANNAME, MODECODE, BANMASK,  OPERATOR, TIME,                         )
+SPQF_FMT( MONLIST,           SELFNAME, NICKLIST                                                              )
+SPQF_FMT( MONONLINE,         SELFNAME, MASKLIST                                                              )
+SPQF_FMT( MONOFFLINE,        SELFNAME, NICKLIST                                                              )
 }
 
 

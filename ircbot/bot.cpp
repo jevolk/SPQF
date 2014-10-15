@@ -143,6 +143,11 @@ try
 		case LIBIRC_RFC_RPL_INVITELIST:           handle_invitelist(msg);              return;
 		case LIBIRC_RFC_RPL_EXCEPTLIST:           handle_exceptlist(msg);              return;
 		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               return;
+		case 730     /* RPL_MONONLINE */:         handle_mononline(msg);               return;
+		case 731     /* RPL_MONOFFLINE */:        handle_monoffline(msg);              return;
+		case 732     /* RPL_MONLIST */:           handle_monlist(msg);                 return;
+		case 733     /* RPL_ENDOFMONLIST */:      handle_endofmonlist(msg);            return;
+		case 734     /* ERR_MONLISTFULL */:       handle_monlistfull(msg);             return;
 
 		case 714     /* ERR_ALREADYONCHAN */:     handle_alreadyonchan(msg);           return;
 		case LIBIRC_RFC_ERR_USERONCHANNEL:        handle_useronchannel(msg);           return;
@@ -1171,6 +1176,48 @@ void Bot::handle_whowasuser(const Msg &msg)
 {
 	log_handle(msg,"WHOWAS USER");
 
+}
+
+
+void Bot::handle_monlist(const Msg &msg)
+{
+	using namespace fmt::MONLIST;
+
+	log_handle(msg,"MONLIST");
+
+	const auto nicks = tokens(msg[NICKLIST],",");
+}
+
+
+void Bot::handle_mononline(const Msg &msg)
+{
+	using namespace fmt::MONONLINE;
+
+	log_handle(msg,"MONONLINE");
+
+	const auto masks = tokens(msg[MASKLIST],",");
+}
+
+
+void Bot::handle_monoffline(const Msg &msg)
+{
+	using namespace fmt::MONOFFLINE;
+
+	log_handle(msg,"MONOFFLINE");
+
+	const auto nicks = tokens(msg[NICKLIST],",");
+}
+
+
+void Bot::handle_monlistfull(const Msg &msg)
+{
+	log_handle(msg,"MONLISTFULL");
+}
+
+
+void Bot::handle_endofmonlist(const Msg &msg)
+{
+	log_handle(msg,"ENDOFMONLIST");
 }
 
 
