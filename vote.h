@@ -22,13 +22,7 @@ class Vote
 	Users &users;
 	Logs &logs;
 
-  public:
-	using id_t = size_t;
-	enum Stat                                   { ADDED, CHANGED,                                   };
-	enum Ballot                                 { YEA, NAY,                                         };
-
-  private:
-	id_t id;                                    // Index id of this vote
+	uint id;                                    // Index id of this vote
 	Adoc cfg;                                   // Configuration of this vote
 	time_t began;                               // Time vote was constructed
 	std::string chan;                           // Name of the channel
@@ -41,6 +35,10 @@ class Vote
 	std::set<std::string> vetoes;               // Accounts voting No with intent to veto
 
   public:
+	using id_t = decltype(id);
+	enum Ballot                                 { YEA, NAY,                                         };
+	enum Stat                                   { ADDED, CHANGED,                                   };
+
 	virtual const char *type() const            { return "";                                        }
 	auto &get_id() const                        { return id;                                        }
 	auto &get_cfg() const                       { return cfg;                                       }
@@ -75,6 +73,10 @@ class Vote
 	Ballot position(const User &user) const     { return position(user.get_acct());                 }
 	bool voted_host(const User &user) const     { return voted_host(user.get_acct());               }
 	bool voted_acct(const User &user) const     { return voted_acct(user.get_acct());               }
+
+	bool has_access(const User &user, const Mode &flags) const;
+	bool has_mode(const User &user, const Mode &flags) const;
+
 	bool intercession(const User &user) const;
 	bool enfranchised(const User &user) const;
 	bool qualified(const User &user) const;

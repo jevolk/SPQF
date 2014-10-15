@@ -11,7 +11,7 @@ its participants, ensuring any action by the bot reflects the true and fair
 intent of the channel's mission and community.
 
 Join **irc.freenode.net/#SPQF** for feedback, suggestions and help.
-We are open to feature requests, but we discourage features that further undemocratic
+We are open to feature requests, but discourage features that further undemocratic
 ideals beyond those available already (Don't request features that make your vote worth more
 than others, etc). We actively seek reports of how attempts are made to abuse the bot
 or conduct takeovers.

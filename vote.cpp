@@ -236,22 +236,8 @@ bool Vote::speaker(const User &user)
 const
 {
 	const Adoc &cfg = get_cfg();
-	const Chan &chan = get_chan();
-	const std::string &sm = cfg["speaker.mode"];
-	const std::string &sa = cfg["speaker.access"];
-
-	if(sa.empty() && sm.empty())
-		return true;
-
-	if(!sm.empty() && !chan.get_mode(user).any(sm))
-		return false;
-
-	if(sa.empty())
-		return true;
-
-	const auto &cf = chan.get_flags();
-	const auto it = cf.find({user.get_acct()});
-	return it != cf.end()? it->get_flags().any(sa) : false;
+	return (!cfg.has("speaker.access") || has_access(user,cfg["speaker.access"])) &&
+	       (!cfg.has("speaker.mode") || has_mode(user,cfg["speaker.mode"]));
 }
 
 
@@ -259,19 +245,8 @@ bool Vote::qualified(const User &user)
 const
 {
 	const Adoc &cfg = get_cfg();
-	const Chan &chan = get_chan();
-	const std::string acc = cfg["qualify.access"];
-
-	if(!acc.empty())
-	{
-		const auto &cf = chan.get_flags();
-		const auto it = cf.find({user.get_acct()});
-		const Mode &f = it != cf.end()? it->get_flags() : Mode();
-		if(f.any(acc))
-			return true;
-
-		// If the user doesn't have a flag to always-qualify, process as normal.
-	}
+	if(has_access(user,cfg["qualify.access"]))
+		return true;
 
 	Logs::SimpleFilter filt;
 	filt.acct = user.get_acct();
@@ -279,6 +254,7 @@ const
 	filt.time.second = get_began();
 	filt.type = "CHA";
 
+	const Chan &chan = get_chan();
 	return logs.atleast(chan,filt,cfg.get<uint>("qualify.lines"));
 }
 
@@ -287,15 +263,8 @@ bool Vote::enfranchised(const User &user)
 const
 {
 	const Adoc &cfg = get_cfg();
-	const Chan &chan = get_chan();
-	const std::string acc = cfg["enfranchise.access"];
-
-	if(!acc.empty())
-	{
-		const auto &cf = chan.get_flags();
-		const auto it = cf.find({user.get_acct()});
-		return it != cf.end()? it->get_flags().any(acc) : false;
-	}
+	if(cfg.has("enfranchise.access"))
+		return has_access(user,cfg["enfranchise.access"]);
 
 	Logs::SimpleFilter filt;
 	filt.acct = user.get_acct();
@@ -303,6 +272,7 @@ const
 	filt.time.second = get_began() - cfg.get<uint>("enfranchise.age");
 	filt.type = "CHA";
 
+	const Chan &chan = get_chan();
 	return logs.atleast(chan,filt,cfg.get<uint>("enfranchise.lines"));
 }
 
@@ -311,22 +281,33 @@ bool Vote::intercession(const User &user)
 const
 {
 	const Adoc &cfg = get_cfg();
+	if(cfg.has("veto.mode") && !has_mode(user,cfg["veto.mode"]))
+		return false;
+
+	if(cfg.has("veto.access") && !has_access(user,cfg["veto.access"]))
+		return false;
+
+	return cfg.has("veto.access") || cfg.has("veto.mode");
+}
+
+
+bool Vote::has_mode(const User &user,
+                    const Mode &mode)
+const
+{
 	const Chan &chan = get_chan();
-	const std::string &mf = cfg["veto.mode"];
-	const std::string &af = cfg["veto.access"];
+	return chan.get_mode(user).any(mode);
+}
 
-	if(af.empty() && mf.empty())
-		return false;
 
-	if(!mf.empty() && !chan.get_mode(user).any(mf))
-		return false;
-
-	if(af.empty())
-		return true;
-
+bool Vote::has_access(const User &user,
+                      const Mode &flags)
+const
+{
+	const Chan &chan = get_chan();
 	const auto &cf = chan.get_flags();
 	const auto it = cf.find({user.get_acct()});
-	return it != cf.end()? it->get_flags().any(af) : false;
+	return it != cf.end()? it->get_flags().any(flags) : false;
 }
 
 
