@@ -5,13 +5,13 @@
 **SPQF** is a robust democratic channel management system with the goal of 
 replacing the need for channel operators to be present, or even exist. 
 The primary design parameter is the resistance to sybil from botnets and 
-spam, in addtion to various other noise and abuse seen regularly on IRC. 
+spam, in addition to various other noise and abuse seen regularly on IRC.
 A versatile configuration can be customized to statistically analyze a channel and
 its participants, ensuring any action by the bot reflects the true and fair
 intent of the channel's mission and community.
 
 Join **irc.freenode.net/#SPQF** for feedback, suggestions and help.
-We are open to feature requests, but discourage features that further undemocratic
+We are open to feature requests, but discourage features that undermine democratic
 ideals beyond those available already (Don't request features that make your vote worth more
 than others, etc). We actively seek reports of how attempts are made to abuse the bot
 or conduct takeovers.
