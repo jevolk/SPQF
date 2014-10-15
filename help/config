@@ -161,7 +161,7 @@ may still restrict veto power. If both config.vote.veto.mode and this are unset,
 power is possible at all.
 
 Note: Omit any leading '+' in the mode string.
-This is set to "v" by default, in conjunction with config.vote.veto.mode also being "v".
+This unset by default.
 
 
 
@@ -175,7 +175,7 @@ If this is set and config.vote.veto.access is unset, a user will still have veto
 matching.
 
 Note: Omit any leading '+' in the mode string.
-This is set to "v" by default.
+This is set to "v" by default. Careful when voting no with voice.
 
 
 
