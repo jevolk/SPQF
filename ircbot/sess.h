@@ -74,12 +74,19 @@ class Sess
 	void cap_end()                                     { quote("CAP END");                          }
 	void cap_ls()                                      { quote("CAP LS");                           }
 
-	// [SEND] Primary commands
+	// [SEND] Services commands
 	void nickserv(const std::string &str)              { quote("ns %s",str.c_str());                }
 	void chanserv(const std::string &str)              { quote("cs %s",str.c_str());                }
 	void memoserv(const std::string &str)              { quote("ms %s",str.c_str());                }
 	void operserv(const std::string &str)              { quote("os %s",str.c_str());                }
 	void botserv(const std::string &str)               { quote("bs %s",str.c_str());                }
+
+	// [SEND] Primary commands
+	template<class It> void topics(const It &begin, const It &end, const std::string &server = "");
+	template<class It> void ison(const It &begin, const It &end);
+	void lusers(const std::string &mask = "", const std::string &server = "");
+	void list(const std::string &server = "")          { quote("LIST %s",server.c_str());           }
+	void ison(const std::string &nick)                 { quote("ISON %s",nick.c_str());             }
 	void help(const std::string &topic)                { quote("HELP %s",topic.c_str());            }
 	void nick(const std::string &nick)                 { call(irc_cmd_nick,nick.c_str());           }
 	void umode(const std::string &mode)                { call(irc_cmd_user_mode,mode.c_str());      }
@@ -204,6 +211,45 @@ inline
 void Sess::quit()
 {
 	call(irc_cmd_quit,"Alea iacta est.");
+}
+
+
+template<class It>
+void Sess::ison(const It &begin,
+                const It &end)
+{
+	std::stringstream ss;
+	std::for_each(begin,end,[&ss]
+	(const auto &s)
+	{
+		ss << s << " ";
+	});
+
+	quote("ISON :%s",ss.str().c_str());
+}
+
+
+template<class It>
+void Sess::topics(const It &begin,
+                  const It &end,
+                  const std::string &server)
+{
+	std::stringstream ss;
+	std::for_each(begin,end,[&ss]
+	(const auto &s)
+	{
+		ss << s << ",";
+	});
+
+	quote("LIST %s %s",ss.str().c_str(),server.c_str());
+}
+
+
+inline
+void Sess::lusers(const std::string &mask,
+                  const std::string &server)
+{
+	quote("LUSERS %s %s",mask.c_str(),server.c_str());
 }
 
 

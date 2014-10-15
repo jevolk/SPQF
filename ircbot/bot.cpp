@@ -118,9 +118,12 @@ try
 		case LIBIRC_RFC_RPL_MYINFO:               handle_myinfo(msg);                  return;
 		case LIBIRC_RFC_RPL_BOUNCE:               handle_isupport(msg);                return;
 
+		case LIBIRC_RFC_RPL_LIST:                 handle_list(msg);                    return;
+		case LIBIRC_RFC_RPL_LISTEND:              handle_listend(msg);                 return;
 		case LIBIRC_RFC_RPL_NAMREPLY:             handle_namreply(msg);                return;
 		case LIBIRC_RFC_RPL_ENDOFNAMES:           handle_endofnames(msg);              return;
 		case LIBIRC_RFC_RPL_UMODEIS:              handle_umodeis(msg);                 return;
+		case LIBIRC_RFC_RPL_ISON:                 handle_ison(msg);                    return;
 		case LIBIRC_RFC_RPL_AWAY:                 handle_away(msg);                    return;
 		case LIBIRC_RFC_RPL_WHOREPLY:             handle_whoreply(msg);                return;
 		case 354     /* RPL_WHOSPCRPL */:         handle_whospecial(msg);              return;
@@ -141,6 +144,7 @@ try
 		case LIBIRC_RFC_RPL_EXCEPTLIST:           handle_exceptlist(msg);              return;
 		case 728     /* RPL_QUIETLIST */:         handle_quietlist(msg);               return;
 
+		case 714     /* ERR_ALREADYONCHAN */:     handle_alreadyonchan(msg);           return;
 		case LIBIRC_RFC_ERR_USERONCHANNEL:        handle_useronchannel(msg);           return;
 		case LIBIRC_RFC_ERR_NICKNAMEINUSE:        handle_nicknameinuse(msg);           return;
 		case LIBIRC_RFC_ERR_UNKNOWNMODE:          handle_unknownmode(msg);             return;
@@ -332,7 +336,7 @@ void Bot::handle_nick(const Msg &msg)
 		const bool regained = !sess.is_desired_nick();
 		sess.set_nick(new_nick);
 
-		if(regained)  // Nick was regained on connect; nothing will exists in Users/chans.
+		if(regained)  // Nick was regained on connect; nothing will exist in Users/chans.
 			return;
 	}
 
@@ -506,6 +510,16 @@ void Bot::handle_umodeis(const Msg &msg)
 
 	Sess &sess = get_sess();
 	sess.delta_mode(msg[DELTASTR]);
+}
+
+
+void Bot::handle_ison(const Msg &msg)
+{
+	using namespace fmt::ISON;
+
+	log_handle(msg,"ISON");
+
+	const std::vector<std::string> list = tokens(msg[NICKLIST]);
 }
 
 
@@ -946,15 +960,37 @@ void Bot::handle_endofnames(const Msg &msg)
 }
 
 
-void Bot::handle_bannedfromchan(const Msg &msg)
+void Bot::handle_list(const Msg &msg)
 {
-	log_handle(msg,"BANNED FROM CHAN");
+	using namespace fmt::LIST;
+
+	log_handle(msg,"LIST");
+}
+
+
+void Bot::handle_listend(const Msg &msg)
+{
+	log_handle(msg,"LIST END");
 }
 
 
 void Bot::handle_unknownmode(const Msg &msg)
 {
 	log_handle(msg,"UNKNOWN MODE");
+}
+
+
+void Bot::handle_bannedfromchan(const Msg &msg)
+{
+	log_handle(msg,"BANNED FROM CHAN");
+}
+
+
+void Bot::handle_alreadyonchan(const Msg &msg)
+{
+	using namespace fmt::ALREADYONCHAN;
+
+	log_handle(msg,"ALREADY ON CHAN");
 }
 
 

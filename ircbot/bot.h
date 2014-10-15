@@ -15,10 +15,11 @@
 #include <map>
 #include <list>
 #include <vector>
-#include <chrono>
+#include <forward_list>
 #include <unordered_map>
 #include <algorithm>
 #include <functional>
+#include <chrono>
 #include <string>
 #include <iomanip>
 #include <sstream>
@@ -148,6 +149,7 @@ class Bot : public std::mutex
 	void handle_bannedfromchan(const Msg &m);
 	void handle_chanoprivsneeded(const Msg &m);
 	void handle_useronchannel(const Msg &m);
+	void handle_alreadyonchan(const Msg &m);
 	void handle_channelmodeis(const Msg &m);
 	void handle_topicwhotime(const Msg &m);
 	void handle_creationtime(const Msg &m);
@@ -191,11 +193,14 @@ class Bot : public std::mutex
 	void handle_action(const Msg &m);
 	void handle_invite(const Msg &m);
 	void handle_umode(const Msg &m);
+	void handle_ison(const Msg &m);
 	void handle_away(const Msg &m);
 	void handle_nick(const Msg &m);
 	void handle_quit(const Msg &m);
 	void handle_authenticate(const Msg &m);
 	void handle_account(const Msg &m);
+	void handle_listend(const Msg &m);
+	void handle_list(const Msg &m);
 	void handle_cap(const Msg &m);
 	void handle_myinfo(const Msg &m);
 	void handle_created(const Msg &m);

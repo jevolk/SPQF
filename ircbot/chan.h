@@ -124,6 +124,7 @@ class Chan : public Locutor,
 	void op();                                              // target is self
 
 	// [SEND] Direct interface to channel
+	void knock(const std::string &msg = "");
 	void invite(const std::string &nick);
 	void topic(const std::string &topic);
 	void kick(const User &user, const std::string &reason = "");
@@ -328,6 +329,14 @@ void Chan::topic(const std::string &topic)
 {
 	Sess &sess = get_sess();
 	sess.call(irc_cmd_topic,get_name().c_str(),topic.c_str());
+}
+
+
+inline
+void Chan::knock(const std::string &msg)
+{
+	Sess &sess = get_sess();
+	sess.quote("KNOCK %s :%s",get_name().c_str(),msg.c_str());
 }
 
 

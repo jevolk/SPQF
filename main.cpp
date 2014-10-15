@@ -7,7 +7,6 @@
 
 
 #include <signal.h>
-#include <forward_list>
 
 // libircbot irc::bot::
 #include "ircbot/bot.h"
