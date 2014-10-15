@@ -57,6 +57,10 @@ SPQF_FMT( QUIETLIST,         SELFNAME, CHANNAME, MODECODE, BANMASK,  OPERATOR, T
 SPQF_FMT( MONLIST,           SELFNAME, NICKLIST                                                              )
 SPQF_FMT( MONONLINE,         SELFNAME, MASKLIST                                                              )
 SPQF_FMT( MONOFFLINE,        SELFNAME, NICKLIST                                                              )
+SPQF_FMT( ACCEPTLIST,        SELFNAME, /* ... */                                                             )
+SPQF_FMT( ACCEPTEXIST,       SELFNAME, NICKNAME, REASON                                                      )
+SPQF_FMT( ACCEPTNOT,         SELFNAME, NICKNAME, REASON                                                      )
+SPQF_FMT( ACCEPTFULL,        SELFNAME                                                                        )
 }
 
 

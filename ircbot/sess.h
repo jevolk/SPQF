@@ -92,6 +92,10 @@ class Sess
 	void monitor_clear()                               { monitor("C");                              }
 	void monitor_list()                                { monitor("L");                              }
 
+	void accept(const std::string &str)                { quote("ACCEPT %s",str.c_str());            }
+	template<class It> void accept_del(const It &begin, const It &end);
+	template<class It> void accept(const It &begin, const It &end);
+
 	// [SEND] Content commands
 	template<class It> void topics(const It &begin, const It &end, const std::string &server = "");
 	void lusers(const std::string &mask = "", const std::string &server = "");
@@ -253,6 +257,36 @@ void Sess::topics(const It &begin,
 	});
 
 	quote("LIST %s %s",ss.str().c_str(),server.c_str());
+}
+
+
+template<class It>
+void Sess::accept(const It &begin,
+                  const It &end)
+{
+	std::stringstream ss;
+	std::for_each(begin,end,[&ss]
+	(const auto &s)
+	{
+		ss << s << ",";
+	});
+
+	accept(ss.str());
+}
+
+
+template<class It>
+void Sess::accept_del(const It &begin,
+                      const It &end)
+{
+	std::stringstream ss;
+	std::for_each(begin,end,[&ss]
+	(const auto &s)
+	{
+		ss << "-" << s << ",";
+	});
+
+	accept(ss.str());
 }
 
 

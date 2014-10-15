@@ -147,8 +147,14 @@ try
 		case 731     /* RPL_MONOFFLINE */:        handle_monoffline(msg);              return;
 		case 732     /* RPL_MONLIST */:           handle_monlist(msg);                 return;
 		case 733     /* RPL_ENDOFMONLIST */:      handle_endofmonlist(msg);            return;
-		case 734     /* ERR_MONLISTFULL */:       handle_monlistfull(msg);             return;
+		case 281     /* RPL_ACCEPTLIST */:        handle_acceptlist(msg);              return;
+		case 282     /* RPL_ENDOFACCEPT */:       handle_endofaccept(msg);             return;
 
+		case 734     /* ERR_MONLISTFULL */:       handle_monlistfull(msg);             return;
+		case 456     /* ERR_ACCEPTFULL */:        handle_acceptfull(msg);              return;
+		case 457     /* ERR_ACCEPTEXIST */:       handle_acceptexist(msg);             return;
+		case 458     /* ERR_ACCEPTNOT */:         handle_acceptnot(msg);               return;
+		case LIBIRC_RFC_ERR_NOSUCHNICK:           handle_nosuchnick(msg);              return;
 		case 714     /* ERR_ALREADYONCHAN */:     handle_alreadyonchan(msg);           return;
 		case LIBIRC_RFC_ERR_USERONCHANNEL:        handle_useronchannel(msg);           return;
 		case LIBIRC_RFC_ERR_NICKNAMEINUSE:        handle_nicknameinuse(msg);           return;
@@ -1218,6 +1224,44 @@ void Bot::handle_monlistfull(const Msg &msg)
 void Bot::handle_endofmonlist(const Msg &msg)
 {
 	log_handle(msg,"ENDOFMONLIST");
+}
+
+
+void Bot::handle_acceptlist(const Msg &msg)
+{
+	using namespace fmt::ACCEPTLIST;
+
+	log_handle(msg,"ACCEPTLIST");
+}
+
+
+void Bot::handle_acceptfull(const Msg &msg)
+{
+	using namespace fmt::ACCEPTFULL;
+
+	log_handle(msg,"ACCEPTFULL");
+}
+
+
+void Bot::handle_acceptexist(const Msg &msg)
+{
+	using namespace fmt::ACCEPTEXIST;
+
+	log_handle(msg,"ACCEPTEXIST");
+}
+
+
+void Bot::handle_acceptnot(const Msg &msg)
+{
+	using namespace fmt::ACCEPTNOT;
+
+	log_handle(msg,"ACCEPTNOT");
+}
+
+
+void Bot::handle_endofaccept(const Msg &msg)
+{
+	log_handle(msg,"ENDOFACCEPT");
 }
 
 
