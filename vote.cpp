@@ -204,7 +204,7 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 		throw Exception("You have not been active enough qualify for this vote.");
 
 	if(ballot == NAY && intercession(user))
-		vetoes.emplace(user.get_acct());
+		veto.emplace(user.get_acct());
 
 	proffer(ballot,user);
 
