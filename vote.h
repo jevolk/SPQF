@@ -31,8 +31,8 @@ class Vote
 	std::string issue;                          // "Issue" input of the vote
 	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
+	std::set<std::string> veto;                 // Accounts voting No with intent to veto
 	std::set<std::string> hosts;                // Hostnames that have voted
-	std::set<std::string> vetoes;               // Accounts voting No with intent to veto
 
   public:
 	using id_t = decltype(id);
@@ -52,8 +52,8 @@ class Vote
 	auto &get_yea() const                       { return yea;                                       }
 	auto &get_nay() const                       { return nay;                                       }
 	auto &get_hosts() const                     { return hosts;                                     }
-	auto &get_vetoes() const                    { return vetoes;                                    }
-	auto num_vetoes() const                     { return vetoes.size();                             }
+	auto &get_veto() const                      { return veto;                                      }
+	auto num_vetoes() const                     { return veto.size();                               }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
 	auto remaining() const                      { return cfg.get<uint>("duration") - elapsed();     }
 	auto tally() const -> std::pair<uint,uint>  { return {yea.size(),nay.size()};                   }
