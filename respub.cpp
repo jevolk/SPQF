@@ -477,17 +477,8 @@ Tokens subtok(const Tokens &tokens)
 
 Tokens subtok(const std::vector<std::string> &tokens)
 {
-	const bool off = !tokens.empty();
-	Tokens ret(tokens.size() - off);
-	std::transform(tokens.begin() + off,tokens.end(),ret.begin(),[]
-	(const std::string &token)
-	{
-		return &token;
-	});
-
-	return ret;
+	return pointers<Tokens>(tokens.begin() + !tokens.empty(),tokens.end());
 }
-
 
 
 std::string detok(const Tokens &tokens)
