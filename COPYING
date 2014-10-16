@@ -1,4 +1,4 @@
-ResPublcia - IRC democracy bot for the people of Freenode
+SPQF - IRC democracy bot for the people of Freenode
 
 Copyright (C) 2014  Jason Volk
 Copyright (C) 2014  Svetlana Tkachenko
@@ -15,3 +15,13 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, as a special exception, the copyright holders give
+permission to link the code of portions of this program with the
+OpenSSL library, and distribute linked combinations including the two.
+
+You must obey the GNU General Public License in all respects
+for all of the code used other than OpenSSL. You may extend this
+exception to your version of the program, but you are not obligated
+to do so. If you do not wish to do so, delete this exception
+statement from your version.
