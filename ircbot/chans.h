@@ -71,9 +71,7 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	std::stringstream s;
-	s << "Unrecognized channel name [" << tolower(name) << "]";
-	throw Exception(s.str());
+	throw Exception() << "Unrecognized channel name [" << tolower(name) << "]";
 }
 
 

@@ -25,9 +25,7 @@ size_t hash(const std::string &str,
 template<class T>
 std::string string(const T &t)
 {
-	std::stringstream s;
-	s << t;
-	return s.str();
+	return static_cast<std::stringstream &>(std::stringstream() << t).str();
 }
 
 
@@ -66,7 +64,7 @@ inline
 std::string chomp(const std::string &str,
                   const std::string &c = " ")
 {
-	const size_t pos = str.find_last_not_of(c);
+	const auto pos = str.find_last_not_of(c);
 	return pos == std::string::npos? str : str.substr(0,pos+1);
 }
 
@@ -75,7 +73,7 @@ inline
 std::pair<std::string, std::string> split(const std::string &str,
                                           const std::string &delim = " ")
 {
-	const size_t pos = str.find(delim);
+	const auto pos = str.find(delim);
 	return pos == std::string::npos?
 	              std::make_pair(str,std::string()):
 	              std::make_pair(str.substr(0,pos), str.substr(pos+delim.size()));
@@ -87,15 +85,16 @@ std::string between(const std::string &str,
                     const std::string &a = "(",
                     const std::string &b = ")")
 {
-	const auto p0 = split(str,a);
-	const auto p1 = split(p0.second,b);
-	return p1.first;
+	return split(split(str,a).second,b).first;
 }
 
 
-inline
-std::vector<std::string> tokens(const std::string &str,
-                                const char *const &sep = " ")
+template<template<class,class>
+         class C = std::vector,
+         class T = std::string,
+         class A = std::allocator<T>>
+C<T,A> tokens(const std::string &str,
+              const char *const &sep = " ")
 {
 	using delim = boost::char_separator<char>;
 
@@ -204,9 +203,8 @@ auto irc_call(irc_session_t *const &sess,
 	if(ret != CODE_FOR_SUCCESS)
 	{
 		const int errc = irc_errno(sess);
-		const char *const str = irc_strerror(errc);
 		std::stringstream s;
-		s << "libircclient: (" << errc << "): " << str;
+		s << "libircclient: (" << errc << "): " << irc_strerror(errc);
 		throw Exception(errc,s.str());
 	}
 
@@ -222,6 +220,5 @@ bool irc_call(std::nothrow_t,
               Function&& func,
               Args&&... args)
 {
-	const auto ret = func(sess,std::forward<Args>(args)...);
-	return ret == CODE_FOR_SUCCESS;
+	return func(sess,std::forward<Args>(args)...) == CODE_FOR_SUCCESS;
 }
