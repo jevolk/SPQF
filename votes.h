@@ -95,27 +95,23 @@ template<class... Args>
 vote::Config::Config(Args&&... args):
 Vote("config",std::forward<Args>(args)...)
 {
-	using delim = boost::char_separator<char>;
+	std::vector<std::string> tokes = tokens(get_issue(),"=");
 
-	static const delim sep("=");
-	const boost::tokenizer<delim> exprs(get_issue(),sep);
-	std::vector<std::string> tokens(exprs.begin(),exprs.end());
-
-	if(tokens.size() > 8)
+	if(tokes.size() > 8)
 		throw Exception("Path nesting too deep.");
 
-	if(tokens.size() > 0)
+	if(tokes.size() > 0)
 	{
-		const auto it = std::remove(tokens.at(0).begin(),tokens.at(0).end(),' ');
-		tokens.at(0).erase(it,tokens.at(0).end());
-		key = tokens.at(0);
+		const auto it = std::remove(tokes.at(0).begin(),tokes.at(0).end(),' ');
+		tokes.at(0).erase(it,tokes.at(0).end());
+		key = tokes.at(0);
 	}
 	else throw Exception("Invalid syntax to assign a configuration variable.");
 
-	if(tokens.size() > 1)
+	if(tokes.size() > 1)
 	{
-		const auto it = std::remove(tokens.at(1).begin(),tokens.at(1).end(),' ');
-		tokens.at(1).erase(it,tokens.at(1).end());
-		val = tokens.at(1);
+		const auto it = std::remove(tokes.at(1).begin(),tokes.at(1).end(),' ');
+		tokes.at(1).erase(it,tokes.at(1).end());
+		val = tokes.at(1);
 	}
 }
