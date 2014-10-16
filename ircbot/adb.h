@@ -15,6 +15,7 @@ struct Adoc : public boost::property_tree::ptree
 	bool has(const std::string &key) const               { return !get(key,std::string()).empty();  }
 
 	bool remove(const std::string &key);
+	void merge(const Adoc &src);                         // src takes precedence over this
 
 	Adoc(const std::string &str = "{}");
 	Adoc(boost::property_tree::ptree &&p):               boost::property_tree::ptree(std::move(p)) {}
@@ -203,6 +204,31 @@ boost::property_tree::ptree([&str]
 catch(const boost::property_tree::json_parser::json_parser_error &e)
 {
 	throw Exception(e.what());
+}
+
+
+inline
+void Adoc::merge(const Adoc &src)
+{
+	const std::function<void (const Adoc &src, Adoc &dst)> recurse = [&recurse]
+	(const Adoc &src, Adoc &dst)
+	{
+		for(const auto &pair : src)
+		{
+			const auto &key = pair.first;
+			const auto &sub = pair.second;
+
+			if(!sub.empty())
+			{
+				Adoc child = dst.get_child(key,Adoc());
+				recurse(sub,child);
+				dst.put_child(key,child);
+			}
+			else dst.put_child(key,sub);
+		}
+	};
+
+	recurse(src,*this);
 }
 
 

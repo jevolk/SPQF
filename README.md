@@ -84,6 +84,7 @@ or conduct takeovers.
 * Prevention of votes that affect the bot itself.
 * Offline configuration/database editing tool.
 * Automatic NickServ ghost and regain on (re)connect.
+* Vote modules can have independent configurations.
 
 
 #### Upcoming Features

@@ -242,6 +242,12 @@ the result tally of the vote will never be known if this is turned off.
 
 
 
+config.vote.disable = <bool> [0 - 1]
+
+This disables voting. This variable is simply intended to set a default "0" value for all
+vote types to be enabled. (see: config.vote.$type in the optional variables section).
+
+
 
 OPTIONAL VARIABLES:
 
@@ -250,11 +256,18 @@ by default at the first vote and thus remain unset.
 
 
 
-config.vote.*.disable = <bool> [0 - 1]
+config.vote.$type.*
 
-For any Vote type, setting this to 1 will disable any votes of that type. For example,
-config.vote.ban.disable = 1 will disable the ban module. Note that if you set
-config.vote.config.disable = 1, you will not be able to vote on changing the config.
+For any vote type (ex: kick) a complete copy of the config.vote configuration can exist
+that will apply to only this vote type. Any variable set in the type's namespace gets
+imported up into the global config.vote namespace during votes of that type.
+
+Examples:
+config.vote.duration = 20              : Sets the default duration of votes to 20 seconds.
+config.vote.opine.duration = 60        : Sets the duration only of opine votes to 60 seconds.
+config.vote.ban.disable = 1            : Disables the ban module.
+
+When you erase a vote type-specific variable it falls back on the global default.
 
 
 
@@ -272,6 +285,8 @@ otherwise they are PM'ed to the user.
 
 
 
-config.vote.kick.ignore_away = <bool> [0 - 1]
+config.vote.shield.when_away = <bool> [0 - 1]
 
-Feature requested by Luke-Jr to allow users who set /away to escape a kick.
+Feature requested by Luke-Jr to allow users who set /away to escape being targets.
+
+Disabled by default.
