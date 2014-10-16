@@ -47,7 +47,7 @@ class Vote
 	auto &get_veto() const                      { return veto;                                      }
 	auto num_vetoes() const                     { return veto.size();                               }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
-	auto remaining() const                      { return cfg.get<uint>("duration") - elapsed();     }
+	auto remaining() const                      { return cfg.get<time_t>("duration") - elapsed();   }
 	auto tally() const -> std::pair<uint,uint>  { return {yea.size(),nay.size()};                   }
 	auto total() const                          { return yea.size() + nay.size();                   }
 	bool disabled() const                       { return cfg.get<bool>("disable");                  }
