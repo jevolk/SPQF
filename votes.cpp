@@ -134,8 +134,8 @@ void vote::Kick::passed()
 	const Adoc &cfg = get_cfg();
 	const User &user = get_users().get(get_issue());
 
-	if(cfg["kick.ignore_away"] == "1" && user.is_away())
-		throw Exception("The user is currently away and config.vote.kick.ignore_away == 1");
+	if(cfg["shield.when_away"] == "1" && user.is_away())
+		throw Exception("The user is currently away and shield.when_away == 1");
 
 	chan.kick(user,"Voted off the island");
 }
@@ -216,25 +216,23 @@ void vote::Config::starting()
 		     << BOLD << "and all child variables" << OFF << "."
 		     << flush;
 
-	// Hack in manual type checking on a per-key basis
-	if(!val.empty()) switch(hash(key))
+	// Hacking manual type checking here  //TODO: key typing
+	if(!val.empty())
 	{
-		case hash("config.vote.enfranchise.access"):
-		case hash("config.vote.qualify.access"):
-		case hash("config.vote.speaker.access"):
-		case hash("config.vote.speaker.mode"):
-		case hash("config.vote.veto.access"):
-		case hash("config.vote.veto.mode"):
+		// Key conforms to types that want mode strings
+		if(key.find(".access") != std::string::npos ||
+		   key.find(".mode") != std::string::npos)
+		{
+
 			if(!std::all_of(val.begin(),val.end(),[&](auto&& c){ return std::isalpha(c,locale); }))
 				throw Exception("Must use letters only for value for this key.");
 
-			break;
+		} else {
 
-		default:
 			if(!std::all_of(val.begin(),val.end(),[&](auto&& c){ return std::isdigit(c,locale); }))
 				throw Exception("Must use a numerical value for this key.");
 
-			break;
+		}
 	}
 
 	chan << "Note: "

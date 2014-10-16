@@ -17,7 +17,8 @@ using namespace irc::bot;
 #include "respub.h"
 
 
-Vote::Vote(const id_t &id,
+Vote::Vote(const std::string &type,
+           const id_t &id,
            const Sess &sess,
            Chans &chans,
            Users &users,
@@ -31,15 +32,43 @@ chans(chans),
 users(users),
 logs(logs),
 id(id),
-cfg([&]() -> Adoc
+cfg([&]
 {
-	if(cfg.empty())
-		return DefaultConfig::configure(chan);
-
-	DefaultConfig::configure(cfg);
-	return cfg;
+	// Default config
+	Adoc ret;
+	ret.put("disable",0);
+	ret.put("max_active",16);
+	ret.put("max_per_user",1);
+	ret.put("min_ballots",1);
+	ret.put("min_yea",1);
+	ret.put("turnout",0.00);
+	ret.put("duration",30);
+	ret.put("plurality",0.51);
+	ret.put("speaker.access","");
+	ret.put("speaker.mode","");
+	ret.put("veto.access","");
+	ret.put("veto.mode","v");
+	ret.put("veto.min",1);
+	ret.put("veto.quick",1);
+	ret.put("enfranchise.age",1800);
+	ret.put("enfranchise.lines",0);
+	ret.put("enfranchise.access","");
+	ret.put("qualify.age",900);
+	ret.put("qualify.lines",0);
+	ret.put("qualify.access","");
+	ret.put("ballot.ack_chan",0);
+	ret.put("ballot.ack_priv",1);
+	ret.put("ballot.rej_chan",0);
+	ret.put("ballot.rej_priv",1);
+	ret.put("result.ack_chan",1);
+	ret.merge(chan.get("config.vote"));         // Overwrite defaults with saved config
+	chan.set("config.vote",ret);                // Write back combined result to db
+	ret.merge(ret.get_child(type,Adoc()));      // Import type-specifc overrides up to main
+	ret.merge(cfg);                             // Import instance-specific overrides to main
+	return ret;
 }()),
 began(time(NULL)),
+type(type),
 chan(chan.get_name()),
 nick(user.get_nick()),
 acct(user.get_acct()),
@@ -383,16 +412,6 @@ const
 }
 
 
-bool Vote::disabled()
-const
-{
-	if(!cfg.has_child(type()))
-		return false;
-
-	return cfg.get_child(type()).get("disable","0") == "1";
-}
-
-
 Locutor &operator<<(Locutor &locutor,
                     const Vote &vote)
 {
@@ -400,83 +419,4 @@ Locutor &operator<<(Locutor &locutor,
 
 	locutor << "#" << BOLD << vote.get_id() << OFF;
 	return locutor;
-}
-
-
-
-DefaultConfig::DefaultConfig()
-{
-	// config.vote
-	put("max_active",16);
-	put("max_per_user",1);
-	put("min_ballots",1);
-	put("min_yea",1);
-	put("turnout",0.00);
-	put("duration",30);
-	put("plurality",0.51);
-	put("speaker.access","");
-	put("speaker.mode","");
-	put("veto.access","");
-	put("veto.mode","v");
-	put("veto.min",1);
-	put("veto.quick",1);
-	put("enfranchise.age",1800);
-	put("enfranchise.lines",0);
-	put("enfranchise.access","");
-	put("qualify.age",900);
-	put("qualify.lines",0);
-	put("qualify.access","");
-	put("ballot.ack_chan",0);
-	put("ballot.ack_priv",1);
-	put("ballot.rej_chan",0);
-	put("ballot.rej_priv",1);
-	put("result.ack_chan",1);
-}
-
-
-Adoc DefaultConfig::configure(Chan &chan)
-{
-	Adoc cfg = chan.get("config.vote");
-
-	if(configure(cfg))
-	{
-		Adoc chan_cfg;
-		chan_cfg.put_child("config.vote",cfg);
-		chan.set(chan_cfg);
-	}
-
-	return cfg;
-}
-
-
-uint DefaultConfig::configure(Adoc &cfg)
-{
-	static const DefaultConfig default_config;
-
-	const std::function<size_t (const Adoc &def, Adoc &cfg)> recurse = [&]
-	(const Adoc &def, Adoc &cfg) -> uint
-	{
-		uint ret = 0;
-		for(const auto &pair : def)
-		{
-			const std::string &key = pair.first;
-			const auto &subtree = pair.second;
-
-			if(!subtree.empty())
-			{
-				Adoc sub = cfg.get_child(key,Adoc());
-				ret += recurse(subtree,sub);
-				cfg.put_child(key,sub);
-			}
-			else if(!cfg.has_child(key))
-			{
-				cfg.put_child(key,subtree);
-				ret++;
-			}
-		}
-
-		return ret;
-	};
-
-	return recurse(default_config,cfg);
 }

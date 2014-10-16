@@ -6,15 +6,6 @@
  */
 
 
-struct DefaultConfig : Adoc
-{
-	static uint configure(Adoc &doc);
-	static Adoc configure(Chan &chan);
-
-	DefaultConfig();
-};
-
-
 class Vote
 {
 	const Sess &sess;
@@ -25,6 +16,7 @@ class Vote
 	uint id;                                    // Index id of this vote
 	Adoc cfg;                                   // Configuration of this vote
 	time_t began;                               // Time vote was constructed
+	std::string type;                           // Type name of this vote
 	std::string chan;                           // Name of the channel
 	std::string nick;                           // Nick of initiating user (note: don't trust)
 	std::string acct;                           // $a name of initiating user
@@ -39,8 +31,8 @@ class Vote
 	enum Ballot                                 { YEA, NAY,                                         };
 	enum Stat                                   { ADDED, CHANGED,                                   };
 
-	virtual const char *type() const            { return "";                                        }
 	auto &get_id() const                        { return id;                                        }
+	auto &get_type() const                      { return type;                                      }
 	auto &get_cfg() const                       { return cfg;                                       }
 	auto &get_chan_name() const                 { return chan;                                      }
 	auto &get_user_acct() const                 { return acct;                                      }
@@ -58,11 +50,11 @@ class Vote
 	auto remaining() const                      { return cfg.get<uint>("duration") - elapsed();     }
 	auto tally() const -> std::pair<uint,uint>  { return {yea.size(),nay.size()};                   }
 	auto total() const                          { return yea.size() + nay.size();                   }
+	bool disabled() const                       { return cfg.get<bool>("disable");                  }
 	bool interceded() const;
 	uint plurality() const;
 	uint minimum() const;
 	uint required() const;
-	bool disabled() const;
 
 	friend Locutor &operator<<(Locutor &l, const Vote &v);  // Appends formatted #ID to the stream
 
@@ -111,6 +103,6 @@ class Vote
 	void finish();
 	void cancel();
 
-	Vote(const id_t &id, const Sess &sess, Chans &chans, Users &users, Logs &logs, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
+	Vote(const std::string &type, const id_t &id, const Sess &sess, Chans &chans, Users &users, Logs &logs, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
 	virtual ~Vote() = default;
 };

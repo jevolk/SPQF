@@ -10,8 +10,6 @@ namespace vote
 {
 	class Config : public Vote
 	{
-		const char *type() const    { return "config";   }
-
 		std::string key;
 		std::string val;
 
@@ -24,94 +22,78 @@ namespace vote
 
 	class Mode : public Vote
 	{
-		const char *type() const    { return "mode";     }
-
 		void passed();
 		void starting();
 
 	  public:
-		template<class... Args> Mode(Args&&... args): Vote(std::forward<Args>(args)...) {}
+		template<class... Args> Mode(Args&&... args): Vote("mode",std::forward<Args>(args)...) {}
 	};
 
 	class Kick : public Vote
 	{
-		const char *type() const    { return "kick";     }
-
 		void starting();
 		void passed();
 
 	  public:
-		template<class... Args> Kick(Args&&... args): Vote(std::forward<Args>(args)...) {}
+		template<class... Args> Kick(Args&&... args): Vote("kick",std::forward<Args>(args)...) {}
 	};
 
 	class Invite : public Vote
 	{
-		const char *type() const    { return "invite";   }
-
 		void passed();
 
 	  public:
-		template<class... Args> Invite(Args&&... args): Vote(std::forward<Args>(args)...) {}
+		template<class... Args> Invite(Args&&... args): Vote("invite",std::forward<Args>(args)...) {}
 	};
 
 	class Topic : public Vote
 	{
-		const char *type() const    { return "topic";    }
-
 		void passed();
 
 	  public:
-		template<class... Args> Topic(Args&&... args): Vote(std::forward<Args>(args)...) {}
+		template<class... Args> Topic(Args&&... args): Vote("topic",std::forward<Args>(args)...) {}
 	};
 
 	class Opine : public Vote
 	{
-		const char *type() const    { return "opine";    }
-
 		void passed();
 
 	  public:
-		template<class... Args> Opine(Args&&... args): Vote(std::forward<Args>(args)...) {}
+		template<class... Args> Opine(Args&&... args): Vote("opine",std::forward<Args>(args)...) {}
 	};
 
 	class Ban : public Vote
 	{
-		const char *type() const    { return "ban";      }
-
 		void starting();
 		void passed();
 
 	  public:
-		template<class... Args> Ban(Args&&... args): Vote(std::forward<Args>(args)...) {}
+		template<class... Args> Ban(Args&&... args): Vote("ban",std::forward<Args>(args)...) {}
 	};
 
 	class Quiet : public Vote
 	{
-		const char *type() const    { return "quiet";    }
-
 		void starting();
 		void passed();
 
 	  public:
-		template<class... Args> Quiet(Args&&... args): Vote(std::forward<Args>(args)...) {}
+		template<class... Args> Quiet(Args&&... args): Vote("quiet",std::forward<Args>(args)...) {}
 	};
 
 	class UnQuiet : public Vote
 	{
-		const char *type() const    { return "unquiet";  }
-
 		void starting();
 		void passed();
 
 	  public:
-		template<class... Args> UnQuiet(Args&&... args): Vote(std::forward<Args>(args)...) {}
+		template<class... Args> UnQuiet(Args&&... args): Vote("unquiet",std::forward<Args>(args)...) {}
 	};
 }
 
 
 template<class... Args>
 vote::Config::Config(Args&&... args):
-Vote(std::forward<Args>(args)...)
+Vote("config",std::forward<Args>(args)...)
 {
 	using delim = boost::char_separator<char>;
 
