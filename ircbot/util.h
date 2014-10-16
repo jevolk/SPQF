@@ -174,16 +174,18 @@ class Exception : public std::runtime_error
   public:
 	const int &code() const  { return c; }
 
-	Exception(const int &c, const std::string &what = ""):
-	          std::runtime_error(what), c(c) {}
+	Exception(const int &c, const std::string &what = ""): std::runtime_error(what), c(c) {}
+	Exception(const std::stringstream &what): std::runtime_error(what.str()), c(0) {}
+	Exception(const std::string &what = ""): std::runtime_error(what), c(0) {}
 
-	Exception(const std::string &what = ""):
-	          std::runtime_error(what), c(0) {}
+	template<class T> friend Exception operator<<(Exception &&e, const T &t)
+	{
+		return static_cast<std::stringstream &>(std::stringstream() << e << t);
+	}
 
 	friend std::ostream &operator<<(std::ostream &s, const Exception &e)
 	{
-		s << e.what();
-		return s;
+		return (s << e.what());
 	}
 };
 

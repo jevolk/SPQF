@@ -54,11 +54,7 @@ void Voting::cancel(Vote &vote,
                     const User &user)
 {
 	if(user.get_acct() != vote.get_user_acct())
-	{
-		std::stringstream ss;
-		ss << "You can't cancel a vote by " << vote.get_user_acct() << ".";
-		throw Exception(ss.str());
-	}
+		throw Exception() << "You can't cancel a vote by " << vote.get_user_acct() << ".";
 
 	if(vote.total() > 1)
 		throw Exception("You can't cancel after someone else has voted.");
