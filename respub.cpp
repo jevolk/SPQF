@@ -275,8 +275,30 @@ void ResPublica::handle_cmd(const Msg &msg,
 		case hash("vote"):     handle_vote(msg,user,subtok(toks));     break;
 		case hash("help"):     handle_help(msg,user,subtok(toks));     break;
 		case hash("config"):   handle_config(msg,user,subtok(toks));   break;
+		case hash("whoami"):   handle_whoami(msg,user,subtok(toks));   break;
+		case hash("regroup"):  handle_regroup(msg,user,subtok(toks));  break;
 		default:                                                       break;
 	}
+}
+
+
+void ResPublica::handle_regroup(const Msg &msg,
+                                User &user,
+                                const Tokens &toks)
+{
+	static const time_t limit = 600;
+	if(user.get_val<time_t>("info._fetched_") > time(NULL) - limit)
+		throw Exception("You've done this too much. Try again later.");
+
+	user.info();
+}
+
+
+void ResPublica::handle_whoami(const Msg &msg,
+                               User &user,
+                               const Tokens &toks)
+{
+	user << user.get() << flush;
 }
 
 

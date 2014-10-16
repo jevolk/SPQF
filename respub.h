@@ -30,7 +30,9 @@ class ResPublica : public irc::bot::Bot
 	// Privmsg stack
 	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Vote::Ballot &b);
 	void handle_vote_list(const Msg &m, User &u, const Tokens &t);
-	void handle_config(const Msg &m, User &u, const Tokens &toks);
+	void handle_regroup(const Msg &m, User &u, const Tokens &t);
+	void handle_whoami(const Msg &m, User &u, const Tokens &t);
+	void handle_config(const Msg &m, User &u, const Tokens &t);
 	void handle_vote(const Msg &m, User &u, const Tokens &t);
 	void handle_cmd(const Msg &m, User &u);
 
