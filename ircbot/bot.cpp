@@ -765,7 +765,11 @@ void Bot::handle_cnotice(const Msg &msg)
 		return;
 	}
 
-	Chan &chan = chans.get(msg[CHANNAME]);
+	const Sess &sess = get_sess();
+	const Server &serv = sess.get_server();
+	const bool wch_prefix = serv.has_prefix(msg[CHANNAME].at(0));
+	const auto chname = wch_prefix? msg[CHANNAME].substr(1) : msg[CHANNAME];
+	Chan &chan = chans.get(chname);
 
 	if(msg.from_chanserv())
 	{

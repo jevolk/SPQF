@@ -19,9 +19,56 @@ struct Server
 	std::set<std::string> caps;
 
 	bool has_cap(const std::string &cap) const     { return caps.count(cap);  }
+	char prefix_to_mode(const char &prefix) const;
+	char mode_to_prefix(const char &mode) const;
+	bool has_prefix(const char &prefix) const;
 
 	friend std::ostream &operator<<(std::ostream &s, const Server &srv);
 };
+
+
+inline
+bool Server::has_prefix(const char &prefix)
+const try
+{
+	const std::string &pxs = cfg.at("PREFIX");
+	const std::string prefx = split(pxs,")").second;
+	return prefx.find(prefix) != std::string::npos;
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("PREFIX was not stocked by an ISUPPORT message.");
+}
+
+
+inline
+char Server::mode_to_prefix(const char &prefix)
+const try
+{
+	const std::string &pxs = cfg.at("PREFIX");
+	const std::string modes = between(pxs,"(",")");
+	const std::string prefx = split(pxs,")").second;
+	return prefx.at(modes.find(prefix));
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("No prefix for that mode on this server.");
+}
+
+
+inline
+char Server::prefix_to_mode(const char &mode)
+const try
+{
+	const std::string &pxs = cfg.at("PREFIX");
+	const std::string modes = between(pxs,"(",")");
+	const std::string prefx = split(pxs,")").second;
+	return modes.at(prefx.find(mode));
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("No mode for that prefix on this server.");
+}
 
 
 inline
