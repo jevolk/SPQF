@@ -56,6 +56,7 @@ void NickServ::handle_info(const Capture &msg)
 	Acct acct(get_adb(),name);
 	Adoc info = acct.get("info");
 	info.put("account",primary);
+	info.put("_fetched_",time(NULL));
 
 	auto it = msg.begin();
 	for(++it; it != msg.end(); ++it)
