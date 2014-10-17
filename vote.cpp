@@ -81,6 +81,7 @@ issue(issue)
 
 	// Initiation implies yes vote
 	yea.emplace(get_user_acct());
+	hosts.emplace(user.get_host());
 }
 
 
