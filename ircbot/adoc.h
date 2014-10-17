@@ -14,8 +14,10 @@ struct Adoc : public boost::property_tree::ptree
 	bool has_child(const std::string &key) const         { return count(key) > 0;                   }
 	bool has(const std::string &key) const               { return !get(key,std::string()).empty();  }
 
-	bool remove(const std::string &key);
-	void merge(const Adoc &src);                         // src takes precedence over this
+	template<class T> Adoc &push(const T &val) &;
+	template<class I> Adoc &push(const I &beg, const I &end) &;
+	bool remove(const std::string &key) &;
+	Adoc &merge(const Adoc &src) &;                         // src takes precedence over this
 
 	Adoc(const std::string &str = "{}");
 	Adoc(boost::property_tree::ptree &&p):               boost::property_tree::ptree(std::move(p)) {}
@@ -45,7 +47,8 @@ catch(const boost::property_tree::json_parser::json_parser_error &e)
 
 
 inline
-void Adoc::merge(const Adoc &src)
+Adoc &Adoc::merge(const Adoc &src)
+&
 {
 	const std::function<void (const Adoc &src, Adoc &dst)> recurse = [&recurse]
 	(const Adoc &src, Adoc &dst)
@@ -66,11 +69,13 @@ void Adoc::merge(const Adoc &src)
 	};
 
 	recurse(src,*this);
+	return *this;
 }
 
 
 inline
 bool Adoc::remove(const std::string &key)
+&
 {
 	const size_t pos = key.rfind(".");
 	if(pos == std::string::npos)
@@ -89,6 +94,32 @@ bool Adoc::remove(const std::string &key)
 		erase(path);
 
 	return ret;
+}
+
+
+template<class I>
+Adoc &Adoc::push(const I &beg,
+                 const I &end)
+&
+{
+	std::for_each(beg,end,[this]
+	(const auto &val)
+	{
+		this->push(val);
+	});
+
+	return *this;
+}
+
+
+template<class T>
+Adoc &Adoc::push(const T &val)
+&
+{
+	Adoc tmp;
+	tmp.put("",val);
+	push_back({"",tmp});
+	return *this;
 }
 
 

@@ -86,37 +86,11 @@ issue(issue)
 
 void Vote::serialize()
 {
-	Adoc yea;
-	for(const auto &acct : this->yea)
-	{
-		Adoc d;
-		d.put("",acct);
-		yea.push_back({"",d});
-	}
-
-	Adoc nay;
-	for(const auto &acct : this->nay)
-	{
-		Adoc d;
-		d.put("",acct);
-		nay.push_back({"",d});
-	}
-
-	Adoc veto;
-	for(const auto &acct : this->veto)
-	{
-		Adoc d;
-		d.put("",acct);
-		veto.push_back({"",d});
-	}
-
-	Adoc hosts;
-	for(const auto &host : this->hosts)
-	{
-		Adoc d;
-		d.put("",host);
-		hosts.push_back({"",d});
-	}
+	Adoc yea, nay, veto, hosts;
+	yea.push(this->yea.begin(),this->yea.end());
+	nay.push(this->nay.begin(),this->nay.end());
+	veto.push(this->veto.begin(),this->veto.end());
+	hosts.push(this->hosts.begin(),this->hosts.end());
 
 	Adoc doc;
 	doc.put("id",get_id());
