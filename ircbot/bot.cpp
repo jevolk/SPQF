@@ -157,6 +157,7 @@ try
 		case LIBIRC_RFC_ERR_NOSUCHNICK:           handle_nosuchnick(msg);              return;
 		case 714     /* ERR_ALREADYONCHAN */:     handle_alreadyonchan(msg);           return;
 		case LIBIRC_RFC_ERR_USERONCHANNEL:        handle_useronchannel(msg);           return;
+		case LIBIRC_RFC_ERR_USERNOTINCHANNEL:     handle_usernotinchannel(msg);        return;
 		case LIBIRC_RFC_ERR_NICKNAMEINUSE:        handle_nicknameinuse(msg);           return;
 		case LIBIRC_RFC_ERR_UNKNOWNMODE:          handle_unknownmode(msg);             return;
 		case LIBIRC_RFC_ERR_CHANOPRIVSNEEDED:     handle_chanoprivsneeded(msg);        return;
@@ -1018,6 +1019,15 @@ void Bot::handle_useronchannel(const Msg &msg)
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
 	chan << "It seems " << msg[NICKNAME] << " " << msg[REASON] << "." << Chan::flush;
+}
+
+
+void Bot::handle_usernotinchannel(const Msg &msg)
+{
+	using namespace fmt::USERNOTINCHANNEL;
+
+	log_handle(msg,"USERNOTINCHAN");
+
 }
 
 
