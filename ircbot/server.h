@@ -18,13 +18,26 @@ struct Server
 	std::map<std::string,std::string> cfg;
 	std::set<std::string> caps;
 
-	bool has_cap(const std::string &cap) const     { return caps.count(cap);  }
+	bool has_cap(const std::string &cap) const      { return caps.count(cap);  }
+	bool has_chantype(const char &prefix) const;
 	char prefix_to_mode(const char &prefix) const;
 	char mode_to_prefix(const char &mode) const;
 	bool has_prefix(const char &prefix) const;
 
 	friend std::ostream &operator<<(std::ostream &s, const Server &srv);
 };
+
+
+inline
+bool Server::has_chantype(const char &prefix)
+const try
+{
+	return cfg.at("CHANTYPES").find(prefix) != std::string::npos;
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("CHANTYPES was not stocked by an ISUPPORT message.");
+}
 
 
 inline
