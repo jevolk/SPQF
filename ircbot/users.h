@@ -10,15 +10,15 @@ class Users
 {
 	Adb &adb;
 	Sess &sess;
-	Service *ns;
+	Service *nickserv;
 
-	std::unordered_map<std::string, std::unique_ptr<User>> users;
+	std::unordered_map<std::string, User> users;
 
   public:
 	// Observers
 	auto &get_adb() const                                { return adb;                        }
 	auto &get_sess() const                               { return sess;                       }
-	auto &get_ns() const                                 { return *ns;                        }
+	auto &get_ns() const                                 { return *nickserv;                  }
 
 	const User &get(const std::string &nick) const;
 	bool has(const std::string &nick) const              { return users.count(nick);          }
@@ -35,10 +35,10 @@ class Users
 	bool del(const User &user);
 
 	// We construct before NickServ; Bot sets this
-	void set_service(Service &ns)                        { this->ns = &ns;                    }
+	void set_service(Service &nickserv)                  { this->nickserv = &nickserv;        }
 
-	Users(Adb &adb, Sess &sess, Service *const &ns = nullptr):
-	      adb(adb), sess(sess), ns(ns) {}
+	Users(Adb &adb, Sess &sess, Service *const &nickserv = nullptr):
+	      adb(adb), sess(sess), nickserv(nickserv) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const Users &u);
 };
@@ -55,9 +55,10 @@ bool Users::del(const User &user)
 inline
 User &Users::add(const std::string &nick)
 {
-	std::unique_ptr<User> user(new User(adb,sess,*ns,nick));
-	const auto &iit = users.emplace(nick,std::move(user));
-	return *iit.first->second;
+	const auto &iit = users.emplace(std::piecewise_construct,
+	                                std::forward_as_tuple(nick),
+	                                std::forward_as_tuple(adb,sess,*nickserv,nick));
+	return iit.first->second;
 }
 
 
@@ -65,7 +66,7 @@ inline
 User &Users::get(const std::string &nick)
 try
 {
-	return *users.at(nick);
+	return users.at(nick);
 }
 catch(const std::out_of_range &e)
 {
@@ -77,10 +78,11 @@ inline
 void Users::rename(const std::string &old_nick,
                    const std::string &new_nick)
 {
-	auto user = std::move(users.at(old_nick));
+	User &old_user = users.at(old_nick);
+	User tmp_user = std::move(old_user);
+	tmp_user.set_nick(new_nick);
 	users.erase(old_nick);
-	user->set_nick(new_nick);
-	users.emplace(new_nick,std::move(user));
+	users.emplace(new_nick,std::move(tmp_user));
 }
 
 
@@ -88,7 +90,7 @@ inline
 const User &Users::get(const std::string &nick)
 const try
 {
-	return *users.at(nick);
+	return users.at(nick);
 }
 catch(const std::out_of_range &e)
 {
@@ -100,7 +102,7 @@ inline
 void Users::for_each(const std::function<void (User &)> &closure)
 {
 	for(auto &userp : users)
-		closure(*userp.second);
+		closure(userp.second);
 }
 
 
@@ -109,7 +111,7 @@ void Users::for_each(const std::function<void (const User &)> &closure)
 const
 {
 	for(const auto &userp : users)
-		closure(*userp.second);
+		closure(userp.second);
 }
 
 
@@ -119,10 +121,7 @@ std::ostream &operator<<(std::ostream &s,
 {
 	s << "Users(" << u.num() << ")" << std::endl;
 	for(const auto &userp : u.users)
-	{
-		const auto &user = *userp.second;
-		s << user << std::endl;
-	}
+		s << userp.second << std::endl;
 
 	return s;
 }

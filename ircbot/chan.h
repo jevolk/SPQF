@@ -11,7 +11,7 @@ class Chan : public Locutor,
 {
 	template<class Mask> using Masks = std::set<Mask>;
 
-	Service &chanserv;
+	Service *chanserv;
 	Log _log;
 
 	// State
@@ -35,7 +35,7 @@ class Chan : public Locutor,
 	static Type chan_type(const char &c);
 
 	// Observers
-	auto &get_cs() const                                    { return chanserv;                      }
+	auto &get_cs() const                                    { return *chanserv;                     }
 	auto &get_log() const                                   { return _log;                          }
 	auto &get_name() const                                  { return Locutor::get_target();         }
 	auto &is_joined() const                                 { return joined;                        }
@@ -70,7 +70,7 @@ class Chan : public Locutor,
 	friend class Bot;
 	friend class ChanServ;
 
-	auto &get_cs()                                          { return chanserv;                      }
+	auto &get_cs()                                          { return *chanserv;                     }
 	auto &get_log()                                         { return _log;                          }
 	auto &get_topic()                                       { return _topic;                        }
 
@@ -155,8 +155,8 @@ Chan::Chan(Adb &adb,
            Service &chanserv,
            const std::string &name):
 Locutor(sess,name),
-Acct(adb,Locutor::get_target()),
-chanserv(chanserv),
+Acct(adb,&Locutor::get_target()),
+chanserv(&chanserv),
 _log(sess,name),
 joined(false)
 {
@@ -486,9 +486,9 @@ void Chan::csclear(const Mode &mode)
 inline
 void Chan::csinfo()
 {
-	Service &out = get_cs();
-	out << "info " << get_name() << flush;
-	out.next_terminator("*** End of Info ***");
+	Service &cs = get_cs();
+	cs << "info " << get_name() << flush;
+	cs.next_terminator("*** End of Info ***");
 }
 
 
@@ -503,37 +503,37 @@ void Chan::names()
 inline
 void Chan::flagslist()
 {
-	Service &out = get_cs();
-	out << "flags " << get_name() << flush;
+	Service &cs = get_cs();
+	cs << "flags " << get_name() << flush;
 
 	std::stringstream ss;
 	ss << "End of " << get_name() << " FLAGS listing.";
-	out.next_terminator(ss.str());
+	cs.next_terminator(ss.str());
 }
 
 
 inline
 void Chan::accesslist()
 {
-	Service &out = get_cs();
-	out << "access " << get_name() << " list" << flush;
+	Service &cs = get_cs();
+	cs << "access " << get_name() << " list" << flush;
 
 	std::stringstream ss;
 	ss << "End of " << get_name() << " FLAGS listing.";
-	out.next_terminator(ss.str());
+	cs.next_terminator(ss.str());
 }
 
 
 inline
 void Chan::akicklist()
 {
-	Service &out = get_cs();
-	out << "akick " << get_name() << " list" << flush;
+	Service &cs = get_cs();
+	cs << "akick " << get_name() << " list" << flush;
 
 	// This is the best we can do right now
 	std::stringstream ss;
 	ss << "Total of ";
-	out.next_terminator(ss.str());
+	cs.next_terminator(ss.str());
 }
 
 

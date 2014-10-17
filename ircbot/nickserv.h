@@ -53,7 +53,7 @@ void NickServ::handle_info(const Capture &msg)
 	const auto &name = tolower(tok.at(2));
 	const auto &primary = tolower(tok.at(4).substr(0,tok.at(4).size()-2));  // Chop off "):]"
 
-	Acct acct(get_adb(),name);
+	Acct acct(get_adb(),&name);
 	Adoc info = acct.get("info");
 	info.put("account",primary);
 	info.put("_fetched_",time(NULL));

@@ -9,7 +9,7 @@
 class User : public Locutor,
              public Acct
 {
-	Service *ns;
+	Service *nickserv;
 	// nick -> Locutor::target                         // who 'n'
 	std::string host;                                  // who 'h'
 	std::string acct;                                  // who 'a' (account name)
@@ -22,14 +22,14 @@ class User : public Locutor,
 	friend class Chan;
 	size_t chans;
 
-	auto &get_ns()                                     { return *ns;                                 }
+	auto &get_ns()                                     { return *nickserv;                           }
 
   public:
 	static constexpr int WHO_RECIPE                    = 0;
 	static constexpr const char *const WHO_FORMAT      = "%tnha,0";       // ID must match WHO_RECIPE
 
 	// Observers
-	auto &get_ns() const                               { return *ns;                                 }
+	auto &get_ns() const                               { return *nickserv;                           }
 	auto &get_nick() const                             { return Locutor::get_target();               }
 	auto &get_host() const                             { return host;                                }
 	auto &get_acct() const                             { return acct;                                }
@@ -70,11 +70,11 @@ class User : public Locutor,
 inline
 User::User(Adb &adb,
            Sess &sess,
-           Service &ns,
+           Service &nickserv,
            const std::string &nick):
 Locutor(sess,nick),
-Acct(adb,this->acct),
-ns(&ns),
+Acct(adb,&this->acct),
+nickserv(&nickserv),
 secure(false),
 signon(0),
 idle(0),

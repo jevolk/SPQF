@@ -63,7 +63,7 @@ int main(int argc, char **argv) try
 		std::cin.get();
 	}
 
-	Acct acct(adb,dockey);
+	Acct acct(adb,&dockey);
 
 	if(key.empty() && eq.empty() && val.empty())
 	{
