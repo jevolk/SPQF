@@ -102,6 +102,11 @@ void Voting::poll_votes()
 void Voting::call_finish(Vote &vote)
 noexcept try
 {
+	const scope s([&]
+	{
+		vote.serialize();
+	});
+
 	vote.finish();
 }
 catch(const std::exception &e)
