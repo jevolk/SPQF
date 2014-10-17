@@ -8,7 +8,7 @@
 
 namespace colors
 {
-	enum Mode
+	enum Mode : unsigned char
 	{
 		OFF           = 0x0f,
 		BOLD          = 0x02,
@@ -48,20 +48,32 @@ class Locutor
 		ACTION,
 	};
 
+	enum MethodEx
+	{
+		NONE,
+		CMSG,                                           // automatic when:  user << chan << ""
+		WALLCHOPS,
+		WALLVOICE,
+	};
+
 	static constexpr struct flush_t {} flush {};        // Stream is flushed (sent) to channel
 	static const Method DEFAULT_METHOD = NOTICE;
+	static const MethodEx DEFAULT_METHODEX = NONE;
 
   private:
 	Sess *sess;
 	std::string target;                                 // Target entity name
 	std::ostringstream sendq;                           // Stream buffer for stream operators
 	Method meth;                                        // Stream state for current method
+	MethodEx methex;                                    // Stream state for extension to method
 	colors::FG fg;                                      // Stream state for foreground color
 
   public:
 	auto &get_sess() const                              { return *sess;                              }
 	auto &get_target() const                            { return target;                             }
 	auto &get_sendq() const                             { return sendq;                              }
+	auto &get_meth() const                              { return meth;                               }
+	auto &get_methex() const                            { return methex;                             }
 
   protected:
 	auto &get_sess()                                    { return *sess;                              }
@@ -69,26 +81,25 @@ class Locutor
 	void set_target(const std::string &target)          { this->target = target;                     }
 	void clear_sendq();
 
-	// [SEND] Raw interface                             // Should attempt to specify in a subclasses
-
   public:
-	// [SEND] Controls / Utils
-	void mode(const std::string &mode);                 // Raw mode command
-	void whois();                                       // Sends whois query
-	void mode();                                        // Sends mode query
-
 	// [SEND] string interface
+	void privmsg(const std::string &msg);
 	void notice(const std::string &msg);
-	void msg(const std::string &msg);
 	void me(const std::string &msg);
 
 	// [SEND] stream interface                          // Defaults back to DEFAULT_METHOD after flush
 	virtual Locutor &operator<<(const flush_t f);       // Flush stream to endpoint
 	Locutor &operator<<(const Method &method);          // Set method for this message
+	Locutor &operator<<(const MethodEx &methodex);      // Set method extension for this message
 	Locutor &operator<<(const colors::FG &fg);          // Insert foreground color
 	Locutor &operator<<(const colors::BG &fg);          // Insert background color
 	Locutor &operator<<(const colors::Mode &mode);      // Color controls
 	template<class T> Locutor &operator<<(const T &t);  // Append data to sendq stream
+
+	// [SEND] Controls / Utils
+	void mode(const std::string &mode);                 // Raw mode command
+	void whois();                                       // Sends whois query
+	void mode();                                        // Sends mode query
 
 	Locutor(Sess &sess, const std::string &target);
 	Locutor(Locutor &&other);                           // Must be defined due to bug in gnu libstdc++ for now
@@ -103,6 +114,7 @@ Locutor::Locutor(Sess &sess,
 sess(&sess),
 target(target),
 meth(DEFAULT_METHOD),
+methex(DEFAULT_METHODEX),
 fg(colors::FG::BLACK)
 {
 
@@ -115,6 +127,7 @@ sess(std::move(o.sess)),
 target(std::move(o.target)),
 sendq(o.sendq.str()),                                   // GNU libstdc++ oversight requires this
 meth(std::move(o.meth)),
+methex(std::move(o.methex)),
 fg(std::move(o.fg))
 {
 
@@ -128,6 +141,7 @@ Locutor &Locutor::operator=(Locutor &&o) &
 	target = std::move(o.target);
 	sendq.str(o.sendq.str());                           // GNU libstdc++ oversight requires this
 	meth = std::move(o.meth);
+	methex = std::move(o.methex);
 	fg = std::move(o.fg);
 	return *this;
 }
@@ -176,20 +190,30 @@ Locutor &Locutor::operator<<(const Method &meth)
 
 
 inline
+Locutor &Locutor::operator<<(const MethodEx &methex)
+{
+	this->methex = methex;
+	return *this;
+}
+
+
+inline
 Locutor &Locutor::operator<<(const flush_t f)
 {
 	const scope reset_stream([&]
 	{
 		clear_sendq();
 		meth = DEFAULT_METHOD;
+		methex = DEFAULT_METHODEX;
 	});
 
 	switch(meth)
 	{
-		case ACTION:    me(sendq.str());         break;
-		case NOTICE:    notice(sendq.str());     break;
-		case PRIVMSG:
-		default:        msg(sendq.str());        break;
+		case ACTION:     me(sendq.str());             break;
+		case NOTICE:     notice(sendq.str());         break;
+		case PRIVMSG:    privmsg(sendq.str());        break;
+		default:
+			throw Exception("Unsupported locution method");
 	}
 
 	return *this;
@@ -206,20 +230,86 @@ void Locutor::me(const std::string &text)
 
 
 inline
-void Locutor::msg(const std::string &text)
+void Locutor::notice(const std::string &text)
 {
 	Sess &sess = get_sess();
-	for(const std::string &token : tokens(text,"\n"))
-		sess.call(irc_cmd_msg,get_target().c_str(),token.c_str());
+	const auto toks = tokens(text,"\n");
+
+	switch(methex)
+	{
+		case CMSG:
+		{
+			const auto &chan = toks.at(0);
+			for(auto it = toks.begin()+1; it != toks.end(); ++it)
+				sess.quote("CPRIVMSG %s %s :%s",
+				           get_target().c_str(),
+				           chan.c_str(),
+				           it->c_str());
+			break;
+		}
+
+		case WALLCHOPS:
+		case WALLVOICE:
+		{
+			for(const std::string &token : toks)
+				sess.quote("NOTICE %c%s :%s",
+				           methex == WALLCHOPS? '@' : '+',
+				           get_target().c_str(),
+				           token.c_str());
+			break;
+		}
+
+		case NONE:
+		default:
+		{
+			for(const std::string &token : toks)
+				sess.call(irc_cmd_notice,get_target().c_str(),token.c_str());
+
+			break;
+		}
+	}
 }
 
 
 inline
-void Locutor::notice(const std::string &text)
+void Locutor::privmsg(const std::string &text)
 {
 	Sess &sess = get_sess();
-	for(const std::string &token : tokens(text,"\n"))
-		sess.call(irc_cmd_notice,get_target().c_str(),token.c_str());
+	const auto toks = tokens(text,"\n");
+
+	switch(methex)
+	{
+		case CMSG:
+		{
+			const auto &chan = toks.at(0);
+			for(auto it = toks.begin()+1; it != toks.end(); ++it)
+				sess.quote("CPRIVMSG %s %s :%s",
+				           get_target().c_str(),
+				           chan.c_str(),
+				           it->c_str());
+			break;
+		}
+
+		case WALLCHOPS:
+		case WALLVOICE:
+		{
+			for(const std::string &token : toks)
+				sess.quote("PRIVMSG %c%s :%s",
+				           methex == WALLCHOPS? '@' : '+',
+				           get_target().c_str(),
+				           token.c_str());
+			break;
+		}
+
+		case NONE:
+		default:
+		{
+			for(const std::string &token : toks)
+				sess.call(irc_cmd_msg,get_target().c_str(),token.c_str());
+
+			break;
+		}
+	}
 }
 
 

@@ -73,11 +73,11 @@ try
 }
 catch(const Exception &e)
 {
-	user << "Failed: " << e << flush;
+	user << chan << "Failed: " << e << flush;
 }
 catch(const std::out_of_range &e)
 {
-	user << "You did not supply required arguments. Use the help command." << flush;
+	user << chan << "You did not supply required arguments. Use the help command." << flush;
 }
 
 

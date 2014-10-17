@@ -6,10 +6,16 @@
  */
 
 
+// Forward declaration of Chan is necessary to disambiguate the stream
+// operator indicating CNOTICE/CPRIVMSG. Chan is immediately reduced to a Locutor.
+class Chan;
+
+
 class User : public Locutor,
              public Acct
 {
 	Service *nickserv;
+
 	// nick -> Locutor::target                         // who 'n'
 	std::string host;                                  // who 'h'
 	std::string acct;                                  // who 'a' (account name)
@@ -45,6 +51,9 @@ class User : public Locutor,
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
 	bool is_myself(const Mask &mask) const;            // Test if mask can match us
 
+	bool operator<(const User &o) const                { return get_nick() < o.get_nick();           }
+	bool operator==(const User &o) const               { return get_nick() == o.get_nick();          }
+
 	// [RECV] Handlers may call to update state
 	void set_nick(const std::string &nick)             { Locutor::set_target(nick);                  }
 	void set_acct(const std::string &acct)             { this->acct = tolower(acct);                 }
@@ -54,14 +63,14 @@ class User : public Locutor,
 	void set_idle(const time_t &idle)                  { this->idle = idle;                          }
 	void set_away(const bool &away)                    { this->away = away;                          }
 
+	// Sets up stream for CNOTICE/CPRIVMSG to channel
+	friend User &operator<<(User &user, Chan &chan);
+
 	// [SEND] Controls
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default
 	void info();                                       // Update acct["info"] from nickserv
 
 	User(Adb &adb, Sess &sess, Service &ns, const std::string &nick);
-
-	bool operator<(const User &o) const                { return get_nick() < o.get_nick();           }
-	bool operator==(const User &o) const               { return get_nick() == o.get_nick();          }
 
 	friend std::ostream &operator<<(std::ostream &s, const User &u);
 };
@@ -100,6 +109,27 @@ void User::who(const std::string &flags)
 {
 	Sess &sess = get_sess();
 	sess.quote("who %s %s",get_nick().c_str(),flags.c_str());
+}
+
+
+inline
+User &operator<<(User &user,
+                 Chan &chan)
+{
+	const Sess &sess = user.get_sess();
+	const Server &serv = sess.get_server();
+
+	Locutor &cloc = reinterpret_cast<Locutor &>(chan);
+	const char &prefix = cloc.get_target().at(0);
+	if(!serv.has_chantype(prefix))
+		throw Exception("Can't append non-channel to user stream.");
+
+	if(!user.get_sendq().str().empty())
+		throw Exception("Must append channel to user stream before all other data.");
+
+	user << Locutor::CMSG;
+	user << cloc.get_target() << "\n";
+	return user;
 }
 
 
