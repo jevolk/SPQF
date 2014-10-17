@@ -6,16 +6,16 @@
  */
 
 
-class Vote
+class Vote : protected Acct
 {
-	const Sess &sess;
-	Chans &chans;
-	Users &users;
-	Logs &logs;
+	Sess *sess;
+	Chans *chans;
+	Users *users;
+	Logs *logs;
 
-	uint id;                                    // Index id of this vote
 	Adoc cfg;                                   // Configuration of this vote
 	time_t began;                               // Time vote was constructed
+	std::string id;                             // Index ID of vote (stored as string for Acct db)
 	std::string type;                           // Type name of this vote
 	std::string chan;                           // Name of the channel
 	std::string nick;                           // Nick of initiating user (note: don't trust)
@@ -27,18 +27,18 @@ class Vote
 	std::set<std::string> hosts;                // Hostnames that have voted
 
   public:
-	using id_t = decltype(id);
+	using id_t = uint;
 	enum Ballot                                 { YEA, NAY,                                         };
 	enum Stat                                   { ADDED, CHANGED,                                   };
 
-	auto &get_id() const                        { return id;                                        }
+	auto get_id() const                         { return boost::lexical_cast<id_t>(id);             }
 	auto &get_type() const                      { return type;                                      }
 	auto &get_cfg() const                       { return cfg;                                       }
 	auto &get_chan_name() const                 { return chan;                                      }
 	auto &get_user_acct() const                 { return acct;                                      }
 	auto &get_user_nick() const                 { return nick;                                      }
-	auto &get_chan() const                      { return chans.get(get_chan_name());                }
-	auto &get_user() const                      { return users.get(get_user_nick());                }
+	auto &get_chan() const                      { return chans->get(get_chan_name());               }
+	auto &get_user() const                      { return users->get(get_user_nick());               }
 	auto &get_began() const                     { return began;                                     }
 	auto &get_issue() const                     { return issue;                                     }
 	auto &get_yea() const                       { return yea;                                       }
@@ -78,10 +78,15 @@ class Vote
   protected:
 	static constexpr auto &flush = Locutor::flush;
 
-	auto &get_sess() const                      { return sess;                                      }
-	auto &get_users()                           { return users;                                     }
-	auto &get_chans()                           { return chans;                                     }
-	auto &get_logs()                            { return logs;                                      }
+	auto &get_sess() const                      { return *sess;                                     }
+	auto &get_users() const                     { return *users;                                    }
+	auto &get_chans() const                     { return *chans;                                    }
+	auto &get_logs() const                      { return *logs;                                     }
+
+	auto &get_sess()                            { return *sess;                                     }
+	auto &get_users()                           { return *users;                                    }
+	auto &get_chans()                           { return *chans;                                    }
+	auto &get_logs()                            { return *logs;                                     }
 
 	// Subclass throws from these for abortions
 	virtual void passed() {}
@@ -91,7 +96,6 @@ class Vote
 	virtual void proffer(const Ballot &b, User &user) {}
 	virtual void starting() {}
 
-  private:
 	Stat cast(const Ballot &ballot, User &u);
 
   public:
@@ -103,6 +107,17 @@ class Vote
 	void finish();
 	void cancel();
 
-	Vote(const std::string &type, const id_t &id, const Sess &sess, Chans &chans, Users &users, Logs &logs, Chan &chan, User &user, const std::string &issue, Adoc cfg = {});
+	Vote(const std::string &type,
+	     const id_t &id,
+	     Adb &adb,
+	     Sess &sess,
+	     Chans &chans,
+	     Users &users,
+	     Logs &logs,
+	     Chan &chan,
+	     User &user,
+	     const std::string &issue,
+	     const Adoc &cfg = {});
+
 	virtual ~Vote() = default;
 };

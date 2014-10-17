@@ -10,11 +10,12 @@ class Voting
 {
 	using id_t = Vote::id_t;
 
-	Bot &bot;
+	Adb &adb;
 	Sess &sess;
 	Chans &chans;
 	Users &users;
 	Logs &logs;
+	Bot &bot;
 
 	std::map<id_t, std::unique_ptr<Vote>> votes;     // Standing votes  : id => vote
 	std::multimap<std::string, id_t> chanidx;        // Index of votes  : chan => id
@@ -60,7 +61,7 @@ class Voting
 	void cancel(const id_t &id, const Chan &chan, const User &user);
 	template<class Vote, class... Args> Vote &motion(Args&&... args);
 
-	Voting(Bot &bot, Sess &sess, Chans &chans, Users &users, Logs &logs);
+	Voting(Adb &adb, Sess &sess, Chans &chans, Users &users, Logs &logs, Bot &bot);
 	Voting(const Voting &) = delete;
 	Voting &operator=(const Voting &) = delete;
 	~Voting() noexcept;
@@ -78,10 +79,14 @@ try
 	}
 	while(has_vote(id));
 
-	const auto iit = votes.emplace(id,std::make_unique<Vote>(id,sess,chans,users,logs,std::forward<Args>(args)...));
-	const bool &inserted = iit.second;
-
-	if(inserted) try
+	const auto iit = votes.emplace(id,std::make_unique<Vote>(id,
+	                                                         adb,
+	                                                         sess,
+	                                                         chans,
+	                                                         users,
+	                                                         logs,
+	                                                         std::forward<Args>(args)...));
+	if(iit.second) try
 	{
 		using limits = std::numeric_limits<size_t>;
 
@@ -121,7 +126,5 @@ try
 }
 catch(const Exception &e)
 {
-	std::stringstream ss;
-	ss << "Vote is not valid: " << e;
-	throw Exception(ss.str());
+	throw Exception() << "Vote is not valid: " << e;
 }
