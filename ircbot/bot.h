@@ -165,6 +165,7 @@ class Bot : public std::mutex
 	void handle_cnotice(const Msg &m);
 	void handle_caction(const Msg &m);
 	void handle_chanmsg(const Msg &m);
+	void handle_knock(const Msg &m);
 	void handle_notopic(const Msg &m);
 	void handle_rpltopic(const Msg &m);
 	void handle_topic(const Msg &m);

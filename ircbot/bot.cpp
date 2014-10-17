@@ -149,6 +149,7 @@ try
 		case 733     /* RPL_ENDOFMONLIST */:      handle_endofmonlist(msg);            return;
 		case 281     /* RPL_ACCEPTLIST */:        handle_acceptlist(msg);              return;
 		case 282     /* RPL_ENDOFACCEPT */:       handle_endofaccept(msg);             return;
+		case 710     /* RPL_KNOCK */:             handle_knock(msg);                   return;
 
 		case 734     /* ERR_MONLISTFULL */:       handle_monlistfull(msg);             return;
 		case 456     /* ERR_ACCEPTFULL */:        handle_acceptfull(msg);              return;
@@ -1276,6 +1277,18 @@ void Bot::handle_acceptnot(const Msg &msg)
 void Bot::handle_endofaccept(const Msg &msg)
 {
 	log_handle(msg,"ENDOFACCEPT");
+}
+
+
+void Bot::handle_knock(const Msg &msg)
+{
+	using namespace fmt::KNOCK;
+
+	log_handle(msg,"KNOCK");
+
+	Chans &chans = get_chans();
+	Chan &chan = chans.get(msg[CHANNAME]);
+	chan << "It seems " << msg[MASK] << " " << msg[REASON] << "." << Chan::flush;
 }
 
 

@@ -62,6 +62,7 @@ SPQF_FMT( ACCEPTLIST,        SELFNAME, /* ... */                                
 SPQF_FMT( ACCEPTEXIST,       SELFNAME, NICKNAME, REASON                                                      )
 SPQF_FMT( ACCEPTNOT,         SELFNAME, NICKNAME, REASON                                                      )
 SPQF_FMT( ACCEPTFULL,        SELFNAME                                                                        )
+SPQF_FMT( KNOCK,             CHANNAME, CHANNAM2, MASK,     REASON                                            )
 }
 
 
