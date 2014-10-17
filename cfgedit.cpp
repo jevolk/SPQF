@@ -19,11 +19,12 @@ int main(int argc, char **argv) try
 
 	if(argc - nargs < 2)
 	{
-		printf("Usage: %s [--dbdir=db] <dbkey> [key] [= [val]]\n",argv[0]);
+		printf("Usage: %s [--dbdir=db] <dbkey | *> [key] [= [val]]\n",argv[0]);
 		printf("\t- dbkey is the channel or account name, i.e \"#SPQF\" or foobar\n");
 		printf("\t- key is the fully qualified JSON key, i.e config.vote.duration\n");
 		printf("\t- omitting value after = is a deletion of this key.\n");
-		printf("\t- omitting other arguments prints things.\n");
+		printf("\t- omitting key prints the whole document.\n");
+		printf("\t- using \"*\" as dbkey prints the whole database.\n");
 		return -1;
 	}
 
@@ -49,6 +50,19 @@ int main(int argc, char **argv) try
 		printf("DELETING THE KEY [%s] INSIDE [%s]\n",key.c_str(),dockey.c_str());
 		printf("Press any key to continue or ctrl-c to quit...\n");
 		std::cin.get();
+	}
+
+	if(dockey == "*")
+	{
+		Ldb ldb(id["dbdir"]);
+		Ldb::Iterator it(ldb);
+		while(it([](const std::string &key, const std::string &val)
+		{
+			std::cout << "[" << key << "] => " << std::endl;
+			std::cout << val << std::endl << std::endl;
+		}));
+
+		return 0;
 	}
 
 	Adb adb(id["dbdir"]);
