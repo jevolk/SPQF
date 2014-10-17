@@ -104,7 +104,7 @@ noexcept try
 {
 	const scope s([&]
 	{
-		vote.serialize();
+		vote.save();
 	});
 
 	vote.finish();

@@ -33,6 +33,13 @@ sess(&sess),
 chans(&chans),
 users(&users),
 logs(&logs),
+id(boost::lexical_cast<std::string>(id)),
+type(type),
+chan(chan.get_name()),
+nick(user.get_nick()),
+acct(user.get_acct()),
+issue(issue),
+began(time(NULL)),
 cfg([&]
 {
 	// Default config
@@ -67,14 +74,7 @@ cfg([&]
 	ret.merge(ret.get_child(type,Adoc()));      // Import type-specifc overrides up to main
 	ret.merge(cfg);                             // Import instance-specific overrides to main
 	return ret;
-}()),
-began(time(NULL)),
-id(boost::lexical_cast<std::string>(id)),
-type(type),
-chan(chan.get_name()),
-nick(user.get_nick()),
-acct(user.get_acct()),
-issue(issue)
+}())
 {
 	if(disabled())
 		throw Exception("Votes of this type are disabled by the configuration.");
@@ -85,7 +85,36 @@ issue(issue)
 }
 
 
-void Vote::serialize()
+Vote::Vote(const std::string &id,
+           Adb &adb,
+           Sess *const &sess,
+           Chans *const &chans,
+           Users *const &users,
+           Logs *const &logs):
+Acct(adb,&this->id),
+sess(sess),
+chans(chans),
+users(users),
+logs(logs),
+id(id),
+type(get_val("type")),
+chan(get_val("chan")),
+nick(get_val("nick")),
+acct(get_val("acct")),
+issue(get_val("issue")),
+began(get_val<time_t>("began")),
+cfg(get("cfg")),
+yea(get("yea").into(yea)),
+nay(get("nay").into(nay)),
+veto(get("veto").into(veto)),
+hosts(get("hosts").into(hosts))
+{
+
+}
+
+
+Vote::operator Adoc()
+const
 {
 	Adoc yea, nay, veto, hosts;
 	yea.push(this->yea.begin(),this->yea.end());
@@ -107,7 +136,7 @@ void Vote::serialize()
 	doc.put_child("veto",veto);
 	doc.put_child("hosts",hosts);
 
-	Acct::set(doc);
+	return doc;
 }
 
 
