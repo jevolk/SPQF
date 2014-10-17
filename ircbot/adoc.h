@@ -10,14 +10,19 @@ struct Adoc : public boost::property_tree::ptree
 {
 	operator std::string() const;
 
-	auto operator[](const std::string &key) const        { return get(key,std::string());           }
-	bool has_child(const std::string &key) const         { return count(key) > 0;                   }
 	bool has(const std::string &key) const               { return !get(key,std::string()).empty();  }
+	bool has_child(const std::string &key) const         { return count(key) > 0;                   }
+	auto operator[](const std::string &key) const        { return get(key,std::string());           }
+
+	// Array document utils
+	template<class C> C into() const;
+	template<class C> C into(const C &) const            { return into<C>();                        }
 
 	template<class T> Adoc &push(const T &val) &;
 	template<class I> Adoc &push(const I &beg, const I &end) &;
+
 	bool remove(const std::string &key) &;
-	Adoc &merge(const Adoc &src) &;                         // src takes precedence over this
+	Adoc &merge(const Adoc &src) &;                      // src takes precedence over this
 
 	Adoc(const std::string &str = "{}");
 	Adoc(boost::property_tree::ptree &&p):               boost::property_tree::ptree(std::move(p)) {}
@@ -120,6 +125,21 @@ Adoc &Adoc::push(const T &val)
 	tmp.put("",val);
 	push_back({"",tmp});
 	return *this;
+}
+
+
+template<class C>
+C Adoc::into()
+const
+{
+	C ret;
+	std::transform(begin(),end(),std::inserter(ret,ret.begin()),[]
+	(const auto &p)
+	{
+		return p.second.get<typename C::value_type>("");
+	});
+
+	return ret;
 }
 
 
