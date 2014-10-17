@@ -13,14 +13,14 @@ class Vote : protected Acct
 	Users *users;
 	Logs *logs;
 
-	Adoc cfg;                                   // Configuration of this vote
-	time_t began;                               // Time vote was constructed
 	std::string id;                             // Index ID of vote (stored as string for Acct db)
 	std::string type;                           // Type name of this vote
 	std::string chan;                           // Name of the channel
 	std::string nick;                           // Nick of initiating user (note: don't trust)
 	std::string acct;                           // $a name of initiating user
 	std::string issue;                          // "Issue" input of the vote
+	time_t began;                               // Time vote was constructed
+	Adoc cfg;                                   // Configuration of this vote
 	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
 	std::set<std::string> veto;                 // Accounts voting No with intent to veto
@@ -56,6 +56,7 @@ class Vote : protected Acct
 	uint minimum() const;
 	uint required() const;
 
+	operator Adoc() const;                                  // Serialize to Adoc/JSON
 	friend Locutor &operator<<(Locutor &l, const Vote &v);  // Appends formatted #ID to the stream
 
 	Ballot position(const std::string &acct) const;         // Throws if user hasn't taken a position
@@ -96,21 +97,24 @@ class Vote : protected Acct
 	virtual void proffer(const Ballot &b, User &user) {}
 	virtual void starting() {}
 
-	Stat cast(const Ballot &ballot, User &u);
+	Stat cast(const Ballot &b, User &u);
 
   public:
-	// Called by Bot handlers
-	void vote(const Ballot &ballot, User &user);
-
-	// Called by the asynchronous Voting worker only
+	void save()                                 { Acct::set(*this);                                 }
+	void vote(const Ballot &b, User &u);
 	void start();
 	void finish();
 	void cancel();
 
-	// Save state to Acct db
-	void deserialize();
-	void serialize();
+	// Deserialization ctor
+	Vote(const std::string &id,
+	     Adb &adb,
+	     Sess *const &sess     = nullptr,
+	     Chans *const &chans   = nullptr,
+	     Users *const &users   = nullptr,
+	     Logs *const &logs     = nullptr);
 
+	// Motion ctor (main ctor)
 	Vote(const std::string &type,
 	     const id_t &id,
 	     Adb &adb,
