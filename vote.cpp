@@ -84,6 +84,58 @@ issue(issue)
 }
 
 
+void Vote::serialize()
+{
+	Adoc yea;
+	for(const auto &acct : this->yea)
+	{
+		Adoc d;
+		d.put("",acct);
+		yea.push_back({"",d});
+	}
+
+	Adoc nay;
+	for(const auto &acct : this->nay)
+	{
+		Adoc d;
+		d.put("",acct);
+		nay.push_back({"",d});
+	}
+
+	Adoc veto;
+	for(const auto &acct : this->veto)
+	{
+		Adoc d;
+		d.put("",acct);
+		veto.push_back({"",d});
+	}
+
+	Adoc hosts;
+	for(const auto &host : this->hosts)
+	{
+		Adoc d;
+		d.put("",host);
+		hosts.push_back({"",d});
+	}
+
+	Adoc doc;
+	doc.put("id",get_id());
+	doc.put("type",get_type());
+	doc.put("chan",get_chan_name());
+	doc.put("nick",get_user_nick());
+	doc.put("acct",get_user_acct());
+	doc.put("issue",get_issue());
+	doc.put("began",get_began());
+	doc.put_child("cfg",get_cfg());
+	doc.put_child("yea",yea);
+	doc.put_child("nay",nay);
+	doc.put_child("veto",veto);
+	doc.put_child("hosts",hosts);
+
+	Acct::set(doc);
+}
+
+
 void Vote::cancel()
 {
 	canceled();

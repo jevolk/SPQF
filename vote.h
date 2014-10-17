@@ -107,6 +107,10 @@ class Vote : protected Acct
 	void finish();
 	void cancel();
 
+	// Save state to Acct db
+	void deserialize();
+	void serialize();
+
 	Vote(const std::string &type,
 	     const id_t &id,
 	     Adb &adb,
