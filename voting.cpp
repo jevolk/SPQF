@@ -16,16 +16,18 @@ using namespace irc::bot;
 #include "voting.h"
 
 
-Voting::Voting(Bot &bot,
+Voting::Voting(Adb &adb,
                Sess &sess,
                Chans &chans,
                Users &users,
-               Logs &logs):
-bot(bot),
+               Logs &logs,
+               Bot &bot):
+adb(adb),
 sess(sess),
 chans(chans),
 users(users),
 logs(logs),
+bot(bot),
 thread(&Voting::worker,this)
 {
 
@@ -146,11 +148,8 @@ void Voting::del(const decltype(votes.begin()) &it)
 
 void Voting::for_each(const std::function<void (Vote &vote)> &closure)
 {
-	for(const auto &p : votes)
-	{
-		Vote &vote = *p.second;
-		closure(vote);
-	}
+	for(auto &p : votes)
+		closure(*p.second);
 }
 
 
@@ -161,13 +160,11 @@ void Voting::for_each(const User &user,
 	for(; pit.first != pit.second; ++pit.first) try
 	{
 		const auto &id = pit.first->second;
-		Vote &vote = *votes.at(id);
-		closure(vote);
+		closure(get(id));
 	}
-	catch(const std::out_of_range &e)
+	catch(const Exception &e)
 	{
-		std::cerr << "Voting index user[" << user.get_acct() << "]: "
-		          << e.what() << std::endl;
+		std::cerr << "Voting index user[" << user.get_acct() << "]: " << e << std::endl;
 	}
 }
 
@@ -179,13 +176,11 @@ void Voting::for_each(const Chan &chan,
 	for(; pit.first != pit.second; ++pit.first) try
 	{
 		const auto &id = pit.first->second;
-		Vote &vote = *votes.at(id);
-		closure(vote);
+		closure(get(id));
 	}
-	catch(const std::out_of_range &e)
+	catch(const Exception &e)
 	{
-		std::cerr << "Voting index chan[" << chan.get_name() << "]: "
-		          << e.what() << std::endl;
+		std::cerr << "Voting index chan[" << chan.get_name() << "]: " << e << std::endl;
 	}
 }
 
@@ -194,10 +189,7 @@ void Voting::for_each(const std::function<void (const Vote &vote)> &closure)
 const
 {
 	for(const auto &p : votes)
-	{
-		const Vote &vote = *p.second;
-		closure(vote);
-	}
+		closure(*p.second);
 }
 
 
@@ -209,13 +201,11 @@ const
 	for(; pit.first != pit.second; ++pit.first) try
 	{
 		const auto &id = pit.first->second;
-		const Vote &vote = *votes.at(id);
-		closure(vote);
+		closure(get(id));
 	}
-	catch(const std::out_of_range &e)
+	catch(const Exception &e)
 	{
-		std::cerr << "Voting index user[" << user.get_acct() << "]: "
-		          << e.what() << std::endl;
+		std::cerr << "Voting index user[" << user.get_acct() << "]: " << e << std::endl;
 	}
 }
 
@@ -228,13 +218,11 @@ const
 	for(; pit.first != pit.second; ++pit.first) try
 	{
 		const auto &id = pit.first->second;
-		const Vote &vote = *votes.at(id);
-		closure(vote);
+		closure(get(id));
 	}
-	catch(const std::out_of_range &e)
+	catch(const Exception &e)
 	{
-		std::cerr << "Voting index chan[" << chan.get_name() << "]: "
-		          << e.what() << std::endl;
+		std::cerr << "Voting index chan[" << chan.get_name() << "]: " << e << std::endl;
 	}
 }
 

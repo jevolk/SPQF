@@ -19,19 +19,20 @@ using namespace irc::bot;
 
 Vote::Vote(const std::string &type,
            const id_t &id,
-           const Sess &sess,
+           Adb &adb,
+           Sess &sess,
            Chans &chans,
            Users &users,
            Logs &logs,
            Chan &chan,
            User &user,
            const std::string &issue,
-           Adoc cfg):
-sess(sess),
-chans(chans),
-users(users),
-logs(logs),
-id(id),
+           const Adoc &cfg):
+Acct(adb,&this->id),
+sess(&sess),
+chans(&chans),
+users(&users),
+logs(&logs),
 cfg([&]
 {
 	// Default config
@@ -68,6 +69,7 @@ cfg([&]
 	return ret;
 }()),
 began(time(NULL)),
+id(boost::lexical_cast<std::string>(id)),
 type(type),
 chan(chan.get_name()),
 nick(user.get_nick()),
@@ -283,6 +285,7 @@ const
 	filt.time.second = get_began();
 	filt.type = "CHA";
 
+	Logs &logs = get_logs();
 	const Chan &chan = get_chan();
 	return logs.atleast(chan,filt,cfg.get<uint>("qualify.lines"));
 }
@@ -301,6 +304,7 @@ const
 	filt.time.second = get_began() - cfg.get<uint>("enfranchise.age");
 	filt.type = "CHA";
 
+	Logs &logs = get_logs();
 	const Chan &chan = get_chan();
 	return logs.atleast(chan,filt,cfg.get<uint>("enfranchise.lines"));
 }
