@@ -484,7 +484,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 {
 	using namespace colors;
 
-	const auto &vote = voting.get(id);
+	const Vote &vote = voting.has_vote(id)? voting.get(id) : Vote(id,get_adb());
 	const auto tally = vote.tally();
 
 	out << vote << ": ";
