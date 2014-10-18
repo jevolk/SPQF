@@ -102,8 +102,9 @@ class Locutor
 	void mode();                                        // Sends mode query
 
 	Locutor(Sess &sess, const std::string &target);
-	Locutor(Locutor &&other);                           // Must be defined due to bug in gnu libstdc++ for now
-	Locutor &operator=(Locutor &&other) &;              // ^
+	Locutor(Locutor &&other) noexcept;                  // Must be defined due to bug in gnu libstdc++ for now
+	Locutor(const Locutor &other);                      // ^
+	Locutor &operator=(Locutor &&other) & noexcept;     // ^
 	virtual ~Locutor() = default;
 };
 
@@ -122,7 +123,8 @@ fg(colors::FG::BLACK)
 
 
 inline
-Locutor::Locutor(Locutor &&o):
+Locutor::Locutor(Locutor &&o)
+noexcept:
 sess(std::move(o.sess)),
 target(std::move(o.target)),
 sendq(o.sendq.str()),                                   // GNU libstdc++ oversight requires this
@@ -135,7 +137,21 @@ fg(std::move(o.fg))
 
 
 inline
-Locutor &Locutor::operator=(Locutor &&o) &
+Locutor::Locutor(const Locutor &o):
+sess(o.sess),
+target(o.target),
+sendq(o.sendq.str()),
+meth(o.meth),
+methex(o.methex),
+fg(o.fg)
+{
+
+}
+
+
+inline
+Locutor &Locutor::operator=(Locutor &&o)
+& noexcept
 {
 	sess = std::move(o.sess);
 	target = std::move(o.target);
