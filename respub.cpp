@@ -38,6 +38,10 @@ try
 
 	handle_cmd(msg,user);
 }
+catch(const Assertive &e)
+{
+	user << "Internal Error: " << e << flush;
+}
 catch(const Exception &e)
 {
 	user << "Failed: " << e << flush;
@@ -70,6 +74,10 @@ try
 		return;
 
 	handle_cmd(msg,chan,user);
+}
+catch(const Assertive &e)
+{
+	user << chan << "Internal Error: " << e << flush;
 }
 catch(const Exception &e)
 {
