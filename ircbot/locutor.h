@@ -79,13 +79,13 @@ class Locutor
 	auto &get_sess()                                    { return *sess;                              }
 	auto &get_sendq()                                   { return sendq;                              }
 	void set_target(const std::string &target)          { this->target = target;                     }
-	void clear_sendq();
 
   public:
 	// [SEND] string interface
 	void privmsg(const std::string &msg);
 	void notice(const std::string &msg);
 	void me(const std::string &msg);
+	void clear_sendq();
 
 	// [SEND] stream interface                          // Defaults back to DEFAULT_METHOD after flush
 	virtual Locutor &operator<<(const flush_t f);       // Flush stream to endpoint
