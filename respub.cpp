@@ -384,10 +384,20 @@ void ResPublica::handle_vote_id(const Msg &msg,
 {
 	const Vote::id_t id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
 
+	Chans &chans = get_chans();
+	Chan *const chan = chans.find_cnotice(user);
+	if(!chan)
+	{
+		handle_vote_list(msg,user,user,subtok(toks),id);
+		return;
+	}
+
+	Locutor &out = user << (*chan);  // sets CNOTICE
+
 	if(voting.has_vote(id))
-		handle_vote_info(msg,user,user,subtok(toks),voting.get(id));
+		handle_vote_info(msg,user,out,subtok(toks),voting.get(id));
 	else
-		handle_vote_info(msg,user,user,subtok(toks),{id,get_adb()});
+		handle_vote_info(msg,user,out,subtok(toks),{id,get_adb()});
 }
 
 
