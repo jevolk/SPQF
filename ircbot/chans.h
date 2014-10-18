@@ -27,6 +27,10 @@ class Chans
 	// Closures
 	void for_each(const std::function<void (const Chan &)> &c) const;
 	void for_each(const std::function<void (Chan &)> &c);
+	bool any_of(const std::function<bool (const Chan &)> &c) const;
+	bool any_of(const std::function<bool (Chan &)> &c);
+
+	Chan *find_cnotice(const User &user);              // returns null if not op in any channel with user
 
 	// Manipulators
 	Chan &get(const std::string &name);                // throws Exception
@@ -82,6 +86,46 @@ Chan &Chans::add(const std::string &name)
 	                         std::forward_as_tuple(tolower(name)),
 	                         std::forward_as_tuple(adb,sess,*chanserv,tolower(name)));
 	return iit.first->second;
+}
+
+
+inline
+Chan *Chans::find_cnotice(const User &user)
+{
+	Chan *ret = nullptr;
+	any_of([&](Chan &chan)
+	{
+		if(!chan.is_op() || !chan.has(user))
+			return false;
+
+		ret = &chan;
+		return true;
+	});
+
+	return ret;
+}
+
+
+inline
+bool Chans::any_of(const std::function<bool (Chan &)> &closure)
+{
+	return std::any_of(chans.begin(),chans.end(),[&closure]
+	(auto &chanp)
+	{
+		return closure(chanp.second);
+	});
+}
+
+
+inline
+bool Chans::any_of(const std::function<bool (const Chan &)> &closure)
+const
+{
+	return std::any_of(chans.begin(),chans.end(),[&closure]
+	(const auto &chanp)
+	{
+		return closure(chanp.second);
+	});
 }
 
 
