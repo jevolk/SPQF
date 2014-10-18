@@ -6,11 +6,6 @@
  */
 
 
-// Forward declaration of Chan is necessary to disambiguate the stream
-// operator indicating CNOTICE/CPRIVMSG. Chan is immediately reduced to a Locutor.
-class Chan;
-
-
 class User : public Locutor,
              public Acct
 {
@@ -63,9 +58,6 @@ class User : public Locutor,
 	void set_idle(const time_t &idle)                  { this->idle = idle;                          }
 	void set_away(const bool &away)                    { this->away = away;                          }
 
-	// Sets up stream for CNOTICE/CPRIVMSG to channel
-	friend User &operator<<(User &user, Chan &chan);
-
 	// [SEND] Controls
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default
 	void info();                                       // Update acct["info"] from nickserv
@@ -109,27 +101,6 @@ void User::who(const std::string &flags)
 {
 	Sess &sess = get_sess();
 	sess.quote("who %s %s",get_nick().c_str(),flags.c_str());
-}
-
-
-inline
-User &operator<<(User &user,
-                 Chan &chan)
-{
-	const Sess &sess = user.get_sess();
-	const Server &serv = sess.get_server();
-
-	Locutor &cloc = reinterpret_cast<Locutor &>(chan);
-	const char &prefix = cloc.get_target().at(0);
-	if(!serv.has_chantype(prefix))
-		throw Assertive("Can't append non-channel to user stream.");
-
-	if(!user.get_sendq().str().empty())
-		throw Assertive("Must append channel to user stream before all other data.");
-
-	user << Locutor::CMSG;
-	user << cloc.get_target() << "\n";
-	return user;
 }
 
 

@@ -74,6 +74,7 @@ class Locutor
 	auto &get_sendq() const                             { return sendq;                              }
 	auto &get_meth() const                              { return meth;                               }
 	auto &get_methex() const                            { return methex;                             }
+	auto has_sendq() const                              { return sendq.str().empty();                }
 
   protected:
 	auto &get_sess()                                    { return *sess;                              }
