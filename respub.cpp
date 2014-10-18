@@ -478,7 +478,7 @@ void ResPublica::handle_help(const Msg &msg,
 
 void ResPublica::handle_vote_list(const Msg &msg,
                                   User &user,
-                                  Locutor &out,
+                                  Locutor out,
                                   const Tokens &toks,
                                   const id_t &id)
 {
@@ -514,7 +514,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 
 void ResPublica::handle_vote_info(const Msg &msg,
                                   User &user,
-                                  Locutor &out,
+                                  Locutor out,
                                   const Tokens &toks,
                                   const Vote &vote)
 {
