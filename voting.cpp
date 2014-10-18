@@ -102,11 +102,6 @@ void Voting::poll_votes()
 void Voting::call_finish(Vote &vote)
 noexcept try
 {
-	const scope s([&]
-	{
-		vote.save();
-	});
-
 	vote.finish();
 }
 catch(const std::exception &e)
