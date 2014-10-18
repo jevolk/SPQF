@@ -111,6 +111,13 @@ void ResPublica::handle_vote(const Msg &msg,
 {
 	const std::string subcmd = !toks.empty()? *toks.at(0) : "help";
 
+	// Handle pattern for accessing vote by ID
+	if(isnumeric(subcmd))
+	{
+		handle_vote_id(msg,chan,user,toks);
+		return;
+	}
+
 	// Handle pattern for voting on config
 	if(subcmd.find("config") == 0)
 	{
@@ -156,6 +163,20 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("opine"):    voting.motion<vote::Opine>(chan,user,detok(subtok(toks)));    break;
 	}
 
+}
+
+
+void ResPublica::handle_vote_id(const Msg &msg,
+                                Chan &chan,
+                                User &user,
+                                const Tokens &toks)
+{
+	const Vote::id_t id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
+
+	if(voting.has_vote(id))
+		handle_vote_info(msg,user,user<<chan,subtok(toks),voting.get(id));
+	else
+		handle_vote_info(msg,user,user<<chan,subtok(toks),{id,get_adb()});
 }
 
 
@@ -218,7 +239,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	if(chan.get("config.vote.list")["ack_chan"] == "1")
 		handle_vote_list(msg,user,chan,toks,id);
 	else
-		handle_vote_list(msg,user,user,toks,id);
+		handle_vote_list(msg,user,user<<chan,toks,id);
 }
 
 
@@ -330,6 +351,13 @@ void ResPublica::handle_vote(const Msg &msg,
 {
 	const std::string subcmd = !toks.empty()? *toks.at(0) : "help";
 
+	// Handle pattern for accessing vote by ID
+	if(isnumeric(subcmd))
+	{
+		handle_vote_id(msg,user,toks);
+		return;
+	}
+
 	switch(hash(subcmd))
 	{
 		// Ballot
@@ -347,6 +375,19 @@ void ResPublica::handle_vote(const Msg &msg,
 		default:
 		case hash("help"):     handle_help(msg,user,subtok(toks));                     break;
 	}
+}
+
+
+void ResPublica::handle_vote_id(const Msg &msg,
+                                User &user,
+                                const Tokens &toks)
+{
+	const Vote::id_t id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
+
+	if(voting.has_vote(id))
+		handle_vote_info(msg,user,user,subtok(toks),voting.get(id));
+	else
+		handle_vote_info(msg,user,user,subtok(toks),{id,get_adb()});
 }
 
 
@@ -460,6 +501,66 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	out << flush;
 }
 
+
+void ResPublica::handle_vote_info(const Msg &msg,
+                                  User &user,
+                                  Locutor &out,
+                                  const Tokens &toks,
+                                  const Vote &vote)
+{
+	using namespace colors;
+
+	const std::string pfx = string(vote.get_id()) + ": ";
+	const auto tally = vote.tally();
+
+	// Title line
+	out << pfx << "Information on vote " << vote << ": ";
+	if(vote.remaining() > 0)
+		out << BOLD << FG::GREEN << "ACTIVE" << OFF << " (remaining: " << BOLD << vote.remaining() << OFF << "s)" << "\n";
+	else
+		out << BOLD << FG::RED << "CLOSED" << "\n";
+
+	// Issue line
+	out << pfx << "[" << BOLD << vote.get_type() << OFF << "] " << UNDER2 << vote.get_issue() << "\n";
+
+	// User's position line
+	out << pfx << BOLD << "YOU    : " << OFF;
+	if(!vote.voted(user))
+		out << FG::BLACK << "---" << "\n";
+	else if(vote.position(user) == Vote::YEA)
+		out << BOLD << FG::WHITE << BG::GREEN << "YEA" << "\n";
+	else if(vote.position(user) == Vote::NAY)
+		out << BOLD << FG::WHITE << BG::RED << "NAY" << "\n";
+
+	// Yea votes line
+	out << pfx << BOLD << "YEA" << OFF << "    : " << BOLD << FG::GREEN << tally.first << OFF << " :: ";
+	for(const auto &acct : vote.get_yea())
+		out << acct << ", ";
+	out << "\n";
+
+	// Nay votes line
+	out << pfx << BOLD << "NAY" << OFF << "    : " << BOLD << FG::RED << tally.second << OFF << " :: ";
+	for(const auto &acct : vote.get_nay())
+		out << acct << ", ";
+	out << "\n";
+
+	// Status/Result line
+	out << pfx << BOLD << "STATUS" << OFF << " : ";
+	if(vote.remaining() <= 0 && vote.get_reason().empty())
+		out << BOLD << FG::WHITE << BG::GREEN << "PASSED" << "\n";
+	else if(vote.remaining() <= 0)
+		out << BOLD << FG::RED << vote.get_reason() << "\n";
+	else if(vote.total() < vote.minimum())
+		out << FG::BLUE << (vote.minimum() - vote.total()) << " more votes are required to reach minimums."  << "\n";
+	else if(tally.first < vote.required())
+		out << FG::ORANGE << (vote.required() - vote.total()) << " more votes are required to pass."  << "\n";
+	else
+		out << FG::GREEN << "As it stands, the motion will pass."  << "\n";
+
+
+	// Flush erases the CNOTICE privilege of this stream, so we only do it once.
+	out << flush;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////
