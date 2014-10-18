@@ -241,7 +241,7 @@ void Locutor::notice(const std::string &text)
 		{
 			const auto &chan = toks.at(0);
 			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				sess.quote("CPRIVMSG %s %s :%s",
+				sess.quote("CNOTICE %s %s :%s",
 				           get_target().c_str(),
 				           chan.c_str(),
 				           it->c_str());
