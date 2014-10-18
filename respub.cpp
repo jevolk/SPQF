@@ -180,13 +180,22 @@ void ResPublica::handle_vote_id(const Msg &msg,
                                 Chan &chan,
                                 User &user,
                                 const Tokens &toks)
+try
 {
+	Chans &chans = get_chans();
+	const Chan *const c = chan.is_op()? &chan : chans.find_cnotice(user);
 	const Vote::id_t id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
 
-	if(voting.has_vote(id))
-		handle_vote_info(msg,user,user<<chan,subtok(toks),voting.get(id));
-	else
-		handle_vote_info(msg,user,user<<chan,subtok(toks),{id,get_adb()});
+	if(c)
+	{
+		const Vote &vote = voting.has_vote(id)? voting.get(id) : Vote(id,get_adb());
+		handle_vote_info(msg,user,user<<(*c),subtok(toks),vote);
+	}
+	else handle_vote_list(msg,user,user,subtok(toks),id);
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw Exception("You supplied a bad ID number.");
 }
 
 
@@ -391,6 +400,7 @@ void ResPublica::handle_vote(const Msg &msg,
 void ResPublica::handle_vote_id(const Msg &msg,
                                 User &user,
                                 const Tokens &toks)
+try
 {
 	const Vote::id_t id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
 
@@ -402,12 +412,12 @@ void ResPublica::handle_vote_id(const Msg &msg,
 		return;
 	}
 
-	Locutor &out = user << (*chan);  // sets CNOTICE
-
-	if(voting.has_vote(id))
-		handle_vote_info(msg,user,out,subtok(toks),voting.get(id));
-	else
-		handle_vote_info(msg,user,out,subtok(toks),{id,get_adb()});
+	const Vote &vote = voting.has_vote(id)? voting.get(id) : Vote(id,get_adb());
+	handle_vote_info(msg,user,user<<(*chan),subtok(toks),vote);
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw Exception("You supplied a bad ID number.");
 }
 
 
@@ -487,7 +497,7 @@ void ResPublica::handle_help(const Msg &msg,
 
 
 void ResPublica::handle_vote_list(const Msg &msg,
-                                  User &user,
+                                  const User &user,
                                   Locutor out,
                                   const Tokens &toks,
                                   const id_t &id)
@@ -523,7 +533,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 
 
 void ResPublica::handle_vote_info(const Msg &msg,
-                                  User &user,
+                                  const User &user,
                                   Locutor out,
                                   const Tokens &toks,
                                   const Vote &vote)
@@ -536,6 +546,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 
 	// Title line
 	out << pfx << "Information on vote " << vote << ": ";
+
 	if(vote.remaining() > 0)
 		out << BOLD << FG::GREEN << "ACTIVE" << OFF << " (remaining: " << BOLD << vote.remaining() << OFF << "s)" << "\n";
 	else
