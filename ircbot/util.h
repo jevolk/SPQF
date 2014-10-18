@@ -193,7 +193,8 @@ class Exception : public std::runtime_error
 	int c;
 
   public:
-	const int &code() const  { return c; }
+	const int &code() const       { return c;      }
+	operator std::string() const  { return what(); }
 
 	Exception(const int &c, const std::string &what = ""): std::runtime_error(what), c(c) {}
 	Exception(const std::stringstream &what): std::runtime_error(what.str()), c(0) {}
