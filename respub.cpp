@@ -41,6 +41,7 @@ try
 catch(const Assertive &e)
 {
 	user << "Internal Error: " << e << flush;
+	throw;
 }
 catch(const Exception &e)
 {
@@ -78,6 +79,7 @@ try
 catch(const Assertive &e)
 {
 	user << chan << "Internal Error: " << e << flush;
+	throw;
 }
 catch(const Exception &e)
 {
