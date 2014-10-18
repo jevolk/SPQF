@@ -85,6 +85,7 @@ or conduct takeovers.
 * Offline configuration/database editing tool.
 * Automatic NickServ ghost and regain on (re)connect.
 * Vote modules can have independent configurations.
+* Database-records of votes, ballots and outcomes.
 
 
 #### Upcoming Features
