@@ -122,10 +122,10 @@ User &operator<<(User &user,
 	Locutor &cloc = reinterpret_cast<Locutor &>(chan);
 	const char &prefix = cloc.get_target().at(0);
 	if(!serv.has_chantype(prefix))
-		throw Exception("Can't append non-channel to user stream.");
+		throw Assertive("Can't append non-channel to user stream.");
 
 	if(!user.get_sendq().str().empty())
-		throw Exception("Must append channel to user stream before all other data.");
+		throw Assertive("Must append channel to user stream before all other data.");
 
 	user << Locutor::CMSG;
 	user << cloc.get_target() << "\n";

@@ -188,7 +188,7 @@ struct scope
 };
 
 
-class Exception : public std::runtime_error
+class Internal : public std::runtime_error
 {
 	int c;
 
@@ -196,19 +196,29 @@ class Exception : public std::runtime_error
 	const int &code() const       { return c;      }
 	operator std::string() const  { return what(); }
 
-	Exception(const int &c, const std::string &what = ""): std::runtime_error(what), c(c) {}
-	Exception(const std::stringstream &what): std::runtime_error(what.str()), c(0) {}
-	Exception(const std::string &what = ""): std::runtime_error(what), c(0) {}
+	Internal(const int &c, const std::string &what = ""): std::runtime_error(what), c(c) {}
+	Internal(const std::stringstream &what): std::runtime_error(what.str()), c(0) {}
+	Internal(const std::string &what = ""): std::runtime_error(what), c(0) {}
 
-	template<class T> friend Exception operator<<(Exception &&e, const T &t)
+	template<class T> Internal operator<<(const T &t) const &&
 	{
-		return static_cast<std::stringstream &>(std::stringstream() << e << t);
+		return {static_cast<std::stringstream &>(std::stringstream() << what() << t)};
 	}
 
-	friend std::ostream &operator<<(std::ostream &s, const Exception &e)
+	friend std::ostream &operator<<(std::ostream &s, const Internal &e)
 	{
 		return (s << e.what());
 	}
+};
+
+struct Exception : public Internal
+{
+	template<class... Args> Exception(Args&&... args): Internal(std::forward<Args&&>(args)...) {}
+};
+
+struct Assertive : public Exception
+{
+	template<class... Args> Assertive(Args&&... args): Exception(std::forward<Args&&>(args)...) {}
 };
 
 
