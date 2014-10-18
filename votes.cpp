@@ -224,12 +224,12 @@ void vote::Config::starting()
 		   key.find(".mode") != std::string::npos)
 		{
 
-			if(!std::all_of(val.begin(),val.end(),[&](auto&& c){ return std::isalpha(c,locale); }))
+			if(!isalpha(val))
 				throw Exception("Must use letters only for value for this key.");
 
 		} else {
 
-			if(!std::all_of(val.begin(),val.end(),[&](auto&& c){ return std::isdigit(c,locale); }))
+			if(!isnumeric(val))
 				throw Exception("Must use a numerical value for this key.");
 
 		}
