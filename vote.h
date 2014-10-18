@@ -19,8 +19,10 @@ class Vote : protected Acct
 	std::string nick;                           // Nick of initiating user (note: don't trust)
 	std::string acct;                           // $a name of initiating user
 	std::string issue;                          // "Issue" input of the vote
-	time_t began;                               // Time vote was constructed
 	Adoc cfg;                                   // Configuration of this vote
+	time_t began;                               // Time vote was constructed
+	time_t ended;                               // Time vote was closed
+	std::string reason;                         // Reason for outcome
 	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
 	std::set<std::string> veto;                 // Accounts voting No with intent to veto
@@ -33,14 +35,16 @@ class Vote : protected Acct
 
 	auto get_id() const                         { return boost::lexical_cast<id_t>(id);             }
 	auto &get_type() const                      { return type;                                      }
-	auto &get_cfg() const                       { return cfg;                                       }
 	auto &get_chan_name() const                 { return chan;                                      }
 	auto &get_user_acct() const                 { return acct;                                      }
 	auto &get_user_nick() const                 { return nick;                                      }
 	auto &get_chan() const                      { return chans->get(get_chan_name());               }
 	auto &get_user() const                      { return users->get(get_user_nick());               }
-	auto &get_began() const                     { return began;                                     }
 	auto &get_issue() const                     { return issue;                                     }
+	auto &get_cfg() const                       { return cfg;                                       }
+	auto &get_began() const                     { return began;                                     }
+	auto &get_ended() const                     { return ended;                                     }
+	auto &get_reason() const                    { return reason;                                    }
 	auto &get_yea() const                       { return yea;                                       }
 	auto &get_nay() const                       { return nay;                                       }
 	auto &get_hosts() const                     { return hosts;                                     }
@@ -89,6 +93,10 @@ class Vote : protected Acct
 	auto &get_chans()                           { return *chans;                                    }
 	auto &get_logs()                            { return *logs;                                     }
 
+	void set_reason(const std::string &reason)  { this->reason = reason;                            }
+	void set_began()                            { time(&began);                                     }
+	void set_ended()                            { time(&ended);                                     }
+
 	// Subclass throws from these for abortions
 	virtual void passed() {}
 	virtual void failed() {}
@@ -107,7 +115,7 @@ class Vote : protected Acct
 	void cancel();
 
 	// Deserialization ctor
-	Vote(const std::string &id,
+	Vote(const id_t &id,
 	     Adb &adb,
 	     Sess *const &sess     = nullptr,
 	     Chans *const &chans   = nullptr,

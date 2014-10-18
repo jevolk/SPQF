@@ -39,7 +39,6 @@ chan(chan.get_name()),
 nick(user.get_nick()),
 acct(user.get_acct()),
 issue(issue),
-began(time(NULL)),
 cfg([&]
 {
 	// Default config
@@ -74,7 +73,9 @@ cfg([&]
 	ret.merge(ret.get_child(type,Adoc()));      // Import type-specifc overrides up to main
 	ret.merge(cfg);                             // Import instance-specific overrides to main
 	return ret;
-}())
+}()),
+began(0),
+ended(0)
 {
 	if(disabled())
 		throw Exception("Votes of this type are disabled by the configuration.");
@@ -85,7 +86,7 @@ cfg([&]
 }
 
 
-Vote::Vote(const std::string &id,
+Vote::Vote(const id_t &id,
            Adb &adb,
            Sess *const &sess,
            Chans *const &chans,
@@ -96,14 +97,16 @@ sess(sess),
 chans(chans),
 users(users),
 logs(logs),
-id(id),
+id(boost::lexical_cast<std::string>(id)),
 type(get_val("type")),
 chan(get_val("chan")),
 nick(get_val("nick")),
 acct(get_val("acct")),
 issue(get_val("issue")),
-began(get_val<time_t>("began")),
 cfg(get("cfg")),
+began(get_val<time_t>("began")),
+ended(get_val<time_t>("ended")),
+reason(get_val("reason")),
 yea(get("yea").into(yea)),
 nay(get("nay").into(nay)),
 veto(get("veto").into(veto)),
@@ -130,6 +133,8 @@ const
 	doc.put("acct",get_user_acct());
 	doc.put("issue",get_issue());
 	doc.put("began",get_began());
+	doc.put("ended",get_ended());
+	doc.put("reason",get_reason());
 	doc.put_child("cfg",get_cfg());
 	doc.put_child("yea",yea);
 	doc.put_child("nay",nay);
@@ -142,6 +147,8 @@ const
 
 void Vote::cancel()
 {
+	set_ended();
+	set_reason("canceled");
 	canceled();
 
 	if(cfg.get<bool>("result.ack_chan"))
@@ -156,6 +163,7 @@ void Vote::start()
 {
 	using namespace colors;
 
+	set_began();
 	starting();
 
 	auto &chan = get_chan();
@@ -174,19 +182,23 @@ try
 {
 	using namespace colors;
 
-	auto &chan = get_chan();
+	const scope s([&]{ save(); });
+	set_ended();
 
 	if(interceded())
 	{
+		auto &chan = get_chan();
 		if(cfg.get<bool>("result.ack_chan"))
 			chan << "The vote " << (*this) << " has been vetoed." << flush;
 
+		set_reason("vetoed");
 		vetoed();
 		return;
 	}
 
 	if(total() < minimum())
 	{
+		auto &chan = get_chan();
 		if(cfg.get<bool>("result.ack_chan"))
 			chan << (*this) << ": "
 			     << "Failed to reach minimum number of votes: "
@@ -196,12 +208,14 @@ try
 			     << " required."
 			     << flush;
 
+		set_reason("minimums");
 		failed();
 		return;
 	}
 
 	if(yea.size() < required())
 	{
+		auto &chan = get_chan();
 		if(cfg.get<bool>("result.ack_chan"))
 			chan << (*this) << ": "
 			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF
@@ -210,10 +224,12 @@ try
 			     << " Required at least: " << BOLD << required() << OFF << " yeas."
 			     << flush;
 
+		set_reason("plurality");
 		failed();
 		return;
 	}
 
+	auto &chan = get_chan();
 	if(cfg.get<bool>("result.ack_chan"))
 		chan << (*this) << ": "
 		     << FG::WHITE << BG::GREEN << BOLD << "The yeas have it." << OFF
@@ -225,6 +241,8 @@ try
 }
 catch(const Exception &e)
 {
+	set_reason(e.what());
+
 	if(cfg.get<bool>("result.ack_chan"))
 	{
 		auto &chan = get_chan();
@@ -262,6 +280,8 @@ try
 
 			break;
 	}
+
+	save();
 }
 catch(const Exception &e)
 {
