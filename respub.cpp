@@ -159,6 +159,17 @@ void ResPublica::handle_vote(const Msg &msg,
 }
 
 
+void ResPublica::handle_vote_cancel(const Msg &msg,
+                                    Chan &chan,
+                                    User &user,
+                                    const Tokens &toks)
+{
+	auto &vote = !toks.empty()? voting.get(boost::lexical_cast<Vote::id_t>(*toks.at(0))):
+	                            voting.get(chan);
+	voting.cancel(vote,chan,user);
+}
+
+
 void ResPublica::handle_vote_ballot(const Msg &msg,
                                     Chan &chan,
                                     User &user,
@@ -166,8 +177,7 @@ void ResPublica::handle_vote_ballot(const Msg &msg,
                                     const Vote::Ballot &ballot)
 try
 {
-	static constexpr auto&& id_cast = boost::lexical_cast<Vote::id_t,std::string>;
-	auto &vote = !toks.empty()? voting.get(id_cast(*toks.at(0))):
+	auto &vote = !toks.empty()? voting.get(boost::lexical_cast<Vote::id_t>(*toks.at(0))):
 	                            voting.get(chan);
 	vote.vote(ballot,user);
 }
@@ -209,18 +219,6 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		handle_vote_list(msg,user,chan,toks,id);
 	else
 		handle_vote_list(msg,user,user,toks,id);
-}
-
-
-void ResPublica::handle_vote_cancel(const Msg &msg,
-                                    Chan &chan,
-                                    User &user,
-                                    const Tokens &toks)
-{
-	static constexpr auto&& id_cast = boost::lexical_cast<Vote::id_t,std::string>;
-	auto &vote = !toks.empty()? voting.get(id_cast(*toks.at(0))):
-	                            voting.get(chan);
-	voting.cancel(vote,chan,user);
 }
 
 
@@ -282,26 +280,6 @@ void ResPublica::handle_cmd(const Msg &msg,
 }
 
 
-void ResPublica::handle_regroup(const Msg &msg,
-                                User &user,
-                                const Tokens &toks)
-{
-	static const time_t limit = 600;
-	if(user.get_val<time_t>("info._fetched_") > time(NULL) - limit)
-		throw Exception("You've done this too much. Try again later.");
-
-	user.info();
-}
-
-
-void ResPublica::handle_whoami(const Msg &msg,
-                               User &user,
-                               const Tokens &toks)
-{
-	user << user.get() << flush;
-}
-
-
 void ResPublica::handle_config(const Msg &msg,
                                User &user,
                                const Tokens &toks)
@@ -323,6 +301,26 @@ try
 catch(const std::out_of_range &e)
 {
 	throw Exception("Need a channel name because this is PM.");
+}
+
+
+void ResPublica::handle_whoami(const Msg &msg,
+                               User &user,
+                               const Tokens &toks)
+{
+	user << user.get() << flush;
+}
+
+
+void ResPublica::handle_regroup(const Msg &msg,
+                                User &user,
+                                const Tokens &toks)
+{
+	static const time_t limit = 600;
+	if(user.get_val<time_t>("info._fetched_") > time(NULL) - limit)
+		throw Exception("You've done this too much. Try again later.");
+
+	user.info();
 }
 
 
