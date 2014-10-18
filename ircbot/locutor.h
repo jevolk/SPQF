@@ -119,7 +119,7 @@ meth(DEFAULT_METHOD),
 methex(DEFAULT_METHODEX),
 fg(colors::FG::BLACK)
 {
-
+	sendq.exceptions(std::ios_base::badbit|std::ios_base::failbit);
 }
 
 
@@ -133,7 +133,9 @@ meth(std::move(o.meth)),
 methex(std::move(o.methex)),
 fg(std::move(o.fg))
 {
-
+	sendq.exceptions(std::ios_base::badbit|std::ios_base::failbit);
+	sendq.setstate(o.sendq.rdstate());
+	sendq.seekp(0,std::ios_base::end);
 }
 
 
@@ -146,7 +148,9 @@ meth(o.meth),
 methex(o.methex),
 fg(o.fg)
 {
-
+	sendq.exceptions(std::ios_base::badbit|std::ios_base::failbit);
+	sendq.setstate(o.sendq.rdstate());
+	sendq.seekp(0,std::ios_base::end);
 }
 
 
@@ -156,7 +160,9 @@ Locutor &Locutor::operator=(Locutor &&o)
 {
 	sess = std::move(o.sess);
 	target = std::move(o.target);
-	sendq.str(o.sendq.str());                           // GNU libstdc++ oversight requires this
+	sendq.str(o.sendq.str());
+	sendq.setstate(o.sendq.rdstate());
+	sendq.seekp(0,std::ios_base::end);
 	meth = std::move(o.meth);
 	methex = std::move(o.methex);
 	fg = std::move(o.fg);

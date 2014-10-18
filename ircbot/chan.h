@@ -141,7 +141,7 @@ class Chan : public Locutor,
 	void join();                                            // Enter channel
 
 	friend Chan &operator<<(Chan &c, const User &user);     // append "nickname: " to locutor stream
-	friend User &operator<<(User &u, Chan &chan);           // for CNOTICE / CPRIVMSG
+	friend User &operator<<(User &u, const Chan &chan);     // for CNOTICE / CPRIVMSG
 
 	Chan(Adb &adb, Sess &sess, Service &chanserv, const std::string &name);
 	virtual ~Chan() = default;
@@ -168,7 +168,7 @@ joined(false)
 
 inline
 User &operator<<(User &user,
-                 Chan &chan)
+                 const Chan &chan)
 {
 	user.clear_sendq();
 	user << Locutor::CMSG;
