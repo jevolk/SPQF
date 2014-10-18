@@ -547,7 +547,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	// Title line
 	out << pfx << "Information on vote " << vote << ": ";
 
-	if(vote.remaining() > 0)
+	if(!vote.get_ended())
 		out << BOLD << FG::GREEN << "ACTIVE" << OFF << " (remaining: " << BOLD << vote.remaining() << OFF << "s)" << "\n";
 	else
 		out << BOLD << FG::RED << "CLOSED" << "\n";
@@ -555,21 +555,23 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	// Issue line
 	out << pfx << "[" << BOLD << vote.get_type() << OFF << "]: " << UNDER2 << vote.get_issue() << "\n";
 
-	// User's position line
-	out << pfx << BOLD << "YOU    : " << OFF;
-	if(!vote.voted(user))
-		out << FG::BLACK << BG::LGRAY << "---" << "\n";
-	else if(vote.position(user) == Vote::YEA)
-		out << BOLD << FG::WHITE << BG::GREEN << "YEA" << "\n";
-	else if(vote.position(user) == Vote::NAY)
-		out << BOLD << FG::WHITE << BG::RED << "NAY" << "\n";
-	else
-		out << FG::BLACK << BG::LGRAY << "???" << "\n";
+	// Chan line
+	out << pfx << BOLD << "CHAN" << OFF << "     : " << vote.get_chan_name() << "\n";
+
+	// Initiator line
+	out << pfx << BOLD << "SPEAKER" << OFF << "  : " << vote.get_user_acct() << "\n";
+
+	// Started line
+	out << pfx << BOLD << "STARTED" << OFF << "  : " << vote.get_began() << "\n";
+
+	// Ended line
+	if(vote.get_ended())
+		out << pfx << BOLD << "ENDED" << OFF << "    : " << vote.get_ended() << "\n";
 
 	// Yea votes line
 	if(tally.first)
 	{
-		out << pfx << BOLD << "YEA" << OFF << "    : " << BOLD << FG::GREEN << tally.first << OFF;
+		out << pfx << BOLD << "YEA" << OFF << "      : " << BOLD << FG::GREEN << tally.first << OFF;
 		if(cfg["visible.ballot"] == "1")
 		{
 			out << " - ";
@@ -582,7 +584,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	// Nay votes line
 	if(tally.second)
 	{
-		out << pfx << BOLD << "NAY" << OFF << "    : " << BOLD << FG::RED << tally.second << OFF;
+		out << pfx << BOLD << "NAY" << OFF << "      : " << BOLD << FG::RED << tally.second << OFF;
 		if(cfg["visible.ballot"] == "1")
 		{
 			out << " - ";
@@ -595,7 +597,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	// Veto votes line
 	if(vote.num_vetoes())
 	{
-		out << pfx << BOLD << "VETO" << OFF << "   : " << BOLD << FG::MAGENTA << vote.num_vetoes() << OFF << " :: ";
+		out << pfx << BOLD << "VETO" << OFF << "     : " << BOLD << FG::MAGENTA << vote.num_vetoes() << OFF;
 		if(cfg["visible.veto"] == "1")
 		{
 			out << " - ";
@@ -605,16 +607,27 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		out << "\n";
 	}
 
+	// User's position line
+	out << pfx << BOLD << "YOU      : " << OFF;
+	if(!vote.voted(user))
+		out << FG::BLACK << BG::LGRAY << "---" << "\n";
+	else if(vote.position(user) == Vote::YEA)
+		out << BOLD << FG::WHITE << BG::GREEN << "YEA" << "\n";
+	else if(vote.position(user) == Vote::NAY)
+		out << BOLD << FG::WHITE << BG::RED << "NAY" << "\n";
+	else
+		out << FG::BLACK << BG::LGRAY << "???" << "\n";
+
 	// Result/Status line
-	if(vote.remaining() <= 0)
+	if(vote.get_ended())
 	{
-		out << pfx << BOLD << "RESULT" << OFF << " : ";
+		out << pfx << BOLD << "RESULT" << OFF << "   : ";
 		if(vote.get_reason().empty())
 			out << BOLD << FG::WHITE << BG::GREEN << "PASSED" << "\n";
 		else
 			out << BOLD << FG::WHITE << BG::RED << "FAILED" << OFF << BOLD << FG::RED << ": " << vote.get_reason() << "\n";
 	} else {
-		out << pfx << BOLD << "STATUS" << OFF << " : ";
+		out << pfx << BOLD << "STATUS" << OFF << "   : ";
 		if(vote.total() < vote.minimum())
 			out << BOLD << FG::BLUE << (vote.minimum() - vote.total()) << " more votes are required to reach minimums."  << "\n";
 		else if(tally.first < vote.required())
