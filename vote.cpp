@@ -68,6 +68,8 @@ cfg([&]
 	ret.put("ballot.rej_chan",0);
 	ret.put("ballot.rej_priv",1);
 	ret.put("result.ack_chan",1);
+	ret.put("visible.ballots",0);
+	ret.put("visible.veto",1);
 	ret.merge(chan.get("config.vote"));         // Overwrite defaults with saved config
 	chan.set("config.vote",ret);                // Write back combined result to db
 	ret.merge(ret.get_child(type,Adoc()));      // Import type-specifc overrides up to main

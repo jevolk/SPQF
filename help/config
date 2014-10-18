@@ -234,11 +234,29 @@ It is recommended channel ack and rej are turned off to reduce noise.
 
 
 
+config.vote.visible.ballot = <bool> [0 - 1]
+
+Allows the list of users and the way they voted to be visible when information on this
+vote is requested.
+
+This is disabled by default, and negates the usefulness of secret ballots via PM.
+
+
+
+config.vote.visible.veto = <bool> [0 - 1]
+
+Allows the list of users who cast a nay vote with intent to veto to be visible when
+information on this vote is queried.
+
+This is enabled by default. With config.vote.veto.mode being set by default, a user's
+intent to veto is already made public by their channel mode.
+
+
+
 config.vote.result.ack_chan = <bool> [0 - 1]
 
 Broadcasts the result of a vote to the channel at its completion. If this is set to 0,
-the effects of the vote will simply happen. Until future versions when vote history is stored,
-the result tally of the vote will never be known if this is turned off.
+the effects of the vote will simply happen.
 
 
 

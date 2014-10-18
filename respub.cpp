@@ -511,6 +511,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	using namespace colors;
 
 	const std::string pfx = string(vote.get_id()) + ": ";
+	const auto cfg = vote.get_cfg();
 	const auto tally = vote.tally();
 
 	// Title line
@@ -521,7 +522,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		out << BOLD << FG::RED << "CLOSED" << "\n";
 
 	// Issue line
-	out << pfx << "[" << BOLD << vote.get_type() << OFF << "] " << UNDER2 << vote.get_issue() << "\n";
+	out << pfx << "[" << BOLD << vote.get_type() << OFF << "]: " << UNDER2 << vote.get_issue() << "\n";
 
 	// User's position line
 	out << pfx << BOLD << "YOU    : " << OFF;
@@ -533,30 +534,61 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		out << BOLD << FG::WHITE << BG::RED << "NAY" << "\n";
 
 	// Yea votes line
-	out << pfx << BOLD << "YEA" << OFF << "    : " << BOLD << FG::GREEN << tally.first << OFF << " :: ";
-	for(const auto &acct : vote.get_yea())
-		out << acct << ", ";
-	out << "\n";
+	if(tally.first)
+	{
+		out << pfx << BOLD << "YEA" << OFF << "    : " << BOLD << FG::GREEN << tally.first << OFF;
+		if(cfg["visible.ballot"] == "1")
+		{
+			out << " - ";
+			for(const auto &acct : vote.get_yea())
+				out << acct << ", ";
+		}
+		out << "\n";
+	}
 
 	// Nay votes line
-	out << pfx << BOLD << "NAY" << OFF << "    : " << BOLD << FG::RED << tally.second << OFF << " :: ";
-	for(const auto &acct : vote.get_nay())
-		out << acct << ", ";
-	out << "\n";
+	if(tally.second)
+	{
+		out << pfx << BOLD << "NAY" << OFF << "    : " << BOLD << FG::RED << tally.second << OFF;
+		if(cfg["visible.ballot"] == "1")
+		{
+			out << " - ";
+			for(const auto &acct : vote.get_nay())
+				out << acct << ", ";
+		}
+		out << "\n";
+	}
 
-	// Status/Result line
-	out << pfx << BOLD << "STATUS" << OFF << " : ";
-	if(vote.remaining() <= 0 && vote.get_reason().empty())
-		out << BOLD << FG::WHITE << BG::GREEN << "PASSED" << "\n";
-	else if(vote.remaining() <= 0)
-		out << BOLD << FG::RED << vote.get_reason() << "\n";
-	else if(vote.total() < vote.minimum())
-		out << FG::BLUE << (vote.minimum() - vote.total()) << " more votes are required to reach minimums."  << "\n";
-	else if(tally.first < vote.required())
-		out << FG::ORANGE << (vote.required() - vote.total()) << " more votes are required to pass."  << "\n";
-	else
-		out << FG::GREEN << "As it stands, the motion will pass."  << "\n";
+	// Veto votes line
+	if(vote.num_vetoes())
+	{
+		out << pfx << BOLD << "VETO" << OFF << "   : " << BOLD << FG::MAGENTA << vote.num_vetoes() << OFF << " :: ";
+		if(cfg["visible.veto"] == "1")
+		{
+			out << " - ";
+			for(const auto &acct : vote.get_veto())
+				out << acct << ", ";
+		}
+		out << "\n";
+	}
 
+	// Result/Status line
+	if(vote.remaining() <= 0)
+	{
+		out << pfx << BOLD << "RESULT" << OFF << " : ";
+		if(vote.get_reason().empty())
+			out << BOLD << FG::WHITE << BG::GREEN << "PASSED" << "\n";
+		else
+			out << BOLD << FG::WHITE << BG::RED << "FAILED" << OFF << BOLD << FG::RED << ": " << vote.get_reason() << "\n";
+	} else {
+		out << pfx << BOLD << "STATUS" << OFF << " : ";
+		if(vote.total() < vote.minimum())
+			out << BOLD << FG::BLUE << (vote.minimum() - vote.total()) << " more votes are required to reach minimums."  << "\n";
+		else if(tally.first < vote.required())
+			out << BOLD << FG::ORANGE << (vote.required() - tally.first) << " more votes are required to pass."  << "\n";
+		else
+			out << FG::GREEN << "As it stands, the motion will pass."  << "\n";
+	}
 
 	// Flush erases the CNOTICE privilege of this stream, so we only do it once.
 	out << flush;
