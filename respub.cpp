@@ -547,11 +547,13 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	// User's position line
 	out << pfx << BOLD << "YOU    : " << OFF;
 	if(!vote.voted(user))
-		out << FG::BLACK << "---" << "\n";
+		out << FG::BLACK << BG::LGRAY << "---" << "\n";
 	else if(vote.position(user) == Vote::YEA)
 		out << BOLD << FG::WHITE << BG::GREEN << "YEA" << "\n";
 	else if(vote.position(user) == Vote::NAY)
 		out << BOLD << FG::WHITE << BG::RED << "NAY" << "\n";
+	else
+		out << FG::BLACK << BG::LGRAY << "???" << "\n";
 
 	// Yea votes line
 	if(tally.first)
