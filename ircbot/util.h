@@ -60,6 +60,28 @@ R pointers(C&& c)
 }
 
 
+template<class T>
+bool isalpha(const T &val)
+{
+	return std::all_of(val.begin(),val.end(),[&]
+	(auto&& c)
+	{
+		return std::isalpha(c,locale);
+	});
+}
+
+
+template<class T>
+bool isnumeric(const T &val)
+{
+	return std::all_of(val.begin(),val.end(),[&]
+	(auto&& c)
+	{
+		return std::isdigit(c,locale);
+	});
+}
+
+
 inline
 std::string chomp(const std::string &str,
                   const std::string &c = " ")
