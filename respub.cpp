@@ -520,7 +520,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 {
 	using namespace colors;
 
-	const std::string pfx = string(vote.get_id()) + ": ";
+	const std::string pfx = std::string("#") + string(vote.get_id()) + ": ";
 	const auto cfg = vote.get_cfg();
 	const auto tally = vote.tally();
 
