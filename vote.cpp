@@ -166,8 +166,8 @@ void Vote::start()
 {
 	using namespace colors;
 
-	set_began();
 	starting();
+	set_began();
 
 	auto &chan = get_chan();
 	chan << BOLD << "Voting has started!" << OFF << " Issue " << (*this) << ": "
@@ -185,8 +185,8 @@ try
 {
 	using namespace colors;
 
-	const scope s([&]{ save(); });
 	set_ended();
+	const scope s([&]{ save(); });
 
 	if(interceded())
 	{
