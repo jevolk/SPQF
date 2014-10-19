@@ -82,7 +82,11 @@ bool Ident::parse_arg(const std::string &str)
 
 	const size_t eqp = str.find('=');
 	if(eqp == str.npos)
-		throw Exception("Missing '=' in an argument");
+	{
+		const std::string key = str.substr(2);
+		(*this)[key] = "true";
+		return true;
+	}
 
 	const std::string key = str.substr(2,eqp-2);
 	const std::string val = str.substr(eqp+1);
