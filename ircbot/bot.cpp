@@ -251,10 +251,8 @@ void Bot::handle_isupport(const Msg &msg)
 		const std::string key = opt.substr(0,sep);
 		const std::string val = sep == std::string::npos? "" : opt.substr(sep+1);
 
-		if(!std::all_of(key.begin(),key.end(),::isupper))
-			continue;
-
-		server.cfg.emplace(key,val);
+		if(std::all_of(key.begin(),key.end(),::isupper))
+			server.isupport.emplace(key,val);
 	}
 }
 

@@ -47,7 +47,7 @@ struct Delta : std::tuple<bool,char,Mask>
 struct Deltas : std::vector<Delta>
 {
 	bool all_signs(const bool &sign) const;
-	bool too_many(const Server &s) const;
+	bool too_many(const Server &s) const         { return size() > s.isupport.get_or_max("MODES");  }
 	void validate_chan(const Server &s) const;
 	void validate_user(const Server &s) const;
 
@@ -128,16 +128,6 @@ const
 
 	for(const Delta &delta : *this)
 		delta.validate_chan(s);
-}
-
-
-inline
-bool Deltas::too_many(const Server &s)
-const
-{
-	const std::string &max_modes_s = s.cfg.at("MODES");
-	const size_t max_modes = boost::lexical_cast<size_t>(max_modes_s);
-	return size() > max_modes;
 }
 
 
