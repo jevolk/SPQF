@@ -8,7 +8,7 @@
 
 class Adb
 {
-	Ldb ldb;
+	Ldb &ldb;
 
   public:
 	const Ldb &get_ldb() const                           { return ldb;                              }
@@ -24,15 +24,13 @@ class Adb
 
 	void set(const std::string &name, const Adoc &data)  { ldb.set(name,data);                      }
 
-	Adb(const std::string &dir);
-	Adb(const Adb &) = delete;
-	Adb &operator=(const Adb &) = delete;
+	Adb(Ldb &ldb);
 };
 
 
 inline
-Adb::Adb(const std::string &dir):
-ldb(dir)
+Adb::Adb(Ldb &ldb):
+ldb(ldb)
 {
 
 }

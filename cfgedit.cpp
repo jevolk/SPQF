@@ -65,7 +65,8 @@ int main(int argc, char **argv) try
 		return 0;
 	}
 
-	Adb adb(id["dbdir"]);
+	Ldb ldb(id["dbdir"]);
+	Adb adb(ldb);
 	if(!adb.exists(dockey))
 	{
 		printf("Document not found in database.\n");

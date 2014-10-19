@@ -17,7 +17,8 @@ std::locale irc::bot::locale;
 
 Bot::Bot(const Ident &ident)
 try:
-adb(ident["dbdir"]),
+ldb(ident["dbdir"]),
+adb(ldb),
 sess(*this,ident,callbacks),
 users(adb,sess),
 chans(adb,sess),

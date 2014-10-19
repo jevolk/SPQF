@@ -95,6 +95,7 @@ extern std::locale locale;
  */
 class Bot : public std::mutex
 {
+	Ldb ldb;
 	Adb adb;
 	Sess sess;
 	Users users;
