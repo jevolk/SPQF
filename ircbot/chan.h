@@ -646,8 +646,11 @@ bool Chan::delta_mode(const std::string &delta,
 			if(sess.isupport("EXCEPTS"))
 				exceptlist();
 
-			flagslist();
-			akicklist();
+			if(sess.has_opt("services"))
+			{
+				flagslist();
+				akicklist();
+			}
 		}
 
 		Mode &mode = get_mode(mask);

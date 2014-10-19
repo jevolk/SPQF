@@ -32,6 +32,7 @@ struct Ident : public std::map<std::string,std::string>
 		{"invite",              ""                                        },
 		{"invite-throttle",     "300"                                     },
 		{"owner",               ""                                        },
+		{"services",            "true"                                    },
 	}
 	{
 		if(at("locale").empty())
