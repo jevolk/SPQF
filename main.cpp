@@ -46,7 +46,7 @@ int main(int argc, char **argv) try
 	Ident id;
 	id.parse({argv+1,argv+argc});
 
-	if(id["host"].empty())
+	if(id["nick"].empty())
 	{
 		fprintf(stderr,"usage: %s [ --var=val | --join=chan ] [...]\n",argv[0]);
 		fprintf(stderr,"\ndefaults:\n");

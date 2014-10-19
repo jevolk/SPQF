@@ -11,7 +11,7 @@ struct Ident : public std::map<std::string,std::string>
 	Ident(): std::map<std::string,std::string>
 	{
 		// Client info
-		{"nick",                "SPQF"                                    },
+		{"nick",                ""                                        },
 		{"user",                "SPQF"                                    },
 		{"gecos",               "Senate & People of Freenode (#SPQF)"     },
 
@@ -20,7 +20,7 @@ struct Ident : public std::map<std::string,std::string>
 		{"ns-pass",             ""                                        },
 
 		// Server info
-		{"host",                ""                                        },
+		{"host",                "chat.freenode.net"                       },
 		{"port",                "6667"                                    },
 		{"pass",                ""                                        },
 

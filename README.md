@@ -133,8 +133,8 @@ channels.
 
 
 ###### Important Command Line Arguments
-* **--host** &nbsp; (*required*) &nbsp; Hostname of the IRC server.
-* **--nick** &nbsp; Nickname for the bot to use.
+* **--nick** &nbsp; (*required*) &nbsp; Nickname for the bot to use.
+* **--host** &nbsp; Hostname of the IRC server.
 * **--join** &nbsp; Channels to join on connect *(multiple --join allowed)*.
 * **--ns-acct** &nbsp; NickServ account name to identify with.
 * **--ns-pass** &nbsp; NickServ account password to identify with.
