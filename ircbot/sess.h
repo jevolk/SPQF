@@ -52,10 +52,13 @@ class Sess
 
 	// Server data
 	auto &get_server() const                           { return server;                             }
+	auto &get_isupport() const                         { return get_server().isupport;              }
 	auto &get_nick() const                             { return _nick;                              }
 	auto &get_mode() const                             { return mode;                               }
 	auto &is_identified() const                        { return identified;                         }
 	auto get_access() const                            { return access;                             }
+
+	template<class T> auto isupport(T&& k) const       { return get_server().isupport(k);           }
 	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
 	bool is_desired_nick() const                       { return _nick == ident["nick"];             }
 	bool is_conn() const;
