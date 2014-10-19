@@ -49,6 +49,7 @@ namespace vote
 	class Topic : public Vote
 	{
 		void passed();
+		void starting();
 
 	  public:
 		template<class... Args> Topic(Args&&... args): Vote("topic",std::forward<Args>(args)...) {}

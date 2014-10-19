@@ -196,6 +196,14 @@ void vote::Topic::passed()
 }
 
 
+void vote::Topic::starting()
+{
+	const Sess &sess = get_sess();
+	if(get_issue().size() > sess.get_isupport().get("TOPICLEN",256U))
+		throw Exception("Topic length exceeds maximum for this server.");
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
