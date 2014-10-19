@@ -68,10 +68,23 @@ R pointers(C&& c)
 }
 
 
-template<class T>
-bool isalpha(const T &val)
+template<class I>
+bool isnumeric(const I &beg,
+               const I &end)
 {
-	return std::all_of(val.begin(),val.end(),[&]
+	return std::all_of(beg,end,[&]
+	(auto&& c)
+	{
+		return std::isdigit(c,locale);
+	});
+}
+
+
+template<class I>
+bool isalpha(const I &beg,
+             const I &end)
+{
+	return std::all_of(beg,end,[&]
 	(auto&& c)
 	{
 		return std::isalpha(c,locale);
@@ -80,13 +93,16 @@ bool isalpha(const T &val)
 
 
 template<class T>
+bool isalpha(const T &val)
+{
+	return isalpha(val.begin(),val.end());
+}
+
+
+template<class T>
 bool isnumeric(const T &val)
 {
-	return std::all_of(val.begin(),val.end(),[&]
-	(auto&& c)
-	{
-		return std::isdigit(c,locale);
-	});
+	return isnumeric(val.begin(),val.end());
 }
 
 
