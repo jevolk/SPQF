@@ -104,7 +104,12 @@ template<> inline
 bool Ident::get<bool>(const std::string &key)
 const try
 {
-	switch(hash(tolower(this->at(key))))
+	const auto it = this->find(key);
+	if(it == end())
+		return false;
+
+	const auto &val = it->second;
+	switch(hash(tolower(val)))
 	{
 		case hash("enable"):
 		case hash("true"):
@@ -123,10 +128,6 @@ catch(const boost::bad_lexical_cast &e)
 	          << "(" << e.what() << ")"
 	          << std::endl;
 
-	return false;
-}
-catch(const std::out_of_range &e)
-{
 	return false;
 }
 
