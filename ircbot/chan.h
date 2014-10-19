@@ -97,8 +97,8 @@ class Chan : public Locutor,
 	void accesslist();                                      // ChanServ access list update
 	void flagslist();                                       // ChanServ flags list update
 	void akicklist();                                       // ChanServ akick list update
-	void invitelist()                                       { mode("+I");                           }
-	void exceptlist()                                       { mode("+e");                           }
+	void invitelist();                                      // INVEX update
+	void exceptlist();                                      // EXCEPTS update
 	void quietlist()                                        { mode("+q");                           }
 	void banlist()                                          { mode("+b");                           }
 	void csinfo();                                          // ChanServ info update
@@ -511,6 +511,24 @@ void Chan::names()
 
 
 inline
+void Chan::invitelist()
+{
+	const auto &sess = get_sess();
+	const auto &isupport = sess.get_isupport();
+	mode(std::string("+") + isupport.get("INVEX",'I'));
+}
+
+
+inline
+void Chan::exceptlist()
+{
+	const auto &sess = get_sess();
+	const auto &isupport = sess.get_isupport();
+	mode(std::string("+") + isupport.get("EXCEPTS",'e'));
+}
+
+
+inline
 void Chan::flagslist()
 {
 	Service &cs = get_cs();
@@ -622,8 +640,12 @@ bool Chan::delta_mode(const std::string &delta,
 		if(mask == sess.get_nick() && delta == "+o")
 		{
 			// We have been op'ed, grab the privileged lists.
-			invitelist();
-			exceptlist();
+			if(sess.isupport("INVEX"))
+				invitelist();
+
+			if(sess.isupport("EXCEPTS"))
+				exceptlist();
+
 			flagslist();
 			akicklist();
 		}
