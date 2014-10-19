@@ -9,8 +9,6 @@
 class Chan : public Locutor,
              public Acct
 {
-	template<class Mask> using Masks = std::set<Mask>;
-
 	Service *chanserv;
 	Log _log;
 
@@ -21,12 +19,12 @@ class Chan : public Locutor,
 	std::map<std::string, std::string> info;
 	std::tuple<std::string, Mask, time_t> _topic;
 	std::unordered_map<std::string, std::tuple<User *, Mode>> users;
-	Masks<Flag> flags;
-	Masks<AKick> akicks;
-	Masks<Except> excepts;
-	Masks<Invite> invites;
-	Masks<Quiet> quiets;
-	Masks<Ban> bans;
+	std::set<Ban> bans;
+	std::set<Quiet> quiets;
+	std::set<Except> excepts;
+	std::set<Invite> invites;
+	std::set<AKick> akicks;
+	std::set<Flag> flags;
 
   public:
 	enum Type { SECRET, PRIVATE, PUBLIC };
