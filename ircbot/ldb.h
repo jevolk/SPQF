@@ -39,6 +39,7 @@ class Ldb
 
 	class Iterator
 	{
+	  protected:
 		leveldb::DB *db;
 		const leveldb::Snapshot *snap;
 		ReadOptions ropt;
@@ -52,7 +53,7 @@ class Ldb
 		using StrClosure = std::function<void (const std::string &key, const std::string &val)>;
 
 		// Utils
-		bool valid() const                                    { return it->Valid();                 }
+		virtual bool valid() const                            { return it->Valid();                 }
 
 		// Move the state pointer
 		void seek(const leveldb::Slice &key)                  { it->Seek(key);                      }

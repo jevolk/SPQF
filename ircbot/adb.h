@@ -11,6 +11,9 @@ class Adb
 	Ldb ldb;
 
   public:
+	const Ldb &get_ldb() const                           { return ldb;                              }
+	Ldb &get_ldb()                                       { return ldb;                              }
+
 	bool exists(const std::string &name) const           { return ldb.exists(name);                 }
 	auto count() const                                   { return ldb.count();                      }
 
