@@ -6,31 +6,32 @@
  */
 
 
-class Vdb
+struct Vdb : Adb
 {
-	Adb &adb;
-
-  public:
 	class Iterator : public Ldb::Iterator
 	{
 		bool valid() const override;
 
 	  public:
-		template<class... A> Iterator(Vdb &vdb, A&&... a);
+		template<class... Args> Iterator(Vdb &vdb, const size_t &id = 0, Args&&... args);
 	};
 
-	auto has_vote(const std::string &id) const       { return adb.exists(id);                   }
-	auto has_vote(const id_t &id) const              { return adb.exists(lex_cast(id));         }
+	auto has_vote(const std::string &id) const       { return exists(id);                      }
+	auto has_vote(const size_t &id) const            { return exists(lex_cast(id));            }
 	uint num_votes() const;
 
-	Vdb(Adb &adb): adb(adb) {}
+	Vdb(Adb &adb): Adb(adb.get_ldb()) {}
 };
 
 
-template<class... A>
+template<class... Args>
 Vdb::Iterator::Iterator(Vdb &vdb,
-                        A&&... a):
-Ldb::Iterator(vdb.adb.get_ldb(),std::forward<A>(a)...)
+                        const size_t &id,
+                        Args&&... args):
+Ldb::Iterator(vdb.get_ldb(),
+              lex_cast(id),
+              false,
+              std::forward<Args>(args)...)
 {
 
 }
@@ -49,7 +50,7 @@ inline
 bool Vdb::Iterator::valid()
 const
 {
-	if(!Ldb::Iterator::valid())
+	if(!it->Valid())
 		return false;
 
 	const auto &key = it->key();
