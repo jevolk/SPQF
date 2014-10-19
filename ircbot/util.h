@@ -22,6 +22,14 @@ size_t hash(const std::string &str,
 }
 
 
+template<class T = std::string,
+         class... Args>
+auto lex_cast(Args&&... args)
+{
+	return boost::lexical_cast<T>(std::forward<Args>(args)...);
+}
+
+
 template<class T>
 std::string string(const T &t)
 {
