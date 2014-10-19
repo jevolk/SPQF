@@ -16,9 +16,8 @@ struct Vdb : Adb
 		template<class... Args> Iterator(Vdb &vdb, const size_t &id = 0, Args&&... args);
 	};
 
-	auto has_vote(const std::string &id) const       { return exists(id);                      }
-	auto has_vote(const size_t &id) const            { return exists(lex_cast(id));            }
-	uint num_votes() const;
+	auto exists(const size_t &id) const            { return Adb::exists(lex_cast(id));          }
+	uint count() const;
 
 	Vdb(Adb &adb): Adb(adb.get_ldb()) {}
 };
@@ -38,7 +37,7 @@ Ldb::Iterator(vdb.get_ldb(),
 
 
 inline
-uint Vdb::num_votes()
+uint Vdb::count()
 const
 {
 	Iterator it(const_cast<Vdb &>(*this));

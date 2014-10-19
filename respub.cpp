@@ -185,11 +185,11 @@ try
 {
 	Chans &chans = get_chans();
 	const Chan *const c = chan.is_op()? &chan : chans.find_cnotice(user);
-	const Vote::id_t id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
+	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
 
 	if(c)
 	{
-		const Vote &vote = voting.has_vote(id)? voting.get(id) : Vote(id,get_adb());
+		const Vote &vote = voting.exists(id)? voting.get(id) : Vote(id,get_adb());
 		handle_vote_info(msg,user,user<<(*c),subtok(toks),vote);
 	}
 	else handle_vote_list(msg,user,user,subtok(toks),id);
@@ -205,7 +205,7 @@ void ResPublica::handle_vote_cancel(const Msg &msg,
                                     User &user,
                                     const Tokens &toks)
 {
-	auto &vote = !toks.empty()? voting.get(boost::lexical_cast<Vote::id_t>(*toks.at(0))):
+	auto &vote = !toks.empty()? voting.get(lex_cast<Vote::id_t>(*toks.at(0))):
 	                            voting.get(chan);
 	voting.cancel(vote,chan,user);
 }
@@ -218,7 +218,7 @@ void ResPublica::handle_vote_ballot(const Msg &msg,
                                     const Vote::Ballot &ballot)
 try
 {
-	auto &vote = !toks.empty()? voting.get(boost::lexical_cast<Vote::id_t>(*toks.at(0))):
+	auto &vote = !toks.empty()? voting.get(lex_cast<Vote::id_t>(*toks.at(0))):
 	                            voting.get(chan);
 	vote.vote(ballot,user);
 }
@@ -244,7 +244,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 			handle_vote_list(msg,chan,user,subtoks,id);
 		});
 	} else {
-		const auto &id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
+		const auto &id = lex_cast<Vote::id_t>(*toks.at(0));
 		handle_vote_list(msg,chan,user,subtoks,id);
 	}
 }
@@ -403,7 +403,7 @@ void ResPublica::handle_vote_id(const Msg &msg,
                                 const Tokens &toks)
 try
 {
-	const Vote::id_t id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
+	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
 
 	Chans &chans = get_chans();
 	Chan *const chan = chans.find_cnotice(user);
@@ -413,7 +413,7 @@ try
 		return;
 	}
 
-	const Vote &vote = voting.has_vote(id)? voting.get(id) : Vote(id,get_adb());
+	const Vote &vote = voting.exists(id)? voting.get(id) : Vote(id,get_adb());
 	handle_vote_info(msg,user,user<<(*chan),subtok(toks),vote);
 }
 catch(const boost::bad_lexical_cast &e)
@@ -440,7 +440,7 @@ try
 			handle_vote_list(msg,user,user,subtoks,id);
 		});
 	} else {
-		const auto &id = boost::lexical_cast<Vote::id_t>(*subtoks.at(0));
+		const auto &id = lex_cast<Vote::id_t>(*subtoks.at(0));
 		handle_vote_list(msg,user,user,subtoks,id);
 	}
 }
@@ -460,7 +460,7 @@ void ResPublica::handle_vote_ballot(const Msg &msg,
                                     const Vote::Ballot &ballot)
 try
 {
-	const Vote::id_t id = boost::lexical_cast<Vote::id_t>(*toks.at(0));
+	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
 	auto &vote = voting.get(id);
 	vote.vote(ballot,user);
 }
@@ -505,7 +505,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 {
 	using namespace colors;
 
-	const Vote &vote = voting.has_vote(id)? voting.get(id) : Vote(id,get_adb());
+	const Vote &vote = voting.exists(id)? voting.get(id) : Vote(id,get_adb());
 	const auto tally = vote.tally();
 
 	out << vote << ": ";

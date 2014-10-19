@@ -29,6 +29,7 @@ chans(chans),
 users(users),
 logs(logs),
 bot(bot),
+vdb(adb),
 thread(&Voting::worker,this)
 {
 
@@ -253,7 +254,7 @@ catch(const std::out_of_range &e)
 const Voting::id_t &Voting::get_id(const User &user)
 const
 {
-	if(num_votes(user) > 1)
+	if(count(user) > 1)
 		throw Exception("There are multiple votes initiated by this user. Specify an ID#.");
 
 	const auto it = useridx.find(user.get_acct());
@@ -267,7 +268,7 @@ const
 const Voting::id_t &Voting::get_id(const Chan &chan)
 const
 {
-	if(num_votes(chan) > 1)
+	if(count(chan) > 1)
 		throw Exception("There are multiple votes active in this channel. Specify an ID#.");
 
 	const auto it = chanidx.find(chan.get_name());
