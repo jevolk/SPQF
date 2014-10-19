@@ -55,12 +55,12 @@ class Sess
 	auto &get_isupport() const                         { return get_server().isupport;              }
 	auto &get_nick() const                             { return _nick;                              }
 	auto &get_mode() const                             { return mode;                               }
-	auto &is_identified() const                        { return identified;                         }
-	auto get_access() const                            { return access;                             }
-
-	template<class T> auto isupport(T&& k) const       { return get_server().isupport(k);           }
+	auto &get_access() const                           { return access;                             }
+	auto isupport(const std::string &key) const        { return get_server().isupport(key);         }
+	auto has_opt(const std::string &key) const         { return ident.get<bool>(key);               }
 	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
 	bool is_desired_nick() const                       { return _nick == ident["nick"];             }
+	auto &is_identified() const                        { return identified;                         }
 	bool is_conn() const;
 
 	// [SEND] libircclient call wrapper
