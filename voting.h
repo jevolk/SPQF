@@ -16,6 +16,7 @@ class Voting
 	Users &users;
 	Logs &logs;
 	Bot &bot;
+	Vdb vdb;
 
 	std::map<id_t, std::unique_ptr<Vote>> votes;     // Standing votes  : id => vote
 	std::multimap<std::string, id_t> chanidx;        // Index of votes  : chan => id
@@ -23,12 +24,12 @@ class Voting
 	std::condition_variable sem;                     // Notify worker of new work
 
   public:
-	auto has_vote(const Chan &chan) const -> bool    { return chanidx.count(chan.get_name());   }
-	auto has_vote(const User &user) const -> bool    { return useridx.count(user.get_acct());   }
-	auto has_vote(const id_t &id) const -> bool      { return votes.count(id);                  }
-	auto num_votes(const Chan &chan) const           { return chanidx.count(chan.get_name());   }
-	auto num_votes(const User &user) const           { return useridx.count(user.get_acct());   }
-	auto num_votes() const                           { return votes.size();                     }
+	auto exists(const Chan &chan) const -> bool      { return chanidx.count(chan.get_name());   }
+	auto exists(const User &user) const -> bool      { return useridx.count(user.get_acct());   }
+	auto exists(const id_t &id) const -> bool        { return votes.count(id);                  }
+	auto count(const Chan &chan) const               { return chanidx.count(chan.get_name());   }
+	auto count(const User &user) const               { return useridx.count(user.get_acct());   }
+	auto count() const                               { return votes.size();                     }
 
 	const id_t &get_id(const Chan &chan) const;      // Throws if more than one vote in channel
 	const id_t &get_id(const User &chan) const;      // Throws if more than one vote for user
