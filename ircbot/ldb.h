@@ -6,104 +6,285 @@
  */
 
 
-class Ldb
+namespace ldb {
+
+
+struct Opts : public leveldb::Options
 {
-	struct Opts : public leveldb::Options
+	Opts(leveldb::Cache *const cache         = nullptr,
+	     const leveldb::FilterPolicy *fp     = nullptr,
+	     const leveldb::CompressionType ct   = leveldb::kSnappyCompression,
+	     const size_t block_size             = 16384,
+	     const bool create_if_missing        = true,
+	     const size_t write_buffer_size      = 4 * (1024 * 1024),
+	     const size_t max_open_files         = 1024);
+};
+
+
+struct WriteOptions : public leveldb::WriteOptions
+{
+	WriteOptions(const bool &sync = false);
+};
+
+
+struct ReadOptions : public leveldb::ReadOptions
+{
+	ReadOptions(const bool &cache                      = false,
+	            const bool &verify                     = false,
+	            const leveldb::Snapshot *const &snap   = nullptr);
+};
+
+
+class const_iterator : public std::iterator<std::bidirectional_iterator_tag,
+                                            std::tuple<const char *, size_t, const char *, size_t>>
+{
+	leveldb::DB *db;
+	std::shared_ptr<const leveldb::Snapshot> snap;
+	ReadOptions ropt;
+	std::unique_ptr<leveldb::Iterator> it;
+	mutable value_type kv;
+
+  public:
+	// Utils
+	virtual bool valid() const                         { return it->Valid();                          }
+	int cmp(const const_iterator &o) const;
+
+	operator bool() const                              { return valid();                              }
+	auto operator!() const                             { return !valid();                             }
+
+	auto operator==(const const_iterator &o) const     { return cmp(o) == 0;                          }
+	auto operator!=(const const_iterator &o) const     { return cmp(o) != 0;                          }
+	auto operator<=(const const_iterator &o) const     { return cmp(o) <= 0;                          }
+	auto operator>=(const const_iterator &o) const     { return cmp(o) >= 0;                          }
+	auto operator<(const const_iterator &o) const      { return cmp(o) < 0;                           }
+	auto operator>(const const_iterator &o) const      { return cmp(o) > 0;                           }
+
+	enum Seek { NEXT, PREV, FIRST, LAST, END };
+	void seek(const leveldb::Slice &key)               { it->Seek(key);                               }
+	void seek(const std::string &key)                  { it->Seek(key);                               }
+	void seek(const Seek &seek);
+
+	const_iterator &operator++();
+	const_iterator &operator--();
+	const_iterator operator++(int);
+	const_iterator operator--(int);
+
+	const_iterator &operator+=(const size_t &n);
+	const_iterator &operator-=(const size_t &n);
+	const_iterator operator+(const size_t &n);
+	const_iterator operator-(const size_t &n);
+
+	enum
 	{
-		Opts(leveldb::Cache *const cache         = nullptr,
-		     const leveldb::FilterPolicy *fp     = nullptr,
-		     const leveldb::CompressionType ct   = leveldb::kSnappyCompression,
-		     const size_t block_size             = 16384,
-		     const bool create_if_missing        = true,
-		     const size_t write_buffer_size      = 4 * (1024 * 1024),
-		     const size_t max_open_files         = 1024);
+		KEY, KEY_SIZE,
+		VAL, VAL_SIZE,
 	};
 
+	value_type &operator*() const;
+	value_type *operator->() const;
+
+	const_iterator(leveldb::DB *const &db,
+	               const bool &snap        = false,
+	               const bool &cache       = false);
+
+	const_iterator(const leveldb::DB *const &db,
+	               const bool &snap        = false);
+
+	const_iterator(const const_iterator &other);
+	const_iterator &operator=(const const_iterator &other) &;
+};
+
+
+inline
+const_iterator::const_iterator(const leveldb::DB *const &db,
+                               const bool &snap):
+const_iterator(const_cast<leveldb::DB *>(db),snap,false)
+{
+
+}
+
+
+inline
+const_iterator::const_iterator(leveldb::DB *const &db,
+                               const bool &snap,
+                               const bool &cache):
+db(db),
+snap({snap? db->GetSnapshot() : nullptr, [db](auto&& s) { if(s) db->ReleaseSnapshot(s); }}),
+ropt(cache,false,this->snap.get()),
+it(db->NewIterator(ropt))
+{
+
+}
+
+
+inline
+const_iterator::const_iterator(const const_iterator &o):
+db(o.db),
+snap(o.snap),
+ropt(o.ropt),
+it(db->NewIterator(ropt))
+{
+	if(valid())
+		it->Seek(o.it->key());
+	else
+		seek(END);
+}
+
+
+inline
+const_iterator &const_iterator::operator=(const const_iterator &o)
+&
+{
+	db = o.db;
+	snap = o.snap;
+	ropt = o.ropt;
+	it.reset(db->NewIterator(ropt));
+
+	if(valid())
+		it->Seek(o.it->key());
+	else
+		seek(END);
+
+	return *this;
+}
+
+
+inline
+const_iterator::value_type *const_iterator::operator->()
+const
+{
+	this->operator*();
+	return &kv;
+}
+
+
+inline
+const_iterator::value_type &const_iterator::operator*()
+const
+{
+	const leveldb::Slice &key = it->key();
+	const leveldb::Slice &val = it->value();
+	kv = value_type{key.data(),key.size(),val.data(),val.size()};
+	return kv;
+}
+
+
+inline
+const_iterator const_iterator::operator+(const size_t &n)
+{
+	auto ret(*this);
+	ret += n;
+	return ret;
+}
+
+
+inline
+const_iterator const_iterator::operator-(const size_t &n)
+{
+	auto ret(*this);
+	ret -= n;
+	return ret;
+}
+
+
+inline
+const_iterator &const_iterator::operator+=(const size_t &n)
+{
+	for(size_t i = 0; i < n; i++)
+		seek(NEXT);
+
+	return *this;
+}
+
+
+inline
+const_iterator &const_iterator::operator-=(const size_t &n)
+{
+	for(size_t i = 0; i < n; i++)
+		seek(PREV);
+
+	return *this;
+}
+
+
+inline
+const_iterator const_iterator::operator++(int)
+{
+	auto ret(*this);
+	++(*this);
+	return ret;
+}
+
+
+inline
+const_iterator const_iterator::operator--(int)
+{
+	auto ret(*this);
+	--(*this);
+	return ret;
+}
+
+
+inline
+const_iterator &const_iterator::operator++()
+{
+	seek(NEXT);
+	return *this;
+}
+
+
+inline
+const_iterator &const_iterator::operator--()
+{
+	seek(PREV);
+	return *this;
+}
+
+
+inline
+void const_iterator::seek(const Seek &seek)
+{
+	switch(seek)
+	{
+		case NEXT:     it->Next();                      break;
+		case PREV:     it->Prev();                      break;
+		case FIRST:    it->SeekToFirst();               break;
+		case LAST:     it->SeekToLast();                break;
+		case END:      it->SeekToLast();  it->Next();   break;
+	};
+}
+
+
+inline
+int const_iterator::cmp(const const_iterator &o)
+const
+{
+	return !valid() && !o.valid()?  0:
+	       !valid() && o.valid()?   1:
+	       valid() && !o.valid()?  -1:
+	                                it->key().compare(o.it->key());
+}
+
+
+class Ldb
+{
 	std::unique_ptr<leveldb::Cache> cache;
 	std::unique_ptr<const leveldb::FilterPolicy> fp;
 	Opts opts;
 	std::unique_ptr<leveldb::DB> db;
 
   public:
-	struct WriteOptions : public leveldb::WriteOptions
-	{
-		WriteOptions(const bool &sync = false);
-	};
+	using const_iterator = ldb::const_iterator;
 
-	struct ReadOptions : public leveldb::ReadOptions
-	{
-		ReadOptions(const bool &cache                      = false,
-		            const bool &verify                     = false,
-		            const leveldb::Snapshot *const &snap   = nullptr);
-	};
-
-	class Iterator
-	{
-	  protected:
-		leveldb::DB *db;
-		const leveldb::Snapshot *snap;
-		ReadOptions ropt;
-		std::unique_ptr<leveldb::Iterator> it;
-
-	  public:
-		enum Seek { NEXT, PREV, FIRST, LAST, END };
-		using Closure = std::function<void (const char *const &key, const size_t &,        // key
-		                                    const char *const &val, const size_t &)>;      // val
-
-		using StrClosure = std::function<void (const std::string &key, const std::string &val)>;
-
-		// Utils
-		virtual bool valid() const                            { return it->Valid();                 }
-
-		// Move the state pointer
-		void seek(const leveldb::Slice &key)                  { it->Seek(key);                      }
-		void seek(const std::string &key)                     { it->Seek(key);                      }
-		void seek(const Seek &seek);
-		auto &operator++()                                    { seek(NEXT); return *this;           }
-		auto &operator--()                                    { seek(PREV); return *this;           }
-
-		// Read current state, false on !valid()
-		bool next(const Closure &closure) const;              // no increment to next
-		bool next(const Closure &closure);                    // increments to next
-		bool next(const StrClosure &closure) const;           // no increment to next
-		bool next(const StrClosure &closure);                 // increments to next
-		template<class... A> bool operator()(A&&... a) const  { return next(std::forward<A>(a)...); }
-		template<class... A> bool operator()(A&&... a)        { return next(std::forward<A>(a)...); }
-
-		// Dependent utils
-		size_t count();
-
-		Iterator(Ldb &ldb,
-		         const bool &first       = true,
-		         const bool &cache       = false,
-		         const bool &snap        = true);
-
-		Iterator(Ldb &ldb,
-		         const std::string &key,
-		         const bool &exact_match = true,              // false = seek to next closest key
-		         const bool &cache       = false,
-		         const bool &snap        = true);
-
-		~Iterator() noexcept;
-	};
-
-	using Closure = Iterator::Closure;
+	// Reading
+	template<class... Args> const_iterator end(Args&&... args) const;
+	template<class... Args> const_iterator begin(Args&&... args) const;
+	template<class... Args> const_iterator find(const std::string &key, Args&&... args) const;
 
 	// Utils
 	size_t count() const;
 	bool exists(const std::string &key) const;
 	bool exists(const std::string &key, const bool &cache = false);
-
-	// Reading
-	bool get(const std::nothrow_t, const std::string &key, const Closure &closure, const bool &cache = true) noexcept;
-	bool get(const std::nothrow_t, const std::string &key, const Closure &closure) const noexcept;
-	void get(const std::string &key, const Closure &closure, const bool &cache = true);
-	void get(const std::string &key, const Closure &closure) const;
-
-	std::string get(const std::nothrow_t, const std::string &key, const bool &cache = true) noexcept;
-	std::string get(const std::nothrow_t, const std::string &key) const noexcept;
-	std::string get(const std::string &key, const bool &cache = true);
-	std::string get(const std::string &key) const;
 
 	// Writing
 	void set(const std::string &key, const std::string &value, const bool &sync = false);
@@ -151,109 +332,11 @@ void Ldb::set(const std::string &key,
 
 
 inline
-std::string Ldb::get(const std::string &key)
-const
-{
-	return get(std::nothrow,key);
-}
-
-
-inline
-std::string Ldb::get(const std::string &key,
-                     const bool &cache)
-{
-	const std::string ret = get(std::nothrow,key,cache);
-	if(ret.empty())
-		throw Exception("Key not found in database");
-
-	return ret;
-}
-
-
-inline
-std::string Ldb::get(const std::nothrow_t,
-                     const std::string &key)
-const noexcept
-{
-	std::string ret;
-	const auto closure = [&ret]
-	(const char *const &key, const size_t &ks, const char *const &val, const size_t &vs)
-	{
-		ret = {val,vs};
-	};
-
-	get(std::nothrow,key,closure);
-	return ret;
-}
-
-
-inline
-std::string Ldb::get(const std::nothrow_t,
-                     const std::string &key,
-                     const bool &cache)
-noexcept
-{
-	std::string ret;
-	const auto closure = [&ret]
-	(const char *const &key, const size_t &ks, const char *const &val, const size_t &vs)
-	{
-		ret = {val,vs};
-	};
-
-	get(std::nothrow,key,closure,cache);
-	return ret;
-}
-
-
-inline
-void Ldb::get(const std::string &key,
-              const Closure &closure)
-const
-{
-	if(!get(std::nothrow,key,closure))
-		throw Exception("Key not found in database");
-}
-
-
-inline
-void Ldb::get(const std::string &key,
-              const Closure &closure,
-              const bool &cache)
-{
-	if(!get(std::nothrow,key,closure,cache))
-		throw Exception("Key not found in database");
-}
-
-
-inline
-bool Ldb::get(const std::nothrow_t,
-              const std::string &key,
-              const Closure &closure)
-const noexcept
-{
-	const Iterator it(const_cast<Ldb &>(*this),key,true,false,true);
-	return it.next(closure);
-}
-
-
-inline
-bool Ldb::get(const std::nothrow_t,
-              const std::string &key,
-              const Closure &closure,
-              const bool &cache)
-noexcept
-{
-	const Iterator it(*this,key,true,cache,true);
-	return it.next(closure);
-}
-
-
-inline
 bool Ldb::exists(const std::string &key,
                  const bool &cache)
 {
-	const Iterator it(*this,key,true,cache,false);
-	return it.valid();
+	const auto it = find(key,false,cache);
+	return bool(it);
 }
 
 
@@ -261,8 +344,8 @@ inline
 bool Ldb::exists(const std::string &key)
 const
 {
-	const Iterator it(const_cast<Ldb &>(*this),key,true,false,false);
-	return it.valid();
+	const auto it = find(key,false,false);
+	return bool(it);
 }
 
 
@@ -270,131 +353,52 @@ inline
 size_t Ldb::count()
 const
 {
-	Iterator it(const_cast<Ldb &>(*this),true,false,true);
-	return it.count();
-}
+	size_t ret = 0;
+	const auto end = this->end();
+	for(auto it = begin(); it != end; ++it)
+		ret++;
 
-
-
-inline
-Ldb::Iterator::Iterator(Ldb &ldb,
-                        const std::string &key,
-                        const bool &exact_match,
-                        const bool &cache,
-                        const bool &snap):
-Iterator(ldb,false,cache,snap)
-{
-	seek(key);
-
-	if(exact_match && valid() && it->key() != key)
-		seek(END);
-}
-
-
-inline
-Ldb::Iterator::Iterator(Ldb &ldb,
-                        const bool &first,
-                        const bool &cache,
-                        const bool &snap):
-db(ldb.db.get()),
-snap(snap? db->GetSnapshot() : nullptr),
-ropt(cache,false,this->snap),
-it(db->NewIterator(ropt))
-{
-	if(first)
-		seek(FIRST);
-}
-
-
-inline
-Ldb::Iterator::~Iterator()
-noexcept
-{
-	if(snap)
-		db->ReleaseSnapshot(snap);
-}
-
-
-inline
-size_t Ldb::Iterator::count()
-{
-	const leveldb::Slice cur_key = it->key();
-
-	size_t ret;
-	for(ret = 0; valid(); ret++)
-		seek(NEXT);
-
-	seek(cur_key);
 	return ret;
 }
 
 
-inline
-bool Ldb::Iterator::next(const StrClosure &closure)
-{
-	return next([&closure]
-	(const char *const &key, const size_t &ks, const char *const &val, const size_t &vs)
-	{
-		closure({key,ks},{val,vs});
-	});
-}
-
-
-inline
-bool Ldb::Iterator::next(const StrClosure &closure) const
-{
-	return next([&closure]
-	(const char *const &key, const size_t &ks, const char *const &val, const size_t &vs)
-	{
-		closure({key,ks},{val,vs});
-	});
-}
-
-
-inline
-bool Ldb::Iterator::next(const Closure &closure)
-{
-	if(!valid())
-		return false;
-
-	const leveldb::Slice &key = it->key();
-	const leveldb::Slice &value = it->value();
-	closure(key.data(),key.size(),value.data(),value.size());
-	const scope nxt([&]{ seek(NEXT); });
-	return true;
-}
-
-
-inline
-bool Ldb::Iterator::next(const Closure &closure)
+template<class... Args>
+Ldb::const_iterator Ldb::end(Args&&... args)
 const
 {
-	if(!valid())
-		return false;
-
-	const leveldb::Slice &key = it->key();
-	const leveldb::Slice &value = it->value();
-	closure(key.data(),key.size(),value.data(),value.size());
-	return true;
+	const_iterator it(db.get(),std::forward<Args>(args)...);
+	it.seek(const_iterator::END);
+	return it;
 }
 
 
-inline
-void Ldb::Iterator::seek(const Seek &seek)
+template<class... Args>
+Ldb::const_iterator Ldb::begin(Args&&... args)
+const
 {
-	switch(seek)
-	{
-		case NEXT:     it->Next();                      break;
-		case PREV:     it->Prev();                      break;
-		case FIRST:    it->SeekToFirst();               break;
-		case LAST:     it->SeekToLast();                break;
-		case END:      it->SeekToLast();  it->Next();   break;
-	};
+	const_iterator it(db.get(),std::forward<Args>(args)...);
+	it.seek(const_iterator::FIRST);
+	return it;
+}
+
+
+template<class... Args>
+Ldb::const_iterator Ldb::find(const std::string &key,
+                              Args&&... args)
+const
+{
+	const_iterator it(db.get(),std::forward<Args>(args)...);
+	it.seek(key);
+
+	if(!it)
+		it.seek(const_iterator::END);
+
+	return it;
 }
 
 
 inline
-Ldb::ReadOptions::ReadOptions(const bool &cache,
+ldb::ReadOptions::ReadOptions(const bool &cache,
                               const bool &verify,
                               const leveldb::Snapshot *const &snap)
 {
@@ -406,7 +410,7 @@ Ldb::ReadOptions::ReadOptions(const bool &cache,
 
 
 inline
-Ldb::WriteOptions::WriteOptions(const bool &sync)
+ldb::WriteOptions::WriteOptions(const bool &sync)
 {
 	this->sync = sync;
 }
@@ -414,7 +418,7 @@ Ldb::WriteOptions::WriteOptions(const bool &sync)
 
 
 inline
-Ldb::Opts::Opts(leveldb::Cache *const cache,
+ldb::Opts::Opts(leveldb::Cache *const cache,
                 const leveldb::FilterPolicy *const fp,
                 const leveldb::CompressionType ct,
                 const size_t block_size,
@@ -432,3 +436,5 @@ Ldb::Opts::Opts(leveldb::Cache *const cache,
 	this->create_if_missing  = create_if_missing;
 }
 
+
+} // namespace ldb

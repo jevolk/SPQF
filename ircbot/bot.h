@@ -42,7 +42,6 @@
 #include <libircclient.h>
 #include <libirc_rfcnumeric.h>
 
-
 // irc::bot
 namespace irc {
 namespace bot {
@@ -51,9 +50,10 @@ namespace bot {
 extern std::locale locale;
 
 #include "util.h"
+#include "ldb.h"
+using Ldb = ldb::Ldb;
 #include "callbacks.h"
 #include "ident.h"
-#include "ldb.h"
 #include "mask.h"
 #include "server.h"
 #include "delta.h"

@@ -148,6 +148,15 @@ void Voting::del(const decltype(votes.begin()) &it)
 }
 
 
+Vote::id_t Voting::get_next_id()
+const
+{
+	//Vdb::Iterator it(vdb);
+
+	return 0;
+}
+
+
 void Voting::for_each(const std::function<void (Vote &vote)> &closure)
 {
 	for(auto &p : votes)

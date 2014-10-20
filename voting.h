@@ -48,6 +48,8 @@ class Voting
 	void for_each(const std::function<void (Vote &vote)> &closure);
 
   private:
+	id_t get_next_id() const;
+
 	void del(const decltype(votes.begin()) &it);
 	void del(const id_t &id);
 

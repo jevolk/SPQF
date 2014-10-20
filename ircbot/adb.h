@@ -39,11 +39,12 @@ ldb(ldb)
 inline
 Adoc Adb::get(const std::string &name)
 {
-	const Adoc ret = get(std::nothrow,name);
-	if(ret.empty())
+	const auto it = ldb.find(name);
+
+	if(!it)
 		throw Exception("Account not found");
 
-	return ret;
+	return std::string(std::get<decltype(it)::VAL>(*it),std::get<decltype(it)::VAL_SIZE>(*it));
 }
 
 
@@ -51,35 +52,32 @@ inline
 Adoc Adb::get(const std::string &name)
 const
 {
-	const Adoc ret = get(std::nothrow,name);
-	if(ret.empty())
+	const auto it = ldb.find(name);
+
+	if(!it)
 		throw Exception("Account not found");
 
-	return ret;
+	return std::string(std::get<decltype(it)::VAL>(*it),std::get<decltype(it)::VAL_SIZE>(*it));
 }
 
 
 inline
 Adoc Adb::get(const std::nothrow_t,
               const std::string &name)
-noexcept try
+noexcept
 {
-	return ldb.get(std::nothrow,name);
-}
-catch(const Exception &e)
-{
-	return {};
+	const auto it = ldb.find(name);
+	return it? std::string(std::get<decltype(it)::VAL>(*it),std::get<decltype(it)::VAL_SIZE>(*it)):
+	           std::string();
 }
 
 
 inline
 Adoc Adb::get(const std::nothrow_t,
               const std::string &name)
-const noexcept try
+const noexcept
 {
-	return ldb.get(std::nothrow,name);
-}
-catch(const Exception &e)
-{
-	return {};
+	const auto it = ldb.find(name);
+	return it? std::string(std::get<decltype(it)::VAL>(*it),std::get<decltype(it)::VAL_SIZE>(*it)):
+	           std::string();
 }
