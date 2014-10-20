@@ -56,17 +56,23 @@ try
 	if(msg.get_name() != "NOTICE")
 		throw Exception("Service handler only reads NOTICE.");
 
-	// Compare if msg CONTAINS the terminator
-	const std::string term = tolower(queue.front());
-	const std::string text = tolower(decolor(msg[TEXT]));
-	if(text.find(term) != std::string::npos)
+	static const auto &term_err = "You are not authorized to perform this operation.";
+	const auto &text = tolower(decolor(msg[TEXT]));
+	const auto &term = tolower(queue.front());
+	const auto reset = [&]
 	{
-		const scope reset([&]
-		{
-			queue.pop_front();
-			capture.clear();
-		});
+		queue.pop_front();
+		capture.clear();
+	};
 
+	if(text.find(term_err) != std::string::npos)
+	{
+		reset();
+		return;
+	}
+	else if(text.find(term) != std::string::npos)
+	{
+		const scope r(reset);
 		captured(capture);
 	}
 	else capture.emplace_back(decolor(msg[TEXT]));
