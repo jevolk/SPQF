@@ -8,15 +8,6 @@
 
 struct Vdb : Adb
 {
-	class Iterator : public Ldb::Iterator
-	{
-		bool valid() const override;
-
-	  public:
-		template<class... Args> Iterator(Vdb &vdb, const size_t &id = 0, Args&&... args);
-		template<class... Args> Iterator(const Vdb &vdb, const size_t &id = 0, Args&&... args);
-	};
-
 	auto exists(const size_t &id) const              { return Adb::exists(lex_cast(id));      }
 	uint count() const;
 
@@ -24,38 +15,15 @@ struct Vdb : Adb
 };
 
 
-template<class... Args>
-Vdb::Iterator::Iterator(Vdb &vdb,
-                        const size_t &id,
-                        Args&&... args):
-Ldb::Iterator(vdb.get_ldb(),
-              lex_cast(id),
-              false,
-              std::forward<Args>(args)...)
-{
-
-}
-
-
-template<class... Args>
-Vdb::Iterator::Iterator(const Vdb &vdb,
-                        const size_t &id,
-                        Args&&... args):
-Vdb::Iterator(const_cast<Vdb &>(vdb),id,std::forward<Args>(args)...)
-{
-
-}
-
-
 inline
 uint Vdb::count()
 const
 {
-	Iterator it(const_cast<Vdb &>(*this));
-	return it.count();
+
+	return 0;
 }
 
-
+/*
 inline
 bool Vdb::Iterator::valid()
 const
@@ -66,3 +34,4 @@ const
 	const auto &key = it->key();
 	return isnumeric(key.data(),key.data()+key.size());
 }
+*/
