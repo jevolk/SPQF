@@ -56,13 +56,10 @@ int main(int argc, char **argv) try
 	{
 		Ldb ldb(id["dbdir"]);
 		std::for_each(ldb.begin(),ldb.end(),[]
-		(const auto &tup)
+		(const auto &kv)
 		{
-			const std::string key {std::get<0>(tup),std::get<1>(tup)};
-			const std::string val {std::get<2>(tup),std::get<3>(tup)};
-
-			std::cout << "[" << key << "] => " << std::endl;
-			std::cout << val << std::endl << std::endl;
+			std::cout << "[" << kv.first << "] => " << std::endl;
+			std::cout << kv.second << std::endl << std::endl;
 		});
 
 		return 0;

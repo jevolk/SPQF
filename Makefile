@@ -29,7 +29,7 @@ WFLAGS = -pedantic                             \
          -Wno-unused-label                     \
          -Wsuggest-attribute=format
 
-CCFLAGS += -std=c++14
+CCFLAGS += -std=c++14 -Istldb
 LDFLAGS = -lircbot -lircclient -lleveldb -lpthread
 LIBPATH = -Lircbot/
 

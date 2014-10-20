@@ -40,11 +40,7 @@ inline
 Adoc Adb::get(const std::string &name)
 {
 	const auto it = ldb.find(name);
-
-	if(!it)
-		throw Exception("Account not found");
-
-	return std::string(std::get<decltype(it)::VAL>(*it),std::get<decltype(it)::VAL_SIZE>(*it));
+	return it? Adoc(it->second) : throw Exception("Account not found");
 }
 
 
@@ -53,11 +49,7 @@ Adoc Adb::get(const std::string &name)
 const
 {
 	const auto it = ldb.find(name);
-
-	if(!it)
-		throw Exception("Account not found");
-
-	return std::string(std::get<decltype(it)::VAL>(*it),std::get<decltype(it)::VAL_SIZE>(*it));
+	return it? Adoc(it->second) : throw Exception("Account not found");
 }
 
 
@@ -67,8 +59,7 @@ Adoc Adb::get(const std::nothrow_t,
 noexcept
 {
 	const auto it = ldb.find(name);
-	return it? std::string(std::get<decltype(it)::VAL>(*it),std::get<decltype(it)::VAL_SIZE>(*it)):
-	           std::string();
+	return it? std::string(it->second) : std::string();
 }
 
 
@@ -78,6 +69,5 @@ Adoc Adb::get(const std::nothrow_t,
 const noexcept
 {
 	const auto it = ldb.find(name);
-	return it? std::string(std::get<decltype(it)::VAL>(*it),std::get<decltype(it)::VAL_SIZE>(*it)):
-	           std::string();
+	return it? std::string(it->second) : std::string();
 }

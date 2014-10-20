@@ -111,10 +111,12 @@ or conduct takeovers.
     * Property Tree, JSON Parser
 * LevelDB &nbsp; *(tested: 1.17)*
 * libircclient **1.8** &nbsp; *(tested: 1.8)*
+* STLdb adapter (submodule)
 
 
 #### Compilation
 
+> git submodule update --init stldb/
 > make
 
 *(If linking error occurs, type make again)*

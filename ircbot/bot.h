@@ -33,25 +33,24 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-// leveldb
-#include <leveldb/filter_policy.h>
-#include <leveldb/cache.h>
-#include <leveldb/db.h>
-
 // ircclient
 #include <libircclient.h>
 #include <libirc_rfcnumeric.h>
+
+// leveldb
+#include <stldb/stldb.h>
+
 
 // irc::bot
 namespace irc {
 namespace bot {
 
+using Ldb = stldb::ldb<std::string,std::string>;
+
 // bot.cpp based externs
 extern std::locale locale;
 
 #include "util.h"
-#include "ldb.h"
-using Ldb = ldb::Ldb;
 #include "callbacks.h"
 #include "ident.h"
 #include "mask.h"
