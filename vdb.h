@@ -14,9 +14,10 @@ struct Vdb : Adb
 
 	  public:
 		template<class... Args> Iterator(Vdb &vdb, const size_t &id = 0, Args&&... args);
+		template<class... Args> Iterator(const Vdb &vdb, const size_t &id = 0, Args&&... args);
 	};
 
-	auto exists(const size_t &id) const            { return Adb::exists(lex_cast(id));          }
+	auto exists(const size_t &id) const              { return Adb::exists(lex_cast(id));      }
 	uint count() const;
 
 	Vdb(Adb &adb): Adb(adb.get_ldb()) {}
@@ -31,6 +32,16 @@ Ldb::Iterator(vdb.get_ldb(),
               lex_cast(id),
               false,
               std::forward<Args>(args)...)
+{
+
+}
+
+
+template<class... Args>
+Vdb::Iterator::Iterator(const Vdb &vdb,
+                        const size_t &id,
+                        Args&&... args):
+Vdb::Iterator(const_cast<Vdb &>(vdb),id,std::forward<Args>(args)...)
 {
 
 }

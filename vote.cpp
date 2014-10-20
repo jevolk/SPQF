@@ -11,8 +11,8 @@
 
 // SPQF
 using namespace irc::bot;
-#include "vdb.h"
 #include "vote.h"
+#include "vdb.h"
 #include "votes.h"
 #include "voting.h"
 #include "respub.h"
@@ -500,6 +500,5 @@ Locutor &operator<<(Locutor &locutor,
 {
 	using namespace colors;
 
-	locutor << "#" << BOLD << vote.get_id() << OFF;
-	return locutor;
+	return (locutor << "#" << BOLD << vote.get_id() << OFF);
 }
