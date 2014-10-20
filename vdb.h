@@ -22,16 +22,3 @@ const
 
 	return 0;
 }
-
-/*
-inline
-bool Vdb::Iterator::valid()
-const
-{
-	if(!it->Valid())
-		return false;
-
-	const auto &key = it->key();
-	return isnumeric(key.data(),key.data()+key.size());
-}
-*/

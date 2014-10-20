@@ -1,0 +1,3 @@
+[submodule "stldb"]
+	path = stldb
+	url = https://github.com/jevolk/stldb.git
