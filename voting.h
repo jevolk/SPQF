@@ -76,12 +76,7 @@ template<class Vote,
 Vote &Voting::motion(Args&&... args)
 try
 {
-	id_t id; do
-	{
-		id = rand() % 1000;
-	}
-	while(has_vote(id));
-
+	const id_t id = get_next_id();
 	const auto iit = votes.emplace(id,std::make_unique<Vote>(id,
 	                                                         vdb,
 	                                                         sess,
