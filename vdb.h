@@ -6,19 +6,35 @@
  */
 
 
-struct Vdb : Adb
+class Vdb : public Adb
 {
-	auto exists(const size_t &id) const              { return Adb::exists(lex_cast(id));      }
-	uint count() const;
+  public:
+	Vote get(const std::nothrow_t, const Vote::id_t &id) noexcept;
+	Vote get(const Vote::id_t &id);
 
-	Vdb(Adb &adb): Adb(adb.get_ldb()) {}
+	Vdb(const std::string &dir);
 };
 
 
 inline
-uint Vdb::count()
-const
+Vdb::Vdb(const std::string &dir):
+Adb(dir)
 {
 
-	return 0;
+}
+
+
+inline
+Vote Vdb::get(const Vote::id_t &id)
+{
+	return {id,*this};
+}
+
+
+inline
+Vote Vdb::get(const std::nothrow_t,
+              const Vote::id_t &id)
+noexcept
+{
+	return {id,*this};
 }

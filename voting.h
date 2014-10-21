@@ -83,7 +83,7 @@ try
 	while(has_vote(id));
 
 	const auto iit = votes.emplace(id,std::make_unique<Vote>(id,
-	                                                         adb,
+	                                                         vdb,
 	                                                         sess,
 	                                                         chans,
 	                                                         users,

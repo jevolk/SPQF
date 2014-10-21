@@ -29,7 +29,7 @@ chans(chans),
 users(users),
 logs(logs),
 bot(bot),
-vdb(adb),
+vdb({sess.get_ident()["dbdir"] + "/vote"}),
 thread(&Voting::worker,this)
 {
 
