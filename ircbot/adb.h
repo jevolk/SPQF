@@ -14,8 +14,8 @@ class Adb
 	const Ldb &get_ldb() const                           { return ldb;                              }
 	Ldb &get_ldb()                                       { return ldb;                              }
 
-	bool exists(const std::string &name) const           { return ldb.exists(name);                 }
-	auto count() const                                   { return ldb.count();                      }
+	bool exists(const std::string &name) const           { return ldb.count(name);                  }
+	auto count() const                                   { return ldb.size();                       }
 
 	Adoc get(const std::nothrow_t, const std::string &name) const noexcept;
 	Adoc get(const std::nothrow_t, const std::string &name) noexcept;
@@ -40,7 +40,7 @@ inline
 Adoc Adb::get(const std::string &name)
 {
 	const auto it = ldb.find(name);
-	return it? Adoc(it->second) : throw Exception("Account not found");
+	return it? Adoc{it->second} : throw Exception("Account not found");
 }
 
 
@@ -49,7 +49,7 @@ Adoc Adb::get(const std::string &name)
 const
 {
 	const auto it = ldb.find(name);
-	return it? Adoc(it->second) : throw Exception("Account not found");
+	return it? Adoc{it->second} : throw Exception("Account not found");
 }
 
 
@@ -59,7 +59,7 @@ Adoc Adb::get(const std::nothrow_t,
 noexcept
 {
 	const auto it = ldb.find(name);
-	return it? std::string(it->second) : std::string();
+	return it? Adoc{it->second} : Adoc{};
 }
 
 
@@ -69,5 +69,5 @@ Adoc Adb::get(const std::nothrow_t,
 const noexcept
 {
 	const auto it = ldb.find(name);
-	return it? std::string(it->second) : std::string();
+	return it? Adoc{it->second} : Adoc{};
 }
