@@ -189,7 +189,7 @@ try
 
 	if(c)
 	{
-		const Vote &vote = voting.exists(id)? voting.get(id) : Vote(id,get_adb());
+		const Vote &vote = voting.exists(id)? voting.get(id) : Vote(id,vdb);
 		handle_vote_info(msg,user,user<<(*c),subtok(toks),vote);
 	}
 	else handle_vote_list(msg,user,user,subtok(toks),id);
@@ -413,7 +413,7 @@ try
 		return;
 	}
 
-	const Vote &vote = voting.exists(id)? voting.get(id) : Vote(id,get_adb());
+	const Vote &vote = voting.exists(id)? voting.get(id) : Vote(id,vdb);
 	handle_vote_info(msg,user,user<<(*chan),subtok(toks),vote);
 }
 catch(const boost::bad_lexical_cast &e)
@@ -505,7 +505,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 {
 	using namespace colors;
 
-	const Vote &vote = voting.exists(id)? voting.get(id) : Vote(id,get_adb());
+	const Vote &vote = voting.exists(id)? voting.get(id) : Vote(id,vdb);
 	const auto tally = vote.tally();
 
 	out << vote << ": ";
