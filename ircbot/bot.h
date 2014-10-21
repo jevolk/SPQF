@@ -45,8 +45,6 @@
 namespace irc {
 namespace bot {
 
-using Ldb = stldb::ldb<std::string,std::string>;
-
 // bot.cpp based externs
 extern std::locale locale;
 
@@ -94,7 +92,6 @@ extern std::locale locale;
  */
 class Bot : public std::mutex
 {
-	Ldb ldb;
 	Adb adb;
 	Sess sess;
 	Users users;

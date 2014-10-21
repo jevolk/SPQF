@@ -8,11 +8,13 @@
 
 class Adb
 {
-	Ldb &ldb;
+	stldb::ldb<std::string,std::string> ldb;
 
   public:
-	const Ldb &get_ldb() const                           { return ldb;                              }
-	Ldb &get_ldb()                                       { return ldb;                              }
+	template<class... A> auto begin(A&&... a) const      { return ldb.begin(std::forward<A>(a)...); }
+	template<class... A> auto begin(A&&... a)            { return ldb.begin(std::forward<A>(a)...); }
+	template<class... A> auto end(A&&... a) const        { return ldb.end(std::forward<A>(a)...);   }
+	template<class... A> auto end(A&&... a)              { return ldb.end(std::forward<A>(a)...);   }
 
 	bool exists(const std::string &name) const           { return ldb.count(name);                  }
 	auto count() const                                   { return ldb.size();                       }
@@ -22,15 +24,15 @@ class Adb
 	Adoc get(const std::string &name) const;
 	Adoc get(const std::string &name);
 
-	void set(const std::string &name, const Adoc &data)  { ldb.set(name,data);                      }
+	void set(const std::string &name, const Adoc &data)  { ldb.insert(name,data);                   }
 
-	Adb(Ldb &ldb);
+	Adb(const std::string &dir);
 };
 
 
 inline
-Adb::Adb(Ldb &ldb):
-ldb(ldb)
+Adb::Adb(const std::string &dir):
+ldb(dir)
 {
 
 }

@@ -52,10 +52,11 @@ int main(int argc, char **argv) try
 		std::cin.get();
 	}
 
+	Adb adb(id["dbdir"] + "/irc");
+
 	if(dockey == "*")
 	{
-		Ldb ldb(id["dbdir"]);
-		std::for_each(ldb.begin(),ldb.end(),[]
+		std::for_each(adb.begin(),adb.end(),[]
 		(const auto &kv)
 		{
 			std::cout << "[" << kv.first << "] => " << std::endl;
@@ -65,8 +66,6 @@ int main(int argc, char **argv) try
 		return 0;
 	}
 
-	Ldb ldb(id["dbdir"]);
-	Adb adb(ldb);
 	if(!adb.exists(dockey))
 	{
 		printf("Document not found in database.\n");
