@@ -116,19 +116,19 @@ or conduct takeovers.
 
 #### Compilation
 
-> git submodule update --init stldb/
-> make
+	git submodule update --init stldb/
+	make
 
 *(If linking error occurs, type make again)*
 
 
 #### Execution
 
-> ./spqf
+	./spqf
 
 A usage message, and a list of command line options and their default arguments will print to console.
 
-> ./spqf --host=chat.freenode.net --nick=DemoBot --invite=true --join="##democracy"
+	./spqf --host=chat.freenode.net --nick=DemoBot --invite=true --join="##democracy"
 
 Connects to Freenode with the nick *DemoBot*, joining *##democracy*, and allowing */invite* to other
 channels.
