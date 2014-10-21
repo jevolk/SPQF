@@ -151,9 +151,15 @@ void Voting::del(const decltype(votes.begin()) &it)
 Vote::id_t Voting::get_next_id()
 const
 {
-	//Vdb::Iterator it(vdb);
+	size_t i = 0;
+	for(auto it = vdb.begin(); it; ++it,i++)
+	{
+		auto id = boost::lexical_cast<Vote::id_t>(it->first);
+		if(id != i && !exists(id))
+			break;
+	}
 
-	return 0;
+	return i;
 }
 
 
