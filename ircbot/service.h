@@ -12,6 +12,8 @@ class Service : public Locutor
 	std::list<std::string> capture;                // State of the current capture
 	std::deque<std::string> queue;                 // Queue of terminators
 
+	void reset();
+
   public:
 	auto &get_adb() const                          { return adb;                          }
 	auto queue_size() const                        { return queue.size();                 }
@@ -56,30 +58,41 @@ try
 	if(msg.get_name() != "NOTICE")
 		throw Exception("Service handler only reads NOTICE.");
 
-	static const auto &term_err = "You are not authorized to perform this operation.";
-	const auto &text = tolower(decolor(msg[TEXT]));
-	const auto &term = tolower(queue.front());
-	const auto reset = [&]
+	static const auto err =
 	{
-		queue.pop_front();
-		capture.clear();
+		"you are not authorized to perform this operation",
+		"is not registered",
+		"invalid parameters",
 	};
 
-	if(text.find(term_err) != std::string::npos)
+	const auto &text = tolower(decolor(msg[TEXT]));
+	if(std::any_of(err.begin(),err.end(),[&](auto&& t) { return text == t; }))
 	{
 		reset();
 		return;
 	}
-	else if(text.find(term) != std::string::npos)
+
+	const auto &term = tolower(queue.front());
+	if(text.find(term) != std::string::npos)
 	{
-		const scope r(reset);
+		const scope r(std::bind(&Service::reset,this));
 		captured(capture);
+		return;
 	}
-	else capture.emplace_back(decolor(msg[TEXT]));
+
+	capture.emplace_back(decolor(msg[TEXT]));
 }
 catch(const std::out_of_range &e)
 {
 	throw Exception("Range error in Service::handle");
+}
+
+
+inline
+void Service::reset()
+{
+	queue.pop_front();
+	capture.clear();
 }
 
 
