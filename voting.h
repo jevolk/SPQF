@@ -10,13 +10,12 @@ class Voting
 {
 	using id_t = Vote::id_t;
 
-	Adb &adb;
 	Sess &sess;
 	Chans &chans;
 	Users &users;
 	Logs &logs;
 	Bot &bot;
-	Vdb vdb;
+	Vdb &vdb;
 
 	std::map<id_t, std::unique_ptr<Vote>> votes;     // Standing votes  : id => vote
 	std::multimap<std::string, id_t> chanidx;        // Index of votes  : chan => id
@@ -64,7 +63,7 @@ class Voting
 	void cancel(const id_t &id, const Chan &chan, const User &user);
 	template<class Vote, class... Args> Vote &motion(Args&&... args);
 
-	Voting(Adb &adb, Sess &sess, Chans &chans, Users &users, Logs &logs, Bot &bot);
+	Voting(Vdb &vdb, Sess &sess, Chans &chans, Users &users, Logs &logs, Bot &bot);
 	Voting(const Voting &) = delete;
 	Voting &operator=(const Voting &) = delete;
 	~Voting() noexcept;

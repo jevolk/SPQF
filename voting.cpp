@@ -17,19 +17,18 @@ using namespace irc::bot;
 #include "voting.h"
 
 
-Voting::Voting(Adb &adb,
+Voting::Voting(Vdb &vdb,
                Sess &sess,
                Chans &chans,
                Users &users,
                Logs &logs,
                Bot &bot):
-adb(adb),
 sess(sess),
 chans(chans),
 users(users),
 logs(logs),
 bot(bot),
-vdb({sess.get_ident()["dbdir"] + "/vote"}),
+vdb(vdb),
 thread(&Voting::worker,this)
 {
 
