@@ -117,11 +117,11 @@ veto(get("veto").into(veto)),
 hosts(get("hosts").into(hosts))
 {
 	if(cfg.empty())
-		throw Exception("The configuration for this vote is missing and required.");
+		throw Assertive("The configuration for this vote is missing and required.");
 }
-catch(const std::exception &e)
+catch(const std::runtime_error &e)
 {
-	throw Exception("Failed to reconstruct Vote data: ") << e.what();
+	throw Assertive("Failed to reconstruct Vote data: ") << e.what();
 }
 
 

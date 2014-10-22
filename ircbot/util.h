@@ -221,12 +221,11 @@ class Internal : public std::runtime_error
 	operator std::string() const  { return what(); }
 
 	Internal(const int &c, const std::string &what = ""): std::runtime_error(what), c(c) {}
-	Internal(const std::stringstream &what): std::runtime_error(what.str()), c(0) {}
 	Internal(const std::string &what = ""): std::runtime_error(what), c(0) {}
 
 	template<class T> Internal operator<<(const T &t) const &&
 	{
-		return {static_cast<std::stringstream &>(std::stringstream() << what() << t)};
+		return {code(),static_cast<std::stringstream &>(std::stringstream() << what() << t).str()};
 	}
 
 	friend std::ostream &operator<<(std::ostream &s, const Internal &e)
@@ -238,11 +237,21 @@ class Internal : public std::runtime_error
 struct Exception : public Internal
 {
 	template<class... Args> Exception(Args&&... args): Internal(std::forward<Args&&>(args)...) {}
+
+	template<class T> Exception operator<<(const T &t) const &&
+	{
+		return {code(),static_cast<std::stringstream &>(std::stringstream() << what() << t).str()};
+	}
 };
 
 struct Assertive : public Exception
 {
 	template<class... Args> Assertive(Args&&... args): Exception(std::forward<Args&&>(args)...) {}
+
+	template<class T> Assertive operator<<(const T &t) const &&
+	{
+		return {code(),static_cast<std::stringstream &>(std::stringstream() << what() << t).str()};
+	}
 };
 
 
@@ -260,7 +269,7 @@ auto irc_call(irc_session_t *const &sess,
 	if(ret != CODE_FOR_SUCCESS)
 	{
 		const int errc = irc_errno(sess);
-		throw Exception(errc,"libircclient: (") << errc << ") " << irc_strerror(errc);
+		throw Internal(errc,"libircclient: (") << errc << ") " << irc_strerror(errc);
 	}
 
 	return ret;

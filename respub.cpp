@@ -222,7 +222,7 @@ try
 }
 catch(const boost::bad_lexical_cast &e)
 {
-	throw Exception("You must supply the vote ID as a number");
+	throw Exception("You must supply the vote ID as a number.");
 }
 
 
