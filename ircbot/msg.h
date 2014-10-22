@@ -181,7 +181,7 @@ template<class R>
 R Msg::get(const size_t &i)
 const
 {
-	return boost::lexical_cast<R>(params.at(i));
+	return lex_cast<R>(params.at(i));
 }
 
 

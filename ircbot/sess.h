@@ -213,7 +213,7 @@ void Sess::conn()
 {
 	call(irc_connect,
 	     opts["host"].c_str(),
-	     boost::lexical_cast<uint16_t>(opts["port"]),
+	     lex_cast<uint16_t>(opts["port"]),
 	     opts["pass"].empty()? nullptr : opts["pass"].c_str(),
 	     opts["nick"].c_str(),
 	     opts["user"].c_str(),

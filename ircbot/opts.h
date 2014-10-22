@@ -137,7 +137,7 @@ template<class T>
 Opts::non_num_t<T> Opts::get(const std::string &key)
 const
 {
-	return boost::lexical_cast<T>(this->at(key));
+	return lex_cast<T>(this->at(key));
 }
 
 
@@ -145,7 +145,7 @@ template<class T>
 Opts::num_t<T> Opts::get(const std::string &key)
 const try
 {
-	return boost::lexical_cast<T>(this->at(key));
+	return lex_cast<T>(this->at(key));
 }
 catch(const boost::bad_lexical_cast &e)
 {

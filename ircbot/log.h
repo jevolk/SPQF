@@ -68,7 +68,7 @@ try
 	const std::string &acct = user.is_logged_in()? user.get_acct() : "*";
 	const std::string &nick = user.get_nick();
 	const std::string &type = !msg.get_code()? msg.get_name().substr(0,3):
-	                                           boost::lexical_cast<std::string>(msg.get_code());
+	                                           lex_cast(msg.get_code());
 	file << VERSION
 	     << ' '
 	     << time

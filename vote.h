@@ -33,7 +33,7 @@ class Vote : protected Acct
 	enum Ballot                                 { YEA, NAY,                                         };
 	enum Stat                                   { ADDED, CHANGED,                                   };
 
-	auto get_id() const                         { return boost::lexical_cast<id_t>(id);             }
+	auto get_id() const                         { return lex_cast<id_t>(id);                        }
 	auto &get_type() const                      { return type;                                      }
 	auto &get_chan_name() const                 { return chan;                                      }
 	auto &get_user_acct() const                 { return acct;                                      }

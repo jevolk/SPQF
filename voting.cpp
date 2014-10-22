@@ -153,7 +153,7 @@ const
 	size_t i = 0;
 	for(auto it = vdb.begin(); it; ++it,i++)
 	{
-		auto id = boost::lexical_cast<Vote::id_t>(it->first);
+		auto id = lex_cast<Vote::id_t>(it->first);
 		if(id != i && !exists(id))
 			break;
 	}
