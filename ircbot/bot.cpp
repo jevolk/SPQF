@@ -35,7 +35,7 @@ dispatch_thread(&Bot::dispatch_worker,this)
 
 	irc_set_ctx(sess,this);
 }
-catch(const Exception &e)
+catch(const Internal &e)
 {
 	std::cerr << "Bot::Bot(): " << e << std::endl;
 }
@@ -47,7 +47,7 @@ noexcept try
 	dispatch_thread.join();
 	sess.disconn();
 }
-catch(const Exception &e)
+catch(const Internal &e)
 {
 	std::cerr << "Bot::~Bot(): " << e << std::endl;
 	return;
@@ -55,11 +55,22 @@ catch(const Exception &e)
 
 
 void Bot::run()
+try
 {
-	sess.call(irc_run);              // Loops forever here
+	sess.call(irc_run);                            // Loops forever here
+}
+catch(const Internal &e)
+{
+	switch(e.code())
+	{
+		case 15:
+			std::cout << e << std::endl;
+			break;
 
-	// see: handle_quit()
-	std::cout << "Worker exit clean." << std::endl;
+		default:
+			std::cerr << "Bot::run() loop unhandled: " << e << std::endl;
+			break;
+	}
 }
 
 
@@ -317,11 +328,7 @@ void Bot::handle_quit(const Msg &msg)
 	const std::string &reason = msg[REASON];
 
 	if(my_nick(nick))
-	{
-		//TODO: libbirc crashes if we don't exit (note: quit() was from a sighandler)
-		exit(0);
 		return;
-	}
 
 	Users &users = get_users();
 	User &user = users.get(nick);
