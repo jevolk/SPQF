@@ -44,8 +44,8 @@ catch(const Internal &e)
 Bot::~Bot(void)
 noexcept try
 {
-	dispatch_thread.join();
 	sess.disconn();
+	dispatch_thread.join();
 }
 catch(const Internal &e)
 {
@@ -64,17 +64,18 @@ catch(const Internal &e)
 	switch(e.code())
 	{
 		case 15:
-			std::cout << e << std::endl;
-			break;
+			std::cout << "libircclient worker exiting: " << e << std::endl;
+			return;
 
 		default:
-			std::cerr << "Bot::run() loop unhandled: " << e << std::endl;
-			break;
+			std::cerr << "\033[1;31mBot::run(): unhandled:\033[0m " << e << std::endl;
+			throw;
 	}
 }
 
 
 void Bot::dispatch_worker()
+try
 {
 	while(1)
 	{
@@ -82,8 +83,11 @@ void Bot::dispatch_worker()
 		const std::unique_lock<Bot> lock(*this);
 		dispatch(msg);
 	}
-
-	std::cout << "Dispatch worker exit clean." << std::endl;
+}
+catch(const Internal &e)
+{
+	std::cout << "Dispatch worker exiting: " << e << std::endl;
+	return;
 }
 
 
@@ -124,6 +128,7 @@ try
 			case hash("CAP"):              handle_cap(msg);                 return;
 			case hash("AUTHENTICATE"):     handle_authenticate(msg);        return;
 			case hash("CONNECT"):          handle_conn(msg);                return;
+			case hash("ERROR"):            handle_error(msg);               return;
 			default:                       handle_unhandled(msg);           return;
 		}
 
@@ -182,9 +187,23 @@ try
 		default:                                  handle_unhandled(msg);               return;
 	}
 }
+catch(const Internal &e)
+{
+	switch(e.code())
+	{
+		case -1:
+			throw;
+
+		default:
+			std::cerr << "\033[1;37;41mDispatch Internal:\033[0m"
+			          << " [\033[1;31m" << e << "\033[0m]"
+			          << " Message: [\033[1;31m" << msg << "\033[0;0m]"
+			          << std::endl;
+	}
+}
 catch(const std::exception &e)
 {
-	std::cerr << "\033[1;37;41mDispatch Exception:\033[0m"
+	std::cerr << "\033[1;37;41mDispatch Unhandled:\033[0m"
 	          << " [\033[1;31m" << e.what() << "\033[0m]"
 	          << " Message: [\033[1;31m" << msg << "\033[0;0m]"
 	          << std::endl;
@@ -1329,6 +1348,12 @@ void Bot::handle_nosuchnick(const Msg &msg)
 {
 	log_handle(msg,"NO SUCH NICK");
 
+}
+
+
+void Bot::handle_error(const Msg &msg)
+{
+	throw Internal(-1,msg[0]);
 }
 
 

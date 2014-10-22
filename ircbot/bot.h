@@ -23,6 +23,7 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <atomic>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -142,6 +143,7 @@ class Bot : public std::mutex
   private:
 	void log_handle(const Msg &m, const std::string &name = "") const;
 	void handle_unhandled(const Msg &m);
+	void handle_error(const Msg &m);
 
 	void handle_notice_nickserv(const Msg &m);
 
