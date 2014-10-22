@@ -8,9 +8,12 @@
 
 class Vdb : public Adb
 {
+	using id_t = Vote::id_t;
+
   public:
-	Vote get(const std::nothrow_t, const Vote::id_t &id) noexcept;
-	Vote get(const Vote::id_t &id);
+	bool exists(const id_t &id) const    { return Adb::exists(boost::lexical_cast<std::string>(id)); }
+
+	template<class... Args> Vote get(const id_t &id, Args&&... args);
 
 	Vdb(const std::string &dir);
 };
@@ -24,17 +27,17 @@ Adb(dir)
 }
 
 
-inline
-Vote Vdb::get(const Vote::id_t &id)
+template<class... Args>
+Vote Vdb::get(const id_t &id,
+              Args&&... args)
+try
 {
-	return {id,*this};
+	return {id,*this,std::forward<Args>(args)...};
 }
-
-
-inline
-Vote Vdb::get(const std::nothrow_t,
-              const Vote::id_t &id)
-noexcept
+catch(const Exception &e)
 {
-	return {id,*this};
+	if(exists(id))
+		throw;
+
+	throw Exception("Failed to find a vote with this ID");
 }
