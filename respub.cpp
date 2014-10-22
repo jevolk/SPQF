@@ -70,9 +70,8 @@ try
 		return;
 
 	// Discard everything not starting with command prefix
-	const Sess &sess = get_sess();
-	const Ident &id = sess.get_ident();
-	if(msg[TEXT].find(id["prefix"]) != 0)
+	const auto &opts = get_opts();
+	if(msg[TEXT].find(opts["prefix"]) != 0)
 		return;
 
 	handle_cmd(msg,chan,user);
@@ -104,10 +103,9 @@ void ResPublica::handle_cmd(const Msg &msg,
 	using namespace fmt::CHANMSG;
 
 	// Chop off cmd prefix and dispatch
-	const Sess &sess = get_sess();
-	const Ident &id = sess.get_ident();
+	const auto &opts = get_opts();
 	const std::vector<std::string> tok = tokens(msg[TEXT]);
-	switch(hash(tok.at(0).substr(id["prefix"].size())))
+	switch(hash(tok.at(0).substr(opts["prefix"].size())))
 	{
 		case hash("vote"):     handle_vote(msg,chan,user,subtok(tok));    break;
 		default:                                                          break;
@@ -301,13 +299,11 @@ void ResPublica::handle_cmd(const Msg &msg,
 {
 	using namespace fmt::PRIVMSG;
 
-	const Sess &sess = get_sess();
-	const Ident &id = sess.get_ident();
-
 	// Strip off the command prefix if given
-	const std::vector<std::string> toks = tokens(msg[TEXT]);
-	const bool has_prefix = toks.at(0).find(id["prefix"]) != std::string::npos;
-	const std::string cmd = has_prefix? toks.at(0).substr(id["prefix"].size()) : toks.at(0);
+	const auto &opts = get_opts();
+	const auto toks = tokens(msg[TEXT]);
+	const bool has_prefix = toks.at(0).find(opts["prefix"]) != std::string::npos;
+	const auto cmd = has_prefix? toks.at(0).substr(opts["prefix"].size()) : toks.at(0);
 
 	switch(hash(cmd))
 	{

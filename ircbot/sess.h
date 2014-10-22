@@ -11,7 +11,7 @@ class Sess
 	std::mutex &mutex;                                 // Bot's main mutex or "session mutex"
 
 	// Our constant data
-	Ident ident;
+	Opts opts;
 
 	// libircclient
 	Callbacks cbs;
@@ -43,7 +43,7 @@ class Sess
 	auto &get_mutex()                                  { return mutex;                              }
 
 	// Local data observers
-	auto &get_ident() const                            { return ident;                              }
+	auto &get_opts() const                             { return opts;                               }
 
 	// libircclient direct
 	auto get_cbs() const                               { return &cbs;                               }
@@ -57,9 +57,9 @@ class Sess
 	auto &get_mode() const                             { return mode;                               }
 	auto &get_access() const                           { return access;                             }
 	auto isupport(const std::string &key) const        { return get_server().isupport(key);         }
-	auto has_opt(const std::string &key) const         { return ident.get<bool>(key);               }
+	auto has_opt(const std::string &key) const         { return opts.get<bool>(key);                }
 	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
-	bool is_desired_nick() const                       { return _nick == ident["nick"];             }
+	bool is_desired_nick() const                       { return _nick == opts["nick"];              }
 	auto &is_identified() const                        { return identified;                         }
 	bool is_conn() const;
 
@@ -121,7 +121,7 @@ class Sess
 	void quit();                                       // Quit to server
 	void conn();
 
-	Sess(std::mutex &mutex, const Ident &id, Callbacks &cbs, irc_session_t *const &sess = nullptr);
+	Sess(std::mutex &mutex, const Opts &opts, Callbacks &cbs, irc_session_t *const &sess = nullptr);
 	Sess(const Sess &) = delete;
 	Sess &operator=(const Sess &) = delete;
 	~Sess() noexcept;
@@ -132,19 +132,19 @@ class Sess
 
 inline
 Sess::Sess(std::mutex &mutex,
-           const Ident &ident,
+           const Opts &opts,
            Callbacks &cbs,
            irc_session_t *const &sess):
 mutex(mutex),
-ident(ident),
+opts(opts),
 cbs(cbs),
 sess(sess? sess : irc_create_session(get_cbs())),
-_nick(this->ident["nick"]),
+_nick(this->opts["nick"]),
 identified(false)
 {
 	// Use the same global locale for each session for now.
 	// Raise an issue if you have a case for this being a problem.
-	irc::bot::locale = std::locale(ident["locale"].c_str());
+	irc::bot::locale = std::locale(opts["locale"].c_str());
 
 }
 
@@ -160,24 +160,21 @@ Sess::~Sess() noexcept
 inline
 void Sess::identify()
 {
-	const Ident &id = get_ident();
-	identify(ident["ns-acct"],ident["ns-pass"]);
+	identify(opts["ns-acct"],opts["ns-pass"]);
 }
 
 
 inline
 void Sess::ghost()
 {
-	const Ident &id = get_ident();
-	ghost(ident["nick"],ident["ns-pass"]);
+	ghost(opts["nick"],opts["ns-pass"]);
 }
 
 
 inline
 void Sess::regain()
 {
-	const Ident &id = get_ident();
-	regain(ident["nick"],ident["ns-pass"]);
+	regain(opts["nick"],opts["ns-pass"]);
 }
 
 
@@ -214,14 +211,13 @@ void Sess::regain(const std::string &nick,
 inline
 void Sess::conn()
 {
-	const Ident &id = get_ident();
 	call(irc_connect,
-	     id["host"].c_str(),
-	     boost::lexical_cast<uint16_t>(id["port"]),
-	     id["pass"].empty()? nullptr : id["pass"].c_str(),
-	     id["nick"].c_str(),
-	     id["user"].c_str(),
-	     id["gecos"].c_str());
+	     opts["host"].c_str(),
+	     boost::lexical_cast<uint16_t>(opts["port"]),
+	     opts["pass"].empty()? nullptr : opts["pass"].c_str(),
+	     opts["nick"].c_str(),
+	     opts["user"].c_str(),
+	     opts["gecos"].c_str());
 }
 
 
@@ -405,9 +401,9 @@ std::ostream &operator<<(std::ostream &s,
                          const Sess &ss)
 {
 	s << "Cbs:             " << ss.get_cbs() << std::endl;
+	s << "Opts:            " << std::endl << ss.opts << std::endl;
 	s << "irc_session_t:   " << ss.sess << std::endl;
 	s << "server:          " << ss.server << std::endl;
-	s << "Ident:           " << std::endl << ss.ident << std::endl;
 	s << "nick:            " << ss.get_nick() << std::endl;
 	s << "mode:            " << ss.mode << std::endl;
 

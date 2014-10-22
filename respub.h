@@ -61,7 +61,7 @@ class ResPublica : public irc::bot::Bot
 template<class... Args>
 ResPublica::ResPublica(Args&&... args):
 irc::bot::Bot(std::forward<Args>(args)...),
-vdb({get_ident()["dbdir"] + "/vote"}),
+vdb({get_opts()["dbdir"] + "/vote"}),
 voting(vdb,get_sess(),get_chans(),get_users(),get_logs(),*this)
 {
 

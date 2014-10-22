@@ -43,14 +43,14 @@ void handle_sig(const int sig)
 
 int main(int argc, char **argv) try
 {
-	Ident id;
-	id.parse({argv+1,argv+argc});
+	Opts opts;
+	opts.parse({argv+1,argv+argc});
 
-	if(id["nick"].empty())
+	if(opts["nick"].empty())
 	{
 		fprintf(stderr,"usage: %s [ --var=val | --join=chan ] [...]\n",argv[0]);
 		fprintf(stderr,"\ndefaults:\n");
-		for(const auto &kv : id)
+		for(const auto &kv : opts)
 			fprintf(stderr,"\t--%s=\"%s\"\n",kv.first.c_str(),kv.second.c_str());
 
 		return -1;
@@ -58,10 +58,11 @@ int main(int argc, char **argv) try
 
 	printf("****** \033[1mSENATVS POPVLVS QVE FREENODUS\033[0m ******\n");
 	printf("** The Senate and The People of Freenode **\n\n");
-	std::cout << id << std::endl;
+	printf("Current configuration:\n");
+	std::cout << opts << std::endl;
 
 	srand(getpid());
-	ResPublica instance(id);                   // Create instance of the bot
+	ResPublica instance(opts);                 // Create instance of the bot
 	::instance = &instance;                    // Set pointer for sighandlers
 	signal(SIGINT,&handle_sig);                // Register handler for ctrl-c
 	signal(SIGTERM,&handle_sig);               // Register handler for term

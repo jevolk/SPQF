@@ -18,7 +18,7 @@ class Service : public Locutor
 	auto &get_adb() const                              { return adb;                                   }
 	auto queue_size() const                            { return queue.size();                          }
 	auto capture_size() const                          { return capture.size();                        }
-	virtual bool enabled() const                       { return get_ident().get<bool>("services");     }
+	virtual bool enabled() const                       { return get_opts().get<bool>("services");      }
 
   protected:
 	using Capture = decltype(capture);

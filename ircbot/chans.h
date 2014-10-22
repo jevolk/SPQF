@@ -53,7 +53,7 @@ class Chans
 inline
 void Chans::autojoin()
 {
-	for(const auto &chan : sess.get_ident().autojoin)
+	for(const auto &chan : sess.get_opts().autojoin)
 		join(chan);
 }
 

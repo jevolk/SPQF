@@ -109,8 +109,8 @@ bool User::is_owner()
 const
 {
 	Sess &sess = get_sess();
-	const auto &cfg = sess.get_ident();
-	return is_logged_in() && (get_acct() == cfg["owner"] || get_nick() == cfg["owner"]);
+	const auto &opts = sess.get_opts();
+	return is_logged_in() && (get_acct() == opts["owner"] || get_nick() == opts["owner"]);
 }
 
 

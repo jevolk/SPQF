@@ -6,9 +6,9 @@
  */
 
 
-struct Ident : public std::map<std::string,std::string>
+struct Opts : public std::map<std::string,std::string>
 {
-	Ident(): std::map<std::string,std::string>
+	Opts(): std::map<std::string,std::string>
 	{
 		// Client info
 		{"nick",                ""                                        },
@@ -60,12 +60,12 @@ struct Ident : public std::map<std::string,std::string>
 	uint parse(const std::vector<std::string> &argv);
 
 	// Output this info
-	friend std::ostream &operator<<(std::ostream &s, const Ident &id);
+	friend std::ostream &operator<<(std::ostream &s, const Opts &id);
 };
 
 
 inline
-uint Ident::parse(const std::vector<std::string> &strs)
+uint Opts::parse(const std::vector<std::string> &strs)
 {
 	uint ret = 0;
 	for(const auto &str : strs)
@@ -76,7 +76,7 @@ uint Ident::parse(const std::vector<std::string> &strs)
 
 
 inline
-bool Ident::parse_arg(const std::string &str)
+bool Opts::parse_arg(const std::string &str)
 {
 	if(str.find("--") != 0)
 		return false;
@@ -102,7 +102,7 @@ bool Ident::parse_arg(const std::string &str)
 
 
 template<> inline
-bool Ident::get<bool>(const std::string &key)
+bool Opts::get<bool>(const std::string &key)
 const try
 {
 	const auto it = this->find(key);
@@ -134,7 +134,7 @@ catch(const boost::bad_lexical_cast &e)
 
 
 template<class T>
-Ident::non_num_t<T> Ident::get(const std::string &key)
+Opts::non_num_t<T> Opts::get(const std::string &key)
 const
 {
 	return boost::lexical_cast<T>(this->at(key));
@@ -142,7 +142,7 @@ const
 
 
 template<class T>
-Ident::num_t<T> Ident::get(const std::string &key)
+Opts::num_t<T> Opts::get(const std::string &key)
 const try
 {
 	return boost::lexical_cast<T>(this->at(key));
@@ -163,7 +163,7 @@ catch(const std::out_of_range &e)
 
 
 inline
-std::string &Ident::operator[](const std::string &key)
+std::string &Opts::operator[](const std::string &key)
 {
 	const auto it = find(key);
 	return it == end()? emplace(key,std::string()).first->second:
@@ -172,7 +172,7 @@ std::string &Ident::operator[](const std::string &key)
 
 
 inline
-const std::string &Ident::operator[](const std::string &key)
+const std::string &Opts::operator[](const std::string &key)
 const
 {
 	const auto it = find(key);
@@ -185,7 +185,7 @@ const
 
 inline
 std::ostream &operator<<(std::ostream &s,
-                         const Ident &id)
+                         const Opts &id)
 {
 	for(const auto &pair : id)
 		std::cout << std::setw(16) << std::left << pair.first

@@ -40,8 +40,8 @@ try:
 sess(sess),
 path([&]
 {
-	const Ident &id = sess.get_ident();
-	const std::string &dir = id["logdir"];
+	const auto &opts = sess.get_opts();
+	const auto &dir = opts["logdir"];
 	mkdir(dir.c_str(),0777);
 	return dir + "/" + name;
 }())

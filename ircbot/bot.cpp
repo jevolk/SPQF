@@ -15,14 +15,14 @@ using namespace irc::bot;
 std::locale irc::bot::locale;
 
 
-Bot::Bot(const Ident &ident)
+Bot::Bot(const Opts &opts)
 try:
 adb([&]
 {
-	mkdir(ident["dbdir"].c_str(),0777);
-	return ident["dbdir"] + "/ircbot";
+	mkdir(opts["dbdir"].c_str(),0777);
+	return opts["dbdir"] + "/ircbot";
 }()),
-sess(*this,ident,callbacks),
+sess(*this,opts,callbacks),
 users(adb,sess),
 chans(adb,sess),
 ns(adb,sess,users),
@@ -185,15 +185,15 @@ void Bot::handle_conn(const Msg &msg)
 	log_handle(msg,"CONNECT");
 
 	Sess &sess = get_sess();
-	const Ident &id = sess.get_ident();
+	const Opts &opts = sess.get_opts();
 
 	sess.cap_ls();
 	sess.cap_req("account-notify extended-join");
 	sess.cap_end();
 
-	if(!id["ns-acct"].empty() && !id["ns-pass"].empty())
+	if(!opts["ns-acct"].empty() && !opts["ns-pass"].empty())
 	{
-		sess.identify(id["ns-acct"],id["ns-pass"]);
+		sess.identify(opts["ns-acct"],opts["ns-pass"]);
 		return;
 	}
 
@@ -931,15 +931,15 @@ void Bot::handle_invite(const Msg &msg)
 	log_handle(msg,"INVITE");
 
 	const Sess &sess = get_sess();
-	const Ident &id = sess.get_ident();
+	const Opts &opts = sess.get_opts();
 
-	if(!id.get<bool>("invite"))
+	if(!opts.get<bool>("invite"))
 	{
 		std::cerr << "Attempt at INVITE was ignored by configuration." << std::endl;
 		return;
 	}
 
-	const time_t limit = id.get<time_t>("invite-throttle");
+	const time_t limit = opts.get<time_t>("invite-throttle");
 	static time_t throttle = 0;
 	if(time(NULL) - limit < throttle)
 	{
@@ -1063,9 +1063,9 @@ void Bot::handle_nicknameinuse(const Msg &msg)
 	log_handle(msg,"NICK IN USE");
 
 	Sess &sess = get_sess();
-	const Ident &id = sess.get_ident();
+	const Opts &opts = sess.get_opts();
 
-	if(!id["ns-acct"].empty() && !id["ns-pass"].empty())
+	if(!opts["ns-acct"].empty() && !opts["ns-pass"].empty())
 	{
 		const std::string randy(randstr(14));
 		sess.nick(randy);

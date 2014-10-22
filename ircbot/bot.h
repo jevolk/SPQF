@@ -50,7 +50,7 @@ extern std::locale locale;
 
 #include "util.h"
 #include "callbacks.h"
-#include "ident.h"
+#include "opts.h"
 #include "mask.h"
 #include "server.h"
 #include "delta.h"
@@ -80,7 +80,7 @@ extern std::locale locale;
  * Usage:
  *	0. #include this file, and only this file, in your project.
  *	1. Override the given virtual handle_* functions in the protected section.
- *	2. Fill in an Ident options structure (ident.h) and instance of this bot in your project.
+ *	2. Fill in an 'Opts' options structure (opts.h) and instance of this bot in your project.
  *	3. Operate the controls:
  *		conn() - initiate the connection to server
  *		run() - runs the event processing
@@ -103,7 +103,7 @@ class Bot : public std::mutex
   public:
 	auto &get_adb() const                             { return adb;                         }
 	auto &get_sess() const                            { return sess;                        }
-	auto &get_ident() const                           { return sess.get_ident();            }
+	auto &get_opts() const                            { return sess.get_opts();             }
 	auto &get_users() const                           { return users;                       }
 	auto &get_chans() const                           { return chans;                       }
 	auto &get_ns() const                              { return ns;                          }
@@ -239,7 +239,7 @@ class Bot : public std::mutex
 	void run();                                             // Run worker loop
 
 	Bot(void) = delete;
-	Bot(const Ident &ident);
+	Bot(const Opts &opts);
 	Bot(Bot &&) = delete;
 	Bot(const Bot &) = delete;
 	Bot &operator=(Bot &&) = delete;

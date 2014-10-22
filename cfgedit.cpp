@@ -14,8 +14,8 @@ using namespace irc::bot;
 
 int main(int argc, char **argv) try
 {
-	Ident id;
-	const int nargs = id.parse({argv+1,argv+argc});
+	Opts opts;
+	const int nargs = opts.parse({argv+1,argv+argc});
 
 	if(argc - nargs < 2)
 	{
@@ -29,7 +29,7 @@ int main(int argc, char **argv) try
 	}
 
 	std::cout << "NOTE : Using configuration: " << std::endl;
-	std::cout << id << std::endl;
+	std::cout << opts << std::endl;
 	std::cout << std::endl;
 
 	const std::string dockey = tolower(argv[nargs+1]);
@@ -52,7 +52,7 @@ int main(int argc, char **argv) try
 		std::cin.get();
 	}
 
-	Adb adb(id["dbdir"] + "/irc");
+	Adb adb(opts["dbdir"] + "/irc");
 
 	if(dockey == "*")
 	{
