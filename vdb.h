@@ -11,7 +11,7 @@ class Vdb : public Adb
 	using id_t = Vote::id_t;
 
   public:
-	bool exists(const id_t &id) const    { return Adb::exists(boost::lexical_cast<std::string>(id)); }
+	bool exists(const id_t &id) const               { return Adb::exists(lex_cast(id));  }
 
 	template<class... Args> Vote get(const id_t &id, Args&&... args);
 
