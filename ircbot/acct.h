@@ -16,7 +16,7 @@ class Acct
   public:
 	auto &get_adb() const                               { return *adb;                              }
 	auto &get_acct() const                              { return *acct;                             }
-	bool has_acct() const                               { return adb->exists(get_acct());           }
+	bool exists() const                                 { return adb->exists(get_acct());           }
 
 	// Get document
 	Adoc get() const                                    { return adb->get(std::nothrow,get_acct()); }

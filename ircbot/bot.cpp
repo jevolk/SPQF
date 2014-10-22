@@ -1124,7 +1124,7 @@ void Bot::handle_whospecial(const Msg &msg)
 			user.set_acct(acct);
 			//user.set_idle(idle);
 
-			if(user.is_logged_in() && !user.has_acct())
+			if(user.is_logged_in() && !user.Acct::exists())
 				user.set_val("first_seen",time(NULL));
 
 			break;

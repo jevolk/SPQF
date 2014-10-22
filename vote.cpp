@@ -94,7 +94,8 @@ Vote::Vote(const id_t &id,
            Sess *const &sess,
            Chans *const &chans,
            Users *const &users,
-           Logs *const &logs):
+           Logs *const &logs)
+try:
 Acct(adb,&this->id),
 sess(sess),
 chans(chans),
@@ -115,7 +116,12 @@ nay(get("nay").into(nay)),
 veto(get("veto").into(veto)),
 hosts(get("hosts").into(hosts))
 {
-
+	if(cfg.empty())
+		throw Exception("The configuration for this vote is missing and required.");
+}
+catch(const std::exception &e)
+{
+	throw Exception("Failed to reconstruct Vote data: ") << e.what();
 }
 
 
