@@ -16,6 +16,7 @@ class Chan : public Locutor,
 	bool joined;                                            // Indication the server has sent us
 	Mode _mode;
 	time_t creation;
+	std::string pass;                                       // passkey for channel
 	std::map<std::string, std::string> info;
 	std::tuple<std::string, Mask, time_t> _topic;
 	std::unordered_map<std::string, std::tuple<User *, Mode>> users;
@@ -36,6 +37,7 @@ class Chan : public Locutor,
 	auto &get_cs() const                                    { return *chanserv;                     }
 	auto &get_log() const                                   { return _log;                          }
 	auto &get_name() const                                  { return Locutor::get_target();         }
+	auto &get_pass() const                                  { return pass;                          }
 	auto &is_joined() const                                 { return joined;                        }
 	auto &get_topic() const                                 { return _topic;                        }
 	auto &get_mode() const                                  { return _mode;                         }
@@ -141,7 +143,7 @@ class Chan : public Locutor,
 	friend Chan &operator<<(Chan &c, const User &user);     // append "nickname: " to locutor stream
 	friend User &operator<<(User &u, const Chan &chan);     // for CNOTICE / CPRIVMSG
 
-	Chan(Adb &adb, Sess &sess, Service &chanserv, const std::string &name);
+	Chan(Adb &adb, Sess &sess, Service &chanserv, const std::string &name, const std::string &pass = "");
 	virtual ~Chan() = default;
 
 	friend std::ostream &operator<<(std::ostream &s, const Chan &chan);
@@ -152,12 +154,15 @@ inline
 Chan::Chan(Adb &adb,
            Sess &sess,
            Service &chanserv,
-           const std::string &name):
+           const std::string &name,
+           const std::string &pass):
 Locutor(sess,name),
 Acct(adb,&Locutor::get_target()),
 chanserv(&chanserv),
 _log(sess,name),
-joined(false)
+joined(false),
+creation(0),
+pass(pass)
 {
 
 
@@ -188,7 +193,8 @@ inline
 void Chan::join()
 {
 	Sess &sess = get_sess();
-	sess.call(irc_cmd_join,get_name().c_str(),nullptr);
+	const auto &pass = get_pass();
+	sess.call(irc_cmd_join,get_name().c_str(),pass.empty()? nullptr : pass.c_str());
 }
 
 
@@ -830,6 +836,7 @@ std::ostream &operator<<(std::ostream &s,
                          const Chan &c)
 {
 	s << "name:       \t" << c.get_name() << std::endl;
+	s << "passkey:    \t" << c.get_pass() << std::endl;
 	s << "logfile:    \t" << c.get_log().get_path() << std::endl;
 	s << "mode:       \t" << c.get_mode() << std::endl;
 	s << "creation:   \t" << c.get_creation() << std::endl;
