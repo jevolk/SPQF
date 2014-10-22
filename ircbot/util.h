@@ -260,9 +260,7 @@ auto irc_call(irc_session_t *const &sess,
 	if(ret != CODE_FOR_SUCCESS)
 	{
 		const int errc = irc_errno(sess);
-		std::stringstream s;
-		s << "libircclient: (" << errc << "): " << irc_strerror(errc);
-		throw Exception(errc,s.str());
+		throw Exception(errc,"libircclient: (") << errc << ") " << irc_strerror(errc);
 	}
 
 	return ret;
