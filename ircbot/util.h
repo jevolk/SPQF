@@ -212,49 +212,6 @@ struct scope
 };
 
 
-class Internal : public std::runtime_error
-{
-	int c;
-
-  public:
-	const int &code() const       { return c;      }
-	operator std::string() const  { return what(); }
-
-	Internal(const int &c, const std::string &what = ""): std::runtime_error(what), c(c) {}
-	Internal(const std::string &what = ""): std::runtime_error(what), c(0) {}
-
-	template<class T> Internal operator<<(const T &t) const &&
-	{
-		return {code(),static_cast<std::stringstream &>(std::stringstream() << what() << t).str()};
-	}
-
-	friend std::ostream &operator<<(std::ostream &s, const Internal &e)
-	{
-		return (s << e.what());
-	}
-};
-
-struct Exception : public Internal
-{
-	template<class... Args> Exception(Args&&... args): Internal(std::forward<Args&&>(args)...) {}
-
-	template<class T> Exception operator<<(const T &t) const &&
-	{
-		return {code(),static_cast<std::stringstream &>(std::stringstream() << what() << t).str()};
-	}
-};
-
-struct Assertive : public Exception
-{
-	template<class... Args> Assertive(Args&&... args): Exception(std::forward<Args&&>(args)...) {}
-
-	template<class T> Assertive operator<<(const T &t) const &&
-	{
-		return {code(),static_cast<std::stringstream &>(std::stringstream() << what() << t).str()};
-	}
-};
-
-
 template<int CODE_FOR_SUCCESS = 0,
          class Exception = Exception,
          class Function,

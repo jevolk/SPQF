@@ -53,6 +53,7 @@ namespace colors
 {
 #include "colors.h"
 }
+#include "exception.h"
 #include "util.h"
 #include "callbacks.h"
 #include "opts.h"
