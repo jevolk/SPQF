@@ -49,6 +49,10 @@ namespace bot {
 // bot.cpp based externs
 extern std::locale locale;
 
+namespace colors
+{
+#include "colors.h"
+}
 #include "util.h"
 #include "callbacks.h"
 #include "opts.h"
