@@ -20,6 +20,7 @@ class Voting
 	std::map<id_t, std::unique_ptr<Vote>> votes;     // Standing votes  : id => vote
 	std::multimap<std::string, id_t> chanidx;        // Index of votes  : chan => id
 	std::multimap<std::string, id_t> useridx;        // Index of votes  : acct => id
+	std::atomic<bool> interrupted;                   // Worker exits on interrupted state
 	std::condition_variable sem;                     // Notify worker of new work
 
   public:
@@ -55,7 +56,7 @@ class Voting
 	void call_finish(Vote &vote) noexcept;
 	void poll_votes();
 	void sleep();
-	void worker() __attribute__((noreturn));
+	void worker();
 	std::thread thread;
 
   public:

@@ -29,6 +29,7 @@ users(users),
 logs(logs),
 bot(bot),
 vdb(vdb),
+interrupted(false),
 thread(&Voting::worker,this)
 {
 
@@ -38,8 +39,9 @@ thread(&Voting::worker,this)
 
 Voting::~Voting() noexcept
 {
+	interrupted.store(true,std::memory_order_release);
+	sem.notify_all();
 	thread.join();
-
 }
 
 
@@ -69,7 +71,7 @@ void Voting::cancel(Vote &vote,
 
 void Voting::worker()
 {
-	while(1)
+	while(!interrupted.load(std::memory_order_consume))
 	{
 		poll_votes();
 		sleep();
@@ -80,7 +82,8 @@ void Voting::worker()
 void Voting::sleep()
 {
 	//TODO: calculate next deadline. Recalculate on semaphore.
-	std::this_thread::sleep_for(std::chrono::seconds(2));
+	std::unique_lock<std::mutex> lock(bot);
+	sem.wait_for(lock,std::chrono::seconds(2));
 }
 
 
