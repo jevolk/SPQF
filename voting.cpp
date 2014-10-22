@@ -116,7 +116,7 @@ void Voting::del(const id_t &id)
 {
 	const auto vit = votes.find(id);
 	if(vit == votes.end())
-		throw Exception("Failed to delete vote by ID");
+		throw Exception("Could not delete any vote by this ID.");
 
 	del(vit);
 }

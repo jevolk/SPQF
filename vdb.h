@@ -39,5 +39,5 @@ catch(const Exception &e)
 	if(exists(id))
 		throw;
 
-	throw Exception("Failed to find a vote with this ID");
+	throw Exception("Could not find a vote by that ID.");
 }
