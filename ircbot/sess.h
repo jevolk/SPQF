@@ -20,7 +20,7 @@ class Sess
 	// Server data
 	Server server;                                     // Filled at connection time
 	std::set<std::string> caps;                        // registered extended capabilities
-	std::string _nick;                                 // NICK reply
+	std::string nickname;                              // NICK reply
 	Mode mode;                                         // UMODE
 	bool identified;                                   // Identified to services
 	std::map<std::string,Mode> access;                 // Our channel access (/ns LISTCHANS)
@@ -32,7 +32,7 @@ class Sess
 	// Handler accesses
 	friend class Bot;
 	friend class NickServ;
-	void set_nick(const std::string &nick)             { this->_nick = nick;                        }
+	void set_nick(const std::string &nickname)         { this->nickname = nickname;                 }
 	void delta_mode(const std::string &str)            { mode.delta(str);                           }
 	void set_identified(const bool &identified)        { this->identified = identified;             }
 
@@ -53,13 +53,13 @@ class Sess
 	// Server data
 	auto &get_server() const                           { return server;                             }
 	auto &get_isupport() const                         { return get_server().isupport;              }
-	auto &get_nick() const                             { return _nick;                              }
+	auto &get_nick() const                             { return nickname;                           }
 	auto &get_mode() const                             { return mode;                               }
 	auto &get_access() const                           { return access;                             }
 	auto isupport(const std::string &key) const        { return get_server().isupport(key);         }
 	auto has_opt(const std::string &key) const         { return opts.get<bool>(key);                }
 	bool has_cap(const std::string &cap) const         { return caps.count(cap);                    }
-	bool is_desired_nick() const                       { return _nick == opts["nick"];              }
+	bool is_desired_nick() const                       { return nickname == opts["nick"];           }
 	auto &is_identified() const                        { return identified;                         }
 	bool is_conn() const;
 
@@ -139,7 +139,7 @@ mutex(mutex),
 opts(opts),
 cbs(cbs),
 sess(sess? sess : irc_create_session(get_cbs())),
-_nick(this->opts["nick"]),
+nickname(this->opts["nick"]),
 identified(false)
 {
 	// Use the same global locale for each session for now.
