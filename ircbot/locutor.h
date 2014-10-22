@@ -70,6 +70,7 @@ class Locutor
 
   public:
 	auto &get_sess() const                              { return *sess;                              }
+	auto &get_ident() const                             { return get_sess().get_ident();             }
 	auto &get_target() const                            { return target;                             }
 	auto &get_sendq() const                             { return sendq;                              }
 	auto &get_meth() const                              { return meth;                               }
