@@ -153,13 +153,9 @@ void Voting::del(const decltype(votes.begin()) &it)
 Vote::id_t Voting::get_next_id()
 const
 {
-	size_t i = 0;
-	for(auto it = vdb.begin(); it; ++it,i++)
-	{
-		auto id = lex_cast<Vote::id_t>(it->first);
-		if(id != i && !exists(id))
-			break;
-	}
+	id_t i = 0;
+	while(vdb.exists(i) || exists(i))
+		i++;
 
 	return i;
 }
