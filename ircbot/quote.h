@@ -29,9 +29,18 @@ class Quote : public Stream
 	template<class T> Quote &operator<<(const T &t);
 	Quote &operator()(const std::string &str = "");         // flush automatically
 
-	Quote(irc_session_t *const &sess, const std::string &cmd = ""):
-	      Stream(cmd), sess(sess) {}
+	Quote(irc_session_t *const &sess, const std::string &cmd = "");
 };
+
+
+inline
+Quote::Quote(irc_session_t *const &sess,
+             const std::string &cmd):
+Stream(cmd),
+sess(sess)
+{
+	Stream::reset();
+}
 
 
 inline
@@ -46,7 +55,7 @@ Quote &Quote::operator()(const std::string &str)
 template<class T>
 Quote &Quote::operator<<(const T &t)
 {
-	Stream::operator<<<T>(t);
+	Stream::operator<<(t);
 	return *this;
 }
 
@@ -54,16 +63,13 @@ Quote &Quote::operator<<(const T &t)
 inline
 Quote &Quote::operator<<(const flush_t)
 {
-	const scope reset([&]
+	const scope r([&]
 	{
-		clear_sendq();
+		clear();
+		reset();
 	});
 
-	if(has_target())
-		quote("%s %s",get_target().c_str(),get_str().c_str());
-	else
-		quote(get_str());
-
+	quote(get_str());
 	return *this;
 }
 
@@ -71,7 +77,7 @@ Quote &Quote::operator<<(const flush_t)
 inline
 void Quote::quote(const std::string &str)
 {
-	call(irc_send_raw,str.c_str());
+	call(irc_send_raw,"%s",str.c_str());
 }
 
 

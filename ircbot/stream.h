@@ -24,8 +24,9 @@ class Stream
 	auto &get_sendq()                                   { return sendq;                         }
 
   public:
-    void set_target(const std::string &target)          { this->target = target;                }
-	void clear_sendq();
+	void set_target(const std::string &target)          { this->target = target;                }
+	void reset();                                       // clear and begin stream with target
+	void clear();                                       // clear all in sendq
 
 	virtual Stream &operator<<(const flush_t) = 0;
 	template<class T> Stream &operator<<(const T &t);   // Append data to sendq stream
@@ -117,8 +118,16 @@ Stream &Stream::operator<<(const T &t)
 
 
 inline
-void Stream::clear_sendq()
+void Stream::clear()
 {
 	sendq.clear();
 	sendq.str(std::string());
+}
+
+
+inline
+void Stream::reset()
+{
+	if(has_target())
+		sendq << get_target() << " ";
 }

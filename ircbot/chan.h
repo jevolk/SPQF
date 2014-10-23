@@ -173,7 +173,7 @@ inline
 User &operator<<(User &user,
                  const Chan &chan)
 {
-	user.clear_sendq();
+	user.Stream::clear();
 	user << Locutor::CMSG;
 	user << chan.get_target() << "\n";
 	return user;

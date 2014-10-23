@@ -153,7 +153,7 @@ ChanServ &ChanServ::operator<<(const flush_t)
 {
 	const scope clear([&]
 	{
-		clear_sendq();
+		Stream::clear();
 	});
 
 	Sess &sess = get_sess();

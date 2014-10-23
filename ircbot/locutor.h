@@ -125,7 +125,7 @@ Locutor &Locutor::operator<<(const flush_t)
 {
 	const scope reset([&]
 	{
-		clear_sendq();
+		clear();
 		meth = DEFAULT_METHOD;
 		methex = DEFAULT_METHODEX;
 	});
