@@ -516,14 +516,23 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	else if(vote.position(user) == Vote::NAY)
 		out << BOLD << UNDER2 << FG::WHITE << BG::RED << "NAY" << OFF << " ";
 
-	out << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
+	if(vote.remaining() >= 0)
+	{
+		out << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
 
-	if(vote.total() < vote.minimum())
-		out << BOLD << (vote.minimum() - vote.total()) << OFF << " more votes are required. ";
-	else if(tally.first < vote.required())
-		out << BOLD << (vote.required() - tally.first) << OFF << " more yeas are required to pass. ";
-	else
-		out << "As it stands, the motion will pass.";
+		if(vote.total() < vote.minimum())
+			out << BOLD << (vote.minimum() - vote.total()) << OFF << " more votes are required. ";
+		else if(tally.first < vote.required())
+			out << BOLD << (vote.required() - tally.first) << OFF << " more yeas are required to pass. ";
+		else
+			out << "As it stands, the motion will pass.";
+	} else {
+		if(vote.get_reason().empty())
+			out << BOLD << FG::WHITE << BG::GREEN << "PASSED";
+		else
+			out << BOLD << FG::WHITE << BG::RED << "FAILED" << OFF << BOLD << FG::RED << ": " << vote.get_reason();
+	}
+
 
 	out << flush;
 }
