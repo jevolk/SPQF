@@ -173,8 +173,16 @@ inline
 User &operator<<(User &user,
                  const Chan &chan)
 {
+	const Sess &sess = chan.get_sess();
+
+	if(user.get_meth() == user.NOTICE && !sess.isupport("CNOTICE"))
+		return user;
+
+	if(user.get_meth() == user.PRIVMSG && !sess.isupport("CPRIVMSG"))
+		return user;
+
 	user.Stream::clear();
-	user << Locutor::CMSG;
+	user << user.CMSG;
 	user << chan.get_target() << "\n";
 	return user;
 }
