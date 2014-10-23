@@ -70,16 +70,17 @@ try
 		"you are not authorized to perform this operation",
 		"is not registered",
 		"invalid parameters",
+		"is not registered",
 	};
 
 	const auto &text = tolower(decolor(msg[TEXT]));
-	if(std::any_of(err.begin(),err.end(),[&](auto&& t) { return text == t; }))
+	const auto &term = tolower(queue.front());
+	if(term.empty() || std::any_of(err.begin(),err.end(),[&](auto&& t) { return text == t; }))
 	{
 		next();
 		return;
 	}
 
-	const auto &term = tolower(queue.front());
 	if(text.find(term) != std::string::npos)
 	{
 		const scope r(std::bind(&Service::next,this));
