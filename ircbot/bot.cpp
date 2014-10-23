@@ -1387,7 +1387,7 @@ void Bot::log_handle(const Msg &msg,
 const
 {
 	const std::string &n = name.empty()? msg.get_name() : name;
-	std::cout << std::setw(15) << std::setfill(' ') << std::left << n;
+	std::cout << std::setw(24) << std::setfill(' ') << std::left << n;
 	std::cout << msg;
 	std::cout << std::endl;
 }
