@@ -149,12 +149,15 @@ void ChanServ::handle_akicklist(const Capture &msg)
 
 
 inline
-ChanServ &ChanServ::operator<<(const flush_t f)
+ChanServ &ChanServ::operator<<(const flush_t)
 {
+	const scope clear([&]
+	{
+		clear_sendq();
+	});
+
 	Sess &sess = get_sess();
-	auto &sendq = get_sendq();
-	sess.chanserv(sendq.str());
-	clear_sendq();
+	sess.chanserv << get_str() << flush;
 	return *this;
 }
 

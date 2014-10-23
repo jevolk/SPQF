@@ -16,6 +16,9 @@ class NickServ : public Service
 	NickServ &operator<<(const flush_t f) override;
 
   public:
+	void identify(const std::string &acct, const std::string &pass);
+	void regain(const std::string &nick, const std::string &pass = "");
+	void ghost(const std::string &nick, const std::string &pass);
 	void listchans();
 
 	NickServ(Adb &adb, Sess &sess, Users &users):
@@ -26,9 +29,39 @@ class NickServ : public Service
 inline
 void NickServ::listchans()
 {
-	Locutor &out = *this;
+	Stream &out = *this;
 	out << "LISTCHANS" << flush;
 	next_terminator("channel access match for the nickname");
+}
+
+
+inline
+void NickServ::identify(const std::string &acct,
+                        const std::string &pass)
+{
+	Stream &out = *this;
+	out << "identify" << " " << acct << " " << pass << flush;
+	null_terminator();
+}
+
+
+inline
+void NickServ::ghost(const std::string &nick,
+                     const std::string &pass)
+{
+	Stream &out = *this;
+	out << "ghost" << " " << nick << " " << pass << flush;
+	null_terminator();
+}
+
+
+inline
+void NickServ::regain(const std::string &nick,
+                      const std::string &pass)
+{
+	Stream &out = *this;
+	out << "regain" << " " << nick << " " << pass << flush;
+	null_terminator();
 }
 
 
@@ -87,12 +120,15 @@ void NickServ::handle_listchans(const Capture &msg)
 
 
 inline
-NickServ &NickServ::operator<<(const flush_t f)
+NickServ &NickServ::operator<<(const flush_t)
 {
+	const scope clear([&]
+	{
+		clear_sendq();
+	});
+
 	Sess &sess = get_sess();
-	auto &sendq = get_sendq();
-	sess.nickserv(sendq.str());
-	clear_sendq();
+	sess.nickserv << get_str() << flush;
 	return *this;
 }
 

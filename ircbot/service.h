@@ -6,9 +6,10 @@
  */
 
 
-class Service : public Locutor
+class Service : public Stream
 {
 	Adb &adb;
+	Sess &sess;
 	std::list<std::string> capture;                    // State of the current capture
 	std::deque<std::string> queue;                     // Queue of terminators
 
@@ -16,6 +17,8 @@ class Service : public Locutor
 
   public:
 	auto &get_adb() const                              { return adb;                                   }
+	auto &get_sess() const                             { return sess;                                  }
+	auto &get_opts() const                             { return get_sess().get_opts();                 }
 	auto queue_size() const                            { return queue.size();                          }
 	auto capture_size() const                          { return capture.size();                        }
 	virtual bool enabled() const                       { return get_opts().get<bool>("services");      }
@@ -24,6 +27,7 @@ class Service : public Locutor
 	using Capture = decltype(capture);
 
 	auto &get_adb()                                    { return adb;                                   }
+	auto &get_sess()                                   { return sess;                                  }
 	auto &get_terminator() const                       { return queue.front();                         }
 
 	// Passes a complete multipart message to subclass
@@ -41,8 +45,9 @@ class Service : public Locutor
 	// [RECV] Called by Bot handlers
 	void handle(const Msg &msg);
 
-	Service(Adb &adb, Sess &sess, const std::string &name):
-	        Locutor(sess,name), adb(adb) {}
+	template<class... Args>
+	Service(Adb &adb, Sess &sess, Args&&... args):
+	        Stream(std::forward<Args>(args)...), adb(adb), sess(sess) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const Service &srv);
 };

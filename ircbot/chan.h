@@ -194,7 +194,12 @@ void Chan::join()
 {
 	Sess &sess = get_sess();
 	const auto &pass = get_pass();
-	sess.call(irc_cmd_join,get_name().c_str(),pass.empty()? nullptr : pass.c_str());
+	sess.quote << "JOIN " << get_name();
+
+	if(!pass.empty())
+		sess.quote << " " << pass;
+
+	sess.quote << flush;
 }
 
 
@@ -202,7 +207,7 @@ inline
 void Chan::part()
 {
 	Sess &sess = get_sess();
-	sess.call(irc_cmd_part,get_name().c_str());
+	sess.quote << "PART " << get_name() << flush;
 }
 
 
@@ -317,8 +322,11 @@ void Chan::remove(const User &user,
                   const std::string &reason)
 {
 	Sess &sess = get_sess();
-	const std::string &targ = user.get_nick();
-	sess.quote("REMOVE %s %s :%s",get_name().c_str(),targ.c_str(),reason.c_str());
+	sess.quote << "REMOVE"
+	           << " "  << get_name()
+	           << " "  << user.get_nick()
+	           << " :" << reason
+	           << flush;
 }
 
 
@@ -327,8 +335,7 @@ void Chan::kick(const User &user,
                 const std::string &reason)
 {
 	Sess &sess = get_sess();
-	const std::string &targ = user.get_nick();
-	sess.call(irc_cmd_kick,targ.c_str(),get_name().c_str(),reason.c_str());
+	sess.quote << "KICK " << get_name() << " " << user.get_nick() << " :" << reason << flush;
 }
 
 
@@ -336,15 +343,20 @@ inline
 void Chan::invite(const std::string &nick)
 {
 	Sess &sess = get_sess();
-	sess.call(irc_cmd_invite,nick.c_str(),get_name().c_str());
+	sess.quote << "INVITE " << nick << " " << get_name() << flush;
 }
 
 
 inline
-void Chan::topic(const std::string &topic)
+void Chan::topic(const std::string &text)
 {
 	Sess &sess = get_sess();
-	sess.call(irc_cmd_topic,get_name().c_str(),topic.c_str());
+	sess.quote << "TOPIC " << get_name();
+
+	if(!text.empty())
+		sess.quote << " :" << text;
+
+	sess.quote << flush;
 }
 
 
@@ -352,7 +364,7 @@ inline
 void Chan::knock(const std::string &msg)
 {
 	Sess &sess = get_sess();
-	sess.quote("KNOCK %s :%s",get_name().c_str(),msg.c_str());
+	sess.quote << "KNOCK " << get_name() << " :" << msg << flush;
 }
 
 
@@ -512,7 +524,7 @@ inline
 void Chan::names()
 {
 	Sess &sess = get_sess();
-	sess.call(irc_cmd_names,get_name().c_str());
+	sess.quote << "NAMES " << get_name() << flush;
 }
 
 
@@ -575,7 +587,7 @@ inline
 void Chan::who(const std::string &flags)
 {
 	Sess &sess = get_sess();
-	sess.quote("who %s %s",get_name().c_str(),flags.c_str());
+	sess.quote << "WHO " << get_name() << " " << flags << flush;
 }
 
 

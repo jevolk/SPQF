@@ -6,7 +6,7 @@
  */
 
 
-class Locutor
+class Locutor : public Stream
 {
   public:
 	enum Method
@@ -24,14 +24,11 @@ class Locutor
 		WALLVOICE,
 	};
 
-	static constexpr struct flush_t {} flush {};        // Stream is flushed (sent) to channel
 	static const Method DEFAULT_METHOD = NOTICE;
 	static const MethodEx DEFAULT_METHODEX = NONE;
 
   private:
 	Sess *sess;
-	std::string target;                                 // Target entity name
-	std::ostringstream sendq;                           // Stream buffer for stream operators
 	Method meth;                                        // Stream state for current method
 	MethodEx methex;                                    // Stream state for extension to method
 	colors::FG fg;                                      // Stream state for foreground color
@@ -39,32 +36,24 @@ class Locutor
   public:
 	auto &get_sess() const                              { return *sess;                              }
 	auto &get_opts() const                              { return get_sess().get_opts();              }
-	auto &get_target() const                            { return target;                             }
-	auto &get_sendq() const                             { return sendq;                              }
 	auto &get_meth() const                              { return meth;                               }
 	auto &get_methex() const                            { return methex;                             }
-	auto has_sendq() const                              { return sendq.str().empty();                }
 
   protected:
 	auto &get_sess()                                    { return *sess;                              }
-	auto &get_sendq()                                   { return sendq;                              }
-	void set_target(const std::string &target)          { this->target = target;                     }
+	void privmsg();
+	void notice();
+	void me();
 
   public:
-	// [SEND] string interface
-	void privmsg(const std::string &msg);
-	void notice(const std::string &msg);
-	void me(const std::string &msg);
-	void clear_sendq();
-
 	// [SEND] stream interface                          // Defaults back to DEFAULT_METHOD after flush
-	virtual Locutor &operator<<(const flush_t f);       // Flush stream to endpoint
+	Locutor &operator<<(const flush_t) override;
 	Locutor &operator<<(const Method &method);          // Set method for this message
 	Locutor &operator<<(const MethodEx &methodex);      // Set method extension for this message
+	Locutor &operator<<(const colors::Mode &mode);      // Color controls
 	Locutor &operator<<(const colors::FG &fg);          // Insert foreground color
 	Locutor &operator<<(const colors::BG &fg);          // Insert background color
-	Locutor &operator<<(const colors::Mode &mode);      // Color controls
-	template<class T> Locutor &operator<<(const T &t);  // Append data to sendq stream
+	template<class T> Locutor &operator<<(const T &t)   { Stream::operator<<<T>(t);   return *this;  }
 
 	// [SEND] Controls / Utils
 	void mode(const std::string &mode);                 // Raw mode command
@@ -72,9 +61,6 @@ class Locutor
 	void mode();                                        // Sends mode query
 
 	Locutor(Sess &sess, const std::string &target);
-	Locutor(Locutor &&other) noexcept;                  // Must be defined due to bug in gnu libstdc++ for now
-	Locutor(const Locutor &other);                      // ^
-	Locutor &operator=(Locutor &&other) & noexcept;     // ^
 	virtual ~Locutor() = default;
 };
 
@@ -82,75 +68,20 @@ class Locutor
 inline
 Locutor::Locutor(Sess &sess,
                  const std::string &target):
+Stream(target),
 sess(&sess),
-target(target),
 meth(DEFAULT_METHOD),
 methex(DEFAULT_METHODEX),
 fg(colors::FG::BLACK)
 {
-	sendq.exceptions(std::ios_base::badbit|std::ios_base::failbit);
-}
 
-
-inline
-Locutor::Locutor(Locutor &&o)
-noexcept:
-sess(std::move(o.sess)),
-target(std::move(o.target)),
-sendq(o.sendq.str()),                                   // GNU libstdc++ oversight requires this
-meth(std::move(o.meth)),
-methex(std::move(o.methex)),
-fg(std::move(o.fg))
-{
-	sendq.exceptions(std::ios_base::badbit|std::ios_base::failbit);
-	sendq.setstate(o.sendq.rdstate());
-	sendq.seekp(0,std::ios_base::end);
-}
-
-
-inline
-Locutor::Locutor(const Locutor &o):
-sess(o.sess),
-target(o.target),
-sendq(o.sendq.str()),
-meth(o.meth),
-methex(o.methex),
-fg(o.fg)
-{
-	sendq.exceptions(std::ios_base::badbit|std::ios_base::failbit);
-	sendq.setstate(o.sendq.rdstate());
-	sendq.seekp(0,std::ios_base::end);
-}
-
-
-inline
-Locutor &Locutor::operator=(Locutor &&o)
-& noexcept
-{
-	sess = std::move(o.sess);
-	target = std::move(o.target);
-	sendq.str(o.sendq.str());
-	sendq.setstate(o.sendq.rdstate());
-	sendq.seekp(0,std::ios_base::end);
-	meth = std::move(o.meth);
-	methex = std::move(o.methex);
-	fg = std::move(o.fg);
-	return *this;
-}
-
-
-template<class T>
-Locutor &Locutor::operator<<(const T &t)
-{
-	sendq << t;
-	return *this;
 }
 
 
 inline
 Locutor &Locutor::operator<<(const colors::FG &fg)
 {
-	sendq << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
+	(*this) << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
 	this->fg = fg;
 	return *this;
 }
@@ -159,8 +90,8 @@ Locutor &Locutor::operator<<(const colors::FG &fg)
 inline
 Locutor &Locutor::operator<<(const colors::BG &bg)
 {
-	sendq << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
-	sendq << "," << std::setfill('0') << std::setw(2) << int(bg);
+	(*this) << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
+	(*this) << "," << std::setfill('0') << std::setw(2) << int(bg);
 	return *this;
 }
 
@@ -168,7 +99,7 @@ Locutor &Locutor::operator<<(const colors::BG &bg)
 inline
 Locutor &Locutor::operator<<(const colors::Mode &mode)
 {
-	sendq << (unsigned char)mode;
+	(*this) << (unsigned char)mode;
 	return *this;
 }
 
@@ -190,9 +121,9 @@ Locutor &Locutor::operator<<(const MethodEx &methex)
 
 
 inline
-Locutor &Locutor::operator<<(const flush_t f)
+Locutor &Locutor::operator<<(const flush_t)
 {
-	const scope reset_stream([&]
+	const scope reset([&]
 	{
 		clear_sendq();
 		meth = DEFAULT_METHOD;
@@ -201,9 +132,9 @@ Locutor &Locutor::operator<<(const flush_t f)
 
 	switch(meth)
 	{
-		case ACTION:     me(sendq.str());             break;
-		case NOTICE:     notice(sendq.str());         break;
-		case PRIVMSG:    privmsg(sendq.str());        break;
+		case ACTION:     me();             break;
+		case NOTICE:     notice();         break;
+		case PRIVMSG:    privmsg();        break;
 		default:
 			throw Exception("Unsupported locution method");
 	}
@@ -213,19 +144,19 @@ Locutor &Locutor::operator<<(const flush_t f)
 
 
 inline
-void Locutor::me(const std::string &text)
+void Locutor::me()
 {
 	Sess &sess = get_sess();
-	for(const std::string &token : tokens(text,"\n"))
-		sess.call(irc_cmd_me,get_target().c_str(),token.c_str());
+	for(const auto &token : tokens(get_str(),"\n"))
+		sess.quote << "ACTION " << get_target() << " " << token << flush;
 }
 
 
 inline
-void Locutor::notice(const std::string &text)
+void Locutor::notice()
 {
 	Sess &sess = get_sess();
-	const auto toks = tokens(text,"\n");
+	const auto toks = tokens(get_str(),"\n");
 
 	switch(methex)
 	{
@@ -233,30 +164,34 @@ void Locutor::notice(const std::string &text)
 		{
 			const auto &chan = toks.at(0);
 			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				sess.quote("CNOTICE %s %s :%s",
-				           get_target().c_str(),
-				           chan.c_str(),
-				           it->c_str());
+				sess.quote << "CNOTICE"
+				           << " "  << get_target()
+				           << " "  << chan
+				           << " :" << *it
+				           << flush;
 			break;
 		}
 
 		case WALLCHOPS:
 		case WALLVOICE:
 		{
-			for(const std::string &token : toks)
-				sess.quote("NOTICE %c%s :%s",
-				           methex == WALLCHOPS? '@' : '+',
-				           get_target().c_str(),
-				           token.c_str());
+			const auto prefix = methex == WALLCHOPS? '@' : '+';
+			for(const auto &token : toks)
+				sess.quote << "NOTICE"
+				           << " " << prefix << get_target()
+				           << " " << token
+				           << flush;
 			break;
 		}
 
 		case NONE:
 		default:
 		{
-			for(const std::string &token : toks)
-				sess.call(irc_cmd_notice,get_target().c_str(),token.c_str());
-
+			for(const auto &token : toks)
+				sess.quote << "NOTICE"
+				           << " " << get_target()
+				           << " " << token
+				           << flush;
 			break;
 		}
 	}
@@ -264,10 +199,10 @@ void Locutor::notice(const std::string &text)
 
 
 inline
-void Locutor::privmsg(const std::string &text)
+void Locutor::privmsg()
 {
 	Sess &sess = get_sess();
-	const auto toks = tokens(text,"\n");
+	const auto toks = tokens(get_str(),"\n");
 
 	switch(methex)
 	{
@@ -275,30 +210,34 @@ void Locutor::privmsg(const std::string &text)
 		{
 			const auto &chan = toks.at(0);
 			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				sess.quote("CPRIVMSG %s %s :%s",
-				           get_target().c_str(),
-				           chan.c_str(),
-				           it->c_str());
+				sess.quote << "CPRIVMSG"
+				           << " "  << get_target()
+				           << " "  << chan
+				           << " :" << *it
+				           << flush;
 			break;
 		}
 
 		case WALLCHOPS:
 		case WALLVOICE:
 		{
-			for(const std::string &token : toks)
-				sess.quote("PRIVMSG %c%s :%s",
-				           methex == WALLCHOPS? '@' : '+',
-				           get_target().c_str(),
-				           token.c_str());
+			const auto prefix = methex == WALLCHOPS? '@' : '+';
+			for(const auto &token : toks)
+				sess.quote << "PRIVMSG"
+				           << " " << prefix << get_target()
+				           << " " << token
+				           << flush;
 			break;
 		}
 
 		case NONE:
 		default:
 		{
-			for(const std::string &token : toks)
-				sess.call(irc_cmd_msg,get_target().c_str(),token.c_str());
-
+			for(const auto &token : toks)
+				sess.quote << "PRIVMSG"
+				           << " " << get_target()
+				           << " " << token
+				           << flush;
 			break;
 		}
 	}
@@ -308,9 +247,8 @@ void Locutor::privmsg(const std::string &text)
 inline
 void Locutor::mode()
 {
-	//NOTE: libircclient irc_cmd_channel_mode is just: %s %s
 	Sess &sess = get_sess();
-	sess.call(irc_cmd_channel_mode,get_target().c_str(),nullptr);
+	sess.quote << "MODE " << get_target() << flush;
 }
 
 
@@ -318,22 +256,13 @@ inline
 void Locutor::whois()
 {
 	Sess &sess = get_sess();
-	sess.call(irc_cmd_whois,get_target().c_str());
+	sess.quote << "WHOIS " << get_target() << flush;
 }
 
 
 inline
 void Locutor::mode(const std::string &str)
 {
-	//NOTE: libircclient irc_cmd_channel_mode is just: %s %s
 	Sess &sess = get_sess();
-	sess.call(irc_cmd_channel_mode,get_target().c_str(),str.c_str());
-}
-
-
-inline
-void Locutor::clear_sendq()
-{
-	sendq.clear();
-	sendq.str(std::string());
+	sess.quote << "MODE " << get_target() << " " << str << flush;
 }

@@ -90,9 +90,9 @@ chans(0)
 inline
 void User::info()
 {
-	Service &out = get_ns();
-	out << "info " << acct << flush;
-	out.next_terminator("*** End of Info ***");
+	auto &ns = get_ns();
+	ns << "info " << acct << flush;
+	ns.next_terminator("*** End of Info ***");
 }
 
 
@@ -100,7 +100,7 @@ inline
 void User::who(const std::string &flags)
 {
 	Sess &sess = get_sess();
-	sess.quote("who %s %s",get_nick().c_str(),flags.c_str());
+	sess.quote << "WHO " << get_nick() << " " << flags << flush;
 }
 
 

@@ -68,6 +68,8 @@ namespace colors
 #include "adoc.h"
 #include "adb.h"
 #include "acct.h"
+#include "stream.h"
+#include "quote.h"
 #include "sess.h"
 #include "locutor.h"
 #include "service.h"
@@ -241,7 +243,7 @@ class Bot : public std::mutex
 
 	// Main controls
 	void join(const std::string &chan)                { get_chans().join(chan);             }
-	void quit()                                       { get_sess().quit();                  }
+	void quit();
 	void conn()                                       { get_sess().conn();                  }
 	void run();                                             // Run worker loop
 

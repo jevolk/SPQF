@@ -54,10 +54,18 @@ catch(const Internal &e)
 }
 
 
+void Bot::quit()
+{
+	Sess &sess = get_sess();
+	sess.quit << "Alea iacta est" << Stream::flush;
+}
+
+
 void Bot::run()
 try
 {
-	sess.call(irc_run);                            // Loops forever here
+	Sess &sess = get_sess();
+	irc_call(sess,irc_run);                            // Loops forever here
 }
 catch(const Internal &e)
 {
@@ -217,13 +225,14 @@ void Bot::handle_conn(const Msg &msg)
 	Sess &sess = get_sess();
 	const Opts &opts = sess.get_opts();
 
-	sess.cap_ls();
-	sess.cap_req("account-notify extended-join");
-	sess.cap_end();
+	sess.cap("LS");
+	sess.cap("REQ :account-notify extended-join");
+	sess.cap("END");
 
 	if(!opts["ns-acct"].empty() && !opts["ns-pass"].empty())
 	{
-		sess.identify(opts["ns-acct"],opts["ns-pass"]);
+		NickServ &ns = get_ns();
+		ns.identify(opts["ns-acct"],opts["ns-pass"]);
 		return;
 	}
 
@@ -1093,10 +1102,11 @@ void Bot::handle_nicknameinuse(const Msg &msg)
 
 	if(!opts["ns-acct"].empty() && !opts["ns-pass"].empty())
 	{
+		NickServ &ns = get_ns();
 		const std::string randy(randstr(14));
 		sess.nick(randy);
 		sess.set_nick(randy);
-		sess.regain();
+		ns.regain(opts["ns-acct"],opts["ns-pass"]);
 		return;
 	}
 }
