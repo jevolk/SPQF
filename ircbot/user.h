@@ -92,7 +92,7 @@ void User::info()
 {
 	auto &ns = get_ns();
 	ns << "info " << acct << flush;
-	ns.next_terminator("*** End of Info ***");
+	ns.terminator_next("*** End of Info ***");
 }
 
 

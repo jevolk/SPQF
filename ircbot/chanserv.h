@@ -88,7 +88,7 @@ void ChanServ::handle_info(const Capture &msg)
 inline
 void ChanServ::handle_flagslist(const Capture &msg)
 {
-	const std::string name = tolower(tokens(get_terminator()).at(2));
+	const std::string name = tolower(tokens(get_terminator().front()).at(2));
 
 	Chan &chan = chans.get(name);
 

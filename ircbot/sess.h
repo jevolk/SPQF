@@ -66,6 +66,7 @@ class Sess
 	Quote quote                                        { sess                                       };
 
 	// [SEND] Services commands
+	// Use the Service handlers unless you really...
 	Quote nickserv                                     { sess, "ns"                                 };
 	Quote chanserv                                     { sess, "cs"                                 };
 	Quote memoserv                                     { sess, "ms"                                 };

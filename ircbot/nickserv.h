@@ -31,7 +31,7 @@ void NickServ::listchans()
 {
 	Stream &out = *this;
 	out << "LISTCHANS" << flush;
-	next_terminator("channel access match for the nickname");
+	terminator_next("channel access match for the nickname");
 }
 
 
@@ -41,7 +41,7 @@ void NickServ::identify(const std::string &acct,
 {
 	Stream &out = *this;
 	out << "identify" << " " << acct << " " << pass << flush;
-	null_terminator();
+	terminator_next("You are now identified");
 }
 
 
@@ -51,7 +51,7 @@ void NickServ::ghost(const std::string &nick,
 {
 	Stream &out = *this;
 	out << "ghost" << " " << nick << " " << pass << flush;
-	null_terminator();
+	terminator_any();
 }
 
 
@@ -61,7 +61,7 @@ void NickServ::regain(const std::string &nick,
 {
 	Stream &out = *this;
 	out << "regain" << " " << nick << " " << pass << flush;
-	null_terminator();
+	terminator_any();
 }
 
 

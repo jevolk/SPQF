@@ -374,7 +374,7 @@ void Chan::op()
 	Service &cs = get_cs();
 	const Sess &sess = get_sess();
 	cs << "OP " << get_name() << " " << sess.get_nick() << flush;
-	cs.null_terminator();
+	cs.terminator_errors();
 }
 
 
@@ -384,7 +384,7 @@ void Chan::csdeop()
 	Service &cs = get_cs();
 	const Sess &sess = get_sess();
 	cs << "DEOP " << get_name() << " " << sess.get_nick() << flush;
-	cs.null_terminator();
+	cs.terminator_errors();
 }
 
 
@@ -393,7 +393,7 @@ void Chan::unban()
 {
 	Service &cs = get_cs();
 	cs << "UNBAN " << get_name() << flush;
-	cs.null_terminator();
+	cs.terminator_errors();
 }
 
 
@@ -402,7 +402,7 @@ void Chan::recover()
 {
 	Service &cs = get_cs();
 	cs << "RECOVER " << get_name() << flush;
-	cs.null_terminator();
+	cs.terminator_errors();
 }
 
 
@@ -411,7 +411,7 @@ void Chan::csop(const User &user)
 {
 	Service &cs = get_cs();
 	cs << "OP " << get_name() << " " << user.get_nick() << flush;
-	cs.null_terminator();
+	cs.terminator_errors();
 }
 
 
@@ -420,7 +420,7 @@ void Chan::csdeop(const User &user)
 {
 	Service &cs = get_cs();
 	cs << "DEOP " << get_name() << " " << user.get_nick() << flush;
-	cs.null_terminator();
+	cs.terminator_errors();
 }
 
 
@@ -449,7 +449,7 @@ void Chan::csquiet(const Mask &mask)
 {
 	Service &cs = get_cs();
 	cs << "QUIET " << get_name() << " " << mask << flush;
-	cs.null_terminator();
+	cs.terminator_errors();
 }
 
 
@@ -458,7 +458,7 @@ void Chan::csunquiet(const Mask &mask)
 {
 	Service &cs = get_cs();
 	cs << "UNQUIET " << get_name() << " " << mask << flush;
-	cs.null_terminator();
+	cs.terminator_errors();
 }
 
 
@@ -489,7 +489,7 @@ void Chan::akick(const Mask &mask,
 
 	cs << " " << reason;
 	cs << flush;
-	cs.null_terminator();
+	cs.terminator_any();
 }
 
 
@@ -498,7 +498,7 @@ void Chan::akick_del(const Mask &mask)
 {
 	Service &cs = get_cs();
 	cs << "AKICK " << get_name() << " DEL " << mask << flush;
-	cs.null_terminator();
+	cs.terminator_any();
 }
 
 
@@ -507,7 +507,7 @@ void Chan::csclear(const Mode &mode)
 {
 	Service &cs = get_cs();
 	cs << "clear " << get_name() << " BANS " << mode << flush;
-	cs.null_terminator();
+	cs.terminator_any();
 }
 
 
@@ -516,7 +516,7 @@ void Chan::csinfo()
 {
 	Service &cs = get_cs();
 	cs << "info " << get_name() << flush;
-	cs.next_terminator("*** End of Info ***");
+	cs.terminator_next("*** End of Info ***");
 }
 
 
@@ -554,7 +554,7 @@ void Chan::flagslist()
 
 	std::stringstream ss;
 	ss << "End of " << get_name() << " FLAGS listing.";
-	cs.next_terminator(ss.str());
+	cs.terminator_next(ss.str());
 }
 
 
@@ -566,7 +566,7 @@ void Chan::accesslist()
 
 	std::stringstream ss;
 	ss << "End of " << get_name() << " FLAGS listing.";
-	cs.next_terminator(ss.str());
+	cs.terminator_next(ss.str());
 }
 
 
@@ -579,7 +579,7 @@ void Chan::akicklist()
 	// This is the best we can do right now
 	std::stringstream ss;
 	ss << "Total of ";
-	cs.next_terminator(ss.str());
+	cs.terminator_next(ss.str());
 }
 
 
