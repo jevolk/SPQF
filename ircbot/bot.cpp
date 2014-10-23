@@ -192,6 +192,7 @@ try
 		case LIBIRC_RFC_ERR_CHANOPRIVSNEEDED:     handle_chanoprivsneeded(msg);        return;
 		case LIBIRC_RFC_ERR_ERRONEUSNICKNAME:     handle_erroneusnickname(msg);        return;
 		case LIBIRC_RFC_ERR_BANNEDFROMCHAN:       handle_bannedfromchan(msg);          return;
+		case LIBIRC_RFC_ERR_CANNOTSENDTOCHAN:     handle_cannotsendtochan(msg);        return;
 		default:                                  handle_unhandled(msg);               return;
 	}
 }
@@ -1357,6 +1358,13 @@ void Bot::handle_knock(const Msg &msg)
 void Bot::handle_nosuchnick(const Msg &msg)
 {
 	log_handle(msg,"NO SUCH NICK");
+
+}
+
+
+void Bot::handle_cannotsendtochan(const Msg &msg)
+{
+	log_handle(msg,"CANNOTSENDTOCHAN");
 
 }
 
