@@ -188,15 +188,15 @@ std::ostream &operator<<(std::ostream &s,
                          const Opts &id)
 {
 	for(const auto &pair : id)
-		std::cout << std::setw(16) << std::left << pair.first
+		s << std::setw(16) << std::left << pair.first
 		          << " => "
 		          << pair.second
 		          << std::endl;
 
-	std::cout << std::endl;
-	std::cout << "Autojoin channels: " << std::endl;
+	s << std::endl;
+	s << "Autojoin channels: " << std::endl;
 	for(const auto &chan : id.autojoin)
-		std::cout << "\t" << chan << std::endl;
+		s << "\t" << chan << std::endl;
 
 	return s;
 }
