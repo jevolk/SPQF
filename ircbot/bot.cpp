@@ -57,7 +57,7 @@ catch(const Internal &e)
 void Bot::quit()
 {
 	Sess &sess = get_sess();
-	sess.quit << "Alea iacta est" << Stream::flush;
+	sess.quit << ":Alea iacta est" << Stream::flush;
 }
 
 

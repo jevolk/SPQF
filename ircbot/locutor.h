@@ -148,7 +148,7 @@ void Locutor::me()
 {
 	Sess &sess = get_sess();
 	for(const auto &token : tokens(get_str(),"\n"))
-		sess.quote << "ACTION " << get_target() << " " << token << flush;
+		sess.quote << "ACTION " << get_target() << " :" << token << flush;
 }
 
 
@@ -178,8 +178,8 @@ void Locutor::notice()
 			const auto prefix = methex == WALLCHOPS? '@' : '+';
 			for(const auto &token : toks)
 				sess.quote << "NOTICE"
-				           << " " << prefix << get_target()
-				           << " " << token
+				           << " "  << prefix << get_target()
+				           << " :" << token
 				           << flush;
 			break;
 		}
@@ -189,8 +189,8 @@ void Locutor::notice()
 		{
 			for(const auto &token : toks)
 				sess.quote << "NOTICE"
-				           << " " << get_target()
-				           << " " << token
+				           << " "  << get_target()
+				           << " :" << token
 				           << flush;
 			break;
 		}
@@ -224,8 +224,8 @@ void Locutor::privmsg()
 			const auto prefix = methex == WALLCHOPS? '@' : '+';
 			for(const auto &token : toks)
 				sess.quote << "PRIVMSG"
-				           << " " << prefix << get_target()
-				           << " " << token
+				           << " "  << prefix << get_target()
+				           << " :" << token
 				           << flush;
 			break;
 		}
@@ -235,8 +235,8 @@ void Locutor::privmsg()
 		{
 			for(const auto &token : toks)
 				sess.quote << "PRIVMSG"
-				           << " " << get_target()
-				           << " " << token
+				           << " "  << get_target()
+				           << " :" << token
 				           << flush;
 			break;
 		}
