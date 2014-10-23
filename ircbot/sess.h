@@ -228,7 +228,6 @@ void Sess::monitor_add(const It &begin,
                        const It &end)
 {
 	monitor << "+ ";
-
 	std::for_each(begin,end,[&]
 	(const auto &s)
 	{
@@ -244,7 +243,6 @@ void Sess::monitor_del(const It &begin,
                        const It &end)
 {
 	monitor << "+ ";
-
 	std::for_each(begin,end,[&]
 	(const auto &s)
 	{

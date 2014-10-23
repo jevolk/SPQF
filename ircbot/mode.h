@@ -1,6 +1,6 @@
 /**
  *	COPYRIGHT 2014 (C) Jason Volk
- *  COPYRIGHT 2014 (C) Svetlana Tkachenko
+ *	COPYRIGHT 2014 (C) Svetlana Tkachenko
  *
  *	DISTRIBUTED UNDER THE GNU GENERAL PUBLIC LICENSE (GPL) (see: LICENSE)
  */
@@ -8,8 +8,8 @@
 
 struct Mode : public std::string
 {
-	bool has(const char &m) const          { return find(m) != std::string::npos;  }
-	bool has(const Delta &d) const         { return has(std::get<Delta::MODE>(d)); }
+	bool has(const char &m) const                 { return find(m) != std::string::npos;  }
+	bool has(const Delta &d) const                { return has(std::get<Delta::MODE>(d)); }
 	bool none(const Mode &m) const;
 	bool all(const Mode &m) const;
 	bool any(const Mode &m) const;
@@ -19,13 +19,13 @@ struct Mode : public std::string
 
 	void add(const char &m) &;
 	void add(const Mode &m) &;
-	void add(const Delta &d) &;            // adding negative delta removes the mode
-	void add(const Deltas &d) &;           // ^
+	void add(const Delta &d) &;                   // adding negative delta removes the mode
+	void add(const Deltas &d) &;                  // ^
 
 	void rm(const char &m) &;
 	void rm(const Mode &m) &;
-	void rm(const Delta &d) &;             // rm of positive or negative delta always removes the mode
-	void rm(const Deltas &d) &;            // ^
+	void rm(const Delta &d) &;                    // rm of positive or negative delta always removes the mode
+	void rm(const Deltas &d) &;                   // ^
 
 	bool delta(const std::string &str) &;
 

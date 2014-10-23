@@ -169,7 +169,7 @@ const
 
 		case Mask::ACCT:
 			if(!is_logged_in())
-				throw Exception("Can't mask ACCT: user not logged in");
+				throw Assertive("Can't mask ACCT: user not logged in");
 
 			s << "$a:" << get_acct();
 			break;

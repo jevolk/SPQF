@@ -41,7 +41,7 @@ class Chans
 	void autojoin();                                   // Joins all channels in the autojoin list
 
 	// We construct before ChanServ; Bot sets this
-	void set_service(Service &chanserv)                 { this->chanserv = &chanserv;               }
+	void set_service(Service &chanserv)                { this->chanserv = &chanserv;                }
 
 	Chans(Adb &adb, Sess &sess, Service *const &chanserv = nullptr):
 	      adb(adb), sess(sess), chanserv(chanserv) {}

@@ -61,7 +61,7 @@ Flag(std::get<Delta::MASK>(delta),
      founder)
 {
 	if(!std::get<Delta::SIGN>(delta))
-		throw Exception("No reason to construct a negative flag at this time.");
+		throw Assertive("No reason to construct a negative flag at this time.");
 }
 
 
@@ -74,7 +74,7 @@ time(time),
 founder(founder)
 {
 	if(!deltas.all_signs(true))
-		throw Exception("No reason to construct a negative flag at this time.");
+		throw Assertive("No reason to construct a negative flag at this time.");
 
 	for(const Delta &d : deltas)
 		flags.push_back(std::get<Delta::MODE>(d));

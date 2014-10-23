@@ -1,6 +1,6 @@
 /**
  *	COPYRIGHT 2014 (C) Jason Volk
- *  COPYRIGHT 2014 (C) Svetlana Tkachenko
+ *	COPYRIGHT 2014 (C) Svetlana Tkachenko
  *
  *	DISTRIBUTED UNDER THE GNU GENERAL PUBLIC LICENSE (GPL) (see: LICENSE)
  */
