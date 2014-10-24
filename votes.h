@@ -106,6 +106,21 @@ namespace vote
 	  public:
 		template<class... Args> UnQuiet(Args&&... args): NickIssue("unquiet",std::forward<Args>(args)...) {}
 	};
+
+	class Import : public Vote
+	{
+		std::stringstream received;
+
+		std::string get_target_chan() const  { return split(get_issue()).first;  }
+		std::string get_target_bot() const   { return split(get_issue()).second; }
+
+		void passed() override;
+		void starting() override;
+		void event_notice(User &u, const std::string &text) override;
+
+	  public:
+		template<class... Args> Import(Args&&... args): Vote("import",std::forward<Args>(args)...) {}
+	};
 }
 
 
