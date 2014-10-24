@@ -23,42 +23,6 @@ using namespace irc::bot;
 //   Primary dispatch (irc::bot::Bot overloads)
 //
 
-void ResPublica::handle_privmsg(const Msg &msg,
-                                User &user)
-try
-{
-	using namespace fmt::PRIVMSG;
-
-	// Discard empty without exception
-	if(msg[TEXT].empty())
-		return;
-
-	// Silently drop the background noise
-	if(!user.is_logged_in())
-		return;
-
-	// Notify active votes listening for private messages
-	voting.for_each([&](Vote &vote)
-	{
-		vote.event_privmsg(user,msg[TEXT]);
-	});
-
-	handle_cmd(msg,user);
-}
-catch(const Assertive &e)
-{
-	user << "Internal Error: " << e << flush;
-	throw;
-}
-catch(const Exception &e)
-{
-	user << "Failed: " << e << flush;
-}
-catch(const std::out_of_range &e)
-{
-	user << "You did not supply required arguments. Use the help command." << flush;
-}
-
 
 void ResPublica::handle_chanmsg(const Msg &msg,
                                 Chan &chan,
@@ -103,6 +67,117 @@ catch(const Exception &e)
 catch(const std::out_of_range &e)
 {
 	user << chan << "You did not supply required arguments. Use the help command." << flush;
+}
+
+
+void ResPublica::handle_cnotice(const Msg &msg,
+                                Chan &chan,
+                                User &user)
+try
+{
+	using namespace fmt::CNOTICE;
+
+	// Discard empty without exception
+	if(msg[TEXT].empty())
+		return;
+
+	// Silently drop the background noise
+	if(!user.is_logged_in())
+		return;
+
+	// Notify active votes listening to channels
+	voting.for_each([&](Vote &vote)
+	{
+		vote.event_cnotice(user,chan,msg[TEXT]);
+
+		if(chan == vote.get_chan_name())
+			vote.event_cnotice(user,msg[TEXT]);
+	});
+}
+catch(const Assertive &e)
+{
+	user << chan << "Internal Error: " << e << flush;
+	throw;
+}
+catch(const Exception &e)
+{
+	user << chan << "Failed: " << e << flush;
+}
+catch(const std::out_of_range &e)
+{
+	user << chan << "You did not supply required arguments. Use the help command." << flush;
+}
+
+
+void ResPublica::handle_privmsg(const Msg &msg,
+                                User &user)
+try
+{
+	using namespace fmt::PRIVMSG;
+
+	// Discard empty without exception
+	if(msg[TEXT].empty())
+		return;
+
+	// Silently drop the background noise
+	if(!user.is_logged_in())
+		return;
+
+	// Notify active votes listening for private messages
+	voting.for_each([&](Vote &vote)
+	{
+		vote.event_privmsg(user,msg[TEXT]);
+	});
+
+	handle_cmd(msg,user);
+}
+catch(const Assertive &e)
+{
+	user << "Internal Error: " << e << flush;
+	throw;
+}
+catch(const Exception &e)
+{
+	user << "Failed: " << e << flush;
+}
+catch(const std::out_of_range &e)
+{
+	user << "You did not supply required arguments. Use the help command." << flush;
+}
+
+
+void ResPublica::handle_notice(const Msg &msg,
+                               User &user)
+try
+{
+	using namespace fmt::NOTICE;
+
+	// Discard empty without exception
+	if(msg[TEXT].empty())
+		return;
+
+	// Silently drop the background noise
+	if(!user.is_logged_in())
+		return;
+
+	// Notify active votes listening for private messages
+	voting.for_each([&](Vote &vote)
+	{
+		vote.event_notice(user,msg[TEXT]);
+	});
+}
+catch(const Assertive &e)
+{
+	user << "Internal Error: " << e << flush;
+	throw;
+}
+catch(const Exception &e)
+{
+	user << "Failed: " << e << flush;
+}
+catch(const std::out_of_range &e)
+{
+	user << "You did not supply required arguments. Use the help command." << flush;
 }
 
 
