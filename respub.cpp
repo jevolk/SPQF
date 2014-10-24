@@ -37,6 +37,12 @@ try
 	if(!user.is_logged_in())
 		return;
 
+	// Notify active votes listening for private messages
+	voting.for_each([&](Vote &vote)
+	{
+		vote.event_privmsg(user,msg[TEXT]);
+	});
+
 	handle_cmd(msg,user);
 }
 catch(const Assertive &e)
@@ -68,6 +74,15 @@ try
 	// Silently drop the background noise
 	if(!user.is_logged_in())
 		return;
+
+	// Notify active votes listening to channels
+	voting.for_each([&](Vote &vote)
+	{
+		vote.event_chanmsg(user,chan,msg[TEXT]);
+
+		if(chan == vote.get_chan_name())
+			vote.event_chanmsg(user,msg[TEXT]);
+	});
 
 	// Discard everything not starting with command prefix
 	const auto &opts = get_opts();
