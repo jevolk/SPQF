@@ -15,6 +15,7 @@
 struct NickIssue : public Vote
 {
 	void event_nick(User &user, const std::string &old) override;
+	void starting() override;
 
 	template<class... Args> NickIssue(Args&&... args): Vote(std::forward<Args>(args)...) {}
 };
@@ -51,7 +52,6 @@ namespace vote
 
 	class Kick : public NickIssue
 	{
-		void starting();
 		void passed();
 
 	  public:
@@ -85,7 +85,6 @@ namespace vote
 
 	class Ban : public NickIssue
 	{
-		void starting();
 		void passed();
 
 	  public:
@@ -94,7 +93,6 @@ namespace vote
 
 	class Quiet : public NickIssue
 	{
-		void starting();
 		void passed();
 
 	  public:
@@ -103,7 +101,6 @@ namespace vote
 
 	class UnQuiet : public NickIssue
 	{
-		void starting();
 		void passed();
 
 	  public:

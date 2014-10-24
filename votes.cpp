@@ -22,13 +22,6 @@ using namespace irc::bot;
 // UnQuiet
 //
 
-void vote::UnQuiet::starting()
-{
-	const std::string &victim = get_issue();
-	User &user = get_users().get(victim);
-	user.whois();
-}
-
 
 void vote::UnQuiet::passed()
 {
@@ -45,17 +38,6 @@ void vote::UnQuiet::passed()
 // Quiet
 //
 
-void vote::Quiet::starting()
-{
-	const std::string &victim = get_issue();
-	User &user = get_users().get(victim);
-
-	if(user.is_myself())
-		throw Exception("http://en.wikipedia.org/wiki/Areopagitica");
-
-	user.whois();
-}
-
 
 void vote::Quiet::passed()
 {
@@ -71,17 +53,6 @@ void vote::Quiet::passed()
 //
 // Ban
 //
-
-void vote::Ban::starting()
-{
-	const std::string &victim = get_issue();
-	User &user = get_users().get(victim);
-
-	if(user.is_myself())
-		throw Exception("http://en.wikipedia.org/wiki/Leviathan_(book)");
-
-	user.whois();
-}
 
 
 void vote::Ban::passed()
@@ -100,6 +71,7 @@ void vote::Ban::passed()
 // Opine
 //
 
+
 void vote::Opine::passed()
 {
 	using namespace colors;
@@ -116,17 +88,6 @@ void vote::Opine::passed()
 //
 // Kick
 //
-
-void vote::Kick::starting()
-{
-	const std::string &victim = get_issue();
-	User &user = get_users().get(victim);
-
-	if(user.is_myself())
-		throw Exception("GNU philosophy 101: You're not free to be unfree.");
-
-	user.whois();
-}
 
 
 void vote::Kick::passed()
@@ -148,6 +109,7 @@ void vote::Kick::passed()
 // Invite
 //
 
+
 void vote::Invite::passed()
 {
 	Chan &chan = get_chan();
@@ -161,6 +123,7 @@ void vote::Invite::passed()
 //
 // Mode
 //
+
 
 void vote::Mode::passed()
 {
@@ -189,6 +152,7 @@ void vote::Mode::starting()
 // Topic
 //
 
+
 void vote::Topic::passed()
 {
 	Chan &chan = get_chan();
@@ -209,6 +173,7 @@ void vote::Topic::starting()
 //
 // Config
 //
+
 
 void vote::Config::starting()
 {
@@ -270,6 +235,23 @@ void vote::Config::passed()
 //
 // Category: NickIssue - All votes with a nickname as the issue
 //
+
+
+void NickIssue::starting()
+{
+	if(get_issue().empty())
+		throw Exception("You must specify a nickname for this type of vote.");
+
+	User &user = get_users().get(get_issue());
+	if(user.is_myself())
+		throw Exception("http://en.wikipedia.org/wiki/Leviathan_(book)");
+
+	Chan &chan = get_chan();
+	if(!chan.has(user))
+		throw Exception("You cannot make a vote about someone in another channel.");
+
+	user.whois();
+}
 
 
 void NickIssue::event_nick(User &user,
