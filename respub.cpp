@@ -218,7 +218,7 @@ try
 {
 	auto &vote = !toks.empty()? voting.get(lex_cast<Vote::id_t>(*toks.at(0))):
 	                            voting.get(chan);
-	vote.vote(ballot,user);
+	vote.event_vote(user,ballot);
 }
 catch(const boost::bad_lexical_cast &e)
 {
@@ -458,7 +458,7 @@ try
 {
 	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
 	auto &vote = voting.get(id);
-	vote.vote(ballot,user);
+	vote.event_vote(user,ballot);
 }
 catch(const boost::bad_lexical_cast &e)
 {
