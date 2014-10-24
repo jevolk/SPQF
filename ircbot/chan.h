@@ -180,6 +180,9 @@ User &operator<<(User &user,
 {
 	const Sess &sess = chan.get_sess();
 
+	if(!chan.is_op())
+		return user;
+
 	if(user.get_meth() == user.NOTICE && !sess.isupport("CNOTICE"))
 		return user;
 
