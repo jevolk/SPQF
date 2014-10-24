@@ -112,6 +112,7 @@ class Vote : protected Acct
 	virtual void event_vote(User &u, const Ballot &b);
 	virtual void event_nick(User &u, const std::string &old) {}
 	virtual void event_privmsg(User &u, const std::string &text) {}
+	virtual void event_chanmsg(User &u, const std::string &text) {}
 	virtual void event_chanmsg(User &u, Chan &c, const std::string &text) {}
 
 	// Main controls
