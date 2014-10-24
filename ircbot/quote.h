@@ -27,7 +27,8 @@ class Quote : public Stream
 
 	// Append to stream after cmd prefix (if one exists)
 	template<class T> Quote &operator<<(const T &t);
-	Quote &operator()(const std::string &str = "");         // flush automatically
+	Quote &operator()();                               // flush automatically
+	Quote &operator()(const std::string &str);         // flush automatically
 
 	Quote(irc_session_t *const &sess, const std::string &cmd = "");
 };
@@ -47,6 +48,13 @@ inline
 Quote &Quote::operator()(const std::string &str)
 {
 	operator<<(str);
+	return operator()();
+}
+
+
+inline
+Quote &Quote::operator()()
+{
 	operator<<(flush);
 	return *this;
 }

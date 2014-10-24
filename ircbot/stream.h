@@ -103,7 +103,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	// shouldn't happen, but recover
+	// shouldn't happen, don't bother recovering though
 	std::cerr << "Stream sendq operator=&&: " << e.what() << std::endl;
 	throw;
 }
