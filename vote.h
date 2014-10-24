@@ -111,9 +111,12 @@ class Vote : protected Acct
 	// Various events while this vote is active.
 	virtual void event_vote(User &u, const Ballot &b);
 	virtual void event_nick(User &u, const std::string &old) {}
+	virtual void event_notice(User &u, const std::string &text) {}
 	virtual void event_privmsg(User &u, const std::string &text) {}
 	virtual void event_chanmsg(User &u, const std::string &text) {}
 	virtual void event_chanmsg(User &u, Chan &c, const std::string &text) {}
+	virtual void event_cnotice(User &u, const std::string &text) {}
+	virtual void event_cnotice(User &u, Chan &c, const std::string &text) {}
 
 	// Main controls
 	void save()                                 { Acct::set(*this);                                 }

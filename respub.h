@@ -51,8 +51,10 @@ class ResPublica : public irc::bot::Bot
 
 	// Primary dispatch
 	void handle_nick(const Msg &m, User &u) override;
-	void handle_chanmsg(const Msg &m, Chan &c, User &u) override;
+	void handle_notice(const Msg &m, User &u) override;
 	void handle_privmsg(const Msg &m, User &u) override;
+	void handle_cnotice(const Msg &m, Chan &c, User &u) override;
+	void handle_chanmsg(const Msg &m, Chan &c, User &u) override;
 
   public:
 	template<class... Args> ResPublica(Args&&... args);
