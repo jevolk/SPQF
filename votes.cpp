@@ -266,8 +266,11 @@ void vote::Config::starting()
 
 		} else {
 
-			if(!isnumeric(val))
+			if(!std::all_of(val.begin(),val.end(),[](auto&& c) { return isdigit(c) || c == '.'; }))
 				throw Exception("Must use a numerical value for this key.");
+
+			if(std::count(val.begin(),val.end(),'.') > 1)
+				throw Exception("One dot only, please.");
 
 		}
 	}
