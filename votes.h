@@ -6,6 +6,26 @@
  */
 
 
+
+///////////////////////////////////////////////////////////////////////////
+//
+// Vote categories / abstract bases
+//
+
+struct NickIssue : public Vote
+{
+	void event_nick(User &user, const std::string &old) override;
+
+	template<class... Args> NickIssue(Args&&... args): Vote(std::forward<Args>(args)...) {}
+};
+
+
+
+///////////////////////////////////////////////////////////////////////////
+//
+// Vote types
+//
+
 namespace vote
 {
 	class Config : public Vote
@@ -29,21 +49,21 @@ namespace vote
 		template<class... Args> Mode(Args&&... args): Vote("mode",std::forward<Args>(args)...) {}
 	};
 
-	class Kick : public Vote
+	class Kick : public NickIssue
 	{
 		void starting();
 		void passed();
 
 	  public:
-		template<class... Args> Kick(Args&&... args): Vote("kick",std::forward<Args>(args)...) {}
+		template<class... Args> Kick(Args&&... args): NickIssue("kick",std::forward<Args>(args)...) {}
 	};
 
-	class Invite : public Vote
+	class Invite : public NickIssue
 	{
 		void passed();
 
 	  public:
-		template<class... Args> Invite(Args&&... args): Vote("invite",std::forward<Args>(args)...) {}
+		template<class... Args> Invite(Args&&... args): NickIssue("invite",std::forward<Args>(args)...) {}
 	};
 
 	class Topic : public Vote
@@ -63,31 +83,31 @@ namespace vote
 		template<class... Args> Opine(Args&&... args): Vote("opine",std::forward<Args>(args)...) {}
 	};
 
-	class Ban : public Vote
+	class Ban : public NickIssue
 	{
 		void starting();
 		void passed();
 
 	  public:
-		template<class... Args> Ban(Args&&... args): Vote("ban",std::forward<Args>(args)...) {}
+		template<class... Args> Ban(Args&&... args): NickIssue("ban",std::forward<Args>(args)...) {}
 	};
 
-	class Quiet : public Vote
+	class Quiet : public NickIssue
 	{
 		void starting();
 		void passed();
 
 	  public:
-		template<class... Args> Quiet(Args&&... args): Vote("quiet",std::forward<Args>(args)...) {}
+		template<class... Args> Quiet(Args&&... args): NickIssue("quiet",std::forward<Args>(args)...) {}
 	};
 
-	class UnQuiet : public Vote
+	class UnQuiet : public NickIssue
 	{
 		void starting();
 		void passed();
 
 	  public:
-		template<class... Args> UnQuiet(Args&&... args): Vote("unquiet",std::forward<Args>(args)...) {}
+		template<class... Args> UnQuiet(Args&&... args): NickIssue("unquiet",std::forward<Args>(args)...) {}
 	};
 }
 

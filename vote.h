@@ -93,6 +93,7 @@ class Vote : protected Acct
 	auto &get_chans()                           { return *chans;                                    }
 	auto &get_logs()                            { return *logs;                                     }
 
+	void set_issue(const std::string &issue)    { this->issue = issue;                              }
 	void set_reason(const std::string &reason)  { this->reason = reason;                            }
 	void set_began()                            { time(&began);                                     }
 	void set_ended()                            { time(&ended);                                     }
