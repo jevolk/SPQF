@@ -56,6 +56,11 @@ class Chan : public Locutor,
 	auto &get_mode(const User &user) const;
 	bool is_op() const;
 
+	bool operator==(const Chan &o) const                    { return get_name() == o.get_name();    }
+	bool operator!=(const Chan &o) const                    { return get_name() != o.get_name();    }
+	bool operator==(const std::string &name) const          { return get_name() == name;            }
+	bool operator!=(const std::string &name) const          { return get_name() != name;            }
+
 	// Closures
 	void for_each(const std::function<void (const User &, const Mode &)> &c) const;
 	void for_each(const std::function<void (const User &)> &c) const;
