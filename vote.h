@@ -97,19 +97,20 @@ class Vote : protected Acct
 	void set_began()                            { time(&began);                                     }
 	void set_ended()                            { time(&ended);                                     }
 
-	// Subclass throws from these for abortions
-	virtual void passed() {}
-	virtual void failed() {}
-	virtual void vetoed() {}
-	virtual void canceled() {}
-	virtual void proffer(const Ballot &b, User &user) {}
-	virtual void starting() {}
+	// One-time events                          // Subclass throws from these for abortions at any time.
+	virtual void passed() {}                    // Performs effects after successful vote
+	virtual void failed() {}                    // Performs effects after failed vote
+	virtual void vetoed() {}                    // Performs effects after vetoed vote
+	virtual void canceled() {}                  // Performs effects after canceled vote
+	virtual void starting() {}                  // Called after ctor, before broadcast to chan
 
 	Stat cast(const Ballot &b, User &u);
 
   public:
+	// Various events
+	virtual void event_vote(User &u, const Ballot &b);          // Ballot is cast. Careful overriding this.
+
 	void save()                                 { Acct::set(*this);                                 }
-	void vote(const Ballot &b, User &u);
 	void start();
 	void finish();
 	void cancel();

@@ -260,8 +260,8 @@ catch(const Exception &e)
 }
 
 
-void Vote::vote(const Ballot &ballot,
-                User &user)
+void Vote::event_vote(User &user,
+                      const Ballot &ballot)
 try
 {
 	using namespace colors;
@@ -322,7 +322,7 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 	if(ballot == NAY && intercession(user))
 		veto.emplace(user.get_acct());
 
-	proffer(ballot,user);
+	event_vote(user,ballot);
 
 	switch(ballot)
 	{
