@@ -147,7 +147,7 @@ inline
 void Locutor::me()
 {
 	Sess &sess = get_sess();
-	for(const auto &token : tokens(get_str(),"\n"))
+	for(const auto &token : tokens(packetize(get_str()),"\n"))
 		sess.quote << "ACTION " << get_target() << " :" << token << flush;
 }
 
@@ -156,7 +156,7 @@ inline
 void Locutor::notice()
 {
 	Sess &sess = get_sess();
-	const auto toks = tokens(get_str(),"\n");
+	const auto toks = tokens(packetize(get_str()),"\n");
 
 	switch(methex)
 	{
@@ -202,7 +202,7 @@ inline
 void Locutor::privmsg()
 {
 	Sess &sess = get_sess();
-	const auto toks = tokens(get_str(),"\n");
+	const auto toks = tokens(packetize(get_str()),"\n");
 
 	switch(methex)
 	{

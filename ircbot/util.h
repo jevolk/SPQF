@@ -151,6 +151,32 @@ C<T,A> tokens(const std::string &str,
 
 
 inline
+std::string packetize(std::string &&str,
+                      const size_t &max = 390)
+{
+	for(size_t i = 0, j = 0; i < str.size(); i++, j++)
+	{
+		if(j > max)
+			str.insert(i,1,'\n');
+
+		if(str[i] == '\n')
+			j = 0;
+	}
+
+	return std::move(str);
+}
+
+
+inline
+std::string packetize(const std::string &str,
+                      const size_t &max = 390)
+{
+	std::string ret(str);
+	return packetize(std::move(ret),max);
+}
+
+
+inline
 std::string tolower(const std::string &str)
 {
 	std::string ret;
