@@ -109,6 +109,7 @@ class Vote : protected Acct
   public:
 	// Various events
 	virtual void event_vote(User &u, const Ballot &b);          // Ballot is cast. Careful overriding this.
+	virtual void event_nick(User &u, const std::string &old) {} // When a user has changed his nick
 
 	void save()                                 { Acct::set(*this);                                 }
 	void start();
