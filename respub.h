@@ -50,6 +50,7 @@ class ResPublica : public irc::bot::Bot
 	void handle_cmd(const Msg &m, Chan &c, User &u);
 
 	// Primary dispatch
+	void handle_nick(const Msg &m, User &u) override;
 	void handle_chanmsg(const Msg &m, Chan &c, User &u) override;
 	void handle_privmsg(const Msg &m, User &u) override;
 

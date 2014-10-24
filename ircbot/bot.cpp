@@ -401,6 +401,8 @@ void Bot::handle_nick(const Msg &msg)
 	{
 		chan.rename(user,old_nick);
 	});
+
+	handle_nick(msg,user);
 }
 
 

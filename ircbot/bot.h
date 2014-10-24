@@ -132,6 +132,7 @@ class Bot : public std::mutex
 	auto &get_logs()                                  { return logs;                        }
 
 	// [RECV] Main interface for users of this library
+	virtual void handle_nick(const Msg &m, User &u) {}
 	virtual void handle_privmsg(const Msg &m, User &u) {}
 	virtual void handle_notice(const Msg &m, User &u) {}
 	virtual void handle_action(const Msg &m, User &u) {}

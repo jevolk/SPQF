@@ -91,6 +91,20 @@ catch(const std::out_of_range &e)
 }
 
 
+void ResPublica::handle_nick(const Msg &msg,
+                             User &user)
+{
+	const auto &old_nick = msg.get_nick();
+	const auto &new_nick = user.get_nick();
+
+	voting.for_each([&]
+	(Vote &vote)
+	{
+		vote.event_nick(user,old_nick);
+	});
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////
 //
 //   Channel message handlers
