@@ -263,3 +263,18 @@ void vote::Config::passed()
 
 	chan.set(cfg);
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Category: NickIssue - All votes with a nickname as the issue
+//
+
+
+void NickIssue::event_nick(User &user,
+                           const std::string &old)
+{
+	if(get_issue() == old)
+		set_issue(user.get_nick());
+}
