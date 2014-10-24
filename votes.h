@@ -34,8 +34,8 @@ namespace vote
 		std::string key;
 		std::string val;
 
-		void passed();
-		void starting();
+		void passed() override;
+		void starting() override;
 
 	  public:
 		template<class... Args> Config(Args&&... args);
@@ -43,8 +43,8 @@ namespace vote
 
 	class Mode : public Vote
 	{
-		void passed();
-		void starting();
+		void passed() override;
+		void starting() override;
 
 	  public:
 		template<class... Args> Mode(Args&&... args): Vote("mode",std::forward<Args>(args)...) {}
@@ -52,7 +52,7 @@ namespace vote
 
 	class Kick : public NickIssue
 	{
-		void passed();
+		void passed() override;
 
 	  public:
 		template<class... Args> Kick(Args&&... args): NickIssue("kick",std::forward<Args>(args)...) {}
@@ -60,7 +60,7 @@ namespace vote
 
 	class Invite : public NickIssue
 	{
-		void passed();
+		void passed() override;
 
 	  public:
 		template<class... Args> Invite(Args&&... args): NickIssue("invite",std::forward<Args>(args)...) {}
@@ -68,8 +68,8 @@ namespace vote
 
 	class Topic : public Vote
 	{
-		void passed();
-		void starting();
+		void passed() override;
+		void starting() override;
 
 	  public:
 		template<class... Args> Topic(Args&&... args): Vote("topic",std::forward<Args>(args)...) {}
@@ -77,7 +77,7 @@ namespace vote
 
 	class Opine : public Vote
 	{
-		void passed();
+		void passed() override;
 
 	  public:
 		template<class... Args> Opine(Args&&... args): Vote("opine",std::forward<Args>(args)...) {}
@@ -85,7 +85,7 @@ namespace vote
 
 	class Ban : public NickIssue
 	{
-		void passed();
+		void passed() override;
 
 	  public:
 		template<class... Args> Ban(Args&&... args): NickIssue("ban",std::forward<Args>(args)...) {}
@@ -93,7 +93,7 @@ namespace vote
 
 	class Quiet : public NickIssue
 	{
-		void passed();
+		void passed() override;
 
 	  public:
 		template<class... Args> Quiet(Args&&... args): NickIssue("quiet",std::forward<Args>(args)...) {}
@@ -101,7 +101,7 @@ namespace vote
 
 	class UnQuiet : public NickIssue
 	{
-		void passed();
+		void passed() override;
 
 	  public:
 		template<class... Args> UnQuiet(Args&&... args): NickIssue("unquiet",std::forward<Args>(args)...) {}
