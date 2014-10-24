@@ -106,8 +106,8 @@ class Chan : public Locutor,
 	void akicklist();                                       // ChanServ akick list update
 	void invitelist();                                      // INVEX update
 	void exceptlist();                                      // EXCEPTS update
-	void quietlist()                                        { mode("+q");                           }
-	void banlist()                                          { mode("+b");                           }
+	void quietlist();                                       // 728 q list
+	void banlist();
 	void csinfo();                                          // ChanServ info update
 	void names();                                           // Update user list of channel (goes into this->users)
 
@@ -545,11 +545,26 @@ void Chan::names()
 
 
 inline
-void Chan::invitelist()
+void Chan::banlist()
 {
 	const auto &sess = get_sess();
-	const auto &isupport = sess.get_isupport();
-	mode(std::string("+") + isupport.get("INVEX",'I'));
+	const auto &serv = sess.get_server();
+	if(serv.chan_pmodes.find('b') == std::string::npos)
+		return;
+
+	mode("+b");
+}
+
+
+inline
+void Chan::quietlist()
+{
+	const auto &sess = get_sess();
+	const auto &serv = sess.get_server();
+	if(serv.chan_pmodes.find('q') == std::string::npos)
+		return;
+
+	mode("+q");
 }
 
 
