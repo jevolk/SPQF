@@ -18,7 +18,9 @@ class Internal : public std::runtime_error
 	operator std::string() const  { return what(); }
 
 	Internal(const int &c, const std::string &what = ""): std::runtime_error(what), c(c) {}
+	Internal(const int &c, std::string &&what): std::runtime_error(std::move(what)), c(c) {}
 	Internal(const std::string &what = ""): std::runtime_error(what), c(0) {}
+	Internal(std::string &&what): std::runtime_error(std::move(what)), c(0) {}
 
 	template<class T> Internal operator<<(const T &t) const &&
 	{
