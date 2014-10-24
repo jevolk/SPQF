@@ -9,15 +9,9 @@
 class Sess
 {
 	std::mutex &mutex;                                 // Bot's main mutex or "session mutex"
-
-	// Our constant data
 	Opts opts;
-
-	// libircclient
 	Callbacks cbs;
 	irc_session_t *sess;
-
-	// Server data
 	Server server;                                     // Filled at connection time
 	std::set<std::string> caps;                        // registered extended capabilities
 	std::string nickname;                              // NICK reply
@@ -37,19 +31,11 @@ class Sess
 	void set_identified(const bool &identified)        { this->identified = identified;             }
 
   public:
-	// mutable session mutex convenience access
 	auto &get_mutex() const                            { return const_cast<std::mutex &>(mutex);    }
-	auto &get_mutex()                                  { return mutex;                              }
-
-	// Local data observers
 	auto &get_opts() const                             { return opts;                               }
-
-	// libircclient direct
-	auto get_cbs() const                               { return &cbs;                               }
 	auto get() const                                   { return sess;                               }
 	operator auto () const                             { return get();                              }
-
-	// Server data
+	auto get_cbs() const                               { return &cbs;                               }
 	auto &get_server() const                           { return server;                             }
 	auto &get_isupport() const                         { return get_server().isupport;              }
 	auto &get_nick() const                             { return nickname;                           }

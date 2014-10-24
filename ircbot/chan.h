@@ -539,7 +539,7 @@ void Chan::csinfo()
 inline
 void Chan::names()
 {
-	Sess &sess = get_sess();
+	auto &sess = get_sess();
 	sess.quote << "NAMES " << get_name() << flush;
 }
 
@@ -557,8 +557,17 @@ inline
 void Chan::exceptlist()
 {
 	const auto &sess = get_sess();
-	const auto &isupport = sess.get_isupport();
-	mode(std::string("+") + isupport.get("EXCEPTS",'e'));
+	const auto &isup = sess.get_isupport();
+	mode(std::string("+") + isup.get("EXCEPTS",'e'));
+}
+
+
+inline
+void Chan::invitelist()
+{
+	const auto &sess = get_sess();
+	const auto &isup = sess.get_isupport();
+	mode(std::string("+") + isup.get("INVEX",'I'));
 }
 
 
