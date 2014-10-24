@@ -58,6 +58,7 @@ namespace colors
 #include "callbacks.h"
 #include "opts.h"
 #include "mask.h"
+#include "isupport.h"
 #include "server.h"
 #include "delta.h"
 #include "mode.h"
