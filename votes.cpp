@@ -19,6 +19,69 @@ using namespace irc::bot;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// Import - Copy a configuration from another channel
+//
+
+
+void vote::Import::starting()
+{
+	static const auto usage = "!vote import <#chan> <nickname of bot>";
+
+	if(get_target_bot().empty())
+		throw Exception("You must hint the nickname of the bot: ") << usage;
+
+	if(get_target_chan().empty())
+		throw Exception("You must specify a channel to fetch from: ") << usage;
+
+	if(tolower(get_target_chan()) == tolower(get_chan_name()))
+		throw Exception("The source of the config must be a different channel.");
+
+	const auto &sess = get_sess();
+	const auto &isup = sess.get_isupport();
+	const auto type = get_target_chan().substr(0,1);
+	if(!isup.find_in("CHANTYPES",type))
+		throw Exception("You must specify a valid channel type for this server.");
+
+	if(tolower(get_target_bot()) == tolower(sess.get_nick()))
+	{
+		Chans &chans = get_chans();
+		Chan &chan = chans.get(get_target_chan());
+		received << chan.get("config.vote");
+		return;
+	}
+
+	Locutor bot(get_sess(),get_target_bot());
+	bot << bot.PRIVMSG << "config " << get_target_chan() << " config.vote" << bot.flush;
+}
+
+
+void vote::Import::event_notice(User &user,
+                                const std::string &text)
+{
+	if(tolower(user.get_nick()) != tolower(get_target_bot()))
+		return;
+
+	received << text;
+}
+
+
+void vote::Import::passed()
+{
+	if(received.str().empty())
+		throw Exception("Failed to fetch any config from the source. No change.");
+
+	Chan &chan = get_chan();
+	chan.set("config.vote",received.str());
+
+	chan << "Applied new configuration"
+	     << " (received " << received.str().size() << " bytes)"
+	     << chan.flush;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // UnQuiet
 //
 

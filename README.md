@@ -86,6 +86,7 @@ or conduct takeovers.
 * Automatic NickServ ghost and regain on (re)connect.
 * Vote modules can have independent configurations.
 * Database-records of votes, ballots and outcomes.
+* Vote to copy the voting configuration of another channel.
 
 
 #### Upcoming Features
