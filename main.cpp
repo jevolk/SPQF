@@ -67,7 +67,7 @@ int main(int argc, char **argv) try
 	signal(SIGINT,&handle_sig);                // Register handler for ctrl-c
 	signal(SIGTERM,&handle_sig);               // Register handler for term
 	instance.conn();                           // Connect to server (may throw)
-	instance.run();                            // Loops in foreground forever
+	instance();                                // Loops in foreground forever
 }
 catch(const Exception &e)
 {
