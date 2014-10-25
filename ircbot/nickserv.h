@@ -68,8 +68,7 @@ void NickServ::regain(const std::string &nick,
 inline
 void NickServ::captured(const Capture &msg)
 {
-	const std::string &header = msg.front();
-
+	const auto &header = msg.front();
 	if(header.find("Information on") == 0)
 		handle_info(msg);
 	else if(header.find("Access flag(s)") == 0)

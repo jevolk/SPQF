@@ -29,8 +29,7 @@ class ChanServ : public Service
 inline
 void ChanServ::captured(const Capture &msg)
 {
-	const std::string &header = msg.front();
-
+	const auto &header = msg.front();
 	if(header.find("Information on") == 0)
 		handle_info(msg);
 	else if(header.find("Entry") == 0)

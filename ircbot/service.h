@@ -74,6 +74,7 @@ try
 	static const auto ignores =
 	{
 		"this nickname is registered",
+		"you have been",
 	};
 
 	if(queue.empty())
@@ -86,15 +87,27 @@ try
 	const auto &text = tolower(decolor(msg[TEXT]));
 
 	const size_t terms = std::distance(term.begin(),term.end());
-	const bool any_term = terms == 1 && term.front().empty();
+	const bool any_term = terms == 1 && term.begin()->empty();
 	const bool err_term = terms == 2 && std::all_of(term.begin(),term.end(),[](auto&& t) { return t.empty(); });
 	const bool match = std::any_of(term.begin(),term.end(),[&](auto&& t) { return text.find(t) != std::string::npos; });
-	const bool error = std::any_of(errors.begin(),errors.end(),[&](auto&& t) { return text == t; });
-	const bool ignore = std::any_of(ignores.begin(),ignores.end(),[&](auto&& t) { return text == t; });
-
-	if(match)
+	const bool error = std::any_of(errors.begin(),errors.end(),[&](auto&& t) { return text.find(t) != std::string::npos; });
+	const bool ignore = std::any_of(ignores.begin(),ignores.end(),[&](auto&& t) { return text.find(t) != std::string::npos; });
+/*
+	printf("text[%s] terms[%zu] at[%u] et[%u] m[%u] e[%u] i[%u]\n",text.c_str(),terms,any_term,err_term,match,error,ignore);
+	for(const auto &t : term)
+		printf("-term[%s]\n",t.c_str());
+*/
+	if(!err_term && match)
 	{
-		const scope r(std::bind(&Service::next,this));
+/*
+		printf("CAPTURE: %zu\n",capture.size());
+		for(const auto &m : capture)
+			printf("[%s]\n",m.c_str());
+*/
+		const scope r([&] { next(); });
+		if(capture.empty())
+			throw Assertive("Empty Service capture!");
+
 		captured(capture);
 		return;
 	}
