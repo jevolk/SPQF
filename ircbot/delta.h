@@ -232,9 +232,6 @@ std::tuple<bool,char,Mask>(sign,mode,mask)
 	{
 		if(needs_inv_mask(mode) && valid_mask())
 			throw Exception("Mode does not require a hostmask argument.");
-
-		if(!needs_inv_mask(mode) && !valid_mask())
-			throw Exception("Mode requires a valid hostmask argument.");
 	}
 }
 
