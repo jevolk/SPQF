@@ -51,46 +51,10 @@ class Sess
 	auto &is_identified() const                        { return identified;                         }
 	bool is_conn() const;
 
-	// [SEND] 
-	Quote quote                                        { sendq                                      };
+	SendQ &get_sendq()                                 { return sendq;                              }
 
-	// [SEND] Services commands
-	// Use the Service handlers unless you really...
-	Quote nickserv                                     { sendq, "ns"                                };
-	Quote chanserv                                     { sendq, "cs"                                };
-	Quote memoserv                                     { sendq, "ms"                                };
-	Quote operserv                                     { sendq, "os"                                };
-	Quote botserv                                      { sendq, "bs"                                };
-
-	// [SEND] Extended commands
-	Quote cap                                          { sendq, "CAP"                               };
-	Quote authenticate                                 { sendq, "AUTHENTICATE"                      };
-	Quote monitor                                      { sendq, "MONITOR"                           };
-	Quote accept                                       { sendq, "ACCEPT"                            };
-
-	// [SEND] Primary commands
-	Quote ison                                         { sendq, "ISON"                              };
-	Quote lusers                                       { sendq, "LUSERS"                            };
-	Quote list                                         { sendq, "LIST"                              };
-	Quote help                                         { sendq, "HELP"                              };
-	Quote nick                                         { sendq, "NICK"                              };
-	Quote mode                                         { sendq, "MODE"                              };
-	Quote quit                                         { sendq, "QUIT"                              };
-
-	// [SEND] Compositions
-	template<class It> void isons(const It &begin, const It &end);
-	template<class It> void topics(const It &begin, const It &end, const std::string &server = "");
-	template<class It> void accept_del(const It &begin, const It &end);
-	template<class It> void accept_add(const It &begin, const It &end);
-	template<class It> void monitor_add(const It &begin, const It &end);
-	template<class It> void monitor_del(const It &begin, const It &end);
-	void monitor_status()                              { monitor("S");                              }
-	void monitor_clear()                               { monitor("C");                              }
-	void monitor_list()                                { monitor("L");                              }
 	void umode(const std::string &m);
-	void umode()                                       { mode << " " << get_nick() << mode.flush;   }
-
-	// [SEND] Library
+	void umode();
 	void disconn()                                     { irc_disconnect(get());                     }
 	void conn();
 
@@ -146,100 +110,16 @@ void Sess::conn()
 
 
 inline
+void Sess::umode()
+{
+	sendq << "MODE " << get_nick() << sendq.flush;
+}
+
+
+inline
 void Sess::umode(const std::string &str)
 {
-	mode << " " << get_nick() << " " << str << mode.flush;
-}
-
-
-template<class It>
-void Sess::isons(const It &begin,
-                 const It &end)
-{
-	ison << " :";
-	std::for_each(begin,end,[&]
-	(const auto &s)
-	{
-		ison << s << " ";
-	});
-
-	ison();
-}
-
-
-template<class It>
-void Sess::topics(const It &begin,
-                  const It &end,
-                  const std::string &server)
-{
-	std::for_each(begin,end,[&]
-	(const auto &s)
-	{
-		list << s << ",";
-	});
-
-	if(!server.empty())
-		list << " " << server;
-
-	list();
-}
-
-
-template<class It>
-void Sess::accept_add(const It &begin,
-                      const It &end)
-{
-	std::for_each(begin,end,[&]
-	(const auto &s)
-	{
-		accept << s << ",";
-	});
-
-	accept();
-}
-
-
-template<class It>
-void Sess::accept_del(const It &begin,
-                      const It &end)
-{
-	std::for_each(begin,end,[&]
-	(const auto &s)
-	{
-		accept << "-" << s << ",";
-	});
-
-	accept();
-}
-
-
-template<class It>
-void Sess::monitor_add(const It &begin,
-                       const It &end)
-{
-	monitor << "+ ";
-	std::for_each(begin,end,[&]
-	(const auto &s)
-	{
-		monitor << s << ",";
-	});
-
-	monitor();
-}
-
-
-template<class It>
-void Sess::monitor_del(const It &begin,
-                       const It &end)
-{
-	monitor << "+ ";
-	std::for_each(begin,end,[&]
-	(const auto &s)
-	{
-		monitor << s << ",";
-	});
-
-	monitor();
+	sendq << "MODE " << get_nick() << " " << str << sendq.flush;
 }
 
 

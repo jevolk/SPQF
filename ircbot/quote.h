@@ -8,18 +8,21 @@
 
 class Quote
 {
+	Sess &sess;
 	SendQ &sendq;
-	std::string cmd;
+	const char *const &cmd;
 
   public:
 	using flush_t = Stream::flush_t;
 	static constexpr flush_t flush = Stream::flush;
 
+	auto &get_sess() const                          { return sess;               }
 	auto &get_sendq() const                         { return sendq;              }
 	auto &get_cmd() const                           { return cmd;                }
-	bool has_cmd() const                            { return !cmd.empty();       }
+	bool has_cmd() const                            { return strnlen(cmd,64);    }
 
   protected:
+	auto &get_sess()                                { return sess;               }
 	auto &get_sendq()                               { return sendq;              }
 	auto &get_cmd()                                 { return cmd;                }
 
@@ -32,24 +35,37 @@ class Quote
 	// Append to stream
 	template<class T> Quote &operator<<(const T &t);
 
-	Quote(SendQ &sendq, const std::string &cmd = "");
+	Quote(Sess &sess, const char *const &cmd = "");
+	~Quote() noexcept;
 };
 
 
 inline
-Quote::Quote(SendQ &sendq,
-             const std::string &cmd):
-sendq(sendq),
+Quote::Quote(Sess &sess,
+             const char *const &cmd):
+sess(sess),
+sendq(sess.get_sendq()),
 cmd(cmd)
 {
+	if(has_cmd())
+		sendq << cmd << " ";
+}
 
+
+inline
+Quote::~Quote()
+noexcept
+{
+	if(sendq.has_pending())
+		operator<<(flush);
 }
 
 
 inline
 Quote &Quote::operator()()
 {
-	sendq << Stream::flush;
+	auto &sendq = get_sendq();
+	operator<<(flush);
 	return *this;
 }
 
@@ -57,10 +73,9 @@ Quote &Quote::operator()()
 inline
 Quote &Quote::operator()(const std::string &str)
 {
-	if(has_cmd())
-		sendq << cmd << " ";
-
-	sendq << str << Stream::flush;
+	auto &sendq = get_sendq();
+	operator<<(str);
+	operator<<(flush);
 	return *this;
 }
 
@@ -68,6 +83,7 @@ Quote &Quote::operator()(const std::string &str)
 template<class T>
 Quote &Quote::operator<<(const T &t)
 {
+	auto &sendq = get_sendq();
 	if(has_cmd() && !sendq.has_pending())
 		sendq << cmd << " ";
 
@@ -79,6 +95,7 @@ Quote &Quote::operator<<(const T &t)
 inline
 Quote &Quote::operator<<(const flush_t)
 {
+	auto &sendq = get_sendq();
 	sendq << flush;
 	return *this;
 }

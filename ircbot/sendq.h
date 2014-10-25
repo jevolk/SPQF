@@ -22,6 +22,7 @@ class SendQ
 
   public:
 	using flush_t = Stream::flush_t;
+	static constexpr flush_t flush {};
 
 	auto &get_sess() const         { return sess;                 }
 	auto has_pending() const       { return !sendq.str().empty(); }

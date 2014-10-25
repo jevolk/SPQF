@@ -156,8 +156,8 @@ ChanServ &ChanServ::operator<<(const flush_t)
 		Stream::clear();
 	});
 
-	Sess &sess = get_sess();
-	sess.chanserv << get_str() << flush;
+	Quote cs(get_sess(),"cs");
+	cs << get_str() << flush;
 	return *this;
 }
 

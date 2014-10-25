@@ -99,8 +99,8 @@ void User::info()
 inline
 void User::who(const std::string &flags)
 {
-	Sess &sess = get_sess();
-	sess.quote << "WHO " << get_nick() << " " << flags << flush;
+	Quote out(get_sess(),"WHO");
+	out << get_nick() << " " << flags << flush;
 }
 
 

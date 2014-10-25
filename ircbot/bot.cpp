@@ -55,8 +55,8 @@ catch(const Internal &e)
 
 void Bot::quit()
 {
-	Sess &sess = get_sess();
-	sess.quit << ":Alea iacta est" << Stream::flush;
+	Quote q(get_sess(),"QUIT");
+	q << ":Alea iacta est" << q.flush;
 }
 
 
@@ -198,9 +198,10 @@ void Bot::handle_conn(const Msg &msg)
 	Sess &sess = get_sess();
 	const Opts &opts = sess.get_opts();
 
-	sess.cap("LS");
-	sess.cap("REQ :account-notify extended-join");
-	sess.cap("END");
+	Quote cap(sess,"CAP");
+	cap("LS");
+	cap("REQ :account-notify extended-join");
+	cap("END");
 
 	if(!opts["ns-acct"].empty() && !opts["ns-pass"].empty())
 	{
@@ -1077,10 +1078,13 @@ void Bot::handle_nicknameinuse(const Msg &msg)
 
 	if(!opts["ns-acct"].empty() && !opts["ns-pass"].empty())
 	{
-		NickServ &ns = get_ns();
 		const std::string randy(randstr(14));
-		sess.nick(randy);
+
+		Quote nick(sess,"NICK");
+		nick(randy);
 		sess.set_nick(randy);
+
+		NickServ &ns = get_ns();
 		ns.regain(opts["ns-acct"],opts["ns-pass"]);
 		return;
 	}

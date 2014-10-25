@@ -127,8 +127,8 @@ NickServ &NickServ::operator<<(const flush_t)
 		Stream::clear();
 	});
 
-	Sess &sess = get_sess();
-	sess.nickserv << get_str() << flush;
+	Quote ns(get_sess(),"ns");
+	ns << get_str() << flush;
 	return *this;
 }
 

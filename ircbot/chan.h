@@ -208,8 +208,8 @@ Chan &operator<<(Chan &chan,
 inline
 void Chan::join()
 {
-	auto &out = get_sess().quote;
-	out << "JOIN " << get_name();
+	Quote out(get_sess(),"JOIN");
+	out << get_name();
 
 	if(!get_pass().empty())
 		out << " " << get_pass();
@@ -221,8 +221,8 @@ void Chan::join()
 inline
 void Chan::part()
 {
-	auto &out = get_sess().quote;
-	out << "PART " << get_name() << flush;
+	Quote out(get_sess(),"PART");
+	out << get_name() << flush;
 }
 
 
@@ -334,8 +334,8 @@ inline
 void Chan::remove(const User &user,
                   const std::string &reason)
 {
-	auto &out = get_sess().quote;
-	out << "REMOVE" << " "  << get_name() << " "  << user.get_nick() << " :" << reason << flush;
+	Quote out(get_sess(),"REMOVE");
+	out << get_name() << " "  << user.get_nick() << " :" << reason << flush;
 }
 
 
@@ -343,24 +343,24 @@ inline
 void Chan::kick(const User &user,
                 const std::string &reason)
 {
-	auto &out = get_sess().quote;
-	out << "KICK " << get_name() << " " << user.get_nick() << " :" << reason << flush;
+	Quote out(get_sess(),"KICK");
+	out << get_name() << " " << user.get_nick() << " :" << reason << flush;
 }
 
 
 inline
 void Chan::invite(const std::string &nick)
 {
-	auto &out = get_sess().quote;
-	out << "INVITE " << nick << " " << get_name() << flush;
+	Quote out(get_sess(),"INVITE");
+	out << nick << " " << get_name() << flush;
 }
 
 
 inline
 void Chan::topic(const std::string &text)
 {
-	auto &out = get_sess().quote;
-	out << "TOPIC " << get_name();
+	Quote out(get_sess(),"TOPIC");
+	out << get_name();
 
 	if(!text.empty())
 		out << " :" << text;
@@ -372,8 +372,8 @@ void Chan::topic(const std::string &text)
 inline
 void Chan::knock(const std::string &msg)
 {
-	auto &out = get_sess().quote;
-	out << "KNOCK " << get_name() << " :" << msg << flush;
+	Quote out(get_sess(),"KNOCK");
+	out << get_name() << " :" << msg << flush;
 }
 
 
@@ -532,8 +532,8 @@ void Chan::csinfo()
 inline
 void Chan::names()
 {
-	auto &out = get_sess().quote;
-	out << "NAMES " << get_name() << flush;
+	Quote out(get_sess(),"NAMES");
+	out << get_name() << flush;
 }
 
 
@@ -619,8 +619,8 @@ void Chan::akicklist()
 inline
 void Chan::who(const std::string &flags)
 {
-	auto &out = get_sess().quote;
-	out << "WHO " << get_name() << " " << flags << flush;
+	Quote out(get_sess(),"WHO");
+	out << get_name() << " " << flags << flush;
 }
 
 

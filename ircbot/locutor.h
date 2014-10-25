@@ -153,7 +153,7 @@ Locutor &Locutor::operator<<(const flush_t)
 inline
 void Locutor::me()
 {
-	auto &out = get_sess().quote;
+	Quote out(get_sess());
 	for(const auto &token : tokens(packetize(get_str()),"\n"))
 		out << "ACTION " << get_target() << " :" << token << flush;
 }
@@ -162,7 +162,7 @@ void Locutor::me()
 inline
 void Locutor::notice()
 {
-	auto &out = get_sess().quote;
+	Quote out(get_sess());
 	const auto toks = tokens(packetize(get_str()),"\n");
 
 	switch(methex)
@@ -208,7 +208,7 @@ void Locutor::notice()
 inline
 void Locutor::privmsg()
 {
-	auto &out = get_sess().quote;
+	Quote out(get_sess());
 	const auto toks = tokens(packetize(get_str()),"\n");
 
 	switch(methex)
@@ -254,22 +254,22 @@ void Locutor::privmsg()
 inline
 void Locutor::mode()
 {
-	auto &out = get_sess().quote;
-	out << "MODE " << get_target() << flush;
+	Quote out(get_sess(),"MODE");
+	out << get_target() << flush;
 }
 
 
 inline
 void Locutor::whois()
 {
-	auto &out = get_sess().quote;
-	out << "WHOIS " << get_target() << flush;
+	Quote out(get_sess(),"WHOIS");
+	out << get_target() << flush;
 }
 
 
 inline
 void Locutor::mode(const std::string &str)
 {
-	auto &out = get_sess().quote;
-	out << "MODE " << get_target() << " " << str << flush;
+	Quote out(get_sess(),"MODE");
+	out << get_target() << " " << str << flush;
 }
