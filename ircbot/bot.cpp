@@ -28,8 +28,7 @@ users(adb,sess),
 chans(adb,sess),
 ns(adb,sess,users),
 cs(adb,sess,chans),
-logs(chans,users,*this),
-dispatch_thread(&Bot::dispatch_worker,this)
+logs(chans,users,*this)
 {
 	users.set_service(ns);
 	chans.set_service(cs);
@@ -46,7 +45,6 @@ Bot::~Bot(void)
 noexcept try
 {
 	sess.disconn();
-	dispatch_thread.join();
 }
 catch(const Internal &e)
 {
@@ -62,7 +60,7 @@ void Bot::quit()
 }
 
 
-void Bot::run()
+void Bot::operator()()
 try
 {
 	Sess &sess = get_sess();
@@ -80,33 +78,6 @@ catch(const Internal &e)
 			std::cerr << "\033[1;31mBot::run(): unhandled:\033[0m " << e << std::endl;
 			throw;
 	}
-}
-
-
-void Bot::dispatch_worker()
-try
-{
-	while(1)
-	{
-		const Msg msg = dispatch_next();
-		const std::unique_lock<Bot> lock(*this);
-		dispatch(msg);
-	}
-}
-catch(const Internal &e)
-{
-	std::cout << "Dispatch worker exiting: " << e << std::endl;
-	return;
-}
-
-
-Msg Bot::dispatch_next()
-{
-	std::unique_lock<std::mutex> lock(dispatch_mutex);
-	dispatch_cond.wait(lock,[&]{ return !dispatch_queue.empty(); });
-	const Msg ret = std::move(dispatch_queue.front());
-	dispatch_queue.pop_front();
-	return ret;
 }
 
 

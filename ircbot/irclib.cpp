@@ -8,6 +8,47 @@
 
 #include "bot.h"
 
+using namespace irc::bot;
+
+
+static std::mutex dispatch_mutex;
+static std::condition_variable dispatch_cond;
+static std::deque<std::pair<Bot *, Msg>> dispatch_queue;
+
+static void dispatch_worker();
+static std::thread dispatch_thread {&dispatch_worker};
+static scope join(std::bind(&std::thread::join,&dispatch_thread));
+
+
+static
+decltype(dispatch_queue)::value_type dispatch_next()
+{
+    std::unique_lock<std::mutex> lock(dispatch_mutex);
+    dispatch_cond.wait(lock,[&]{ return !dispatch_queue.empty(); });
+    auto ret = std::move(dispatch_queue.front());
+    dispatch_queue.pop_front();
+    return ret;
+}
+
+static
+void dispatch_worker()
+try
+{
+    while(1)
+    {
+        auto msgp = dispatch_next();
+        Bot &bot = *std::get<0>(msgp);
+        const Msg &msg = std::get<1>(msgp);
+        const std::lock_guard<Bot> lock(bot);
+        bot.dispatch(msg);
+    }
+}
+catch(const Internal &e)
+{
+    std::cout << "Dispatch worker exiting: " << e << std::endl;
+    return;
+}
+
 
 template<class event_t>
 void handler(irc_session_t *const &session,
@@ -25,8 +66,10 @@ try
 		return;
 	}
 
-	irc::bot::Bot &bot = *static_cast<irc::bot::Bot *>(ctx);
-	bot(event,origin,params,count);
+	Bot *const &bot = static_cast<Bot *>(ctx);
+	const std::lock_guard<std::mutex> lock(dispatch_mutex);
+	dispatch_queue.emplace_back(bot,Msg{event,origin,params,count});
+	dispatch_cond.notify_one();
 }
 catch(const std::exception &e)
 {

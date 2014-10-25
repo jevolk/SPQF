@@ -46,14 +46,13 @@
 namespace irc {
 namespace bot {
 
-
 namespace colors
 {
 #include "colors.h"
 }
+#include "callbacks.h"
 #include "exception.h"
 #include "util.h"
-#include "callbacks.h"
 #include "opts.h"
 #include "mask.h"
 #include "isupport.h"
@@ -230,24 +229,13 @@ class Bot : public std::mutex
 	void handle_welcome(const Msg &m);
 	void handle_conn(const Msg &m);
 
-	std::deque<Msg> dispatch_queue;
-	std::mutex dispatch_mutex;
-	std::condition_variable dispatch_cond;
-
-	Msg dispatch_next();
-	void dispatch(const Msg &m);
-	void dispatch_worker();
-	std::thread dispatch_thread;
-
   public:
-	// Event/Handler input
-	template<class... Msg> void operator()(Msg&&... msg);
+	void dispatch(const Msg &msg);                    // Input event
+	void operator()();                                // Run worker loop
 
-	// Main controls
 	void join(const std::string &chan)                { get_chans().join(chan);             }
 	void quit();
 	void conn()                                       { get_sess().conn();                  }
-	void run();                                             // Run worker loop
 
 	Bot(void) = delete;
 	Bot(const Opts &opts);
@@ -259,15 +247,6 @@ class Bot : public std::mutex
 
 	friend std::ostream &operator<<(std::ostream &s, const Bot &bot);
 };
-
-
-template<class... Msg>
-void Bot::operator()(Msg&&... args)
-{
-    const std::lock_guard<decltype(dispatch_mutex)> lock(dispatch_mutex);
-    dispatch_queue.emplace_back(std::forward<Msg>(args)...);
-    dispatch_cond.notify_one();
-}
 
 
 }       // namespace bot
