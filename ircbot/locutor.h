@@ -40,6 +40,7 @@ class Locutor : public Stream
 	auto &get_meth() const                              { return meth;                               }
 	auto &get_methex() const                            { return methex;                             }
 	auto &get_target() const                            { return target;                             }
+	auto &get_my_nick() const                           { return get_sess().get_nick();              }
 
   protected:
 	auto &get_sess()                                    { return *sess;                              }
