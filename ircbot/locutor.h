@@ -142,7 +142,7 @@ Locutor &Locutor::operator<<(const flush_t)
 		case PRIVMSG:    msg(methex == CMSG? "CPRIVMSG" : "PRIVMSG");    break;
 		case ACTION:     msg("ACTION");                                  break;
 		default:
-			throw Exception("Unsupported locution method");
+			throw Assertive("Unsupported locution method");
 	}
 
 	return *this;
