@@ -52,7 +52,7 @@ int main(int argc, char **argv) try
 		std::cin.get();
 	}
 
-	Adb adb(opts["dbdir"] + "/irc");
+	Adb adb(opts["dbdir"] + "/ircbot");
 
 	if(dockey == "*")
 	{
