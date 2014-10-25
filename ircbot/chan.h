@@ -52,6 +52,7 @@ class Chan : public Locutor,
 	auto &get_akicks() const                                { return akicks;                        }
 	auto &get_opq() const                                   { return opq;                           }
 	uint num_users() const                                  { return users.size();                  }
+	bool has_mode(const char &mode) const                   { return get_mode().has(mode);          }
 	bool has_nick(const std::string &nick) const            { return users.count(nick);             }
 	bool has(const User &user) const                        { return has_nick(user.get_nick());     }
 	auto &get_user(const std::string &nick) const;
@@ -376,11 +377,22 @@ void Chan::invite(const std::string &nick)
 inline
 void Chan::topic(const std::string &text)
 {
-	Quote out(get_sess(),"TOPIC");
-	out << get_name();
+	auto func = [text](Chan &chan)
+	{
+		Quote out(chan.get_sess(),"TOPIC");
+		out << chan.get_name();
 
-	if(!text.empty())
-		out << " :" << text;
+		if(!text.empty())
+			out << " :" << text;
+
+		out << flush;
+		chan.deop();
+	};
+
+	if(has_mode('t'))
+		opdo(func);
+	else
+		func(*this);
 }
 
 
