@@ -44,5 +44,5 @@ C. Order everything by dependency:
 		- Classes start private. The ideal class has one "public:" label somewhere in the
 		  middle, and no other labels necessary (this is obviously not a rule...).
 		
-	- In class definitions the order is the REVERSE OF THE CLASS DECLARATION.
+	- For class definition files: the order is the REVERSE OF THE CLASS DECLARATION.
 		- The definition file should open to the constructor at the top.
