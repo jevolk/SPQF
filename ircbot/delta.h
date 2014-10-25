@@ -50,8 +50,9 @@ struct Deltas : std::vector<Delta>
 	bool too_many(const Server &s) const         { return size() > s.isupport.get_or_max("MODES");  }
 	void validate_chan(const Server &s) const;
 	void validate_user(const Server &s) const;
-
 	operator std::string() const;
+
+	template<class... T> Deltas &operator<<(T&&... t);
 
 	Deltas() = default;
 	Deltas(std::vector<Delta> &&vec):       std::vector<Delta>(std::move(vec)) {}
@@ -104,6 +105,14 @@ try
 catch(const std::out_of_range &e)
 {
 	throw Exception("Not enough arguments for this mode string.");
+}
+
+
+template<class... T>
+Deltas &Deltas::operator<<(T&&... t)
+{
+	emplace_back(std::forward<T>(t)...);
+	return *this;
 }
 
 

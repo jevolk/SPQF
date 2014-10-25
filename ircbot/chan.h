@@ -229,13 +229,13 @@ uint Chan::unquiet(const User &u)
 	Deltas deltas;
 
 	if(quiets.count(u.mask(Mask::NICK)))
-		deltas.emplace_back('-','q',u.mask(Mask::NICK));
+		deltas.emplace_back("-q",u.mask(Mask::NICK));
 
 	if(quiets.count(u.mask(Mask::HOST)))
-		deltas.emplace_back('-','q',u.mask(Mask::HOST));
+		deltas.emplace_back("-q",u.mask(Mask::HOST));
 
 	if(u.is_logged_in() && quiets.count(u.mask(Mask::ACCT)))
-		deltas.emplace_back('-','q',u.mask(Mask::ACCT));
+		deltas.emplace_back("-q",u.mask(Mask::ACCT));
 
 	mode(deltas);
 	return deltas.size();
@@ -248,13 +248,13 @@ uint Chan::unban(const User &u)
 	Deltas deltas;
 
 	if(bans.count(u.mask(Mask::NICK)))
-		deltas.emplace_back('-','b',u.mask(Mask::NICK));
+		deltas.emplace_back("-b",u.mask(Mask::NICK));
 
 	if(bans.count(u.mask(Mask::HOST)))
-		deltas.emplace_back('-','b',u.mask(Mask::HOST));
+		deltas.emplace_back("-b",u.mask(Mask::HOST));
 
 	if(u.is_logged_in() && bans.count(u.mask(Mask::ACCT)))
-		deltas.emplace_back('-','b',u.mask(Mask::ACCT));
+		deltas.emplace_back("-b",u.mask(Mask::ACCT));
 
 	mode(deltas);
 	return deltas.size();
@@ -265,10 +265,10 @@ inline
 bool Chan::ban(const User &u)
 {
 	Deltas deltas;
-	deltas.emplace_back('+','b',u.mask(Mask::HOST));
+	deltas.emplace_back("+b",u.mask(Mask::HOST));
 
 	if(u.is_logged_in())
-		deltas.emplace_back('+','b',u.mask(Mask::ACCT));
+		deltas.emplace_back("+b",u.mask(Mask::ACCT));
 
 	mode(deltas);
 	return true;
@@ -279,10 +279,10 @@ inline
 bool Chan::quiet(const User &u)
 {
 	Deltas deltas;
-	deltas.emplace_back('+','q',u.mask(Mask::HOST));
+	deltas.emplace_back("+q",u.mask(Mask::HOST));
 
 	if(u.is_logged_in())
-		deltas.emplace_back('+','q',u.mask(Mask::ACCT));
+		deltas.emplace_back("+q",u.mask(Mask::ACCT));
 
 	mode(deltas);
 	return true;
@@ -293,8 +293,10 @@ inline
 bool Chan::ban(const User &user,
                const Ban::Type &type)
 {
-	const Delta delta('+','b',user.mask(type));
-	mode(delta);
+	Deltas deltas;
+	deltas.emplace_back("+b",user.mask(type));
+
+	mode(deltas);
 	return true;
 }
 
@@ -303,8 +305,10 @@ inline
 bool Chan::quiet(const User &user,
                  const Quiet::Type &type)
 {
-	const Delta delta('+','q',user.mask(type));
-	mode(delta);
+	Deltas deltas;
+	deltas.emplace_back("+q",user.mask(type));
+
+	mode(deltas);
 	return true;
 }
 
@@ -312,18 +316,20 @@ bool Chan::quiet(const User &user,
 inline
 void Chan::voice(const User &user)
 {
-	const std::string &targ = user.get_nick();
-	const Delta delta('+','v',targ);
-	mode(delta);
+	Deltas deltas;
+	deltas.emplace_back("+v",user.get_nick());
+
+	mode(deltas);
 }
 
 
 inline
 void Chan::devoice(const User &user)
 {
-	const std::string &targ = user.get_nick();
-	const Delta delta('-','v',targ);
-	mode(delta);
+	Deltas deltas;
+	deltas.emplace_back("-v",user.get_nick());
+
+	mode(deltas);
 }
 
 
