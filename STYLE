@@ -41,9 +41,8 @@ B. Always be covered by RAII, it's your alibi:
 
 C. Order everything by dependency:
 	- In class declarations this means if foo() calls bar(), foo() is listed BELOW bar().
-		- Proper (RAII) use of the initializer list reflects why this is the proper layout of a class.
-		- The ideal class has one "public:" label somewhere in the middle, and no other labels
-		  (this is obviously not a rule...).
+		- Classes start private. The ideal class has one "public:" label somewhere in the
+		  middle, and no other labels necessary (this is obviously not a rule...).
 		
 	- In class definitions the order is the REVERSE OF THE CLASS DECLARATION.
 		- The definition file should open to the constructor at the top.
