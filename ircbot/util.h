@@ -6,6 +6,9 @@
  */
 
 
+extern std::locale locale;   // bot.cpp
+
+
 constexpr
 size_t hash(const char *const &str,
             const size_t i = 0)

@@ -11,8 +11,9 @@
 using namespace irc::bot;
 
 
-// bot.h globals
-std::locale irc::bot::locale;
+// irc::bot:: library extern base
+decltype(irc::bot::locale) irc::bot::locale;                              // util.h
+thread_local decltype(irc::bot::Stream::sbuf) irc::bot::Stream::sbuf;     // stream.h
 
 
 Bot::Bot(const Opts &opts)

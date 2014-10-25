@@ -10,6 +10,7 @@ class Service : public Stream
 {
 	Adb &adb;
 	Sess &sess;
+	std::string name;
 	std::list<std::string> capture;                    // State of the current capture
 	std::deque<std::forward_list<std::string>> queue;  // Queue of terminators
 
@@ -19,6 +20,7 @@ class Service : public Stream
 	auto &get_adb() const                              { return adb;                                   }
 	auto &get_sess() const                             { return sess;                                  }
 	auto &get_opts() const                             { return get_sess().get_opts();                 }
+	auto get_name() const                              { return name;                                  }
 	auto queue_size() const                            { return queue.size();                          }
 	auto capture_size() const                          { return capture.size();                        }
 	virtual bool enabled() const                       { return get_opts().get<bool>("services");      }
@@ -48,8 +50,8 @@ class Service : public Stream
 	void handle(const Msg &msg);
 
 	template<class... Args>
-	Service(Adb &adb, Sess &sess, Args&&... args):
-	        Stream(std::forward<Args>(args)...), adb(adb), sess(sess) {}
+	Service(Adb &adb, Sess &sess, const std::string &name):
+	        adb(adb), sess(sess), name(name) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const Service &srv);
 };
@@ -134,7 +136,7 @@ std::ostream &operator<<(std::ostream &s,
                          const Service &srv)
 {
 	s << "[Service]:        " << std::endl;
-	s << "Name:             " << srv.get_target() << std::endl;
+	s << "Name:             " << srv.get_name() << std::endl;
 	s << "Queue size:       " << srv.queue_size() << std::endl;
 	s << "Capture size:     " << srv.capture_size() << std::endl;
 	return s;

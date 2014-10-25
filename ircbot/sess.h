@@ -12,6 +12,7 @@ class Sess
 	Opts opts;
 	Callbacks cbs;
 	irc_session_t *sess;
+	SendQ sendq;
 	Server server;                                     // Filled at connection time
 	std::set<std::string> caps;                        // registered extended capabilities
 	std::string nickname;                              // NICK reply
@@ -23,6 +24,7 @@ class Sess
 	auto get_cbs()                                     { return &cbs;                               }
 	operator auto ()                                   { return get();                              }
 
+  private:
 	// Handler accesses
 	friend class Bot;
 	friend class NickServ;
@@ -36,6 +38,7 @@ class Sess
 	auto get() const                                   { return sess;                               }
 	operator auto () const                             { return get();                              }
 	auto get_cbs() const                               { return &cbs;                               }
+	auto &get_sendq() const                            { return sendq;                              }
 	auto &get_server() const                           { return server;                             }
 	auto &get_isupport() const                         { return get_server().isupport;              }
 	auto &get_nick() const                             { return nickname;                           }
@@ -49,30 +52,30 @@ class Sess
 	bool is_conn() const;
 
 	// [SEND] 
-	Quote quote                                        { sess                                       };
+	Quote quote                                        { sendq                                      };
 
 	// [SEND] Services commands
 	// Use the Service handlers unless you really...
-	Quote nickserv                                     { sess, "ns"                                 };
-	Quote chanserv                                     { sess, "cs"                                 };
-	Quote memoserv                                     { sess, "ms"                                 };
-	Quote operserv                                     { sess, "os"                                 };
-	Quote botserv                                      { sess, "bs"                                 };
+	Quote nickserv                                     { sendq, "ns"                                };
+	Quote chanserv                                     { sendq, "cs"                                };
+	Quote memoserv                                     { sendq, "ms"                                };
+	Quote operserv                                     { sendq, "os"                                };
+	Quote botserv                                      { sendq, "bs"                                };
 
 	// [SEND] Extended commands
-	Quote cap                                          { sess, "CAP"                                };
-	Quote authenticate                                 { sess, "AUTHENTICATE"                       };
-	Quote monitor                                      { sess, "MONITOR"                            };
-	Quote accept                                       { sess, "ACCEPT"                             };
+	Quote cap                                          { sendq, "CAP"                               };
+	Quote authenticate                                 { sendq, "AUTHENTICATE"                      };
+	Quote monitor                                      { sendq, "MONITOR"                           };
+	Quote accept                                       { sendq, "ACCEPT"                            };
 
 	// [SEND] Primary commands
-	Quote ison                                         { sess, "ISON"                               };
-	Quote lusers                                       { sess, "LUSERS"                             };
-	Quote list                                         { sess, "LIST"                               };
-	Quote help                                         { sess, "HELP"                               };
-	Quote nick                                         { sess, "NICK"                               };
-	Quote mode                                         { sess, "MODE"                               };
-	Quote quit                                         { sess, "QUIT"                               };
+	Quote ison                                         { sendq, "ISON"                              };
+	Quote lusers                                       { sendq, "LUSERS"                            };
+	Quote list                                         { sendq, "LIST"                              };
+	Quote help                                         { sendq, "HELP"                              };
+	Quote nick                                         { sendq, "NICK"                              };
+	Quote mode                                         { sendq, "MODE"                              };
+	Quote quit                                         { sendq, "QUIT"                              };
 
 	// [SEND] Compositions
 	template<class It> void isons(const It &begin, const It &end);
@@ -109,6 +112,7 @@ mutex(mutex),
 opts(opts),
 cbs(cbs),
 sess(sess? sess : irc_create_session(get_cbs())),
+sendq(this->sess),
 nickname(this->opts["nick"]),
 identified(false)
 {

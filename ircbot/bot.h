@@ -46,8 +46,6 @@
 namespace irc {
 namespace bot {
 
-// bot.cpp based externs
-extern std::locale locale;
 
 namespace colors
 {
@@ -70,6 +68,7 @@ namespace colors
 #include "adb.h"
 #include "acct.h"
 #include "stream.h"
+#include "sendq.h"
 #include "quote.h"
 #include "sess.h"
 #include "locutor.h"

@@ -32,12 +32,14 @@ class Locutor : public Stream
 	Method meth;                                        // Stream state for current method
 	MethodEx methex;                                    // Stream state for extension to method
 	colors::FG fg;                                      // Stream state for foreground color
+	std::string target;
 
   public:
 	auto &get_sess() const                              { return *sess;                              }
 	auto &get_opts() const                              { return get_sess().get_opts();              }
 	auto &get_meth() const                              { return meth;                               }
 	auto &get_methex() const                            { return methex;                             }
+	auto &get_target() const                            { return target;                             }
 
   protected:
 	auto &get_sess()                                    { return *sess;                              }
@@ -46,6 +48,8 @@ class Locutor : public Stream
 	void me();
 
   public:
+	void set_target(const std::string &target)          { this->target = target;                     }
+
 	// [SEND] stream interface                          // Defaults back to DEFAULT_METHOD after flush
 	Locutor &operator<<(const flush_t) override;
 	Locutor &operator<<(const Method &method);          // Set method for this message
@@ -68,11 +72,11 @@ class Locutor : public Stream
 inline
 Locutor::Locutor(Sess &sess,
                  const std::string &target):
-Stream(target),
 sess(&sess),
 meth(DEFAULT_METHOD),
 methex(DEFAULT_METHODEX),
-fg(colors::FG::BLACK)
+fg(colors::FG::BLACK),
+target(target)
 {
 
 }
@@ -81,7 +85,8 @@ fg(colors::FG::BLACK)
 inline
 Locutor &Locutor::operator<<(const colors::FG &fg)
 {
-	(*this) << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
+	auto &out = *this;
+	out << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
 	this->fg = fg;
 	return *this;
 }
@@ -90,8 +95,9 @@ Locutor &Locutor::operator<<(const colors::FG &fg)
 inline
 Locutor &Locutor::operator<<(const colors::BG &bg)
 {
-	(*this) << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
-	(*this) << "," << std::setfill('0') << std::setw(2) << int(bg);
+	auto &out = *this;
+	out << "\x03" << std::setfill('0') << std::setw(2) << int(fg);
+	out << "," << std::setfill('0') << std::setw(2) << int(bg);
 	return *this;
 }
 
@@ -99,7 +105,8 @@ Locutor &Locutor::operator<<(const colors::BG &bg)
 inline
 Locutor &Locutor::operator<<(const colors::Mode &mode)
 {
-	(*this) << (unsigned char)mode;
+	auto &out = *this;
+	out << (unsigned char)mode;
 	return *this;
 }
 
@@ -146,16 +153,16 @@ Locutor &Locutor::operator<<(const flush_t)
 inline
 void Locutor::me()
 {
-	Sess &sess = get_sess();
+	auto &out = get_sess().quote;
 	for(const auto &token : tokens(packetize(get_str()),"\n"))
-		sess.quote << "ACTION " << get_target() << " :" << token << flush;
+		out << "ACTION " << get_target() << " :" << token << flush;
 }
 
 
 inline
 void Locutor::notice()
 {
-	Sess &sess = get_sess();
+	auto &out = get_sess().quote;
 	const auto toks = tokens(packetize(get_str()),"\n");
 
 	switch(methex)
@@ -164,11 +171,11 @@ void Locutor::notice()
 		{
 			const auto &chan = toks.at(0);
 			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				sess.quote << "CNOTICE"
-				           << " "  << get_target()
-				           << " "  << chan
-				           << " :" << *it
-				           << flush;
+				out << "CNOTICE"
+				    << " "  << get_target()
+				    << " "  << chan
+				    << " :" << *it
+				    << flush;
 			break;
 		}
 
@@ -177,10 +184,10 @@ void Locutor::notice()
 		{
 			const auto prefix = methex == WALLCHOPS? '@' : '+';
 			for(const auto &token : toks)
-				sess.quote << "NOTICE"
-				           << " "  << prefix << get_target()
-				           << " :" << token
-				           << flush;
+				out << "NOTICE"
+				    << " "  << prefix << get_target()
+				    << " :" << token
+				    << flush;
 			break;
 		}
 
@@ -188,10 +195,10 @@ void Locutor::notice()
 		default:
 		{
 			for(const auto &token : toks)
-				sess.quote << "NOTICE"
-				           << " "  << get_target()
-				           << " :" << token
-				           << flush;
+				out << "NOTICE"
+				    << " "  << get_target()
+				    << " :" << token
+				    << flush;
 			break;
 		}
 	}
@@ -201,7 +208,7 @@ void Locutor::notice()
 inline
 void Locutor::privmsg()
 {
-	Sess &sess = get_sess();
+	auto &out = get_sess().quote;
 	const auto toks = tokens(packetize(get_str()),"\n");
 
 	switch(methex)
@@ -210,11 +217,11 @@ void Locutor::privmsg()
 		{
 			const auto &chan = toks.at(0);
 			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				sess.quote << "CPRIVMSG"
-				           << " "  << get_target()
-				           << " "  << chan
-				           << " :" << *it
-				           << flush;
+				out << "CPRIVMSG"
+				    << " "  << get_target()
+				    << " "  << chan
+				    << " :" << *it
+				    << flush;
 			break;
 		}
 
@@ -223,10 +230,10 @@ void Locutor::privmsg()
 		{
 			const auto prefix = methex == WALLCHOPS? '@' : '+';
 			for(const auto &token : toks)
-				sess.quote << "PRIVMSG"
-				           << " "  << prefix << get_target()
-				           << " :" << token
-				           << flush;
+				out << "PRIVMSG"
+				    << " "  << prefix << get_target()
+				    << " :" << token
+				    << flush;
 			break;
 		}
 
@@ -234,10 +241,10 @@ void Locutor::privmsg()
 		default:
 		{
 			for(const auto &token : toks)
-				sess.quote << "PRIVMSG"
-				           << " "  << get_target()
-				           << " :" << token
-				           << flush;
+				out << "PRIVMSG"
+				    << " "  << get_target()
+				    << " :" << token
+				    << flush;
 			break;
 		}
 	}
@@ -247,22 +254,22 @@ void Locutor::privmsg()
 inline
 void Locutor::mode()
 {
-	Sess &sess = get_sess();
-	sess.quote << "MODE " << get_target() << flush;
+	auto &out = get_sess().quote;
+	out << "MODE " << get_target() << flush;
 }
 
 
 inline
 void Locutor::whois()
 {
-	Sess &sess = get_sess();
-	sess.quote << "WHOIS " << get_target() << flush;
+	auto &out = get_sess().quote;
+	out << "WHOIS " << get_target() << flush;
 }
 
 
 inline
 void Locutor::mode(const std::string &str)
 {
-	Sess &sess = get_sess();
-	sess.quote << "MODE " << get_target() << " " << str << flush;
+	auto &out = get_sess().quote;
+	out << "MODE " << get_target() << " " << str << flush;
 }

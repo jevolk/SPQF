@@ -208,22 +208,21 @@ Chan &operator<<(Chan &chan,
 inline
 void Chan::join()
 {
-	Sess &sess = get_sess();
-	const auto &pass = get_pass();
-	sess.quote << "JOIN " << get_name();
+	auto &out = get_sess().quote;
+	out << "JOIN " << get_name();
 
-	if(!pass.empty())
-		sess.quote << " " << pass;
+	if(!get_pass().empty())
+		out << " " << get_pass();
 
-	sess.quote << flush;
+	out << flush;
 }
 
 
 inline
 void Chan::part()
 {
-	Sess &sess = get_sess();
-	sess.quote << "PART " << get_name() << flush;
+	auto &out = get_sess().quote;
+	out << "PART " << get_name() << flush;
 }
 
 
@@ -316,7 +315,6 @@ bool Chan::quiet(const User &user,
 inline
 void Chan::voice(const User &user)
 {
-	Sess &sess = get_sess();
 	const std::string &targ = user.get_nick();
 	const Delta delta('+','v',targ);
 	mode(delta);
@@ -326,7 +324,6 @@ void Chan::voice(const User &user)
 inline
 void Chan::devoice(const User &user)
 {
-	Sess &sess = get_sess();
 	const std::string &targ = user.get_nick();
 	const Delta delta('-','v',targ);
 	mode(delta);
@@ -337,12 +334,8 @@ inline
 void Chan::remove(const User &user,
                   const std::string &reason)
 {
-	Sess &sess = get_sess();
-	sess.quote << "REMOVE"
-	           << " "  << get_name()
-	           << " "  << user.get_nick()
-	           << " :" << reason
-	           << flush;
+	auto &out = get_sess().quote;
+	out << "REMOVE" << " "  << get_name() << " "  << user.get_nick() << " :" << reason << flush;
 }
 
 
@@ -350,37 +343,37 @@ inline
 void Chan::kick(const User &user,
                 const std::string &reason)
 {
-	Sess &sess = get_sess();
-	sess.quote << "KICK " << get_name() << " " << user.get_nick() << " :" << reason << flush;
+	auto &out = get_sess().quote;
+	out << "KICK " << get_name() << " " << user.get_nick() << " :" << reason << flush;
 }
 
 
 inline
 void Chan::invite(const std::string &nick)
 {
-	Sess &sess = get_sess();
-	sess.quote << "INVITE " << nick << " " << get_name() << flush;
+	auto &out = get_sess().quote;
+	out << "INVITE " << nick << " " << get_name() << flush;
 }
 
 
 inline
 void Chan::topic(const std::string &text)
 {
-	Sess &sess = get_sess();
-	sess.quote << "TOPIC " << get_name();
+	auto &out = get_sess().quote;
+	out << "TOPIC " << get_name();
 
 	if(!text.empty())
-		sess.quote << " :" << text;
+		out << " :" << text;
 
-	sess.quote << flush;
+	out << flush;
 }
 
 
 inline
 void Chan::knock(const std::string &msg)
 {
-	Sess &sess = get_sess();
-	sess.quote << "KNOCK " << get_name() << " :" << msg << flush;
+	auto &out = get_sess().quote;
+	out << "KNOCK " << get_name() << " :" << msg << flush;
 }
 
 
@@ -539,8 +532,8 @@ void Chan::csinfo()
 inline
 void Chan::names()
 {
-	auto &sess = get_sess();
-	sess.quote << "NAMES " << get_name() << flush;
+	auto &out = get_sess().quote;
+	out << "NAMES " << get_name() << flush;
 }
 
 
@@ -626,8 +619,8 @@ void Chan::akicklist()
 inline
 void Chan::who(const std::string &flags)
 {
-	Sess &sess = get_sess();
-	sess.quote << "WHO " << get_name() << " " << flags << flush;
+	auto &out = get_sess().quote;
+	out << "WHO " << get_name() << " " << flags << flush;
 }
 
 
