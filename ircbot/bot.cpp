@@ -202,6 +202,8 @@ void Bot::handle_conn(const Msg &msg)
 	cap("REQ :account-notify extended-join");
 	cap("END");
 
+	Quote(sess,"MODE") << get_nick() << " +w";
+
 	if(!opts["ns-acct"].empty() && !opts["ns-pass"].empty())
 	{
 		NickServ &ns = get_ns();
