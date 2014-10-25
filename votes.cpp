@@ -191,7 +191,7 @@ void vote::Invite::passed()
 void vote::Mode::passed()
 {
 	Chan &chan = get_chan();
-	chan.mode(get_issue());
+	chan.opdo(Deltas(get_issue()));
 }
 
 
