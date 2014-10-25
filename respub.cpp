@@ -667,7 +667,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	out << pfx << "[" << BOLD << vote.get_type() << OFF << "]: " << UNDER2 << vote.get_issue() << "\n";
 
 	// Chan line
-	out << pfx << BOLD << "CHANNEL" << OFF << "     : " << vote.get_chan_name() << "\n";
+	out << pfx << BOLD << "CHANNEL" << OFF << "  : " << vote.get_chan_name() << "\n";
 
 	// Initiator line
 	out << pfx << BOLD << "SPEAKER" << OFF << "  : " << vote.get_user_acct() << "\n";
