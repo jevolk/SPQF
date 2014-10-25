@@ -43,9 +43,8 @@ class Locutor : public Stream
 
   protected:
 	auto &get_sess()                                    { return *sess;                              }
-	void privmsg();
-	void notice();
-	void me();
+
+	void msg(const char *const &cmd);
 
   public:
 	void set_target(const std::string &target)          { this->target = target;                     }
@@ -139,9 +138,9 @@ Locutor &Locutor::operator<<(const flush_t)
 
 	switch(meth)
 	{
-		case ACTION:     me();             break;
-		case NOTICE:     notice();         break;
-		case PRIVMSG:    privmsg();        break;
+		case NOTICE:     msg(methex == CMSG? "CNOTICE" : "NOTICE");      break;
+		case PRIVMSG:    msg(methex == CMSG? "CPRIVMSG" : "PRIVMSG");    break;
+		case ACTION:     msg("ACTION");                                  break;
 		default:
 			throw Exception("Unsupported locution method");
 	}
@@ -151,35 +150,27 @@ Locutor &Locutor::operator<<(const flush_t)
 
 
 inline
-void Locutor::me()
-{
-	for(const auto &token : tokens(packetize(get_str()),"\n"))
-		Quote(get_sess(),"ACTION") << get_target() << " :" << token;
-}
-
-
-inline
-void Locutor::notice()
+void Locutor::msg(const char *const &cmd)
 {
 	const auto toks = tokens(packetize(get_str()),"\n");
 
 	switch(methex)
 	{
-		case CMSG:
-		{
-			const auto &chan = toks.at(0);
-			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				Quote(get_sess(),"CNOTICE") << get_target() << " "  << chan << " :" << *it;
-
-			break;
-		}
-
 		case WALLCHOPS:
 		case WALLVOICE:
 		{
 			const auto prefix = methex == WALLCHOPS? '@' : '+';
 			for(const auto &token : toks)
-				Quote(get_sess(),"NOTICE") << prefix << get_target() << " :" << token;
+				Quote(get_sess(),cmd) << prefix << get_target() << " :" << token;
+
+			break;
+		}
+
+		case CMSG:
+		{
+			const auto &chan = toks.at(0);
+			for(auto it = toks.begin()+1; it != toks.end(); ++it)
+				Quote(get_sess(),cmd) << get_target() << " "  << chan << " :" << *it;
 
 			break;
 		}
@@ -188,46 +179,7 @@ void Locutor::notice()
 		default:
 		{
 			for(const auto &token : toks)
-				Quote(get_sess(),"NOTICE") << get_target() << " :" << token;
-
-			break;
-		}
-	}
-}
-
-
-inline
-void Locutor::privmsg()
-{
-	Quote out(get_sess());
-	const auto toks = tokens(packetize(get_str()),"\n");
-
-	switch(methex)
-	{
-		case CMSG:
-		{
-			const auto &chan = toks.at(0);
-			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				Quote(get_sess(),"CPRIVMSG") << get_target() << " "  << chan << " :" << *it;
-
-			break;
-		}
-
-		case WALLCHOPS:
-		case WALLVOICE:
-		{
-			const auto prefix = methex == WALLCHOPS? '@' : '+';
-			for(const auto &token : toks)
-				Quote(get_sess(),"PRIVMSG") << prefix << get_target() << " :" << token;
-
-			break;
-		}
-
-		case NONE:
-		default:
-		{
-			for(const auto &token : toks)
-				Quote(get_sess(),"PRIVMSG") << get_target() << " :" << token;
+				Quote(get_sess(),cmd) << get_target() << " :" << token;
 
 			break;
 		}
