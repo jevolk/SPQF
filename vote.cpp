@@ -322,8 +322,6 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 	if(ballot == NAY && intercession(user))
 		veto.emplace(user.get_acct());
 
-	event_vote(user,ballot);
-
 	switch(ballot)
 	{
 		case YEA:
