@@ -82,9 +82,6 @@ class Chan : public Locutor,
 	auto &get_topic()                                       { return _topic;                        }
 	auto &get_opq()                                         { return opq;                           }
 
-	void as_op(const std::function<void (Chan &)> &func);   // perform func() as op
-	void as_op(const Deltas &deltas);                       // execute delta as op
-
 	void log(const User &user, const Msg &msg)              { _log(user,msg);                       }
 	void set_joined(const bool &joined)                     { this->joined = joined;                }
 	void set_creation(const time_t &creation)               { this->creation = creation;            }
@@ -153,6 +150,9 @@ class Chan : public Locutor,
 	void op(const User &user);
 	void part();                                            // Leave channel
 	void join();                                            // Enter channel
+
+	void opdo(const std::function<void (Chan &)> &func);    // perform func() as op
+	void opdo(const Deltas &deltas);                        // execute delta as op
 
 	friend Chan &operator<<(Chan &c, const User &user);     // append "nickname: " to locutor stream
 	friend User &operator<<(User &u, const Chan &chan);     // for CNOTICE / CPRIVMSG
@@ -235,7 +235,7 @@ void Chan::part()
 inline
 void Chan::op(const User &u)
 {
-	as_op({{{"+o",u.get_nick()}}});
+	opdo({{{"+o",u.get_nick()}}});
 }
 
 
@@ -261,7 +261,7 @@ uint Chan::unquiet(const User &u)
 		deltas.emplace_back("-q",u.mask(Mask::ACCT));
 
 	const auto ret = deltas.size();
-	as_op(deltas);
+	opdo(deltas);
 	return ret;
 }
 
@@ -281,7 +281,7 @@ uint Chan::unban(const User &u)
 		deltas.emplace_back("-b",u.mask(Mask::ACCT));
 
 	const auto ret = deltas.size();
-	as_op(deltas);
+	opdo(deltas);
 	return ret;
 }
 
@@ -295,7 +295,7 @@ void Chan::ban(const User &u)
 	if(u.is_logged_in())
 		deltas.emplace_back("+b",u.mask(Mask::ACCT));
 
-	as_op(deltas);
+	opdo(deltas);
 }
 
 
@@ -308,7 +308,7 @@ void Chan::quiet(const User &u)
 	if(u.is_logged_in())
 		deltas.emplace_back("+q",u.mask(Mask::ACCT));
 
-	as_op(deltas);
+	opdo(deltas);
 }
 
 
@@ -318,7 +318,7 @@ void Chan::ban(const User &user,
 {
 	Deltas deltas;
 	deltas.emplace_back("+b",user.mask(type));
-	as_op(deltas);
+	opdo(deltas);
 }
 
 
@@ -328,7 +328,7 @@ void Chan::quiet(const User &user,
 {
 	Deltas deltas;
 	deltas.emplace_back("+q",user.mask(type));
-	as_op(deltas);
+	opdo(deltas);
 }
 
 
@@ -337,7 +337,7 @@ void Chan::voice(const User &user)
 {
 	Deltas deltas;
 	deltas.emplace_back("+v",user.get_nick());
-	as_op(deltas);
+	opdo(deltas);
 }
 
 
@@ -346,7 +346,7 @@ void Chan::devoice(const User &user)
 {
 	Deltas deltas;
 	deltas.emplace_back("-v",user.get_nick());
-	as_op(deltas);
+	opdo(deltas);
 }
 
 
@@ -646,7 +646,7 @@ void Chan::who(const std::string &flags)
 
 
 inline
-void Chan::as_op(const Deltas &deltas)
+void Chan::opdo(const Deltas &deltas)
 {
 	if(is_op())
 	{
@@ -666,7 +666,7 @@ void Chan::as_op(const Deltas &deltas)
 
 
 inline
-void Chan::as_op(const std::function<void (Chan &)> &func)
+void Chan::opdo(const std::function<void (Chan &)> &func)
 {
 	if(is_op())
 	{
