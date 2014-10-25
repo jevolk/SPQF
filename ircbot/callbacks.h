@@ -37,4 +37,4 @@ struct Callbacks : irc_callbacks_t
 };
 
 
-extern Callbacks callbacks;  // irclib.cpp  (callback stack base / dispatch)
+extern Callbacks callbacks;  // recvq.cpp  (callback stack base / dispatch)

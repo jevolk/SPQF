@@ -42,11 +42,11 @@ WFLAGS = -pedantic                             \
 all: $(TARGET)
 
 
-$(TARGET): irclib.o bot.o
+$(TARGET): recvq.o bot.o
 	ar rc $@ $^
 	ranlib $@
 
-irclib.o: irclib.cpp *.h
+recvq.o: recvq.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 bot.o: bot.cpp *.h

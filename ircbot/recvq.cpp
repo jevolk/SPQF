@@ -11,32 +11,33 @@
 using namespace irc::bot;
 
 
-static std::mutex dispatch_mutex;
-static std::condition_variable dispatch_cond;
-static std::deque<std::pair<Bot *, Msg>> dispatch_queue;
+static std::mutex mutex;
+static std::condition_variable cond;
+static std::deque<std::pair<Bot *, Msg>> queue;
 
-static void dispatch_worker();
-static std::thread dispatch_thread {&dispatch_worker};
-static scope join(std::bind(&std::thread::join,&dispatch_thread));
+static void worker();
+static std::thread thread {&worker};
+static scope join(std::bind(&std::thread::join,&thread));
 
 
 static
-decltype(dispatch_queue)::value_type dispatch_next()
+decltype(queue)::value_type next()
 {
-    std::unique_lock<std::mutex> lock(dispatch_mutex);
-    dispatch_cond.wait(lock,[&]{ return !dispatch_queue.empty(); });
-    auto ret = std::move(dispatch_queue.front());
-    dispatch_queue.pop_front();
+    std::unique_lock<std::mutex> lock(mutex);
+    cond.wait(lock,[&]{ return !queue.empty(); });
+    auto ret = std::move(queue.front());
+    queue.pop_front();
     return ret;
 }
 
+
 static
-void dispatch_worker()
+void worker()
 try
 {
     while(1)
     {
-        auto msgp = dispatch_next();
+        auto msgp = next();
         Bot &bot = *std::get<0>(msgp);
         const Msg &msg = std::get<1>(msgp);
         const std::lock_guard<Bot> lock(bot);
@@ -45,7 +46,7 @@ try
 }
 catch(const Internal &e)
 {
-    std::cout << "Dispatch worker exiting: " << e << std::endl;
+    std::cout << "recvq worker exiting: " << e << std::endl;
     return;
 }
 
@@ -67,9 +68,9 @@ try
 	}
 
 	Bot *const &bot = static_cast<Bot *>(ctx);
-	const std::lock_guard<std::mutex> lock(dispatch_mutex);
-	dispatch_queue.emplace_back(bot,Msg{event,origin,params,count});
-	dispatch_cond.notify_one();
+	const std::lock_guard<std::mutex> lock(mutex);
+	queue.emplace_back(bot,Msg{event,origin,params,count});
+	cond.notify_one();
 }
 catch(const std::exception &e)
 {
