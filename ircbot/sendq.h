@@ -27,10 +27,9 @@ class SendQ
 	auto &get_sess() const         { return sess;                 }
 	auto has_pending() const       { return !sendq.str().empty(); }
 
-    // Send to server
-	SendQ &operator<<(const flush_t);
+	void clear();
 
-	// Append to pending stream
+	SendQ &operator<<(const flush_t);
 	template<class T> SendQ &operator<<(const T &t);
 
 	SendQ(irc_session_t *const &sess);
@@ -56,14 +55,17 @@ SendQ &SendQ::operator<<(const T &t)
 inline
 SendQ &SendQ::operator<<(const flush_t)
 {
-	const scope _([&]
-	{
-		sendq.clear();
-		sendq.str(std::string());
-	});
-
+	const scope clr(std::bind(&SendQ::clear,this));
 	quote(sendq.str());
 	return *this;
+}
+
+
+inline
+void SendQ::clear()
+{
+	sendq.clear();
+	sendq.str(std::string());
 }
 
 

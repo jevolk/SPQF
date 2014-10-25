@@ -56,6 +56,12 @@ inline
 Quote::~Quote()
 noexcept
 {
+	if(std::uncaught_exception())
+	{
+		sendq.clear();
+		return;
+	}
+
 	if(sendq.has_pending())
 		operator<<(flush);
 }

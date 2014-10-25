@@ -213,16 +213,13 @@ void Chan::join()
 
 	if(!get_pass().empty())
 		out << " " << get_pass();
-
-	out << flush;
 }
 
 
 inline
 void Chan::part()
 {
-	Quote out(get_sess(),"PART");
-	out << get_name() << flush;
+	Quote(get_sess(),"PART") << get_name();
 }
 
 
@@ -334,8 +331,7 @@ inline
 void Chan::remove(const User &user,
                   const std::string &reason)
 {
-	Quote out(get_sess(),"REMOVE");
-	out << get_name() << " "  << user.get_nick() << " :" << reason << flush;
+	Quote(get_sess(),"REMOVE") << get_name() << " "  << user.get_nick() << " :" << reason;
 }
 
 
@@ -343,16 +339,14 @@ inline
 void Chan::kick(const User &user,
                 const std::string &reason)
 {
-	Quote out(get_sess(),"KICK");
-	out << get_name() << " " << user.get_nick() << " :" << reason << flush;
+	Quote(get_sess(),"KICK") << get_name() << " " << user.get_nick() << " :" << reason;
 }
 
 
 inline
 void Chan::invite(const std::string &nick)
 {
-	Quote out(get_sess(),"INVITE");
-	out << nick << " " << get_name() << flush;
+	Quote(get_sess(),"INVITE") << nick << " " << get_name();
 }
 
 
@@ -364,16 +358,13 @@ void Chan::topic(const std::string &text)
 
 	if(!text.empty())
 		out << " :" << text;
-
-	out << flush;
 }
 
 
 inline
 void Chan::knock(const std::string &msg)
 {
-	Quote out(get_sess(),"KNOCK");
-	out << get_name() << " :" << msg << flush;
+	Quote(get_sess(),"KNOCK") << get_name() << " :" << msg;
 }
 
 

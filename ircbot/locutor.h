@@ -153,16 +153,14 @@ Locutor &Locutor::operator<<(const flush_t)
 inline
 void Locutor::me()
 {
-	Quote out(get_sess());
 	for(const auto &token : tokens(packetize(get_str()),"\n"))
-		out << "ACTION " << get_target() << " :" << token << flush;
+		Quote(get_sess(),"ACTION") << get_target() << " :" << token;
 }
 
 
 inline
 void Locutor::notice()
 {
-	Quote out(get_sess());
 	const auto toks = tokens(packetize(get_str()),"\n");
 
 	switch(methex)
@@ -171,11 +169,8 @@ void Locutor::notice()
 		{
 			const auto &chan = toks.at(0);
 			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				out << "CNOTICE"
-				    << " "  << get_target()
-				    << " "  << chan
-				    << " :" << *it
-				    << flush;
+				Quote(get_sess(),"CNOTICE") << get_target() << " "  << chan << " :" << *it;
+
 			break;
 		}
 
@@ -184,10 +179,8 @@ void Locutor::notice()
 		{
 			const auto prefix = methex == WALLCHOPS? '@' : '+';
 			for(const auto &token : toks)
-				out << "NOTICE"
-				    << " "  << prefix << get_target()
-				    << " :" << token
-				    << flush;
+				Quote(get_sess(),"NOTICE") << prefix << get_target() << " :" << token;
+
 			break;
 		}
 
@@ -195,10 +188,8 @@ void Locutor::notice()
 		default:
 		{
 			for(const auto &token : toks)
-				out << "NOTICE"
-				    << " "  << get_target()
-				    << " :" << token
-				    << flush;
+				Quote(get_sess(),"NOTICE") << get_target() << " :" << token;
+
 			break;
 		}
 	}
@@ -217,11 +208,8 @@ void Locutor::privmsg()
 		{
 			const auto &chan = toks.at(0);
 			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				out << "CPRIVMSG"
-				    << " "  << get_target()
-				    << " "  << chan
-				    << " :" << *it
-				    << flush;
+				Quote(get_sess(),"CPRIVMSG") << get_target() << " "  << chan << " :" << *it;
+
 			break;
 		}
 
@@ -230,10 +218,8 @@ void Locutor::privmsg()
 		{
 			const auto prefix = methex == WALLCHOPS? '@' : '+';
 			for(const auto &token : toks)
-				out << "PRIVMSG"
-				    << " "  << prefix << get_target()
-				    << " :" << token
-				    << flush;
+				Quote(get_sess(),"PRIVMSG") << prefix << get_target() << " :" << token;
+
 			break;
 		}
 
@@ -241,10 +227,8 @@ void Locutor::privmsg()
 		default:
 		{
 			for(const auto &token : toks)
-				out << "PRIVMSG"
-				    << " "  << get_target()
-				    << " :" << token
-				    << flush;
+				Quote(get_sess(),"PRIVMSG") << get_target() << " :" << token;
+
 			break;
 		}
 	}
@@ -254,22 +238,19 @@ void Locutor::privmsg()
 inline
 void Locutor::mode()
 {
-	Quote out(get_sess(),"MODE");
-	out << get_target() << flush;
+	Quote(get_sess(),"MODE") << get_target();
 }
 
 
 inline
 void Locutor::whois()
 {
-	Quote out(get_sess(),"WHOIS");
-	out << get_target() << flush;
+	Quote(get_sess(),"WHOIS") << get_target();
 }
 
 
 inline
 void Locutor::mode(const std::string &str)
 {
-	Quote out(get_sess(),"MODE");
-	out << get_target() << " " << str << flush;
+	Quote(get_sess(),"MODE") << get_target() << " " << str;
 }

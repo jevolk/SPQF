@@ -55,8 +55,7 @@ catch(const Internal &e)
 
 void Bot::quit()
 {
-	Quote q(get_sess(),"QUIT");
-	q << ":Alea iacta est" << q.flush;
+	Quote(get_sess(),"QUIT") << ":Alea iacta est";
 }
 
 
