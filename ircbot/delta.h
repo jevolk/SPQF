@@ -34,11 +34,12 @@ struct Delta : std::tuple<bool,char,Mask>
 	void validate_user(const Server &s) const;
 
 	operator std::string() const;
+	void check() const;                          // Throws why failed
 
-	Delta(const bool &sign, const char &mode, const Mask &mask, const bool &check = true);
-	Delta(const char &sign, const char &mode, const Mask &mask, const bool &check = true);
-	Delta(const std::string &mode_delta, const Mask &mask, const bool &check = true);
-	Delta(const std::string &delta, const bool &check = true);
+	Delta(const bool &sign, const char &mode, const Mask &mask);
+	Delta(const char &sign, const char &mode, const Mask &mask);
+	Delta(const std::string &mode_delta, const Mask &mask);
+	Delta(const std::string &delta);
 
 	friend std::ostream &operator<<(std::ostream &s, const Delta &delta);
 };
@@ -69,7 +70,7 @@ inline
 Deltas::Deltas(const std::string &delts)
 try
 {
-	const std::vector<std::string> tok = tokens(delts);
+	const auto tok = tokens(delts);
 	const bool sign = Delta::sign(tok.at(0).at(0));
 	for(size_t i = 1; i < tok.size(); i++)
 	{
@@ -89,7 +90,7 @@ Deltas::Deltas(const std::string &delts,
                const Server &serv)
 try
 {
-	const std::vector<std::string> tok = tokens(delts);
+	const auto tok = tokens(delts);
 	const bool sign = Delta::sign(tok.at(0).at(0));
 	for(size_t i = 1, a = 1; i < tok.at(0).size(); i++)
 	{
@@ -175,12 +176,10 @@ std::ostream &operator<<(std::ostream &s,
 
 
 inline
-Delta::Delta(const std::string &delta,
-             const bool &check)
+Delta::Delta(const std::string &delta)
 try:
 Delta(delta.substr(0,delta.find(" ")),
-      delta.size() > 2? delta.substr(delta.find(" ")+1) : "",
-      check)
+      delta.size() > 2? delta.substr(delta.find(" ")+1) : "")
 {
 
 }
@@ -192,13 +191,11 @@ catch(const std::out_of_range &e)
 
 inline
 Delta::Delta(const std::string &mode_delta,
-             const Mask &mask,
-             const bool &check)
+             const Mask &mask)
 try:
 Delta(sign(mode_delta.at(0)),
       mode_delta.at(1),
-      mask,
-      check)
+      mask)
 {
 	if(mode_delta.size() != 2)
 		throw Exception("Bad mode delta: Need two characters: [+/-][mode].");
@@ -212,11 +209,9 @@ catch(const std::out_of_range &e)
 inline
 Delta::Delta(const char &sc,
              const char &mode,
-             const Mask &mask,
-             const bool &check):
-Delta(sign(sc),mode,mask,check)
+             const Mask &mask):
+Delta(sign(sc),mode,mask)
 {
-
 
 }
 
@@ -224,13 +219,20 @@ Delta(sign(sc),mode,mask,check)
 inline
 Delta::Delta(const bool &sign,
              const char &mode,
-             const Mask &mask,
-             const bool &check):
+             const Mask &mask):
 std::tuple<bool,char,Mask>(sign,mode,mask)
 {
-	if(check && !mask.empty())
+
+}
+
+
+inline
+void Delta::check()
+const
+{
+	if(!std::get<MASK>(*this).empty())
 	{
-		if(needs_inv_mask(mode) && valid_mask())
+		if(needs_inv_mask(std::get<MODE>(*this)) && valid_mask())
 			throw Exception("Mode does not require a hostmask argument.");
 	}
 }
