@@ -33,7 +33,7 @@ void NickServ::listchans()
 {
 	Stream &out = *this;
 	out << "LISTCHANS" << flush;
-	terminator_next("channel access match for the nickname");
+	terminator_next("channel access match");
 }
 
 
