@@ -349,6 +349,7 @@ bool Delta::needs_inv_mask(const char &m)
 		case 'o':
 		case 'v':
 		case 'l':
+		case 'j':
 			return true;
 
 		default:
