@@ -20,8 +20,8 @@ class Vote : protected Acct
 	std::string acct;                           // $a name of initiating user
 	std::string issue;                          // "Issue" input of the vote
 	Adoc cfg;                                   // Configuration of this vote
-	time_t began;                               // Time vote was constructed
-	time_t ended;                               // Time vote was closed
+	time_t began;                               // Time vote was activated or 0
+	time_t ended;                               // Time vote was closed or 0
 	std::string reason;                         // Reason for outcome
 	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
