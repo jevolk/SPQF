@@ -11,17 +11,27 @@
 using namespace irc::bot;
 
 
-decltype(SendQ::mutex) SendQ::mutex, SendQ::flood_mutex;
-decltype(SendQ::cond) SendQ::cond, SendQ::flood_cond;
-decltype(SendQ::interrupted) SendQ::interrupted;
-decltype(SendQ::queue) SendQ::queue;
 
-static std::thread thread {&SendQ::worker};
-static scope join([]
+///////////////////////////////////////////////////////////////////////////////
+//
+// libircclient
+//
+
+decltype(coarse_flood_mutex) irc::bot::coarse_flood_mutex;
+decltype(coarse_flood_cond) irc::bot::coarse_flood_cond;
+
+
+void irc::bot::coarse_flood_wait()
 {
-	SendQ::interrupt();
-	thread.join();
-});
+	std::unique_lock<std::mutex> lock(coarse_flood_mutex);
+	coarse_flood_cond.wait(lock);
+}
+
+
+void irc::bot::coarse_flood_done()
+{
+	coarse_flood_cond.notify_all();
+}
 
 
 static
@@ -37,29 +47,29 @@ void send(irc_session_t *const &sess,
 	{
 		switch(e.code())
 		{
-			case LIBIRC_ERR_NOMEM:
-				SendQ::flood_wait();
-				continue;
-
-			default:
-				// No reattempt for everything else
-				throw;
+			case LIBIRC_ERR_NOMEM:   coarse_flood_wait();   continue;
+			default:                                        throw;
 		}
 	}
 }
 
 
-void SendQ::flood_wait()
-{
-	std::unique_lock<decltype(flood_mutex)> lock(flood_mutex);
-	flood_cond.wait(lock);
-}
+///////////////////////////////////////////////////////////////////////////////
+//
+// SendQ
+//
 
+decltype(SendQ::mutex) SendQ::mutex;
+decltype(SendQ::cond) SendQ::cond;
+decltype(SendQ::interrupted) SendQ::interrupted;
+decltype(SendQ::queue) SendQ::queue;
 
-void SendQ::flood_done()
+static std::thread thread {&SendQ::worker};
+static scope join([]
 {
-	flood_cond.notify_all();
-}
+	SendQ::interrupt();
+	thread.join();
+});
 
 
 void SendQ::interrupt()
@@ -69,13 +79,51 @@ void SendQ::interrupt()
 }
 
 
+using Clock = std::chrono::steady_clock;
+using TimePoint = std::chrono::time_point<Clock>;
+
+struct Ent
+{
+	irc_session_t *sess;
+	std::string pck;
+	TimePoint time;
+};
+
+struct State
+{
+	TimePoint last;
+
+};
+
+static const std::chrono::milliseconds PROCESS_INTERVAL {250};
+static std::map<irc_session_t *, State> state;
+static std::deque<Ent> slowq;
+
+
+static
+void process_slowq()
+{
+
+
+}
+
+
+static
+void process(irc_session_t *const &sess,
+             const std::string &pck)
+{
+	state[sess].last = std::chrono::steady_clock::now();
+	send(sess,pck);
+}
+
+
 void SendQ::worker()
 try
 {
 	while(1)
 	{
 		std::unique_lock<decltype(SendQ::mutex)> lock(SendQ::mutex);
-		cond.wait(lock,[&]
+		cond.wait_for(lock,PROCESS_INTERVAL,[&]
 		{
 			if(interrupted.load(std::memory_order_consume))
 				throw Internal("Interrupted");
@@ -83,9 +131,14 @@ try
 			return !queue.empty();
 		});
 
-		auto &ent = queue.front();
-		const scope pf([]{ queue.pop_front(); });
-		send(ent.sess,ent.pck);
+		process_slowq();
+
+		if(!queue.empty())
+		{
+			auto &ent = queue.front();
+			const scope pf([]{ queue.pop_front(); });
+			process(ent.sess,ent.pck);
+		}
     }
 }
 catch(const Internal &e)

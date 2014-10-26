@@ -83,7 +83,7 @@ try
 	const std::lock_guard<std::mutex> lock(mutex);
 	queue.emplace_back(bot,Msg{event,origin,params,count});
 	cond.notify_one();
-	SendQ::flood_done();
+	coarse_flood_done();
 }
 catch(const std::exception &e)
 {

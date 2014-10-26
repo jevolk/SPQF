@@ -6,6 +6,13 @@
  */
 
 
+extern std::mutex coarse_flood_mutex;
+extern std::condition_variable coarse_flood_cond;
+
+void coarse_flood_wait();
+void coarse_flood_done();
+
+
 class SendQ
 {
 	struct Ent
@@ -14,23 +21,22 @@ class SendQ
 		std::string pck;
 	};
 
-	// sendq.cpp
-	static std::mutex mutex, flood_mutex;
-	static std::condition_variable cond, flood_cond;
+	static std::mutex mutex;
+	static std::condition_variable cond;
 	static std::atomic<bool> interrupted;
 	static std::deque<Ent> queue;
 
+  public:
+	static void interrupt();
+	static void worker();
+
+  private:
 	irc_session_t *sess;
 	std::ostringstream sendq;
 
   public:
 	using flush_t = Stream::flush_t;
 	static constexpr flush_t flush {};
-
-	static void flood_wait();
-	static void flood_done();
-	static void interrupt();
-	static void worker();
 
 	auto &get_sess() const                    { return *sess;                                       }
 	auto has_pending() const                  { return !sendq.str().empty();                        }
