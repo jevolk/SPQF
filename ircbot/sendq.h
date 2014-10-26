@@ -26,6 +26,8 @@ class SendQ
 	static std::atomic<bool> interrupted;
 	static std::deque<Ent> queue;
 
+	static Ent next();
+
   public:
 	static void interrupt();
 	static void worker();

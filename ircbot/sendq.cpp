@@ -103,7 +103,8 @@ static std::deque<Ent> slowq;
 static
 void process_slowq()
 {
-
+	//TODO:                                               //
+	std::this_thread::sleep_for(std::chrono::milliseconds(333));
 
 }
 
@@ -117,28 +118,35 @@ void process(irc_session_t *const &sess,
 }
 
 
+SendQ::Ent SendQ::next()
+{
+	std::unique_lock<decltype(SendQ::mutex)> lock(SendQ::mutex);
+	cond.wait_for(lock,PROCESS_INTERVAL,[&]
+	{
+		if(interrupted.load(std::memory_order_consume))
+			throw Internal("Interrupted");
+
+		return !queue.empty();
+	});
+
+	if(queue.empty())
+		return {nullptr};
+
+	const scope pf([]{ queue.pop_front(); });
+	return queue.front();
+}
+
+
 void SendQ::worker()
 try
 {
 	while(1)
 	{
-		std::unique_lock<decltype(SendQ::mutex)> lock(SendQ::mutex);
-		cond.wait_for(lock,PROCESS_INTERVAL,[&]
-		{
-			if(interrupted.load(std::memory_order_consume))
-				throw Internal("Interrupted");
-
-			return !queue.empty();
-		});
+		const Ent ent = next();
+		if(ent.sess)
+			process(ent.sess,ent.pck);
 
 		process_slowq();
-
-		if(!queue.empty())
-		{
-			auto &ent = queue.front();
-			const scope pf([]{ queue.pop_front(); });
-			process(ent.sess,ent.pck);
-		}
     }
 }
 catch(const Internal &e)
