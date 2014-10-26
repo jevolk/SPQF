@@ -12,7 +12,8 @@ struct Delta : std::tuple<bool,char,Mask>
 	enum Valid                                   { VALID, NOT_FOUND, NEED_MASK, CANT_MASK           };
 
 	static char sign(const bool &b)              { return b? '+' : '-';                             }
-	static bool sign(const char &s);             // throws on not + or -
+	static bool sign(const char &s)              { return s != '-';                                 }
+	static bool is_sign(const char &s)           { return s == '-' || s == '+';                     }
 	static bool needs_inv_mask(const char &m);   // Modes that take an argument which is not a Mask
 
 	bool need_mask_chan(const Server &s) const;
@@ -61,53 +62,38 @@ struct Deltas : std::vector<Delta>
 	Deltas(std::vector<Delta> &&vec):       std::vector<Delta>(std::move(vec)) {}
 	Deltas(const std::vector<Delta> &vec):  std::vector<Delta>(vec) {}
 
-	Deltas(const std::string &delts);
-	Deltas(const std::string &delts, const Server &serv);  // Note: Arg testing for chan only
+	Deltas(const std::string &delts, const Server *const &serv = nullptr);
+	Deltas(const std::string &delts, const Server &serv): Deltas(delts,&serv) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const Deltas &d);
 };
 
 
 inline
-Deltas::Deltas(const std::string &delts)
+Deltas::Deltas(const std::string &delts,
+               const Server *const &serv)
 try
 {
 	const auto tok = tokens(delts);
-	const bool sign = Delta::sign(tok.at(0).at(0));
-	for(size_t i = 1; i < tok.size(); i++)
+	const auto &ms = tok.at(0);
+	bool sign = Delta::sign(ms.at(0));
+	for(size_t i = 1, m = 0, a = 1; i < tok.size(); i++)
 	{
-		const char &mode = tok.at(0).at(i);
-		const std::string &arg = tok.size() > i? tok.at(i) : "";
+		if(Delta::is_sign(ms.at(i + m)))
+			sign = Delta::sign(ms.at(i + m++));
+
+		const char &mode = ms.at(i + m);
+		const bool has_arg = serv? serv->chan_pmodes.find(mode) != std::string::npos : tok.size() >= a;
+		const auto &arg = has_arg? tok.at(a++) : "";
 		emplace_back(sign,mode,arg);
 	}
+
+	if(serv)
+		validate_chan(*serv);
 }
 catch(const std::out_of_range &e)
 {
 	throw Exception("Improperly formatted deltas string.");
-}
-
-
-inline
-Deltas::Deltas(const std::string &delts,
-               const Server &serv)
-try
-{
-	const auto tok = tokens(delts);
-	const bool sign = Delta::sign(tok.at(0).at(0));
-	for(size_t i = 1, a = 1; i < tok.at(0).size(); i++)
-	{
-		const char &mode = tok.at(0).at(i);
-		if(serv.chan_pmodes.find(mode) != std::string::npos)
-			emplace_back(sign,mode,tok.at(a++));
-		else
-			emplace_back(sign,mode,"");
-	}
-
-	validate_chan(serv);
-}
-catch(const std::out_of_range &e)
-{
-	throw Exception("Not enough arguments for this mode string.");
 }
 
 
@@ -375,15 +361,6 @@ bool Delta::needs_inv_mask(const char &m)
 		default:
 			return false;
 	}
-}
-
-
-inline
-bool Delta::sign(const char &s)
-{
-	return s == '+'? true:
-	       s == '-'? false:
-	                 throw Exception("Invalid +/- sign character.");
 }
 
 
