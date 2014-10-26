@@ -71,8 +71,8 @@ void SendQ::interrupt()
 void SendQ::worker()
 try
 {
-    while(1)
-    {
+	while(1)
+	{
 		std::unique_lock<decltype(SendQ::mutex)> lock(SendQ::mutex);
 		cond.wait(lock,[&]
 		{
@@ -82,13 +82,12 @@ try
 			return !queue.empty();
 		});
 
-		Ent &ent = queue.front();
+		auto &ent = queue.front();
 		const scope pf([]{ queue.pop_front(); });
 		send(ent.sess,ent.pck);
     }
 }
 catch(const Internal &e)
 {
-    std::cout << "sendq worker exiting: " << e << std::endl;
-    return;
+	return;
 }

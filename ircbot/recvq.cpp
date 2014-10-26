@@ -13,21 +13,34 @@ using namespace irc::bot;
 
 static std::mutex mutex;
 static std::condition_variable cond;
+static std::atomic<bool> interrupted;
 static std::deque<std::pair<Bot *, Msg>> queue;
 
 static void worker();
 static std::thread thread {&worker};
-static scope join(std::bind(&std::thread::join,&thread));
+static scope join([]
+{
+	interrupted.store(true,std::memory_order_release);
+	cond.notify_all();
+	thread.join();
+});
 
 
 static
 decltype(queue)::value_type next()
 {
-    std::unique_lock<std::mutex> lock(mutex);
-    cond.wait(lock,[&]{ return !queue.empty(); });
-    auto ret = std::move(queue.front());
-    queue.pop_front();
-    return ret;
+	std::unique_lock<std::mutex> lock(mutex);
+	cond.wait(lock,[]
+	{
+		if(interrupted.load(std::memory_order_consume))
+			throw Internal("Interrupted");
+
+		return !queue.empty();
+	});
+
+	auto ret = std::move(queue.front());
+	queue.pop_front();
+	return ret;
 }
 
 
@@ -35,19 +48,18 @@ static
 void worker()
 try
 {
-    while(1)
-    {
-        auto msgp = next();
-        Bot &bot = *std::get<0>(msgp);
-        const Msg &msg = std::get<1>(msgp);
-        const std::lock_guard<Bot> lock(bot);
-        bot.dispatch(msg);
-    }
+	while(1)
+	{
+		auto msgp = next();
+		Bot &bot = *std::get<0>(msgp);
+		const Msg &msg = std::get<1>(msgp);
+		const std::lock_guard<Bot> lock(bot);
+		bot.dispatch(msg);
+	}
 }
 catch(const Internal &e)
 {
-    std::cout << "recvq worker exiting: " << e << std::endl;
-    return;
+	return;
 }
 
 
