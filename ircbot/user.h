@@ -18,10 +18,7 @@ class User : public Locutor,
 	time_t signon;                                     // WHOISIDLE
 	time_t idle;                                       // who 'l' or WHOISIDLE
 	bool away;
-
-	// Chan increments or decrements
-	friend class Chan;
-	size_t chans;
+	size_t chans;                                      // reference counter for number of channels
 
 	auto &get_ns()                                     { return *nickserv;                           }
 
@@ -57,6 +54,8 @@ class User : public Locutor,
 	void set_signon(const time_t &signon)              { this->signon = signon;                      }
 	void set_idle(const time_t &idle)                  { this->idle = idle;                          }
 	void set_away(const bool &away)                    { this->away = away;                          }
+	void inc_chans(const size_t &n = 1)                { chans += n;                                 }
+	void dec_chans(const size_t &n = 1)                { chans -= n;                                 }
 
 	// [SEND] Controls
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default

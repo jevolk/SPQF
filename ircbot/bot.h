@@ -48,7 +48,7 @@ namespace bot {
 
 namespace colors
 {
-#include "colors.h"
+	#include "colors.h"
 }
 #include "callbacks.h"
 #include "exception.h"
@@ -75,7 +75,11 @@ namespace colors
 #include "service.h"
 #include "user.h"
 #include "log.h"
-#include "chan.h"
+namespace chan
+{
+	#include "chan.h"
+}
+using Chan = chan::Chan;
 #include "users.h"
 #include "chans.h"
 #include "nickserv.h"

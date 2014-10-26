@@ -341,7 +341,9 @@ void Bot::handle_quit(const Msg &msg)
 	(Chan &chan)
 	{
 		chan.log(user,msg);
-		chan.del(user);
+
+		if(chan.users.del(user))
+			user.dec_chans();
 	});
 }
 
@@ -373,7 +375,7 @@ void Bot::handle_nick(const Msg &msg)
 	chans.for_each([&user,&old_nick]
 	(Chan &chan)
 	{
-		chan.rename(user,old_nick);
+		chan.users.rename(user,old_nick);
 	});
 
 	handle_nick(msg,user);
@@ -407,7 +409,9 @@ void Bot::handle_join(const Msg &msg)
 		user.set_acct(msg[ACCTNAME]);
 
 	Chan &chan = chans.add(msg[CHANNAME]);
-	chan.add(user);
+	if(chan.users.add(user))
+		user.inc_chans();
+
 	chan.log(user,msg);
 
 	if(my_nick(msg.get_nick()))
@@ -436,7 +440,9 @@ void Bot::handle_part(const Msg &msg)
 	User &user = users.get(msg.get_nick());
 	Chan &chan = chans.get(msg[CHANNAME]);
 	chan.log(user,msg);
-	chan.del(user);
+
+	if(chan.users.del(user))
+		user.dec_chans();
 
 	if(my_nick(msg.get_nick()))
 	{
@@ -493,7 +499,7 @@ void Bot::handle_mode(const Msg &msg)
 		// Associate each mode delta with its target
 		const std::string delta = sign + msg[DELTASTR].at(d);
 		const Mask &targ = msg[m];
-		chan.delta_mode(delta,targ);          // Chan handles everything from here
+		chan.delta_mode(targ,delta);          // Chan handles everything from here
 
 		if(targ.get_form() == Mask::INVALID)  // Target is a straight nickname, we can call downstream
 		{
@@ -606,8 +612,8 @@ void Bot::handle_topicwhotime(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	std::get<Mask>(chan.get_topic()) = msg[MASK];
-	std::get<time_t>(chan.get_topic()) = msg.get<time_t>(TIME);
+	std::get<Mask>(chan.set_topic()) = msg[MASK];
+	std::get<time_t>(chan.set_topic()) = msg.get<time_t>(TIME);
 }
 
 
@@ -619,7 +625,7 @@ void Bot::handle_banlist(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.bans.emplace(msg[BANMASK],msg[OPERATOR],msg.get<time_t>(TIME));
+	chan.lists.bans.emplace(msg[BANMASK],msg[OPERATOR],msg.get<time_t>(TIME));
 }
 
 
@@ -631,7 +637,7 @@ void Bot::handle_invitelist(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.invites.emplace(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
+	chan.lists.invites.emplace(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
 }
 
 
@@ -643,7 +649,7 @@ void Bot::handle_exceptlist(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.excepts.emplace(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
+	chan.lists.excepts.emplace(msg[MASK],msg[OPERATOR],msg.get<time_t>(TIME));
 }
 
 
@@ -661,7 +667,7 @@ void Bot::handle_quietlist(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.quiets.emplace(msg[BANMASK],msg[OPERATOR],msg.get<time_t>(TIME));
+	chan.lists.quiets.emplace(msg[BANMASK],msg[OPERATOR],msg.get<time_t>(TIME));
 }
 
 
@@ -673,7 +679,7 @@ void Bot::handle_topic(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	std::get<std::string>(chan.get_topic()) = msg[TEXT];
+	std::get<std::string>(chan.set_topic()) = msg[TEXT];
 }
 
 
@@ -685,7 +691,7 @@ void Bot::handle_rpltopic(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	std::get<std::string>(chan.get_topic()) = msg[TEXT];
+	std::get<std::string>(chan.set_topic()) = msg[TEXT];
 }
 
 
@@ -697,9 +703,9 @@ void Bot::handle_notopic(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	std::get<0>(chan.get_topic()) = {};
-	std::get<1>(chan.get_topic()) = {};
-	std::get<2>(chan.get_topic()) = {};
+	std::get<0>(chan.set_topic()) = {};
+	std::get<1>(chan.set_topic()) = {};
+	std::get<2>(chan.set_topic()) = {};
 }
 
 
@@ -725,7 +731,9 @@ void Bot::handle_kick(const Msg &msg)
 	User &user = users.get(kickee);
 	Chan &chan = chans.get(msg[CHANNAME]);
 	chan.log(user,msg);
-	chan.del(user);
+
+	if(chan.users.del(user))
+		user.dec_chans();
 
 	const scope free([&]
 	{
@@ -998,13 +1006,14 @@ void Bot::handle_namreply(const Msg &msg)
 
 	for(const auto &nick : tokens(msg[NAMELIST]))
 	{
-		const char f = Chan::nick_flag(nick);
-		const char m = Chan::flag2mode(f);
-		const std::string &rawnick = f? nick.substr(1) : nick;
-		const std::string &modestr = m? std::string(1,m) : "";
+		const auto f = chan::nick_flag(nick);
+		const auto m = chan::flag2mode(f);
+		const auto &rawnick = f? nick.substr(1) : nick;
+		const auto &modestr = m? std::string(1,m) : "";
 
 		User &user = users.add(rawnick);
-		chan.add(user,modestr);
+		if(chan.users.add(user,modestr))
+			user.inc_chans();
 	}
 }
 

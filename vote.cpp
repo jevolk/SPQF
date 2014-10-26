@@ -412,7 +412,7 @@ bool Vote::has_mode(const User &user,
 const
 {
 	const Chan &chan = get_chan();
-	return chan.get_mode(user).any(mode);
+	return chan.users.mode(user).any(mode);
 }
 
 
@@ -421,7 +421,7 @@ bool Vote::has_access(const User &user,
 const
 {
 	const Chan &chan = get_chan();
-	const auto &cf = chan.get_flags();
+	const auto &cf = chan.lists.flags;
 	const auto it = cf.find({user.get_acct()});
 	return it != cf.end()? it->get_flags().any(flags) : false;
 }
@@ -472,7 +472,7 @@ const
 		return *std::max_element(sel.begin(),sel.end());
 
 	const Chan &chan = get_chan();
-	const float eligible = chan.count_logged_in();
+	const float eligible = chan.users.count_logged_in();
 	sel.emplace_back(ceil(eligible * cfg.get<float>("turnout")));
 	return *std::max_element(sel.begin(),sel.end());
 }

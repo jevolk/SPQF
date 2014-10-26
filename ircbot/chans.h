@@ -95,7 +95,7 @@ Chan *Chans::find_cnotice(const User &user)
 	Chan *ret = nullptr;
 	any_of([&](Chan &chan)
 	{
-		if(!chan.is_op() || !chan.has(user))
+		if(!chan.is_op() || !chan.users.has(user))
 			return false;
 
 		ret = &chan;

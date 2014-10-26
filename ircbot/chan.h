@@ -6,6 +6,69 @@
  */
 
 
+enum Type
+{
+	SECRET,
+	PRIVATE,
+	PUBLIC
+};
+
+using Info = std::map<std::string, std::string>;
+using Topic = std::tuple<std::string, Mask, time_t>;
+template<class Value> using List = std::set<Value>;
+
+
+Type type(const char &c);
+char flag2mode(const char &flag);                // input = '@' then output = 'o' (or null)
+char nick_flag(const std::string &name);         // input = "@nickname" then output = '@' (or null)
+
+
+struct Lists
+{
+    List<Ban> bans;
+    List<Quiet> quiets;
+    List<Except> excepts;
+    List<Invite> invites;
+    List<AKick> akicks;
+    List<Flag> flags;
+
+	bool delta_mode(const Mask &m, const std::string &delta);
+	void delta_flag(const Mask &m, const std::string &delta);
+
+	friend std::ostream &operator<<(std::ostream &s, const Lists &lists);
+};
+
+
+class Users
+{
+	std::unordered_map<std::string, std::tuple<User *, Mode>> users;
+
+  public:
+	void for_each(const std::function<void (const User &, const Mode &)> &c) const;
+	void for_each(const std::function<void (const User &)> &c) const;
+
+	bool has(const std::string &nick) const                 { return users.count(nick);             }
+	bool has(const User &user) const                        { return has(user.get_nick());          }
+	auto &get(const std::string &nick) const;
+	auto &mode(const std::string &nick) const               { return std::get<1>(users.at(nick));   }
+	auto &mode(const User &user) const;
+	auto num() const                                        { return users.size();                  }
+
+	void for_each(const std::function<void (User &, Mode &)> &c);
+	void for_each(const std::function<void (User &)> &c);
+	size_t count_logged_in() const;
+
+	auto &get(const std::string &nick);
+	auto &mode(const std::string &nick)                     { return std::get<1>(users.at(nick));   }
+	auto &mode(const User &user)                            { return mode(user.get_nick());         }
+	bool rename(const User &user, const std::string &old);
+	bool add(User &user, const Mode &mode = {});
+	bool del(User &user);
+
+	friend std::ostream &operator<<(std::ostream &s, const Users &users);
+};
+
+
 class Chan : public Locutor,
              public Acct
 {
@@ -17,46 +80,31 @@ class Chan : public Locutor,
 	Mode _mode;
 	time_t creation;
 	std::string pass;                                       // passkey for channel
-	std::map<std::string, std::string> info;
-	std::tuple<std::string, Mask, time_t> _topic;
-	std::unordered_map<std::string, std::tuple<User *, Mode>> users;
-	std::set<Ban> bans;
-	std::set<Quiet> quiets;
-	std::set<Except> excepts;
-	std::set<Invite> invites;
-	std::set<AKick> akicks;
-	std::set<Flag> flags;
-	std::deque<std::function<void (Chan &)>> opq;           // jobs to perform pending +o
+	Topic _topic;
+	Info info;
+	std::deque<std::function<void (Chan &)>> opq;
+
+  protected:
+	auto &get_cs()                                          { return *chanserv;                     }
+	auto &get_log()                                         { return _log;                          }
+	auto &get_opq()                                         { return opq;                           }
 
   public:
-	enum Type { SECRET, PRIVATE, PUBLIC };
-	static char flag2mode(const char &flag);                // input = '@' then output = 'o' (or null)
-	static char nick_flag(const std::string &name);         // input = "@nickname" then output = '@' (or null)
-	static Type chan_type(const char &c);
+	Users users;
+	Lists lists;
 
-	// Observers
+	auto &get_name() const                                  { return Locutor::get_target();         }
 	auto &get_cs() const                                    { return *chanserv;                     }
 	auto &get_log() const                                   { return _log;                          }
-	auto &get_name() const                                  { return Locutor::get_target();         }
-	auto &get_pass() const                                  { return pass;                          }
 	auto &is_joined() const                                 { return joined;                        }
-	auto &get_topic() const                                 { return _topic;                        }
 	auto &get_mode() const                                  { return _mode;                         }
 	auto &get_creation() const                              { return creation;                      }
+	auto &get_pass() const                                  { return pass;                          }
+	auto &get_topic() const                                 { return _topic;                        }
 	auto &get_info() const                                  { return info;                          }
-	auto &get_bans() const                                  { return bans;                          }
-	auto &get_quiets() const                                { return quiets;                        }
-	auto &get_excepts() const                               { return excepts;                       }
-	auto &get_invites() const                               { return invites;                       }
-	auto &get_flags() const                                 { return flags;                         }
-	auto &get_akicks() const                                { return akicks;                        }
 	auto &get_opq() const                                   { return opq;                           }
-	uint num_users() const                                  { return users.size();                  }
+
 	bool has_mode(const char &mode) const                   { return get_mode().has(mode);          }
-	bool has_nick(const std::string &nick) const            { return users.count(nick);             }
-	bool has(const User &user) const                        { return has_nick(user.get_nick());     }
-	auto &get_user(const std::string &nick) const;
-	auto &get_mode(const User &user) const;
 	bool is_op() const;
 
 	bool operator==(const Chan &o) const                    { return get_name() == o.get_name();    }
@@ -64,45 +112,14 @@ class Chan : public Locutor,
 	bool operator==(const std::string &name) const          { return get_name() == name;            }
 	bool operator!=(const std::string &name) const          { return get_name() != name;            }
 
-	// Closures
-	void for_each(const std::function<void (const User &, const Mode &)> &c) const;
-	void for_each(const std::function<void (const User &)> &c) const;
-	void for_each(const std::function<void (User &, Mode &)> &c);
-	void for_each(const std::function<void (User &)> &c);
-
-	// Closure recipes
-	size_t count_logged_in() const;
-
-  protected:
-	// [RECV] Handler may call these to update state
-	friend class Bot;
-	friend class ChanServ;
-
-	auto &get_cs()                                          { return *chanserv;                     }
-	auto &get_log()                                         { return _log;                          }
-	auto &get_topic()                                       { return _topic;                        }
-	auto &get_opq()                                         { return opq;                           }
-
 	void log(const User &user, const Msg &msg)              { _log(user,msg);                       }
 	void set_joined(const bool &joined)                     { this->joined = joined;                }
 	void set_creation(const time_t &creation)               { this->creation = creation;            }
-	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
-	bool delta_mode(const std::string &d, const Mask &m);
-	void delta_flag(const std::string &d, const Mask &m);
-
 	void set_info(const decltype(info) &info)               { this->info = info;                    }
-	void set_flags(const decltype(flags) &flags)            { this->flags = flags;                  }
-	void set_akicks(const decltype(akicks) &akicks)         { this->akicks = akicks;                }
+	auto &set_topic()                                       { return _topic;                        }
+	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
+	bool delta_mode(const Mask &m, const std::string &d);
 
-	auto &get_user(const std::string &nick);
-	auto &get_mode(const std::string &nick)                 { return std::get<1>(users.at(nick));   }
-	auto &get_mode(const User &user)                        { return get_mode(user.get_nick());     }
-
-	bool rename(const User &user, const std::string &old_nick);
-	bool add(User &user, const Mode &mode = {});
-	bool del(User &user);
-
-  public:
 	// [SEND] State update interface
 	void who(const std::string &fl = User::WHO_FORMAT);     // Update state of users in channel (goes into Users->User)
 	void accesslist();                                      // ChanServ access list update
@@ -152,8 +169,9 @@ class Chan : public Locutor,
 	void part();                                            // Leave channel
 	void join();                                            // Enter channel
 
-	void opdo(const std::function<void (Chan &)> &func);    // perform func() as op
-	void opdo(const Deltas &deltas);                        // execute delta as op
+	// Closures
+	void opdo(const std::function<void (Chan &)> &func);    // perform lambda as op (asyncrhonous)
+	void opdo(const Deltas &deltas);                        // execute delta as op  (asyncrhonous)
 
 	friend Chan &operator<<(Chan &c, const User &user);     // append "nickname: " to locutor stream
 	friend User &operator<<(User &u, const Chan &chan);     // for CNOTICE / CPRIVMSG
@@ -216,6 +234,40 @@ Chan &operator<<(Chan &chan,
 
 
 inline
+void Chan::opdo(const Deltas &deltas)
+{
+	if(is_op())
+	{
+		mode(deltas);
+		return;
+	}
+
+	Deltas d(deltas);
+	d.emplace_back("-o",get_my_nick());
+
+	op();
+	opq.emplace_back([d](Chan &chan)
+	{
+		chan.mode(d);
+	});
+}
+
+
+inline
+void Chan::opdo(const std::function<void (Chan &)> &func)
+{
+	if(is_op())
+	{
+		func(*this);
+		return;
+	}
+
+	op();
+	opq.emplace_back(func);
+}
+
+
+inline
 void Chan::join()
 {
 	Quote out(get_sess(),"JOIN");
@@ -236,7 +288,7 @@ void Chan::part()
 inline
 void Chan::op(const User &u)
 {
-	opdo({{{"+o",u.get_nick()}}});
+	mode(Delta("+o",u.get_nick()));
 }
 
 
@@ -252,18 +304,17 @@ uint Chan::unquiet(const User &u)
 {
 	Deltas deltas;
 
-	if(quiets.count(u.mask(Mask::NICK)))
+	if(lists.quiets.count(u.mask(Mask::NICK)))
 		deltas.emplace_back("-q",u.mask(Mask::NICK));
 
-	if(quiets.count(u.mask(Mask::HOST)))
+	if(lists.quiets.count(u.mask(Mask::HOST)))
 		deltas.emplace_back("-q",u.mask(Mask::HOST));
 
-	if(u.is_logged_in() && quiets.count(u.mask(Mask::ACCT)))
+	if(u.is_logged_in() && lists.quiets.count(u.mask(Mask::ACCT)))
 		deltas.emplace_back("-q",u.mask(Mask::ACCT));
 
-	const auto ret = deltas.size();
-	opdo(deltas);
-	return ret;
+	mode(deltas);
+	return deltas.size();
 }
 
 
@@ -272,18 +323,17 @@ uint Chan::unban(const User &u)
 {
 	Deltas deltas;
 
-	if(bans.count(u.mask(Mask::NICK)))
+	if(lists.bans.count(u.mask(Mask::NICK)))
 		deltas.emplace_back("-b",u.mask(Mask::NICK));
 
-	if(bans.count(u.mask(Mask::HOST)))
+	if(lists.bans.count(u.mask(Mask::HOST)))
 		deltas.emplace_back("-b",u.mask(Mask::HOST));
 
-	if(u.is_logged_in() && bans.count(u.mask(Mask::ACCT)))
+	if(u.is_logged_in() && lists.bans.count(u.mask(Mask::ACCT)))
 		deltas.emplace_back("-b",u.mask(Mask::ACCT));
 
-	const auto ret = deltas.size();
-	opdo(deltas);
-	return ret;
+	mode(deltas);
+	return deltas.size();
 }
 
 
@@ -296,7 +346,7 @@ void Chan::ban(const User &u)
 	if(u.is_logged_in())
 		deltas.emplace_back("+b",u.mask(Mask::ACCT));
 
-	opdo(deltas);
+	mode(deltas);
 }
 
 
@@ -309,7 +359,7 @@ void Chan::quiet(const User &u)
 	if(u.is_logged_in())
 		deltas.emplace_back("+q",u.mask(Mask::ACCT));
 
-	opdo(deltas);
+	mode(deltas);
 }
 
 
@@ -319,7 +369,7 @@ void Chan::ban(const User &user,
 {
 	Deltas deltas;
 	deltas.emplace_back("+b",user.mask(type));
-	opdo(deltas);
+	mode(deltas);
 }
 
 
@@ -329,7 +379,7 @@ void Chan::quiet(const User &user,
 {
 	Deltas deltas;
 	deltas.emplace_back("+q",user.mask(type));
-	opdo(deltas);
+	mode(deltas);
 }
 
 
@@ -338,7 +388,7 @@ void Chan::voice(const User &user)
 {
 	Deltas deltas;
 	deltas.emplace_back("+v",user.get_nick());
-	opdo(deltas);
+	mode(deltas);
 }
 
 
@@ -347,7 +397,7 @@ void Chan::devoice(const User &user)
 {
 	Deltas deltas;
 	deltas.emplace_back("-v",user.get_nick());
-	opdo(deltas);
+	mode(deltas);
 }
 
 
@@ -363,36 +413,25 @@ inline
 void Chan::kick(const User &user,
                 const std::string &reason)
 {
-	Quote(get_sess(),"KICK") << get_name() << " " << user.get_nick() << " :" << reason;
+	Quote(get_sess(),"KICK") << get_name() << " "  << user.get_nick() << " :" << reason;
 }
 
 
 inline
 void Chan::invite(const std::string &nick)
 {
-	Quote(get_sess(),"INVITE") << nick << " " << get_name();
+	Quote(get_sess(),"INVITE") << get_name() << " "  << nick;
 }
 
 
 inline
 void Chan::topic(const std::string &text)
 {
-	auto func = [text](Chan &chan)
-	{
-		Quote out(chan.get_sess(),"TOPIC");
-		out << chan.get_name();
+	Quote out(get_sess(),"TOPIC");
+	out << get_name();
 
-		if(!text.empty())
-			out << " :" << text;
-
-		out << flush;
-		chan.deop();
-	};
-
-	if(has_mode('t'))
-		opdo(func);
-	else
-		func(*this);
+	if(!text.empty())
+		out << " :" << text;
 }
 
 
@@ -658,147 +697,13 @@ void Chan::who(const std::string &flags)
 
 
 inline
-void Chan::opdo(const Deltas &deltas)
+bool Chan::delta_mode(const Mask &mask,
+                      const std::string &delta)
 {
-	if(is_op())
-	{
-		mode(deltas);
-		return;
-	}
-
-	Deltas d(deltas);
-	d.emplace_back("-o",get_my_nick());
-
-	op();
-	opq.emplace_back([d](Chan &chan)
-	{
-		chan.mode(d);
-	});
-}
-
-
-inline
-void Chan::opdo(const std::function<void (Chan &)> &func)
-{
-	if(is_op())
-	{
-		func(*this);
-		return;
-	}
-
-	op();
-	opq.emplace_back(func);
-}
-
-
-inline
-bool Chan::del(User &user)
-{
-	const bool ret = users.erase(user.get_nick());
-
-	if(ret)
-		user.chans--;
-
-	return ret;
-}
-
-
-inline
-bool Chan::add(User &user,
-               const Mode &mode)
-{
-	const auto iit = users.emplace(std::piecewise_construct,
-	                               std::forward_as_tuple(user.get_nick()),
-	                               std::forward_as_tuple(std::make_tuple(&user,mode)));
-	const bool &ret = iit.second;
-
-	if(ret)
-		user.chans++;
-
-	return ret;
-}
-
-
-inline
-bool Chan::rename(const User &user,
-                  const std::string &old_nick)
-try
-{
-	auto val = users.at(old_nick);
-	users.erase(old_nick);
-
-	const auto &new_nick = user.get_nick();
-	const auto iit = users.emplace(new_nick,val);
-	return iit.second;
-}
-catch(const std::out_of_range &e)
-{
-	return false;
-}
-
-
-inline
-auto &Chan::get_user(const std::string &nick)
-try
-{
-	return *std::get<0>(users.at(nick));
-}
-catch(const std::out_of_range &e)
-{
-	throw Exception("User not found");
-}
-
-
-inline
-auto &Chan::get_user(const std::string &nick)
-const try
-{
-	return *std::get<0>(users.at(nick));
-}
-catch(const std::out_of_range &e)
-{
-	throw Exception("User not found");
-}
-
-
-inline
-auto &Chan::get_mode(const User &user)
-const
-{
-	return std::get<1>(users.at(user.get_nick()));
-}
-
-
-inline
-void Chan::delta_flag(const std::string &delta,
-                      const Mask &mask)
-{
-	auto it = flags.find({mask});
-	if(it == flags.end())
-		it = flags.emplace(mask).first;
-
-	Flag &f = const_cast<Flag &>(*it);
-	f.delta(delta);
-	f.update(time(NULL));
-}
-
-
-inline
-bool Chan::delta_mode(const std::string &delta,
-                      const Mask &mask)
-{
-	bool ret;
-	switch(hash(delta.c_str()))                // Careful what is switched if Mask::INVALID
-	{
-		case hash("+b"):     ret = bans.emplace(mask).second;    break;
-		case hash("-b"):     ret = bans.erase(mask);             break;
-		case hash("+q"):     ret = quiets.emplace(mask).second;  break;
-		case hash("-q"):     ret = quiets.erase(mask);           break;
-		default:             ret = false;                        break;
-	}
+	const bool ret = lists.delta_mode(mask,delta);
 
 	// Target is a straight nickname, not a Mask
-	if(mask.get_form() == Mask::INVALID) try
+	if(mask == Mask::INVALID) try
 	{
 		const Sess &sess = get_sess();
 		if(mask == get_my_nick() && delta == "+o")
@@ -826,7 +731,7 @@ bool Chan::delta_mode(const std::string &delta,
 				lambda(*this);
 		}
 
-		Mode &mode = get_mode(mask);
+		Mode &mode = users.mode(mask);
 		return mode.delta(delta);
 	}
 	catch(const Exception &e)
@@ -842,113 +747,12 @@ bool Chan::delta_mode(const std::string &delta,
 
 
 inline
-size_t Chan::count_logged_in()
-const
-{
-	size_t ret = 0;
-	for_each([&ret]
-	(const User &user)
-	{
-		ret += user.is_logged_in();
-	});
-
-	return ret;
-}
-
-
-inline
-void Chan::for_each(const std::function<void (User &)> &c)
-{
-	for(auto &p : users)
-		c(*std::get<0>(std::get<1>(p)));
-}
-
-
-inline
-void Chan::for_each(const std::function<void (const User &)> &c)
-const
-{
-	for(const auto &p : users)
-		c(*std::get<0>(std::get<1>(p)));
-}
-
-
-inline
-void Chan::for_each(const std::function<void (User &, Mode &)> &c)
-{
-	for(auto &pair : users)
-	{
-		auto &val = pair.second;
-		auto &user = *std::get<0>(val);
-		auto &mode = std::get<1>(val);
-		c(user,mode);
-	}
-}
-
-
-inline
-void Chan::for_each(const std::function<void (const User &, const Mode &)> &c)
-const
-{
-	for(auto &pair : users)
-	{
-		const auto &val = pair.second;
-		const auto &user = *std::get<0>(val);
-		const auto &mode = std::get<1>(val);
-		c(user,mode);
-	}
-}
-
-
-inline
 bool Chan::is_op()
 const
 {
-	const Sess &sess = get_sess();
-	const auto &user = get_user(sess.get_nick());
-	const auto &mode = get_mode(user);
+	const auto &sess = get_sess();
+	const auto &mode = users.mode(sess.get_nick());
 	return mode.has('o');
-}
-
-
-inline
-Chan::Type Chan::chan_type(const char &c)
-{
-	switch(c)
-	{
-		case '@':     return SECRET;
-		case '*':     return PRIVATE;
-		case '=':
-		default:      return PUBLIC;
-	};
-}
-
-
-inline
-char Chan::nick_flag(const std::string &name)
-{
-	const char &c = name.at(0);
-	switch(c)
-	{
-		case '@':
-		case '+':
-			return c;
-
-		default:
-			return 0x00;
-	}
-}
-
-
-inline
-char Chan::flag2mode(const char &flag)
-{
-	switch(flag)
-	{
-		case '@':    return 'o';
-		case '+':    return 'v';
-		default:     return 0x00;
-	}
 }
 
 
@@ -971,41 +775,262 @@ std::ostream &operator<<(std::ostream &s,
 	for(const auto &kv : c.info)
 		s << "\t" << kv.first << ":\t => " << kv.second << std::endl;
 
-	s << "bans:      \t" << c.bans.size() << std::endl;
-	for(const auto &b : c.bans)
-		s << "\t+b " << b << std::endl;
+	s << c.lists << std::endl;
+	s << c.users << std::endl;
+	return s;
+}
 
-	s << "quiets:    \t" << c.quiets.size() << std::endl;
-	for(const auto &q : c.quiets)
-		s << "\t+q " << q << std::endl;
 
-	s << "excepts:   \t" << c.excepts.size() << std::endl;
-	for(const auto &e : c.excepts)
-		s << "\t+e " << e << std::endl;
 
-	s << "invites:   \t" << c.invites.size() << std::endl;
-	for(const auto &i : c.invites)
-		s << "\t+I " << i << std::endl;
+inline
+bool Users::del(User &user)
+{
+	return users.erase(user.get_nick());
+}
 
-	s << "flags:     \t" << c.flags.size() << std::endl;
-	for(const auto &f : c.flags)
-		s << "\t"<< f << std::endl;
 
-	s << "akicks:    \t" << c.akicks.size() << std::endl;
-	for(const auto &a : c.akicks)
-		s << "\t"<< a << std::endl;
+inline
+bool Users::add(User &user,
+                const Mode &mode)
+{
+	const auto iit = users.emplace(std::piecewise_construct,
+	                               std::forward_as_tuple(user.get_nick()),
+	                               std::forward_as_tuple(std::make_tuple(&user,mode)));
+	return iit.second;
+}
 
-	s << "users:      \t" << c.num_users() << std::endl;
-	for(const auto &userp : c.users)
+
+inline
+bool Users::rename(const User &user,
+                   const std::string &old)
+try
+{
+	auto val = users.at(old);
+	users.erase(old);
+
+	const auto &new_nick = user.get_nick();
+	const auto iit = users.emplace(new_nick,val);
+	return iit.second;
+}
+catch(const std::out_of_range &e)
+{
+	return false;
+}
+
+
+inline
+auto &Users::get(const std::string &nick)
+try
+{
+	return *std::get<0>(users.at(nick));
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("User not found");
+}
+
+
+inline
+auto &Users::get(const std::string &nick)
+const try
+{
+	return *std::get<0>(users.at(nick));
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("User not found");
+}
+
+
+inline
+void Users::for_each(const std::function<void (User &)> &c)
+{
+	for(auto &p : users)
+		c(*std::get<0>(std::get<1>(p)));
+}
+
+
+inline
+void Users::for_each(const std::function<void (User &, Mode &)> &c)
+{
+	for(auto &pair : users)
+	{
+		auto &val = pair.second;
+		auto &user = *std::get<0>(val);
+		auto &mode = std::get<1>(val);
+		c(user,mode);
+	}
+}
+
+
+inline
+auto &Users::mode(const User &user)
+const
+{
+	return std::get<1>(users.at(user.get_nick()));
+}
+
+
+inline
+size_t Users::count_logged_in()
+const
+{
+	size_t ret = 0;
+	for_each([&ret]
+	(const User &user)
+	{
+		ret += user.is_logged_in();
+	});
+
+	return ret;
+}
+
+
+inline
+void Users::for_each(const std::function<void (const User &)> &c)
+const
+{
+	for(const auto &p : users)
+		c(*std::get<0>(std::get<1>(p)));
+}
+
+
+inline
+void Users::for_each(const std::function<void (const User &, const Mode &)> &c)
+const
+{
+	for(auto &pair : users)
+	{
+		const auto &val = pair.second;
+		const auto &user = *std::get<0>(val);
+		const auto &mode = std::get<1>(val);
+		c(user,mode);
+	}
+}
+
+
+inline
+std::ostream &operator<<(std::ostream &s,
+                         const Users &u)
+{
+	s << "users:      \t" << u.num() << std::endl;
+	for(const auto &userp : u.users)
 	{
 		const auto &val = userp.second;
-		const Mode &mode = std::get<1>(val);
+		const auto &mode = std::get<1>(val);
 
 		if(!mode.empty())
 			s << "+" << mode;
 
-		s << "\t" << userp.first << std::endl;;
+		s << "\t" << userp.first << std::endl;
 	}
-	s << std::endl;
+
 	return s;
+}
+
+
+
+inline
+void Lists::delta_flag(const Mask &mask,
+                       const std::string &delta)
+{
+	auto it = flags.find({mask});
+	if(it == flags.end())
+		it = flags.emplace(mask).first;
+
+	auto &f = const_cast<Flag &>(*it);
+	f.delta(delta);
+	f.update(time(NULL));
+}
+
+
+inline
+bool Lists::delta_mode(const Mask &mask,
+                       const std::string &delta)
+{
+	if(mask == Mask::INVALID)
+		return false;
+
+	switch(hash(delta.c_str()))
+	{
+		case hash("+b"):     return bans.emplace(mask).second;
+		case hash("-b"):     return bans.erase(mask);
+		case hash("+q"):     return quiets.emplace(mask).second;
+		case hash("-q"):     return quiets.erase(mask);
+		default:             return false;
+	}
+}
+
+
+inline
+std::ostream &operator<<(std::ostream &s,
+                         const Lists &l)
+{
+	s << "bans:      \t" << l.bans.size() << std::endl;
+	for(const auto &b : l.bans)
+		s << "\t+b " << b << std::endl;
+
+	s << "quiets:    \t" << l.quiets.size() << std::endl;
+	for(const auto &q : l.quiets)
+		s << "\t+q " << q << std::endl;
+
+	s << "excepts:   \t" << l.excepts.size() << std::endl;
+	for(const auto &e : l.excepts)
+		s << "\t+e " << e << std::endl;
+
+	s << "invites:   \t" << l.invites.size() << std::endl;
+	for(const auto &i : l.invites)
+		s << "\t+I " << i << std::endl;
+
+	s << "flags:     \t" << l.flags.size() << std::endl;
+	for(const auto &f : l.flags)
+		s << "\t"<< f << std::endl;
+
+	s << "akicks:    \t" << l.akicks.size() << std::endl;
+	for(const auto &a : l.akicks)
+		s << "\t"<< a << std::endl;
+
+	return s;
+}
+
+
+
+inline
+Type type(const char &c)
+{
+	switch(c)
+	{
+		case '@':     return SECRET;
+		case '*':     return PRIVATE;
+		case '=':
+		default:      return PUBLIC;
+	};
+}
+
+
+inline
+char nick_flag(const std::string &name)
+{
+	const char &c = name.at(0);
+	switch(c)
+	{
+		case '@':
+		case '+':
+			return c;
+
+		default:
+			return 0x00;
+	}
+}
+
+
+inline
+char flag2mode(const char &flag)
+{
+	switch(flag)
+	{
+		case '@':    return 'o';
+		case '+':    return 'v';
+		default:     return 0x00;
+	}
 }

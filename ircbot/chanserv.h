@@ -58,7 +58,7 @@ void ChanServ::handle_set_flags(Chan &chan,
                                 const std::string &flags,
                                 const Mask &targ)
 {
-	chan.delta_flag(flags,targ);
+	chan.lists.delta_flag(targ,flags);
 }
 
 
@@ -70,7 +70,7 @@ void ChanServ::handle_info(const Capture &msg)
 
 	Chan &chan = chans.get(name);
 
-	decltype(chan.info) info;
+	chan::Info info;
 	auto it = msg.begin();
 	for(++it; it != msg.end(); ++it)
 	{
@@ -91,7 +91,7 @@ void ChanServ::handle_flagslist(const Capture &msg)
 
 	Chan &chan = chans.get(name);
 
-	decltype(chan.flags) flags;
+	decltype(chan.lists.flags) flags;
 	auto it = msg.begin();
 	auto end = msg.begin();
 	std::advance(it,2);
@@ -111,7 +111,7 @@ void ChanServ::handle_flagslist(const Capture &msg)
 		flags.emplace(user,list,0,founder);   //TODO: times
 	}
 
-	chan.set_flags(flags);
+	chan.lists.flags = flags;
 }
 
 
@@ -124,7 +124,7 @@ void ChanServ::handle_akicklist(const Capture &msg)
 	++it;
 
 	Chan &chan = chans.get(name);
-	decltype(chan.akicks) akicks;
+	decltype(chan.lists.akicks) akicks;
 
 	auto end = msg.begin();
 	std::advance(end,msg.size());
@@ -143,7 +143,7 @@ void ChanServ::handle_akicklist(const Capture &msg)
 		akicks.emplace(mask,setter,reason.first,reason.second,0,0); //TODO: times
 	}
 
-	chan.set_akicks(akicks);
+	chan.lists.akicks = akicks;
 }
 
 
