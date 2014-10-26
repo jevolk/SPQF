@@ -15,8 +15,8 @@ class SendQ
 	};
 
 	// sendq.cpp
-	static std::mutex mutex;
-	static std::condition_variable cond;
+	static std::mutex mutex, flood_mutex;
+	static std::condition_variable cond, flood_cond;
 	static std::atomic<bool> interrupted;
 	static std::deque<Ent> queue;
 
@@ -27,15 +27,17 @@ class SendQ
 	using flush_t = Stream::flush_t;
 	static constexpr flush_t flush {};
 
+	static void flood_wait();
+	static void flood_done();
+	static void interrupt();
+	static void worker();
+
 	auto &get_sess() const                    { return *sess;                                       }
 	auto has_pending() const                  { return !sendq.str().empty();                        }
 
 	void clear();
 	SendQ &operator<<(const flush_t);
 	template<class T> SendQ &operator<<(const T &t);
-
-	static void interrupt();
-	static void worker();
 
 	SendQ(irc_session_t *const &sess): sess(sess) {}
 };
