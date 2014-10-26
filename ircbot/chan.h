@@ -773,8 +773,11 @@ void Chan::run_opdo()
 		std::cerr << "Chan::run_opdo() lambda exception: " << e << std::endl;
 	}
 
-	const auto &sess = get_sess();
 	auto &deltas = opq.get_deltas();
+	if(deltas.empty())
+		return;
+
+	const auto &sess = get_sess();
 	deltas.emplace_back("-o",sess.get_nick());
 	mode(deltas);
 }
