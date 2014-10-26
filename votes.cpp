@@ -190,8 +190,11 @@ void vote::Invite::passed()
 
 void vote::Mode::passed()
 {
+	const Sess &sess = get_sess();
+	const Server &serv = sess.get_server();
+
 	Chan &chan = get_chan();
-	chan.opdo(Deltas(get_issue()));
+	chan.opdo(Deltas(get_issue(),serv));
 }
 
 
@@ -313,7 +316,7 @@ void NickIssue::starting()
 		throw Exception("http://en.wikipedia.org/wiki/Leviathan_(book)");
 
 	Chan &chan = get_chan();
-	if(!chan.has(user))
+	if(!chan.users.has(user))
 		throw Exception("You cannot make a vote about someone in another channel.");
 
 	user.whois();

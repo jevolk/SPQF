@@ -790,7 +790,7 @@ Selection karma_tokens(const Tokens &tokens,
 			continue;
 
 		const std::string nick = token.substr(0,token.size()-oper.size());
-		if(chan.has_nick(nick))
+		if(chan.users.has(nick))
 			ret.push_front(it);
 	}
 
