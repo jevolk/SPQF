@@ -258,7 +258,7 @@ struct scope
 
 
 template<int CODE_FOR_SUCCESS = 0,
-         class Exception = Exception,
+         class Exception = Internal,
          class Function,
          class... Args>
 auto irc_call(irc_session_t *const &sess,
@@ -271,7 +271,7 @@ auto irc_call(irc_session_t *const &sess,
 	if(ret != CODE_FOR_SUCCESS)
 	{
 		const int errc = irc_errno(sess);
-		throw Internal(errc,"libircclient: (") << errc << ") " << irc_strerror(errc);
+		throw Exception(errc,"libircclient: (") << errc << ") " << irc_strerror(errc);
 	}
 
 	return ret;
