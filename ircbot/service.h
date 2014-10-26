@@ -106,7 +106,7 @@ try
 */
 		const scope r([&] { next(); });
 		if(capture.empty())
-			throw Assertive("Empty Service capture!");
+			capture.emplace_back(decolor(msg[TEXT]));
 
 		captured(capture);
 		return;
