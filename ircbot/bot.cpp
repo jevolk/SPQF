@@ -26,7 +26,7 @@ adb([&]
 sess(*this,opts,callbacks),
 users(adb,sess),
 chans(adb,sess),
-ns(adb,sess,users),
+ns(adb,sess,users,chans),
 cs(adb,sess,chans),
 logs(chans,users,*this)
 {
@@ -839,7 +839,8 @@ void Bot::handle_notice(const Msg &msg)
 
 	if(msg.from_nickserv())
 	{
-		handle_notice_nickserv(msg);
+		NickServ &ns = get_ns();
+		ns.handle(msg);
 		return;
 	}
 
@@ -861,28 +862,6 @@ void Bot::handle_notice(const Msg &msg)
 
 	User &user = users.get(msg.get_nick());
 	handle_notice(msg,user);
-}
-
-
-void Bot::handle_notice_nickserv(const Msg &msg)
-{
-	Sess &sess = get_sess();
-
-	// Special case for joining
-	if(!sess.is_identified() && msg[1].find("You are now identified") != std::string::npos)
-	{
-		NickServ &ns = get_ns();
-		ns.clear_capture();
-		ns.listchans();
-
-		Chans &chans = get_chans();
-		sess.set_identified(true);
-		chans.autojoin();
-		return;
-	}
-
-	NickServ &ns = get_ns();
-	ns.handle(msg);
 }
 
 

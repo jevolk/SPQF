@@ -158,8 +158,6 @@ class Bot : public std::mutex
 	void handle_unhandled(const Msg &m);
 	void handle_error(const Msg &m);
 
-	void handle_notice_nickserv(const Msg &m);
-
 	void handle_cannotsendtochan(const Msg &m);
 	void handle_bannedfromchan(const Msg &m);
 	void handle_chanoprivsneeded(const Msg &m);

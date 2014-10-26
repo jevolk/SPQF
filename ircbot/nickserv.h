@@ -9,7 +9,9 @@
 class NickServ : public Service
 {
 	Users &users;
+	Chans &chans;
 
+	void handle_identified(const Capture &capture);
 	void handle_listchans(const Capture &capture);
 	void handle_info(const Capture &capture);
 	void captured(const Capture &capture) override;        // Fully collected messages from Service
@@ -21,8 +23,8 @@ class NickServ : public Service
 	void ghost(const std::string &nick, const std::string &pass);
 	void listchans();
 
-	NickServ(Adb &adb, Sess &sess, Users &users):
-	         Service(adb,sess,"NickServ"), users(users) {}
+	NickServ(Adb &adb, Sess &sess, Users &users, Chans &chans):
+	         Service(adb,sess,"NickServ"), users(users), chans(chans) {}
 };
 
 
@@ -73,6 +75,8 @@ void NickServ::captured(const Capture &msg)
 		handle_info(msg);
 	else if(header.find("Access flag(s)") == 0)
 		handle_listchans(msg);
+	else if(header.find("You are now identified") == 0)
+		handle_identified(msg);
 	else
 		throw Exception("Unhandled NickServ capture.");
 }
@@ -115,6 +119,16 @@ void NickServ::handle_listchans(const Capture &msg)
 		const auto chan = tok.at(4);
 		sess.access[chan] = flags;
 	}
+}
+
+
+inline
+void NickServ::handle_identified(const Capture &capture)
+{
+	Sess &sess = get_sess();
+	sess.set_identified(true);
+	chans.autojoin();
+	listchans();
 }
 
 

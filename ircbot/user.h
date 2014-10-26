@@ -89,7 +89,7 @@ chans(0)
 inline
 void User::info()
 {
-	auto &ns = get_ns();
+	Service &ns = get_ns();
 	ns << "info " << acct << flush;
 	ns.terminator_next("*** End of Info ***");
 }
