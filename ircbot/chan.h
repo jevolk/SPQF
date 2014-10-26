@@ -115,6 +115,7 @@ class Chan : public Locutor,
 	auto &get_log()                                         { return _log;                          }
 
 	void run_opdo();
+	void fetch_oplists();
 	void event_opped();                                     // We have been opped up
 
   public:
@@ -741,6 +742,17 @@ bool Chan::opdo(F&& f)
 inline
 void Chan::event_opped()
 {
+	if(opq.empty())
+		fetch_oplists();
+
+	if(!opq.empty())
+		run_opdo();
+}
+
+
+inline
+void Chan::fetch_oplists()
+{
 	const Sess &sess = get_sess();
 
 	if(sess.isupport("INVEX"))
@@ -754,8 +766,6 @@ void Chan::event_opped()
 		flagslist();
 		akicklist();
 	}
-
-	run_opdo();
 }
 
 
