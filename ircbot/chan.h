@@ -393,21 +393,30 @@ void Chan::kick(const User &user,
 inline
 void Chan::invite(const std::string &nick)
 {
-	opdo([nick](Chan &chan)
+
+	const auto func = [nick](Chan &chan)
 	{
 		Quote(chan.get_sess(),"INVITE") << chan.get_name() << " " << nick;
-	});
+	};
+
+	if(has_mode('g'))
+		func(*this);
+	else
+		opdo(func);
 }
 
 
 inline
 void Chan::topic(const std::string &text)
 {
-	Quote out(get_sess(),"TOPIC");
-	out << get_name();
+	opdo([text](Chan &chan)
+	{
+		Quote out(chan.get_sess(),"TOPIC");
+		out << chan.get_name();
 
-	if(!text.empty())
-		out << " :" << text;
+		if(!text.empty())
+			out << " :" << text;
+	});
 }
 
 
