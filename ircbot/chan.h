@@ -32,7 +32,7 @@ struct Lists
     List<AKick> akicks;
     List<Flag> flags;
 
-	bool delta_mode(const Mask &m, const std::string &delta);
+	bool set_mode(const Delta &delta);
 	void delta_flag(const Mask &m, const std::string &delta);
 
 	friend std::ostream &operator<<(std::ostream &s, const Lists &lists);
@@ -120,8 +120,7 @@ class Chan : public Locutor,
 	void set_creation(const time_t &creation)               { this->creation = creation;            }
 	void set_info(const decltype(info) &info)               { this->info = info;                    }
 	auto &set_topic()                                       { return _topic;                        }
-	void delta_mode(const std::string &d)                   { _mode.delta(d);                       }
-	bool delta_mode(const Mask &m, const std::string &d);
+	bool set_mode(const Delta &d);
 	template<class F> bool opdo(F&& f);                     // sudo <something as op> (happens async)
 
 	// [SEND] State update interface
@@ -674,26 +673,37 @@ void Chan::who(const std::string &flags)
 
 
 inline
-bool Chan::delta_mode(const Mask &mask,
-                      const std::string &delta)
+bool Chan::set_mode(const Delta &delta)
 try
 {
+	const auto &mask = std::get<Delta::MASK>(delta);
+	const auto &sign = std::get<Delta::SIGN>(delta);
+	const auto &mode = std::get<Delta::MODE>(delta);
+
+	// Mode is for channel (TODO: special arguments)
+	if(mask.empty())
+	{
+		_mode += delta;
+		return true;
+	}
+
 	// Target is a straight nickname, not a Mask
 	if(mask == Mask::INVALID)
 	{
-		if(mask == get_my_nick() && delta == "+o")
+		if(mask == get_my_nick() && sign && mode == 'o')
 			event_opped();
 
-		return users.mode(mask).delta(delta);
+		users.mode(mask) += delta;
+		return true;
 	}
 
-	return lists.delta_mode(mask,delta);
+	return lists.set_mode(delta);
 }
 catch(const Exception &e)
 {
 	// Ignore user's absence from channel, though this shouldn't happen.
-	std::cerr << "Chan: " << get_name()
-	          << " delta_mode(" << mask << "): "
+	std::cerr << "Chan: " << get_name() << " "
+	          << "set_mode: " << delta << " "
 	          << e << std::endl;
 
 	return false;
@@ -960,16 +970,21 @@ void Lists::delta_flag(const Mask &mask,
 
 
 inline
-bool Lists::delta_mode(const Mask &mask,
-                       const std::string &delta)
+bool Lists::set_mode(const Delta &d)
 {
-	switch(hash(delta.c_str()))
+	const auto &mask = std::get<Delta::MASK>(d);
+	const auto &sign = std::get<Delta::SIGN>(d);
+	const auto &mode = std::get<Delta::MODE>(d);
+
+	switch(mode)
 	{
-		case hash("+b"):     return bans.emplace(mask).second;
-		case hash("-b"):     return bans.erase(mask);
-		case hash("+q"):     return quiets.emplace(mask).second;
-		case hash("-q"):     return quiets.erase(mask);
-		default:             return false;
+		case 'b':     return sign? bans.emplace(mask).second:
+		                           bans.erase(mask);
+
+		case 'q':     return sign? quiets.emplace(mask).second:
+		                           quiets.erase(mask);
+
+		default:      return false;
 	}
 }
 

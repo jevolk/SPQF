@@ -480,39 +480,36 @@ void Bot::handle_mode(const Msg &msg)
 		return;
 	}
 
-	Chans &chans = get_chans();
-	Chan &chan = chans.get(msg[CHANNAME]);
-
-	// Channel's own mode
-	if(msg.num_params() < 3)
-	{
-		chan.delta_mode(msg[DELTASTR]);
-		handle_mode(msg,chan);
-		return;
-	}
-
-	// Channel mode apropos a user
+	const Sess &sess = get_sess();
+	const Server &serv = sess.get_server();
 	Users &users = get_users();
-	const std::string sign(1,msg[DELTASTR].at(0));
-	for(size_t d = 1, m = 2; m < msg.num_params(); d++, m++) try
-	{
-		// Associate each mode delta with its target
-		const std::string delta = sign + msg[DELTASTR].at(d);
-		const Mask &targ = msg[m];
-		chan.delta_mode(targ,delta);          // Chan handles everything from here
+	Chans &chans = get_chans();
 
-		if(targ.get_form() == Mask::INVALID)  // Target is a straight nickname, we can call downstream
+	Chan &chan = chans.get(msg[CHANNAME]);
+	const Deltas deltas(detok(msg.begin()+1,msg.end()));
+	for(const Delta &d : deltas) try
+	{
+		chan.set_mode(d);
+
+		// Channel's own mode
+		if(std::get<Delta::MASK>(d).empty())
 		{
-			User &user = users.get(targ);
+			handle_mode(msg,chan);
+			continue;
+		}
+
+		// Target is a straight nickname
+		if(std::get<Delta::MASK>(d) == Mask::INVALID)
+		{
+			User &user = users.get(std::get<Delta::MASK>(d));
 			handle_mode(msg,chan,user);
 		}
 	}
 	catch(const std::exception &e)
 	{
-		std::cerr << "Mode update failed:"
-		          << " chan: " << chan.get_name()
-		          << " target[" << m << "]: " << msg[m]
+		std::cerr << "Mode update failed: chan: " << chan.get_name()
 		          << " (modestr: " << msg[DELTASTR] << ")"
+		          << ": " << e.what()
 		          << std::endl;
 	}
 }
@@ -576,7 +573,9 @@ void Bot::handle_channelmodeis(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan.delta_mode(msg[DELTASTR]);
+	const Deltas deltas(msg[DELTASTR]);
+	for(const auto &delta : deltas)
+		chan.set_mode(delta);
 }
 
 

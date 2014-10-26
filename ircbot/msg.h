@@ -86,6 +86,8 @@ class Msg
 	auto &operator[](const size_t &i) const;                // returns empty str for outofrange
 	template<class R> R get(const size_t &i) const;         // throws for range or bad cast
 	template<class R> R operator[](const size_t &i) const   { return get<R>(i);                 }
+	auto begin() const                                      { return params.begin();            }
+	auto end() const                                        { return params.end();              }
 
 	std::string get_nick() const;
 	std::string get_host() const;

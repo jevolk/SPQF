@@ -153,6 +153,22 @@ C<T,A> tokens(const std::string &str,
 }
 
 
+template<class It>
+std::string detok(const It &begin,
+                  const It &end,
+                  const std::string &sep = " ")
+{
+	std::stringstream str;
+	std::for_each(begin,end,[&str,sep]
+	(const auto &val)
+	{
+		str << val << sep;
+	});
+
+	return chomp(str.str(),sep);
+}
+
+
 inline
 std::string packetize(std::string &&str,
                       const size_t &max = 390)

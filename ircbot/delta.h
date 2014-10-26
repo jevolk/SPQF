@@ -62,6 +62,7 @@ struct Deltas : std::vector<Delta>
 	Deltas(std::vector<Delta> &&vec):       std::vector<Delta>(std::move(vec)) {}
 	Deltas(const std::vector<Delta> &vec):  std::vector<Delta>(vec) {}
 
+	//NOTE: Modes with arguments must only be chan_pmodes for now
 	Deltas(const std::string &delts, const Server *const &serv = nullptr);
 	Deltas(const std::string &delts, const Server &serv): Deltas(delts,&serv) {}
 
@@ -77,13 +78,13 @@ try
 	const auto tok = tokens(delts);
 	const auto &ms = tok.at(0);
 	bool sign = Delta::sign(ms.at(0));
-	for(size_t i = 1, m = 0, a = 1; i < tok.size(); i++)
+	for(size_t i = 0, a = 1; i < ms.size(); i++)
 	{
-		if(Delta::is_sign(ms.at(i + m)))
-			sign = Delta::sign(ms.at(i + m++));
+		if(Delta::is_sign(ms.at(i)))
+			sign = Delta::sign(ms.at(i++));
 
-		const char &mode = ms.at(i + m);
-		const bool has_arg = serv? serv->chan_pmodes.find(mode) != std::string::npos : tok.size() >= a;
+		const char &mode = ms.at(i);
+		const bool has_arg = serv? serv->chan_pmodes.find(mode) != std::string::npos : tok.size() > a;
 		const auto &arg = has_arg? tok.at(a++) : "";
 		emplace_back(sign,mode,arg);
 	}
