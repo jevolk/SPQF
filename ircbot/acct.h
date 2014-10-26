@@ -31,11 +31,11 @@ class Acct
 	template<class T = std::string> T get_val(const std::string &key);
 
 	// Check if document exists
-	bool has(const std::string &key) const               { return !get_val(key).empty();            }
+	bool has(const std::string &key) const              { return !get_val(key).empty();             }
 
 	// Set document
 	void set(const std::string &key, const Adoc &doc);
-	void set(const Adoc &doc)                            { adb->set(get_acct(),doc);                }
+	void set(const Adoc &doc)                           { adb->set(get_acct(),doc);                 }
 
 	// Convenience for single key => value
 	template<class T> void set_val(const std::string &key, const T &t);

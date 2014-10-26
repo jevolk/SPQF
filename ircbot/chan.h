@@ -25,12 +25,12 @@ char nick_flag(const std::string &name);         // input = "@nickname" then out
 
 struct Lists
 {
-    List<Ban> bans;
-    List<Quiet> quiets;
-    List<Except> excepts;
-    List<Invite> invites;
-    List<AKick> akicks;
-    List<Flag> flags;
+	List<Ban> bans;
+	List<Quiet> quiets;
+	List<Except> excepts;
+	List<Invite> invites;
+	List<AKick> akicks;
+	List<Flag> flags;
 
 	bool set_mode(const Delta &delta);
 	void delta_flag(const Mask &m, const std::string &delta);
