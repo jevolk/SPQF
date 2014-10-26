@@ -206,6 +206,8 @@ void vote::Mode::starting()
 	const User &myself = users.get(sess.get_nick());
 
 	const Deltas deltas(get_issue(),serv);
+	deltas.validate_chan(serv);
+
 	for(const Delta delta : deltas)
 		if(myself.is_myself(std::get<Delta::MASK>(delta)))
 			throw Exception("One of the mode deltas matches myself.");

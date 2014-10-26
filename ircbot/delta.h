@@ -88,9 +88,6 @@ try
 		const auto &arg = has_arg? tok.at(a++) : "";
 		emplace_back(sign,mode,arg);
 	}
-
-	if(serv)
-		validate_chan(*serv);
 }
 catch(const std::out_of_range &e)
 {
