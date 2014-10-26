@@ -55,5 +55,8 @@ struct Mask : public std::string
 		                       INVALID;
 	}
 
+	bool operator==(const Form &f) const { return get_form() == f;                               }
+	bool operator!=(const Form &f) const { return get_form() != f;                               }
+
 	template<class... A> Mask(A&&... a): std::string(std::forward<A>(a)...) {}
 };
