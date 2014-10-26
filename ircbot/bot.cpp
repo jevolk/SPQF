@@ -483,11 +483,12 @@ void Bot::handle_mode(const Msg &msg)
 
 	const Sess &sess = get_sess();
 	const Server &serv = sess.get_server();
+
 	Users &users = get_users();
 	Chans &chans = get_chans();
-
 	Chan &chan = chans.get(msg[CHANNAME]);
-	const Deltas deltas(detok(msg.begin()+1,msg.end()));
+
+	const Deltas deltas(detok(msg.begin()+1,msg.end()),serv);
 	for(const Delta &d : deltas) try
 	{
 		chan.set_mode(d);
@@ -572,9 +573,13 @@ void Bot::handle_channelmodeis(const Msg &msg)
 
 	log_handle(msg,"CHANNELMODEIS");
 
+	const Sess &sess = get_sess();
+	const Server &serv = sess.get_server();
+
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	const Deltas deltas(msg[DELTASTR]);
+
+	const Deltas deltas(msg[DELTASTR],serv);
 	for(const auto &delta : deltas)
 		chan.set_mode(delta);
 }
