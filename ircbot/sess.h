@@ -42,6 +42,7 @@ class Sess
 	auto &get_server() const                           { return server;                             }
 	auto &get_isupport() const                         { return get_server().isupport;              }
 	auto &get_nick() const                             { return nickname;                           }
+	auto &get_acct() const                             { return opts["ns-acct"];                    }
 	auto &get_mode() const                             { return mymode;                             }
 	auto &get_access() const                           { return access;                             }
 	auto isupport(const std::string &key) const        { return get_server().isupport(key);         }

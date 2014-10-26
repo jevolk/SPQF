@@ -32,6 +32,9 @@ struct Lists
 	List<AKick> akicks;
 	List<Flag> flags;
 
+	bool has_flag(const Mask &m) const;
+	bool has_flag(const Mask &m, const char &flag) const;
+
 	bool set_mode(const Delta &delta);
 	void delta_flag(const Mask &m, const std::string &delta);
 
@@ -722,7 +725,7 @@ catch(const Exception &e)
 template<class F>
 bool Chan::opdo(F&& f)
 {
-	if(opq.empty() && !is_op())
+	if(!is_op() && opq.empty())
 		op();
 
 	opq(std::forward<F>(f));
@@ -774,11 +777,12 @@ void Chan::run_opdo()
 	}
 
 	auto &deltas = opq.get_deltas();
-	if(deltas.empty())
-		return;
 
 	const auto &sess = get_sess();
-	deltas.emplace_back("-o",sess.get_nick());
+	const auto &acct = sess.get_acct();
+	if(!acct.empty() && lists.has_flag(acct) && !lists.has_flag(acct,'O'))
+		deltas.emplace_back("-o",sess.get_nick());
+
 	mode(deltas);
 }
 
@@ -998,6 +1002,24 @@ bool Lists::set_mode(const Delta &d)
 
 		default:      return false;
 	}
+}
+
+
+inline
+bool Lists::has_flag(const Mask &m,
+                     const char &flag)
+const
+{
+	const auto it = flags.find({m});
+	return it != flags.end()? it->get_flags().has(flag) : false;
+}
+
+
+inline
+bool Lists::has_flag(const Mask &m)
+const
+{
+	return flags.count({m});
 }
 
 

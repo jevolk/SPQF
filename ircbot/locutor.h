@@ -213,7 +213,7 @@ void Locutor::mode(const Deltas &deltas)
 	for(size_t i = 0; i < deltas.size(); i += max)
 	{
 		const auto beg = deltas.begin() + i;
-		const auto end = deltas.begin() + i + std::min(deltas.size(),i + max);
+		const auto end = deltas.begin() + std::min(deltas.size(),i + max);
 		mode(deltas.substr(beg,end));
 	}
 }
