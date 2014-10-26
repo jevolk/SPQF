@@ -77,6 +77,7 @@ namespace colors
 #include "log.h"
 namespace chan
 {
+	#include "opdo.h"
 	#include "chan.h"
 }
 using Chan = chan::Chan;
