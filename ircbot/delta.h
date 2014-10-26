@@ -77,6 +77,11 @@ try
 {
 	const auto tok = tokens(delts);
 	const auto &ms = tok.at(0);
+
+	// Handle an empty mode string or simply a "+" string.
+	if(ms.empty() || (Delta::is_sign(ms.at(0)) && ms.size() == 1))
+		return;
+
 	bool sign = Delta::sign(ms.at(0));
 	for(size_t i = 0, a = 1; i < ms.size(); i++)
 	{
