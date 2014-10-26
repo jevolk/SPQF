@@ -51,6 +51,8 @@ struct Deltas : std::vector<Delta>
 	bool too_many(const Server &s) const         { return size() > s.isupport.get_or_max("MODES");  }
 	void validate_chan(const Server &s) const;
 	void validate_user(const Server &s) const;
+
+	std::string substr(const const_iterator &begin, const const_iterator &end) const;
 	operator std::string() const;
 
 	template<class... T> Deltas &operator<<(T&&... t);
@@ -162,15 +164,33 @@ const
 
 
 inline
+std::string Deltas::substr(const Deltas::const_iterator &begin,
+                           const Deltas::const_iterator &end)
+const
+{
+	std::stringstream s;
+
+	for(auto it = begin; it != end; ++it)
+	{
+		const auto &d = *it;
+		s << d.sign(std::get<Delta::SIGN>(d)) << std::get<Delta::MODE>(d);
+	}
+
+	for(auto it = begin; it != end; ++it)
+	{
+		const auto &d = *it;
+		s << " " << std::get<Delta::MASK>(d);
+	}
+
+	return s.str();
+}
+
+
+inline
 std::ostream &operator<<(std::ostream &s,
                          const Deltas &deltas)
 {
-	for(const Delta &d : deltas)
-		s << d.sign(std::get<Delta::SIGN>(d)) << std::get<Delta::MODE>(d);
-
-	for(const Delta &d : deltas)
-		s << " " << std::get<Delta::MASK>(d);
-
+	s << deltas.substr(deltas.begin(),deltas.end());
 	return s;
 }
 

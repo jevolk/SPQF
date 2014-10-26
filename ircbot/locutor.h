@@ -61,6 +61,7 @@ class Locutor : public Stream
 
 	// [SEND] Controls / Utils
 	void mode(const std::string &mode);                 // Raw mode command
+	void mode(const Deltas &deltas);                    // Execute any number of deltas
 	void whois();                                       // Sends whois query
 	void mode();                                        // Sends mode query
 
@@ -199,6 +200,22 @@ inline
 void Locutor::whois()
 {
 	Quote(get_sess(),"WHOIS") << get_target();
+}
+
+
+inline
+void Locutor::mode(const Deltas &deltas)
+{
+	auto &sess = get_sess();
+	const auto &isup = sess.get_isupport();
+	const size_t max = isup.get("MODES",3);
+
+	for(size_t i = 0; i < deltas.size(); i += max)
+	{
+		const auto beg = deltas.begin() + i;
+		const auto end = deltas.begin() + i + std::min(deltas.size(),i + max);
+		mode(deltas.substr(beg,end));
+	}
 }
 
 
