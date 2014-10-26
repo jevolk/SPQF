@@ -20,10 +20,24 @@ class ChanServ : public Service
 
   public:
 	void handle_cnotice(const Msg &msg, Chan &chan);
+	void handle(const Msg &msg);
 
 	ChanServ(Adb &adb, Sess &sess, Chans &chans):
 	         Service(adb,sess,"ChanServ"), chans(chans) {}
 };
+
+
+inline
+void ChanServ::handle(const Msg &msg)
+{
+	using namespace fmt::NOTICE;
+
+	// ignore entry message
+	if(!msg[TEXT].empty() && msg[TEXT].at(0) == '[')
+		return;
+
+	Service::handle(msg);
+}
 
 
 inline
