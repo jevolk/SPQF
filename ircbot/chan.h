@@ -32,8 +32,12 @@ struct Lists
 	List<AKick> akicks;
 	List<Flag> flags;
 
+	const Flag &get_flag(const Mask &m) const;
+	const Flag &get_flag(const User &u) const;
 	bool has_flag(const Mask &m) const;
+	bool has_flag(const User &u) const;
 	bool has_flag(const Mask &m, const char &flag) const;
+	bool has_flag(const User &u, const char &flag) const;
 
 	bool set_mode(const Delta &delta);
 	void delta_flag(const Mask &m, const std::string &delta);
@@ -1015,6 +1019,16 @@ bool Lists::set_mode(const Delta &d)
 
 
 inline
+bool Lists::has_flag(const User &u,
+                     const char &flag)
+const
+{
+	const auto &gacct = u.get_val("info.account");
+	return !gacct.empty()? has_flag(gacct,flag) : has_flag(u.get_acct(),flag);
+}
+
+
+inline
 bool Lists::has_flag(const Mask &m,
                      const char &flag)
 const
@@ -1025,10 +1039,38 @@ const
 
 
 inline
+bool Lists::has_flag(const User &u)
+const
+{
+	return has_flag(u.get_acct());
+}
+
+
+inline
 bool Lists::has_flag(const Mask &m)
 const
 {
 	return flags.count({m});
+}
+
+
+inline
+const Flag &Lists::get_flag(const User &u)
+const
+{
+	return get_flag(u.get_acct());
+}
+
+
+inline
+const Flag &Lists::get_flag(const Mask &m)
+const
+{
+	const auto it = flags.find({m});
+	if(it == flags.end())
+		throw Exception("No flags matching this user.");
+
+	return *it;
 }
 
 

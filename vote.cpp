@@ -421,9 +421,11 @@ bool Vote::has_access(const User &user,
 const
 {
 	const Chan &chan = get_chan();
-	const auto &cf = chan.lists.flags;
-	const auto it = cf.find({user.get_acct()});
-	return it != cf.end()? it->get_flags().any(flags) : false;
+	if(!chan.lists.has_flag(user))
+		return false;
+
+	const auto &f = chan.lists.get_flag(user);
+	return f.get_flags().any(flags);
 }
 
 
