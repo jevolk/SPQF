@@ -422,6 +422,7 @@ void Bot::handle_join(const Msg &msg)
 		chan.csinfo();
 		chan.banlist();
 		chan.quietlist();
+		chan.accesslist();
 	}
 
 	handle_join(msg,chan,user);

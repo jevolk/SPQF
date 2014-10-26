@@ -745,8 +745,7 @@ void Chan::event_opped()
 	if(opq.empty())
 		fetch_oplists();
 
-	if(!opq.empty())
-		run_opdo();
+	run_opdo();
 }
 
 
