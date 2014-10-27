@@ -182,6 +182,14 @@ std::string detok(const It &begin,
 }
 
 
+inline
+bool is_arg(const std::string &token,
+            const std::string &keyed = "--")
+{
+	return token.size() > keyed.size() && token.find(keyed) == 0;
+}
+
+
 template<class It>
 void parse_args(const It &begin,
                 const It &end,
@@ -192,7 +200,7 @@ void parse_args(const It &begin,
 	std::for_each(begin,end,[&,keyed,valued,func]
 	(const auto &token)
 	{
-		if(token.size() > keyed.size() && token.find(keyed) == 0)
+		if(is_arg(token,keyed))
 			func(split(token.substr(keyed.size()),valued));
 	});
 }
@@ -200,15 +208,15 @@ void parse_args(const It &begin,
 
 inline
 void parse_args(const std::string &str,
-                const std::string &keyed,   //  = "--",
-                const std::string &valued,  //  = "=",
-                const std::function<void (const std::pair<std::string,std::string> &kv)> &func,
-                const char *const &toksep = " ")
+                const std::string &keyed,   //  = "--"
+                const std::string &valued,  //  = "="
+                const std::string &toksep,  //  = " "
+                const std::function<void (const std::pair<std::string,std::string> &kv)> &func)
 {
-	tokens(str,toksep,[&,keyed,valued,func]
+	tokens(str,toksep.c_str(),[&,keyed,valued,func]
 	(const std::string &token)
 	{
-		if(token.size() > keyed.size() && token.find(keyed) == 0)
+		if(is_arg(token,keyed))
 			func(split(token.substr(keyed.size()),valued));
 	});
 }
@@ -223,7 +231,7 @@ std::string strip_args(const std::string &str,
 	tokens(str,toksep.c_str(),[&ret,&keyed,&toksep]
 	(const auto &token)
 	{
-		if(token.size() <= keyed.size() || token.find(keyed) != 0)
+		if(!is_arg(token,keyed))
 			ret << token << toksep;
 	});
 
