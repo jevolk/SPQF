@@ -36,12 +36,20 @@ class User : public Locutor,
 	auto &get_signon() const                           { return signon;                              }
 	auto &get_idle() const                             { return idle;                                }
 	auto &num_chans() const                            { return chans;                               }
-
 	bool is_myself() const                             { return get_nick() == get_sess().get_nick(); }
 	bool is_logged_in() const;
 	bool is_owner() const;
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
 	bool is_myself(const Mask &mask) const;            // Test if mask can match us
+
+	Delta unquiet(const Quiet::Type &type) const       { return {"-q",mask(type)};                   }
+	Delta quiet(const Quiet::Type &type) const         { return {"+q",mask(type)};                   }
+	Delta unban(const Ban::Type &type) const           { return {"-b",mask(type)};                   }
+	Delta ban(const Ban::Type &type) const             { return {"+b",mask(type)};                   }
+	Delta devoice() const                              { return {"-v",get_nick()};                   }
+	Delta voice() const                                { return {"+v",get_nick()};                   }
+	Delta deop() const                                 { return {"-o",get_nick()};                   }
+	Delta op() const                                   { return {"+o",get_nick()};                   }
 
 	// [RECV] Handlers may call to update state
 	void set_nick(const std::string &nick)             { Locutor::set_target(nick);                  }

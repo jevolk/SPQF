@@ -25,21 +25,21 @@ class OpDo
 		lambdas.clear();
 	}
 
-	OpDo &operator()(const typename decltype(lambdas)::value_type &func)
+	const auto &operator()(const typename decltype(lambdas)::value_type &func)
 	{
 		lambdas.emplace_front(func);
-		return *this;
+		return lambdas.front();
 	}
 
-	OpDo &operator()(const Deltas &deltas)
+	const auto &operator()(const Deltas &deltas)
 	{
 		this->deltas.insert(this->deltas.end(),deltas.begin(),deltas.end());
-		return *this;
+		return deltas;
 	}
 
-	OpDo &operator()(const Delta &delta)
+	const auto &operator()(const Delta &delta)
 	{
 		this->deltas.emplace_back(delta);
-		return *this;
+		return delta;
 	}
 };

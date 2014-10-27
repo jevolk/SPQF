@@ -162,10 +162,8 @@ class Chan : public Locutor,
 	void kick(const User &user, const std::string &reason = "");
 	void remove(const User &user, const std::string &reason = "");
 	Deltas unquiet(const User &user);
-	Delta quiet(const User &user, const Quiet::Type &type);
 	Deltas quiet(const User &user);
 	Deltas unban(const User &user);
-	Delta ban(const User &user, const Ban::Type &type);
 	Deltas ban(const User &user);
 	Delta devoice(const User &user);
 	Delta voice(const User &user);
@@ -253,36 +251,36 @@ void Chan::part()
 
 
 inline
-Delta Chan::op(const User &user)
+Delta Chan::op(const User &u)
 {
-	Delta d("+o",user.get_nick());
+	const Delta d = u.op();
 	opdo(d);
 	return d;
 }
 
 
 inline
-Delta Chan::deop(const User &user)
+Delta Chan::deop(const User &u)
 {
-	Delta d("-o",user.get_nick());
+	const Delta d = u.deop();
 	opdo(d);
 	return d;
 }
 
 
 inline
-Delta Chan::voice(const User &user)
+Delta Chan::voice(const User &u)
 {
-	Delta d("+v",user.get_nick());
+	Delta d = u.voice();
 	opdo(d);
 	return d;
 }
 
 
 inline
-Delta Chan::devoice(const User &user)
+Delta Chan::devoice(const User &u)
 {
-	Delta d("-v",user.get_nick());
+	Delta d = u.devoice();
 	opdo(d);
 	return d;
 }
@@ -291,86 +289,66 @@ Delta Chan::devoice(const User &user)
 inline
 Deltas Chan::ban(const User &u)
 {
-	Deltas deltas;
-	deltas.emplace_back("+b",u.mask(Mask::HOST));
+	Deltas d;
+	d.emplace_back(u.ban(Mask::HOST));
 
 	if(u.is_logged_in())
-		deltas.emplace_back("+b",u.mask(Mask::ACCT));
+		d.emplace_back(u.ban(Mask::ACCT));
 
-	opdo(deltas);
-	return deltas;
-}
-
-
-inline
-Delta Chan::ban(const User &user,
-                const Ban::Type &type)
-{
-	Delta delta("+b",user.mask(type));
-	opdo(delta);
-	return delta;
+	opdo(d);
+	return d;
 }
 
 
 inline
 Deltas Chan::unban(const User &u)
 {
-	Deltas deltas;
+	Deltas d;
 
 	if(lists.bans.count(u.mask(Mask::NICK)))
-		deltas.emplace_back("-b",u.mask(Mask::NICK));
+		d.emplace_back(u.unban(Mask::NICK));
 
 	if(lists.bans.count(u.mask(Mask::HOST)))
-		deltas.emplace_back("-b",u.mask(Mask::HOST));
+		d.emplace_back(u.unban(Mask::HOST));
 
 	if(u.is_logged_in() && lists.bans.count(u.mask(Mask::ACCT)))
-		deltas.emplace_back("-b",u.mask(Mask::ACCT));
+		d.emplace_back(u.unban(Mask::ACCT));
 
-	opdo(deltas);
-	return deltas;
+	opdo(d);
+	return d;
 }
 
 
 inline
 Deltas Chan::quiet(const User &u)
 {
-	Deltas deltas;
-	deltas.emplace_back("+q",u.mask(Mask::HOST));
+	Deltas d;
+	d.emplace_back(u.quiet(Mask::HOST));
 
 	if(u.is_logged_in())
-		deltas.emplace_back("+q",u.mask(Mask::ACCT));
+		d.emplace_back(u.quiet(Mask::ACCT));
 
-	opdo(deltas);
-	return deltas;
-}
-
-
-inline
-Delta Chan::quiet(const User &user,
-                  const Quiet::Type &type)
-{
-	Delta delta("+q",user.mask(type));
-	opdo(delta);
-	return delta;
+	opdo(d);
+	return d;
 }
 
 
 inline
 Deltas Chan::unquiet(const User &u)
 {
-	Deltas deltas;
+	Deltas d;
 
 	if(lists.quiets.count(u.mask(Mask::NICK)))
-		deltas.emplace_back("-q",u.mask(Mask::NICK));
+		d.emplace_back(u.unquiet(Mask::NICK));
 
 	if(lists.quiets.count(u.mask(Mask::HOST)))
-		deltas.emplace_back("-q",u.mask(Mask::HOST));
+		d.emplace_back(u.unquiet(Mask::HOST));
 
 	if(u.is_logged_in() && lists.quiets.count(u.mask(Mask::ACCT)))
-		deltas.emplace_back("-q",u.mask(Mask::ACCT));
+		d.emplace_back(u.unquiet(Mask::ACCT));
 
-	opdo(deltas);
-	return deltas;
+	opdo(d);
+	return d;
 }
 
 
