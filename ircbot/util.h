@@ -171,14 +171,14 @@ std::string detok(const It &begin,
                   const It &end,
                   const std::string &sep = " ")
 {
-	std::stringstream str;
+	std::ostringstream str;
 	std::for_each(begin,end,[&str,sep]
 	(const auto &val)
 	{
 		str << val << sep;
 	});
 
-	return chomp(str.str(),sep);
+	return str.str().substr(0,ssize_t(str.tellp()) - sep.size());
 }
 
 
@@ -192,10 +192,8 @@ void parse_args(const It &begin,
 	std::for_each(begin,end,[&,keyed,valued,func]
 	(const auto &token)
 	{
-		if(token.size() <= keyed.size() || token.find(keyed) != 0)
-			return;
-
-		func(split(token.substr(keyed.size()),valued));
+		if(token.size() > keyed.size() && token.find(keyed) == 0)
+			func(split(token.substr(keyed.size()),valued));
 	});
 }
 
@@ -210,10 +208,8 @@ void parse_args(const std::string &str,
 	tokens(str,toksep,[&,keyed,valued,func]
 	(const std::string &token)
 	{
-		if(token.size() <= keyed.size() || token.find(keyed) != 0)
-			return;
-
-		func(split(token.substr(keyed.size()),valued));
+		if(token.size() > keyed.size() && token.find(keyed) == 0)
+			func(split(token.substr(keyed.size()),valued));
 	});
 }
 
