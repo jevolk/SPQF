@@ -17,10 +17,8 @@ using Info = std::map<std::string, std::string>;
 using Topic = std::tuple<std::string, Mask, time_t>;
 template<class Value> using List = std::set<Value>;
 
-
 Type type(const char &c);
-char flag2mode(const char &flag);                // input = '@' then output = 'o' (or null)
-char nick_flag(const std::string &name);         // input = "@nickname" then output = '@' (or null)
+char name_hat(const Server &serv, const std::string &nick); // "@nickname" then output = '@' (or null)
 
 
 struct Lists
@@ -1121,28 +1119,14 @@ Type type(const char &c)
 
 
 inline
-char nick_flag(const std::string &name)
+char name_hat(const Server &serv,
+              const std::string &nick)
+try
 {
-	const char &c = name.at(0);
-	switch(c)
-	{
-		case '@':
-		case '+':
-			return c;
-
-		default:
-			return 0x00;
-	}
+	const char &c = nick.at(0);
+	return serv.has_prefix(c)? c : '\0';
 }
-
-
-inline
-char flag2mode(const char &flag)
+catch(const std::out_of_range &e)
 {
-	switch(flag)
-	{
-		case '@':    return 'o';
-		case '+':    return 'v';
-		default:     return 0x00;
-	}
+	return '\0';
 }

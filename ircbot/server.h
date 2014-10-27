@@ -38,8 +38,8 @@ inline
 bool Server::has_prefix(const char &prefix)
 const try
 {
-	const std::string &pxs = isupport["PREFIX"];
-	const std::string pfx = split(pxs,")").second;
+	const auto &pxs = isupport["PREFIX"];
+	const auto pfx = split(pxs,")").second;
 	return pfx.find(prefix) != std::string::npos;
 }
 catch(const std::out_of_range &e)
@@ -50,31 +50,25 @@ catch(const std::out_of_range &e)
 
 inline
 char Server::mode_to_prefix(const char &prefix)
-const try
+const
 {
-	const std::string &pxs = isupport["PREFIX"];
-	const std::string modes = between(pxs,"(",")");
-	const std::string prefx = split(pxs,")").second;
-	return prefx.at(modes.find(prefix));
-}
-catch(const std::out_of_range &e)
-{
-	throw Exception("No prefix for that mode on this server.");
+	const auto &pxs = isupport["PREFIX"];
+	const auto modes = between(pxs,"(",")");
+	const auto prefx = split(pxs,")").second;
+	const auto pos = modes.find(prefix);
+	return pos != std::string::npos? prefx.at(pos) : '\0';
 }
 
 
 inline
 char Server::prefix_to_mode(const char &mode)
-const try
+const
 {
-	const std::string &pxs = isupport["PREFIX"];
-	const std::string modes = between(pxs,"(",")");
-	const std::string prefx = split(pxs,")").second;
-	return modes.at(prefx.find(mode));
-}
-catch(const std::out_of_range &e)
-{
-	throw Exception("No mode for that prefix on this server.");
+	const auto &pxs = isupport["PREFIX"];
+	const auto modes = between(pxs,"(",")");
+	const auto prefx = split(pxs,")").second;
+	const auto pos = prefx.find(mode);
+	return pos != std::string::npos? modes.at(pos) : '\0';
 }
 
 

@@ -984,16 +984,19 @@ void Bot::handle_namreply(const Msg &msg)
 	if(!my_nick(msg[NICKNAME]))
 		throw Exception("Server replied to the wrong nickname");
 
+	const Sess &sess = get_sess();
+	const Server &serv = sess.get_server();
+
 	Users &users = get_users();
 	Chans &chans = get_chans();
 	Chan &chan = chans.add(msg[CHANNAME]);
 
 	for(const auto &nick : tokens(msg[NAMELIST]))
 	{
-		const auto f = chan::nick_flag(nick);
-		const auto m = chan::flag2mode(f);
+		const auto f = chan::name_hat(serv,nick);
+		const auto m = serv.prefix_to_mode(f);
 		const auto &rawnick = f? nick.substr(1) : nick;
-		const auto &modestr = m? std::string(1,m) : "";
+		const auto &modestr = m? std::string(1,m) : std::string();
 
 		User &user = users.add(rawnick);
 		if(chan.users.add(user,modestr))
