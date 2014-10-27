@@ -215,6 +215,23 @@ void parse_args(const std::string &str,
 
 
 inline
+std::string strip_args(const std::string &str,
+                       const std::string &keyed = "--",
+                       const std::string &toksep = " ")
+{
+	std::stringstream ret;
+	tokens(str,toksep.c_str(),[&ret,&keyed,&toksep]
+	(const auto &token)
+	{
+		if(token.size() <= keyed.size() || token.find(keyed) != 0)
+			ret << token << toksep;
+	});
+
+	return ret.str().substr(0,ssize_t(ret.tellp()) - toksep.size());
+}
+
+
+inline
 std::string packetize(std::string &&str,
                       const size_t &max = 390)
 {
