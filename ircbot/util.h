@@ -138,6 +138,19 @@ std::string between(const std::string &str,
 }
 
 
+inline
+void tokens(const std::string &str,
+            const char *const &sep,
+            const std::function<void (const std::string &)> &func)
+{
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim> tk(str,d);
+	std::for_each(tk.begin(),tk.end(),func);
+}
+
+
 template<template<class,class>
          class C = std::vector,
          class T = std::string,
@@ -166,6 +179,42 @@ std::string detok(const It &begin,
 	});
 
 	return chomp(str.str(),sep);
+}
+
+
+template<class It>
+void parse_args(const It &begin,
+                const It &end,
+                const std::string &keyed,   //  = "--",
+                const std::string &valued,  //  = "=",
+                const std::function<void (const std::pair<std::string,std::string> &kv)> &func)
+{
+	std::for_each(begin,end,[&,keyed,valued,func]
+	(const auto &token)
+	{
+		if(token.size() <= keyed.size() || token.find(keyed) != 0)
+			return;
+
+		func(split(token.substr(keyed.size()),valued));
+	});
+}
+
+
+inline
+void parse_args(const std::string &str,
+                const std::string &keyed,   //  = "--",
+                const std::string &valued,  //  = "=",
+                const std::function<void (const std::pair<std::string,std::string> &kv)> &func,
+                const char *const &toksep = " ")
+{
+	tokens(str,toksep,[&,keyed,valued,func]
+	(const std::string &token)
+	{
+		if(token.size() <= keyed.size() || token.find(keyed) != 0)
+			return;
+
+		func(split(token.substr(keyed.size()),valued));
+	});
 }
 
 

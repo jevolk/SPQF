@@ -56,7 +56,6 @@ struct Opts : public std::map<std::string,std::string>
 	template<class T> non_num_t<T> get(const std::string &key) const;
 	template<class T> num_t<T> get(const std::string &key) const;
 
-	bool parse_arg(const std::string &arg);
 	uint parse(const std::vector<std::string> &argv);
 
 	// Output this info
@@ -68,36 +67,20 @@ inline
 uint Opts::parse(const std::vector<std::string> &strs)
 {
 	uint ret = 0;
-	for(const auto &str : strs)
-		ret += parse_arg(str);
+	parse_args(strs.begin(),strs.end(),"--","=",[&]
+	(const auto &kv)
+	{
+		ret++;
+
+		if(kv.second.empty())
+			(*this)[kv.first] = "true";
+		else if(kv.first == "join")
+			autojoin.emplace_back(kv.second);
+		else
+			(*this)[kv.first] = kv.second;
+	});
 
 	return ret;
-}
-
-
-inline
-bool Opts::parse_arg(const std::string &str)
-{
-	if(str.find("--") != 0)
-		return false;
-
-	const size_t eqp = str.find('=');
-	if(eqp == str.npos)
-	{
-		const std::string key = str.substr(2);
-		(*this)[key] = "true";
-		return true;
-	}
-
-	const std::string key = str.substr(2,eqp-2);
-	const std::string val = str.substr(eqp+1);
-
-	if(key == "join")
-		autojoin.emplace_back(val);
-	else
-		(*this)[key] = val;
-
-	return true;
 }
 
 
