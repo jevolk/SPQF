@@ -767,7 +767,7 @@ void Bot::handle_privmsg(const Msg &msg)
 	if(!users.has(msg.get_nick()))
 	{
 		// User is not in any channel with us.
-		User user(get_adb(),get_sess(),get_ns(),msg.get_nick());
+		User user(get_adb(),get_sess(),get_ns(),msg.get_nick(),msg.get_host());
 		handle_privmsg(msg,user);
 		return;
 	}
@@ -847,7 +847,7 @@ void Bot::handle_notice(const Msg &msg)
 	if(!users.has(msg.get_nick()))
 	{
 		// User is not in any channel with us.
-		User user(get_adb(),get_sess(),get_ns(),msg.get_nick());
+		User user(get_adb(),get_sess(),get_ns(),msg.get_nick(),msg.get_host());
 		handle_notice(msg,user);
 		return;
 	}
@@ -891,7 +891,7 @@ void Bot::handle_action(const Msg &msg)
 	if(!users.has(msg.get_nick()))
 	{
 		// User is not in any channel with us.
-		User user(get_adb(),get_sess(),get_ns(),msg.get_nick());
+		User user(get_adb(),get_sess(),get_ns(),msg.get_nick(),msg.get_host());
 		handle_action(msg,user);
 		return;
 	}
