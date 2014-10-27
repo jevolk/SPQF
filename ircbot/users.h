@@ -12,7 +12,8 @@ class Users
 	Sess &sess;
 	Service *nickserv;
 
-	std::unordered_map<std::string, User> users;
+	using Cmp = CaseInsensitiveEqual<std::string>;
+	std::unordered_map<std::string, User, Cmp, Cmp> users;
 
   public:
 	// Observers

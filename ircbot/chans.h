@@ -12,7 +12,8 @@ class Chans
 	Sess &sess;
 	Service *chanserv;
 
-	std::map<std::string, Chan> chans;
+	using Cmp = CaseInsensitiveLess<std::string>;
+	std::map<std::string, Chan, Cmp> chans;
 
   public:
 	// Observers
@@ -20,8 +21,8 @@ class Chans
 	auto &get_sess() const                             { return sess;                               }
 	auto &get_cs() const                               { return *chanserv;                          }
 
-	const Chan &get(const std::string &name) const     { return chans.at(tolower(name));            }
-	bool has(const std::string &name) const            { return chans.count(tolower(name));         }
+	const Chan &get(const std::string &name) const     { return chans.at(name);                     }
+	bool has(const std::string &name) const            { return chans.count(name);                  }
 	auto num() const                                   { return chans.size();                       }
 
 	// Closures
@@ -36,7 +37,7 @@ class Chans
 	Chan &get(const std::string &name);                // throws Exception
 	Chan &add(const std::string &name);                // Add channel (w/o join) or return existing
 	Chan &join(const std::string &name);               // Add channel with join or return existing
-	bool del(const std::string &name)                  { return chans.erase(tolower(name));         }
+	bool del(const std::string &name)                  { return chans.erase(name);                  }
 	bool del(const Chan &chan)                         { return del(chan.get_name());               }
 	void autojoin();                                   // Joins all channels in the autojoin list
 
@@ -61,7 +62,7 @@ void Chans::autojoin()
 inline
 Chan &Chans::join(const std::string &name)
 {
-	Chan &chan = add(tolower(name));
+	Chan &chan = add(name);
 	chan.join();
 	return chan;
 }
@@ -71,11 +72,11 @@ inline
 Chan &Chans::get(const std::string &name)
 try
 {
-	return chans.at(tolower(name));
+	return chans.at(name);
 }
 catch(const std::out_of_range &e)
 {
-	throw Exception() << "Unrecognized channel name [" << tolower(name) << "]";
+	throw Exception() << "Unrecognized channel name [" << name << "]";
 }
 
 

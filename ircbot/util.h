@@ -293,6 +293,21 @@ std::string tolower(const std::string &str)
 }
 
 
+template<class T = std::string>
+struct CaseInsensitiveEqual
+{
+	auto operator()(const T &a, const T &b) const    { return tolower(a) == tolower(b);   }
+	auto operator()(const T &a) const                { return std::hash<T>()(tolower(a)); }
+};
+
+
+template<class T = std::string>
+struct CaseInsensitiveLess
+{
+	auto operator()(const T &a, const T &b) const    { return tolower(a) < tolower(b);    }
+};
+
+
 inline
 std::string decolor(const std::string &str)
 {

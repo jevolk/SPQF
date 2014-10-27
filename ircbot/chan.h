@@ -46,7 +46,8 @@ struct Lists
 
 class Users
 {
-	std::unordered_map<std::string, std::tuple<User *, Mode>> users;
+	using Cmp = CaseInsensitiveEqual<std::string>;
+	std::unordered_map<std::string, std::tuple<User *, Mode>, Cmp, Cmp> users;
 
   public:
 	void for_each(const std::function<void (const User &, const Mode &)> &c) const;
