@@ -24,6 +24,11 @@ struct Adoc : public boost::property_tree::ptree
 	bool remove(const std::string &key) &;
 	Adoc &merge(const Adoc &src) &;                      // src takes precedence over this
 
+	// Special ctor for key/vals i.e "--foo=bar" to {"foo": "bar"}
+	static constexpr const struct arg_ctor_t {} arg_ctor {};
+	Adoc(arg_ctor_t, const std::string &str, const std::string &keyed = "--", const std::string &valued = "=", const std::string &toksep = " ");
+
+	// Primary ctors
 	Adoc(const std::string &str = "{}");
 	Adoc(boost::property_tree::ptree &&p):               boost::property_tree::ptree(std::move(p)) {}
 	Adoc(const boost::property_tree::ptree &p):          boost::property_tree::ptree(p) {}
@@ -48,6 +53,21 @@ boost::property_tree::ptree([&str]
 catch(const boost::property_tree::json_parser::json_parser_error &e)
 {
 	throw Exception(e.what());
+}
+
+
+inline
+Adoc::Adoc(arg_ctor_t,
+           const std::string &str,
+           const std::string &keyed,
+           const std::string &valued,
+           const std::string &toksep)
+{
+	parse_args(str,keyed,valued,toksep,[&]
+	(const auto &kv)
+	{
+		this->put(kv.first,kv.second);
+	});
 }
 
 
