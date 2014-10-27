@@ -107,11 +107,6 @@ class Chan : public Locutor,
 	bool has_mode(const char &mode) const                   { return get_mode().has(mode);          }
 	bool is_op() const;
 
-	bool operator==(const Chan &o) const                    { return get_name() == o.get_name();    }
-	bool operator!=(const Chan &o) const                    { return get_name() != o.get_name();    }
-	bool operator==(const std::string &name) const          { return get_name() == name;            }
-	bool operator!=(const std::string &name) const          { return get_name() != name;            }
-
   protected:
 	auto &get_cs()                                          { return *chanserv;                     }
 	auto &get_log()                                         { return _log;                          }

@@ -43,9 +43,6 @@ class User : public Locutor,
 	Mask mask(const Mask::Type &t) const;              // Generate a mask from *this members
 	bool is_myself(const Mask &mask) const;            // Test if mask can match us
 
-	bool operator<(const User &o) const                { return get_nick() < o.get_nick();           }
-	bool operator==(const User &o) const               { return get_nick() == o.get_nick();          }
-
 	// [RECV] Handlers may call to update state
 	void set_nick(const std::string &nick)             { Locutor::set_target(nick);                  }
 	void set_acct(const std::string &acct)             { this->acct = tolower(acct);                 }
@@ -133,17 +130,17 @@ const
 			if(mask.has_all_wild())
 				return true;
 
-			if(mask.get_host() == get_host())
+			if(tolower(mask.get_host()) == tolower(get_host()))
 				return true;
 
-			if(mask.get_nick() == get_nick())
+			if(tolower(mask.get_nick()) == tolower(get_nick()))
 				return true;
 
 		case Mask::EXTENDED:
-			return mask.get_mask() == get_acct();
+			return tolower(mask.get_mask()) == get_acct();
 
 		case Mask::INVALID:
-			return mask == get_nick();
+			return tolower(mask) == tolower(get_nick());
 
 		default:
 			throw Exception("Mask format unrecognized.");

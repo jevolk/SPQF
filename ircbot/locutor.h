@@ -42,6 +42,20 @@ class Locutor : public Stream
 	auto &get_target() const                            { return target;                             }
 	auto &get_my_nick() const                           { return get_sess().get_nick();              }
 
+	bool operator==(const Locutor &o) const             { return target == o.target;                 }
+	bool operator!=(const Locutor &o) const             { return target != o.target;                 }
+	bool operator<=(const Locutor &o) const             { return target <= o.target;                 }
+	bool operator>=(const Locutor &o) const             { return target >= o.target;                 }
+	bool operator<(const Locutor &o) const              { return target < o.target;                  }
+	bool operator>(const Locutor &o) const              { return target > o.target;                  }
+
+	bool operator==(const std::string &o) const         { return tolower(target) == tolower(o);      }
+	bool operator!=(const std::string &o) const         { return tolower(target) != tolower(o);      }
+	bool operator<=(const std::string &o) const         { return tolower(target) <= tolower(o);      }
+	bool operator>=(const std::string &o) const         { return tolower(target) >= tolower(o);      }
+	bool operator<(const std::string &o) const          { return tolower(target) < tolower(o);       }
+	bool operator>(const std::string &o) const          { return tolower(target) > tolower(o);       }
+
   protected:
 	auto &get_sess()                                    { return *sess;                              }
 
