@@ -46,6 +46,7 @@ SPQF_FMT( ACTION,            SELFNAME, TEXT                                     
 SPQF_FMT( NOTICE,            SELFNAME, TEXT                                                                  )
 SPQF_FMT( NAMREPLY,          NICKNAME, TYPE,     CHANNAME, NAMELIST                                          )
 SPQF_FMT( WHOREPLY,          SELFNAME, CHANNAME, USERNAME, HOSTNAME, SERVNAME, NICKNAME, FLAGS,    ADDL      )
+SPQF_FMT( WHOISUSER,         SELFNAME, NICKNAME, USERNAME, HOSTNAME, ASTERISK, REALNAME                      )
 SPQF_FMT( WHOISIDLE,         SELFNAME, NICKNAME, SECONDS,  SIGNON,   REMARKS                                 )
 SPQF_FMT( WHOISSECURE,       SELFNAME, NICKNAME, REMARKS,                                                    )
 SPQF_FMT( WHOISACCOUNT,      SELFNAME, NICKNAME, ACCTNAME, REMARKS                                           )

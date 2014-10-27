@@ -1149,9 +1149,20 @@ void Bot::handle_whospecial(const Msg &msg)
 
 
 void Bot::handle_whoisuser(const Msg &msg)
+try
 {
+	using namespace fmt::WHOISUSER;
+
 	log_handle(msg,"WHOIS USER");
 
+	Users &users = get_users();
+	User &user = users.get(msg[NICKNAME]);
+	user.set_host(msg[HOSTNAME]);
+}
+catch(const Exception &e)
+{
+	std::cerr << "handle_whoisidle(): " << e << std::endl;
+	return;
 }
 
 
