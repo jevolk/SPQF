@@ -8,6 +8,9 @@
 
 class Vote : protected Acct
 {
+	static constexpr const char *const ARG_KEYED = "--";
+	static constexpr const char *const ARG_VALUED = "=";
+
 	Sess *sess;
 	Chans *chans;
 	Users *users;

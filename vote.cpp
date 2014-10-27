@@ -39,7 +39,7 @@ type(type),
 chan(chan.get_name()),
 nick(user.get_nick()),
 acct(user.get_acct()),
-issue(issue),
+issue(strip_args(issue,ARG_KEYED)),
 cfg([&]
 {
 	// Default config
@@ -71,10 +71,11 @@ cfg([&]
 	ret.put("result.ack_chan",1);
 	ret.put("visible.ballots",0);
 	ret.put("visible.veto",1);
-	ret.merge(chan.get("config.vote"));         // Overwrite defaults with saved config
-	chan.set("config.vote",ret);                // Write back combined result to db
-	ret.merge(ret.get_child(type,Adoc()));      // Import type-specifc overrides up to main
-	ret.merge(cfg);                             // Import instance-specific overrides to main
+	ret.merge(chan.get("config.vote"));                      // Overwrite defaults with saved config
+	chan.set("config.vote",ret);                             // Write back combined result to db
+	ret.merge(ret.get_child(type,Adoc()));                   // Import type-specifc overrides up to main
+	ret.merge({Adoc::arg_ctor,issue,ARG_KEYED,ARG_VALUED});  // Any vote-time options from user.
+	ret.merge(cfg);                                          // Any overrides trumping all.
 	return ret;
 }()),
 began(0),
