@@ -79,9 +79,8 @@ void ChanServ::handle_set_flags(Chan &chan,
 inline
 void ChanServ::handle_info(const Capture &msg)
 {
-	const std::vector<std::string> tok = tokens(msg.front());
-	const std::string name = tolower(chomp(tok.at(2),":"));
-
+	const auto tok = tokens(msg.front());
+	const auto name = tolower(chomp(tok.at(2),":"));
 	Chan &chan = chans.get(name);
 
 	chan::Info info;
@@ -101,8 +100,7 @@ void ChanServ::handle_info(const Capture &msg)
 inline
 void ChanServ::handle_flagslist(const Capture &msg)
 {
-	const std::string name = tolower(tokens(get_terminator().front()).at(2));
-
+	const auto name = tolower(tokens(get_terminator().front()).at(2));
 	Chan &chan = chans.get(name);
 
 	decltype(chan.lists.flags) flags;
@@ -134,18 +132,16 @@ void ChanServ::handle_akicklist(const Capture &msg)
 {
 	auto it = msg.begin();
 	const size_t ns = tokens(*it).at(3).size() - 1;
-	const std::string name = tolower(tokens(*it).at(3).substr(0,ns));
-	++it;
-
+	const auto name = tolower(tokens(*it).at(3).substr(0,ns));
 	Chan &chan = chans.get(name);
-	decltype(chan.lists.akicks) akicks;
 
 	auto end = msg.begin();
 	std::advance(end,msg.size());
-	for(; it != end; ++it)
+	decltype(chan.lists.akicks) akicks;
+	for(++it; it != end; ++it)
 	{
 		const std::string &str = *it;
-		const std::vector<std::string> toks = tokens(str," ");
+		const auto toks = tokens(str," ");
 		const std::string &num = toks.at(0);
 		const std::string &mask = toks.at(1);
 		const std::pair<std::string,std::string> reason = split(between(str,"(",")")," | ");

@@ -327,16 +327,12 @@ void Bot::handle_quit(const Msg &msg)
 
 	log_handle(msg,"QUIT");
 
-	const std::string nick = msg.get_nick();
-	const std::string &reason = msg[REASON];
-
-	if(my_nick(nick))
+	if(msg.get_nick() == get_nick())
 		return;
 
-	Users &users = get_users();
-	User &user = users.get(nick);
-
 	Chans &chans = get_chans();
+	Users &users = get_users();
+	User &user = users.get(msg.get_nick());
 	chans.for_each([&user,&msg]
 	(Chan &chan)
 	{
@@ -354,11 +350,11 @@ void Bot::handle_nick(const Msg &msg)
 
 	log_handle(msg,"NICK");
 
-	const std::string old_nick = msg.get_nick();
-	const std::string &new_nick = msg[NICKNAME];
+	const auto &old_nick = msg.get_nick();
+	const auto &new_nick = msg[NICKNAME];
 
 	Sess &sess = get_sess();
-	if(my_nick(old_nick))
+	if(old_nick == get_nick())
 	{
 		const bool regained = !sess.is_desired_nick();
 		sess.set_nick(new_nick);
@@ -414,8 +410,9 @@ void Bot::handle_join(const Msg &msg)
 
 	chan.log(user,msg);
 
-	if(my_nick(msg.get_nick()))
+	if(msg.get_nick() == get_nick())
 	{
+		// We have joined
 		chan.set_joined(true);
 		chan.mode();
 		chan.who();
@@ -445,8 +442,9 @@ void Bot::handle_part(const Msg &msg)
 	if(chan.users.del(user))
 		user.dec_chans();
 
-	if(my_nick(msg.get_nick()))
+	if(msg.get_nick() == get_nick())
 	{
+		// We have left
 		chans.del(chan);
 		return;
 	}
@@ -474,8 +472,8 @@ void Bot::handle_mode(const Msg &msg)
 		return;
 	}
 
-	// Our UMODE coming as MODE formatted as UMODEIS (was this protocol designed by committee?)
-	if(my_nick(msg.get_nick()) && my_nick(msg[CHANNAME]))
+	// Our UMODE coming as MODE formatted as UMODEIS (lol)
+	if(msg.get_nick() == get_nick() && msg[CHANNAME] == get_nick())
 	{
 		handle_umodeis(msg);
 		return;
@@ -523,9 +521,6 @@ void Bot::handle_umode(const Msg &msg)
 
 	log_handle(msg,"UMODE");
 
-	if(!my_nick(msg.get_nick()))
-		throw Exception("Server sent us umode for a different nickname");
-
 	Sess &sess = get_sess();
 	sess.delta_mode(msg[DELTASTR]);
 }
@@ -536,9 +531,6 @@ void Bot::handle_umodeis(const Msg &msg)
 	using namespace fmt::UMODEIS;
 
 	log_handle(msg,"UMODEIS");
-
-	if(!my_nick(msg[SELFNAME]))
-		throw Exception("Server sent us umodeis for a different nickname");
 
 	Sess &sess = get_sess();
 	sess.delta_mode(msg[DELTASTR]);
@@ -720,14 +712,15 @@ void Bot::handle_kick(const Msg &msg)
 
 	log_handle(msg,"KICK");
 
-	const std::string kicker = msg.get_nick();
-	const std::string &kickee = msg.num_params() > 1? msg[KICK::TARGET] : kicker;
+	const auto kicker = msg.get_nick();
+	const auto &kickee = msg.num_params() > 1? msg[KICK::TARGET] : kicker;
 
 	Chans &chans = get_chans();
 	Users &users = get_users();
 
-	if(my_nick(kickee))
+	if(get_nick() == kickee)
 	{
+		// We have been kicked
 		chans.del(msg[CHANNAME]);
 		chans.join(msg[CHANNAME]);
 		return;
@@ -831,7 +824,7 @@ void Bot::handle_notice(const Msg &msg)
 	if(msg.from_server())
 		return;
 
-	if(!my_nick(msg[SELFNAME]))
+	if(msg[SELFNAME] != get_nick())
 	{
 		handle_cnotice(msg);
 		return;
@@ -889,7 +882,7 @@ void Bot::handle_action(const Msg &msg)
 
 	log_handle(msg,"ACTION");
 
-	if(!my_nick(msg[SELFNAME]))
+	if(msg[SELFNAME] != get_nick())
 	{
 		handle_caction(msg);
 		return;
@@ -980,9 +973,6 @@ void Bot::handle_namreply(const Msg &msg)
 	using namespace fmt::NAMREPLY;
 
 	log_handle(msg,"NAM REPLY");
-
-	if(!my_nick(msg[NICKNAME]))
-		throw Exception("Server replied to the wrong nickname");
 
 	const Sess &sess = get_sess();
 	const Server &serv = sess.get_server();

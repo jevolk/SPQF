@@ -125,7 +125,6 @@ class Bot : public std::mutex
 
 	bool ready() const                                { return get_sess().is_conn();        }
 	auto &get_nick() const                            { return get_sess().get_nick();       }
-	bool my_nick(const std::string &nick) const       { return get_nick() == nick;          }
 
   protected:
 	auto &get_adb()                                   { return adb;                         }

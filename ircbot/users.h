@@ -47,8 +47,7 @@ class Users
 inline
 bool Users::del(const User &user)
 {
-	const std::string &nick = user.get_nick();
-	return users.erase(nick);
+	return users.erase(user.get_nick());
 }
 
 
