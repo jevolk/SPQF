@@ -13,9 +13,6 @@
 using namespace irc::bot;
 #include "vote.h"
 #include "vdb.h"
-#include "votes.h"
-#include "voting.h"
-#include "respub.h"
 
 
 Vote::Vote(const std::string &type,
