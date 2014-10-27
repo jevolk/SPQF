@@ -112,10 +112,10 @@ void ChanServ::handle_flagslist(const Capture &msg)
 	std::advance(end,msg.size() - 1);
 	for(; it != end; ++it)
 	{
-		const std::vector<std::string> toks = tokens(*it," ");
-		const std::string &num = toks.at(0);
-		const std::string &user = toks.at(1);
-		const std::string &list = toks.at(2).substr(1);   // chop off '+'	
+		const auto toks = tokens(*it," ");
+		const auto &num = toks.at(0);
+		const auto &user = tolower(toks.at(1));
+		const auto &list = toks.at(2).substr(1);   // chop off '+'
 		const bool founder = toks.at(3) == "(FOUNDER)";
 
 		std::stringstream addl;
