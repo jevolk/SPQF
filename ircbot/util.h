@@ -265,6 +265,20 @@ std::string packetize(const std::string &str,
 }
 
 
+template<size_t SIZE>
+const char *tolower(char (&buf)[SIZE])
+{
+	const size_t len = strnlen(buf,SIZE);
+	std::transform(buf,buf+len,buf,[]
+	(const char &c)
+	{
+		return std::tolower(c,locale);
+	});
+
+	return buf;
+}
+
+
 inline
 std::string tolower(const std::string &str)
 {
