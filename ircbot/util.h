@@ -282,8 +282,8 @@ const char *tolower(char (&buf)[SIZE])
 inline
 std::string tolower(const std::string &str)
 {
-	std::string ret;
-	std::transform(str.begin(),str.end(),std::back_inserter(ret),[]
+	std::string ret(str.size(),char());
+	std::transform(str.begin(),str.end(),ret.begin(),[]
 	(const char &c)
 	{
 		return std::tolower(c,locale);
