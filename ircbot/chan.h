@@ -161,16 +161,16 @@ class Chan : public Locutor,
 	void topic(const std::string &topic);
 	void kick(const User &user, const std::string &reason = "");
 	void remove(const User &user, const std::string &reason = "");
-	void devoice(const User &user);
-	void voice(const User &user);
-	uint unquiet(const User &user);
-	void quiet(const User &user, const Quiet::Type &type);
-	void quiet(const User &user);
-	uint unban(const User &user);
-	void ban(const User &user, const Ban::Type &type);
-	void ban(const User &user);
-	void deop(const User &user);
-	void op(const User &user);
+	Deltas unquiet(const User &user);
+	Delta quiet(const User &user, const Quiet::Type &type);
+	Deltas quiet(const User &user);
+	Deltas unban(const User &user);
+	Delta ban(const User &user, const Ban::Type &type);
+	Deltas ban(const User &user);
+	Delta devoice(const User &user);
+	Delta voice(const User &user);
+	Delta deop(const User &user);
+	Delta op(const User &user);
 	void part();                                            // Leave channel
 	void join();                                            // Enter channel
 
@@ -253,40 +253,67 @@ void Chan::part()
 
 
 inline
-void Chan::op(const User &u)
+Delta Chan::op(const User &user)
 {
-	opdo(Delta("+o",u.get_nick()));
+	Delta d("+o",user.get_nick());
+	opdo(d);
+	return d;
 }
 
 
 inline
-void Chan::deop(const User &u)
+Delta Chan::deop(const User &user)
 {
-	opdo(Delta("-o",u.get_nick()));
+	Delta d("-o",user.get_nick());
+	opdo(d);
+	return d;
 }
 
 
 inline
-uint Chan::unquiet(const User &u)
+Delta Chan::voice(const User &user)
+{
+	Delta d("+v",user.get_nick());
+	opdo(d);
+	return d;
+}
+
+
+inline
+Delta Chan::devoice(const User &user)
+{
+	Delta d("-v",user.get_nick());
+	opdo(d);
+	return d;
+}
+
+
+inline
+Deltas Chan::ban(const User &u)
 {
 	Deltas deltas;
+	deltas.emplace_back("+b",u.mask(Mask::HOST));
 
-	if(lists.quiets.count(u.mask(Mask::NICK)))
-		deltas.emplace_back("-q",u.mask(Mask::NICK));
-
-	if(lists.quiets.count(u.mask(Mask::HOST)))
-		deltas.emplace_back("-q",u.mask(Mask::HOST));
-
-	if(u.is_logged_in() && lists.quiets.count(u.mask(Mask::ACCT)))
-		deltas.emplace_back("-q",u.mask(Mask::ACCT));
+	if(u.is_logged_in())
+		deltas.emplace_back("+b",u.mask(Mask::ACCT));
 
 	opdo(deltas);
-	return deltas.size();
+	return deltas;
 }
 
 
 inline
-uint Chan::unban(const User &u)
+Delta Chan::ban(const User &user,
+                const Ban::Type &type)
+{
+	Delta delta("+b",user.mask(type));
+	opdo(delta);
+	return delta;
+}
+
+
+inline
+Deltas Chan::unban(const User &u)
 {
 	Deltas deltas;
 
@@ -300,25 +327,12 @@ uint Chan::unban(const User &u)
 		deltas.emplace_back("-b",u.mask(Mask::ACCT));
 
 	opdo(deltas);
-	return deltas.size();
+	return deltas;
 }
 
 
 inline
-void Chan::ban(const User &u)
-{
-	Deltas deltas;
-	deltas.emplace_back("+b",u.mask(Mask::HOST));
-
-	if(u.is_logged_in())
-		deltas.emplace_back("+b",u.mask(Mask::ACCT));
-
-	opdo(deltas);
-}
-
-
-inline
-void Chan::quiet(const User &u)
+Deltas Chan::quiet(const User &u)
 {
 	Deltas deltas;
 	deltas.emplace_back("+q",u.mask(Mask::HOST));
@@ -327,44 +341,36 @@ void Chan::quiet(const User &u)
 		deltas.emplace_back("+q",u.mask(Mask::ACCT));
 
 	opdo(deltas);
+	return deltas;
 }
 
 
 inline
-void Chan::ban(const User &user,
-               const Ban::Type &type)
+Delta Chan::quiet(const User &user,
+                  const Quiet::Type &type)
 {
-	Deltas deltas;
-	deltas.emplace_back("+b",user.mask(type));
-	opdo(deltas);
+	Delta delta("+q",user.mask(type));
+	opdo(delta);
+	return delta;
 }
 
 
 inline
-void Chan::quiet(const User &user,
-                 const Quiet::Type &type)
+Deltas Chan::unquiet(const User &u)
 {
 	Deltas deltas;
-	deltas.emplace_back("+q",user.mask(type));
+
+	if(lists.quiets.count(u.mask(Mask::NICK)))
+		deltas.emplace_back("-q",u.mask(Mask::NICK));
+
+	if(lists.quiets.count(u.mask(Mask::HOST)))
+		deltas.emplace_back("-q",u.mask(Mask::HOST));
+
+	if(u.is_logged_in() && lists.quiets.count(u.mask(Mask::ACCT)))
+		deltas.emplace_back("-q",u.mask(Mask::ACCT));
+
 	opdo(deltas);
-}
-
-
-inline
-void Chan::voice(const User &user)
-{
-	Deltas deltas;
-	deltas.emplace_back("+v",user.get_nick());
-	opdo(deltas);
-}
-
-
-inline
-void Chan::devoice(const User &user)
-{
-	Deltas deltas;
-	deltas.emplace_back("-v",user.get_nick());
-	opdo(deltas);
+	return deltas;
 }
 
 
