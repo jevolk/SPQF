@@ -79,15 +79,16 @@ class Locutor : public Stream
 	void whois();                                       // Sends whois query
 	void mode();                                        // Sends mode query
 
-	Locutor(Sess &sess, const std::string &target);
+	Locutor(Sess *const &sess, const std::string &target);
+	Locutor(Sess &sess, const std::string &target): Locutor(&sess,target) {}
 	virtual ~Locutor() = default;
 };
 
 
 inline
-Locutor::Locutor(Sess &sess,
+Locutor::Locutor(Sess *const &sess,
                  const std::string &target):
-sess(&sess),
+sess(sess),
 meth(DEFAULT_METHOD),
 methex(DEFAULT_METHODEX),
 fg(colors::FG::BLACK),

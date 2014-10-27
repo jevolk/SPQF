@@ -176,7 +176,7 @@ class Chan : public Locutor,
 	friend Chan &operator<<(Chan &c, const User &user);     // append "nickname: " to locutor stream
 	friend User &operator<<(User &u, const Chan &chan);     // for CNOTICE / CPRIVMSG
 
-	Chan(Adb &adb, Sess &sess, Service &chanserv, const std::string &name, const std::string &pass = "");
+	Chan(Adb *const &adb, Sess *const &sess, Service *const &chanserv, const std::string &name, const std::string &pass = "");
 	virtual ~Chan() = default;
 
 	friend std::ostream &operator<<(std::ostream &s, const Chan &chan);
@@ -184,14 +184,14 @@ class Chan : public Locutor,
 
 
 inline
-Chan::Chan(Adb &adb,
-           Sess &sess,
-           Service &chanserv,
+Chan::Chan(Adb *const &adb,
+           Sess *const &sess,
+           Service *const &chanserv,
            const std::string &name,
            const std::string &pass):
 Locutor(sess,name),
 Acct(adb,&Locutor::get_target()),
-chanserv(&chanserv),
+chanserv(chanserv),
 _log(sess,name),
 joined(false),
 creation(0),

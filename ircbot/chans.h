@@ -84,7 +84,7 @@ Chan &Chans::add(const std::string &name)
 {
 	auto iit = chans.emplace(std::piecewise_construct,
 	                         std::forward_as_tuple(tolower(name)),
-	                         std::forward_as_tuple(adb,sess,*chanserv,tolower(name)));
+	                         std::forward_as_tuple(&adb,&sess,chanserv,tolower(name)));
 	return iit.first->second;
 }
 

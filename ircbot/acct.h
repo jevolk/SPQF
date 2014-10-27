@@ -40,19 +40,10 @@ class Acct
 	// Convenience for single key => value
 	template<class T> void set_val(const std::string &key, const T &t);
 
-	Acct(Adb &adb, const std::string *const &acct);
+	Acct(Adb *const &adb, const std::string *const &acct): adb(adb), acct(acct) {}
+	Acct(Adb &adb, const std::string *const &acct): Acct(&adb,acct) {}
 	virtual ~Acct() = default;
 };
-
-
-inline
-Acct::Acct(Adb &adb,
-           const std::string *const &acct):
-adb(&adb),
-acct(acct)
-{
-
-}
 
 
 template<class T>

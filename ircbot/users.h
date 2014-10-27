@@ -56,7 +56,7 @@ User &Users::add(const std::string &nick)
 {
 	const auto &iit = users.emplace(std::piecewise_construct,
 	                                std::forward_as_tuple(nick),
-	                                std::forward_as_tuple(adb,sess,*nickserv,nick));
+	                                std::forward_as_tuple(&adb,&sess,nickserv,nick));
 	return iit.first->second;
 }
 

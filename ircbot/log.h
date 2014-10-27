@@ -8,7 +8,7 @@
 
 class Log
 {
-	const Sess &sess;
+	const Sess *sess;
 	std::string path;
 	std::ofstream file;
 
@@ -29,18 +29,21 @@ class Log
 	void operator()(const User &user, const Msg &msg);
 	auto &flush()                                        { return file.flush();     }
 
-	Log(const Sess &sess, const std::string &name);
+	Log(const Sess *const &sess, const std::string &name);
 };
 
 
 inline
-Log::Log(const Sess &sess,
+Log::Log(const Sess *const &sess,
          const std::string &name)
 try:
 sess(sess),
 path([&]
 {
-	const auto &opts = sess.get_opts();
+	if(!sess)
+		return name;
+
+	const auto &opts = sess->get_opts();
 	const auto &dir = opts["logdir"];
 	mkdir(dir.c_str(),0777);
 	return dir + "/" + name;
