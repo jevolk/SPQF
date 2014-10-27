@@ -400,9 +400,8 @@ void Bot::handle_join(const Msg &msg)
 	Chans &chans = get_chans();
 	Users &users = get_users();
 
-	User &user = users.add(msg.get_nick());
-	if(sess.has_cap("extended-join"))
-		user.set_acct(msg[ACCTNAME]);
+	const auto &acct = sess.has_cap("extended-join")? msg[ACCTNAME] : std::string();
+	User &user = users.add(msg.get_nick(),msg.get_host(),acct);
 
 	Chan &chan = chans.add(msg[CHANNAME]);
 	if(chan.users.add(user))

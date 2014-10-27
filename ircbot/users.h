@@ -30,9 +30,9 @@ class Users
 	void for_each(const std::function<void (User &)> &c);
 
 	// Manipulators
-	void rename(const std::string &old_nick, const std::string &new_nick);
 	User &get(const std::string &nick);
-	User &add(const std::string &nick);
+	void rename(const std::string &old_nick, const std::string &new_nick);
+	template<class... Args> User &add(const std::string &nick, Args&&... args);
 	bool del(const User &user);
 
 	// We construct before NickServ; Bot sets this
@@ -52,25 +52,18 @@ bool Users::del(const User &user)
 }
 
 
-inline
-User &Users::add(const std::string &nick)
+template<class... Args>
+User &Users::add(const std::string &nick,
+                 Args&&... args)
 {
 	const auto &iit = users.emplace(std::piecewise_construct,
 	                                std::forward_as_tuple(nick),
-	                                std::forward_as_tuple(&adb,&sess,nickserv,nick));
+	                                std::forward_as_tuple(get_adb(),
+	                                                      get_sess(),
+	                                                      get_ns(),
+	                                                      nick,
+	                                                      std::forward<Args>(args)...));
 	return iit.first->second;
-}
-
-
-inline
-User &Users::get(const std::string &nick)
-try
-{
-	return users.at(nick);
-}
-catch(const std::out_of_range &e)
-{
-	throw Exception("User not found");
 }
 
 
@@ -83,6 +76,18 @@ void Users::rename(const std::string &old_nick,
 	tmp_user.set_nick(new_nick);
 	users.erase(old_nick);
 	users.emplace(new_nick,std::move(tmp_user));
+}
+
+
+inline
+User &Users::get(const std::string &nick)
+try
+{
+	return users.at(nick);
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("User not found");
 }
 
 

@@ -58,8 +58,15 @@ class User : public Locutor,
 	void who(const std::string &flags = WHO_FORMAT);   // Requests who with flags we need by default
 	void info();                                       // Update acct["info"] from nickserv
 
-	User(Adb *const &adb, Sess *const &sess, Service *const &ns, const std::string &nick);
-	User(Adb &adb, Sess &sess, Service &ns, const std::string &nick): User(&adb,&sess,&ns,nick) {}
+	User(Adb *const &adb          = nullptr,
+	     Sess *const &sess        = nullptr,
+	     Service *const &ns       = nullptr,
+	     const std::string &nick  = std::string(),
+	     const std::string &host  = std::string(),
+	     const std::string &acct  = std::string());
+
+	template<class... A> User(Adb &adb, Sess &sess, Service &ns, A&&... a):
+	                          User(&adb,&sess,&ns,std::forward<A>(a)...) {}
 
 	friend std::ostream &operator<<(std::ostream &s, const User &u);
 };
@@ -69,7 +76,9 @@ inline
 User::User(Adb *const &adb,
            Sess *const &sess,
            Service *const &nickserv,
-           const std::string &nick):
+           const std::string &nick,
+           const std::string &host,
+           const std::string &acct):
 Locutor(sess,nick),
 Acct(adb,&this->acct),
 nickserv(nickserv),
