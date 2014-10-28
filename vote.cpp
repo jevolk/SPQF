@@ -322,14 +322,17 @@ catch(const Exception &e)
 Vote::Stat Vote::cast(const Ballot &ballot,
                       User &user)
 {
-	if(!voted(user) && voted_host(user.get_host()) > 0)
-		throw Exception("You can not cast another vote from this hostname.");
+	if(!voted(user))
+	{
+		if(voted_host(user.get_host()) > 0)
+			throw Exception("You can not cast another vote from this hostname.");
 
-	if(!voted(user) && !enfranchised(user))
-		throw Exception("You are not yet enfranchised in this channel.");
+		if(!enfranchised(user))
+			throw Exception("You are not yet enfranchised in this channel.");
 
-	if(!voted(user) && !qualified(user))
-		throw Exception("You have not been active enough qualify for this vote.");
+		if(!qualified(user))
+			throw Exception("You have not been active enough qualify for this vote.");
+	}
 
 	if(ballot == NAY && intercession(user))
 		veto.emplace(user.get_acct());
@@ -518,5 +521,5 @@ Locutor &operator<<(Locutor &locutor,
 {
 	using namespace colors;
 
-	return (locutor << "#" << BOLD << vote.get_id() << OFF);
+	return locutor << "#" << BOLD << vote.get_id() << OFF;
 }
