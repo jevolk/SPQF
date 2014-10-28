@@ -14,7 +14,7 @@ class Vdb : public Adb
 	bool exists(const id_t &id) const               { return Adb::exists(lex_cast(id));  }
 
 	template<class T, class... Args> T get(const id_t &id, Args&&... args);
-	template<class... Args> Vote get(const id_t &id, Args&&... args);
+	template<class... Args> std::unique_ptr<Vote> get(const id_t &id, Args&&... args);
 	std::string get_type(const id_t &id);
 
 	Vdb(const std::string &dir);
@@ -32,18 +32,22 @@ Adb(dir)
 inline
 std::string Vdb::get_type(const id_t &id)
 {
-	const auto doc = Adb::get(lex_cast(id));
+	const auto doc = Adb::get(std::nothrow,lex_cast(id));
 	return doc["type"];
 }
 
 
-template<class T,
-         class... Args>
-T Vdb::get(const id_t &id,
-           Args&&... args)
+template<class... Args>
+std::unique_ptr<Vote> Vdb::get(const id_t &id,
+                               Args&&... args)
 try
 {
-	return T{id,*this,std::forward<Args>(args)...};
+	switch(hash(get_type(id)))
+	{
+		case hash("quiet"):   return std::make_unique<vote::Quiet>(id,*this,std::forward<Args>(args)...);
+		case hash("ban"):     return std::make_unique<vote::Ban>(id,*this,std::forward<Args>(args)...);
+		default:              return std::make_unique<Vote>("",id,*this,std::forward<Args>(args)...);
+	}
 }
 catch(const Exception &e)
 {
@@ -54,12 +58,13 @@ catch(const Exception &e)
 }
 
 
-template<class... Args>
-Vote Vdb::get(const id_t &id,
-              Args&&... args)
+template<class T,
+         class... Args>
+T Vdb::get(const id_t &id,
+           Args&&... args)
 try
 {
-	return {std::string(),id,*this,std::forward<Args>(args)...};
+	return T{"",id,*this,std::forward<Args>(args)...};
 }
 catch(const Exception &e)
 {
