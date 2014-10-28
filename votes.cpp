@@ -334,7 +334,7 @@ void NickIssue::event_nick(User &user,
 //
 
 
-void ModeEffect::revert()
+void ModeEffect::expire()
 {
 	const Sess &sess = get_sess();
 	const Server &serv = sess.get_server();

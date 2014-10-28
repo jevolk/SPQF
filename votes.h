@@ -31,7 +31,7 @@ class NickIssue : virtual Vote
 // The effect is a reversible mode Delta
 class ModeEffect : virtual Vote
 {
-	void revert() override;
+	void expire() override;
 
   protected:
 	template<class... Args> ModeEffect(Args&&... args): Vote(std::forward<Args>(args)...) {}
