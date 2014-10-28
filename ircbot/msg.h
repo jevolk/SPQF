@@ -73,7 +73,7 @@ class Msg
 
 	uint32_t code;
 	std::string name;
-	std::string origin;
+	Mask origin;
 	Params params;
 
   public:
@@ -83,6 +83,10 @@ class Msg
 	auto &get_params() const                                { return params;                    }
 	auto num_params() const                                 { return get_params().size();       }
 
+	auto get_nick() const                                   { return origin.get_nick();         }
+	auto get_user() const                                   { return origin.get_user();         }
+	auto get_host() const                                   { return origin.get_host();         }
+
 	auto &get(const size_t &i) const                        { return get_params().at(i);        }
 	auto &operator[](const size_t &i) const;                // returns empty str for outofrange
 	template<class R> R get(const size_t &i) const;         // throws for range or bad cast
@@ -90,14 +94,8 @@ class Msg
 	auto begin() const                                      { return params.begin();            }
 	auto end() const                                        { return params.end();              }
 
-	std::string get_nick() const;
-	std::string get_host() const;
-	bool from_server() const                                { return get_nick() == get_host();  }
-	bool from_nickserv() const                              { return get_nick() == "NickServ";  }
-	bool from_chanserv() const                              { return get_nick() == "ChanServ";  }
-	bool from_memoserv() const                              { return get_nick() == "MemoServ";  }
-	bool from_operserv() const                              { return get_nick() == "OperServ";  }
-	bool from_botserv() const                               { return get_nick() == "BotServ";   }
+	bool from(const Mask &mask) const;
+	bool from_server() const;
 
 	Msg(const uint32_t &code, const std::string &origin, const Params &params);
 	Msg(const uint32_t &code, const char *const &origin, const char **const &params, const size_t &count);
@@ -131,7 +129,6 @@ origin(origin),
 params(params)
 {
 
-
 }
 
 
@@ -157,28 +154,24 @@ origin(origin),
 params(params)
 {
 
-
 }
 
 
 inline
-std::string Msg::get_nick()
+bool Msg::from_server()
 const
 {
-	char buf[32];
-	irc_target_get_nick(get_origin().c_str(),buf,sizeof(buf));
-	return buf;
+	return !get_origin().has('@') && !get_origin().has('!');
 }
 
 
 inline
-std::string Msg::get_host()
+bool Msg::from(const Mask &mask)
 const
 {
-	char buf[128];
-	irc_target_get_host(get_origin().c_str(),buf,sizeof(buf));
-	return buf;
+	return mask == origin || tolower(mask.get_nick()) == tolower(origin.get_nick());
 }
+
 
 template<class R>
 R Msg::get(const size_t &i)

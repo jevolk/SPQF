@@ -800,7 +800,7 @@ void Bot::handle_cnotice(const Msg &msg)
 	const auto chname = wch_prefix? msg[CHANNAME].substr(1) : msg[CHANNAME];
 	Chan &chan = chans.get(chname);
 
-	if(msg.from_chanserv())
+	if(msg.from("chanserv"))
 	{
 		ChanServ &cs = get_cs();
 		cs.handle_cnotice(msg,chan);
@@ -829,14 +829,14 @@ void Bot::handle_notice(const Msg &msg)
 		return;
 	}
 
-	if(msg.from_nickserv())
+	if(msg.from("nickserv"))
 	{
 		NickServ &ns = get_ns();
 		ns.handle(msg);
 		return;
 	}
 
-	if(msg.from_chanserv())
+	if(msg.from("chanserv"))
 	{
 		ChanServ &cs = get_cs();
 		cs.handle(msg);
