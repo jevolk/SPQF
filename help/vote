@@ -8,7 +8,7 @@ Voting System:
 
 usage:
 
-  !vote      <command | issue>     : Initiate a vote for an issue or supply a command...
+  !vote      <command | issue> [--option=value] [<sub-argument ...>]
 
 Commands:
 
