@@ -33,6 +33,7 @@ class Locutor : public Stream
 	MethodEx methex;                                    // Stream state for extension to method
 	colors::FG fg;                                      // Stream state for foreground color
 	std::string target;
+	time_point flood;                                   // State for when next message gets sent
 
   public:
 	auto &get_sess() const                              { return *sess;                              }
@@ -41,6 +42,8 @@ class Locutor : public Stream
 	auto &get_methex() const                            { return methex;                             }
 	auto &get_target() const                            { return target;                             }
 	auto &get_my_nick() const                           { return get_sess().get_nick();              }
+	auto &get_flood() const                             { return flood;                              }
+	milliseconds calc_delay() const;
 
 	bool operator==(const Locutor &o) const             { return target == o.target;                 }
 	bool operator!=(const Locutor &o) const             { return target != o.target;                 }
@@ -56,14 +59,16 @@ class Locutor : public Stream
 	bool operator<(const std::string &o) const          { return tolower(target) < tolower(o);       }
 	bool operator>(const std::string &o) const          { return tolower(target) > tolower(o);       }
 
+	void set_target(const std::string &target)          { this->target = target;                     }
+	void inc_flood(const milliseconds &flood)           { this->flood += flood;                      }
+
   protected:
 	auto &get_sess()                                    { return *sess;                              }
 
+	milliseconds delay();                               // calc_delay, inc_flood
 	void msg(const char *const &cmd);
 
   public:
-	void set_target(const std::string &target)          { this->target = target;                     }
-
 	// [SEND] stream interface                          // Defaults back to DEFAULT_METHOD after flush
 	Locutor &operator<<(const flush_t) override;
 	Locutor &operator<<(const Method &method);          // Set method for this message
@@ -92,9 +97,47 @@ sess(sess),
 meth(DEFAULT_METHOD),
 methex(DEFAULT_METHODEX),
 fg(colors::FG::BLACK),
-target(target)
+target(target),
+flood(steady_clock::now())
 {
 
+}
+
+
+inline
+void Locutor::mode()
+{
+	Quote(get_sess(),"MODE") << get_target();
+}
+
+
+inline
+void Locutor::whois()
+{
+	Quote(get_sess(),"WHOIS") << get_target();
+}
+
+
+inline
+void Locutor::mode(const Deltas &deltas)
+{
+	auto &sess = get_sess();
+	const auto &isup = sess.get_isupport();
+	const size_t max = isup.get("MODES",3);
+
+	for(size_t i = 0; i < deltas.size(); i += max)
+	{
+		const auto beg = deltas.begin() + i;
+		const auto end = deltas.begin() + std::min(deltas.size(),i + max);
+		mode(deltas.substr(beg,end));
+	}
+}
+
+
+inline
+void Locutor::mode(const std::string &str)
+{
+	Quote(get_sess(),"MODE") << get_target() << " " << str;
 }
 
 
@@ -178,7 +221,7 @@ void Locutor::msg(const char *const &cmd)
 		{
 			const auto prefix = methex == WALLCHOPS? '@' : '+';
 			for(const auto &token : toks)
-				Quote(get_sess(),cmd) << prefix << get_target() << " :" << token;
+				Quote(get_sess(),cmd,delay()) << prefix << get_target() << " :" << token;
 
 			break;
 		}
@@ -187,7 +230,7 @@ void Locutor::msg(const char *const &cmd)
 		{
 			const auto &chan = toks.at(0);
 			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				Quote(get_sess(),cmd) << get_target() << " "  << chan << " :" << *it;
+				Quote(get_sess(),cmd,delay()) << get_target() << " "  << chan << " :" << *it;
 
 			break;
 		}
@@ -196,7 +239,7 @@ void Locutor::msg(const char *const &cmd)
 		default:
 		{
 			for(const auto &token : toks)
-				Quote(get_sess(),cmd) << get_target() << " :" << token;
+				Quote(get_sess(),cmd,delay()) << get_target() << " :" << token;
 
 			break;
 		}
@@ -205,37 +248,31 @@ void Locutor::msg(const char *const &cmd)
 
 
 inline
-void Locutor::mode()
+milliseconds Locutor::delay()
 {
-	Quote(get_sess(),"MODE") << get_target();
+	const Sess &sess = get_sess();
+	const Opts &opts = sess.get_opts();
+	const milliseconds inc(opts.get<uint>("flood-increment"));
+	const auto ret = calc_delay();
+
+	if(ret == 0ms)
+		flood = steady_clock::now();
+
+	inc_flood(inc);
+	return ret;
 }
 
 
 inline
-void Locutor::whois()
+milliseconds Locutor::calc_delay()
+const
 {
-	Quote(get_sess(),"WHOIS") << get_target();
-}
+	using namespace std::chrono;
 
+	const auto now = steady_clock::now();
+	if(flood < now)
+		return 0ms;
 
-inline
-void Locutor::mode(const Deltas &deltas)
-{
-	auto &sess = get_sess();
-	const auto &isup = sess.get_isupport();
-	const size_t max = isup.get("MODES",3);
-
-	for(size_t i = 0; i < deltas.size(); i += max)
-	{
-		const auto beg = deltas.begin() + i;
-		const auto end = deltas.begin() + std::min(deltas.size(),i + max);
-		mode(deltas.substr(beg,end));
-	}
-}
-
-
-inline
-void Locutor::mode(const std::string &str)
-{
-	Quote(get_sess(),"MODE") << get_target() << " " << str;
+	return duration_cast<milliseconds>(flood.time_since_epoch()) -
+	       duration_cast<milliseconds>(now.time_since_epoch());
 }

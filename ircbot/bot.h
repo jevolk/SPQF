@@ -46,6 +46,11 @@
 namespace irc {
 namespace bot {
 
+using namespace std::literals::chrono_literals;
+using milliseconds = std::chrono::milliseconds;
+using steady_clock = std::chrono::steady_clock;
+using time_point = std::chrono::time_point<steady_clock>;
+
 namespace colors
 {
 	#include "colors.h"

@@ -33,6 +33,7 @@ struct Opts : public std::map<std::string,std::string>
 		{"invite-throttle",     "300"                                     },
 		{"owner",               ""                                        },
 		{"services",            "true"                                    },
+		{"flood-increment",     "750"   /* milliseconds */                },
 	}
 	{
 		if(at("locale").empty())

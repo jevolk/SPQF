@@ -35,18 +35,21 @@ class Quote
 	// Append to stream
 	template<class T> Quote &operator<<(const T &t);
 
-	Quote(Sess &sess, const char *const &cmd = "");
+	Quote(Sess &sess, const char *const &cmd = "", const milliseconds &delay = 0ms);
 	~Quote() noexcept;
 };
 
 
 inline
 Quote::Quote(Sess &sess,
-             const char *const &cmd):
+             const char *const &cmd,
+             const milliseconds &delay):
 sess(sess),
 sendq(sess.get_sendq()),
 cmd(cmd)
 {
+	sendq.set_delay(delay);
+
 	if(has_cmd())
 		sendq << cmd << " ";
 }

@@ -63,6 +63,7 @@ decltype(SendQ::mutex) SendQ::mutex;
 decltype(SendQ::cond) SendQ::cond;
 decltype(SendQ::interrupted) SendQ::interrupted;
 decltype(SendQ::queue) SendQ::queue;
+decltype(SendQ::slowq) SendQ::slowq;
 
 static std::thread thread {&SendQ::worker};
 static scope join([]
@@ -79,61 +80,54 @@ void SendQ::interrupt()
 }
 
 
-using Clock = std::chrono::steady_clock;
-using TimePoint = std::chrono::time_point<Clock>;
-
-struct Ent
+auto SendQ::slowq_next()
 {
-	irc_session_t *sess;
-	std::string pck;
-	TimePoint time;
-};
+	using namespace std::chrono;
 
-struct State
-{
-	TimePoint last;
+	if(slowq.empty())
+		return milliseconds(std::numeric_limits<uint32_t>::max());
 
-};
+	const auto now = steady_clock::now();
+	const auto &abs = slowq.front().absolute;
+	if(abs < now)
+		return milliseconds(0);
 
-static const std::chrono::milliseconds PROCESS_INTERVAL {250};
-static std::map<irc_session_t *, State> state;
-static std::deque<Ent> slowq;
-
-
-static
-void process_slowq()
-{
-	//TODO:                                               //
-	std::this_thread::sleep_for(std::chrono::milliseconds(333));
-
+	return duration_cast<milliseconds>(abs.time_since_epoch()) -
+	       duration_cast<milliseconds>(now.time_since_epoch());
 }
 
 
-static
-void process(irc_session_t *const &sess,
-             const std::string &pck)
+void SendQ::slowq_process()
 {
-	state[sess].last = std::chrono::steady_clock::now();
-	send(sess,pck);
-}
-
-
-SendQ::Ent SendQ::next()
-{
-	std::unique_lock<decltype(SendQ::mutex)> lock(SendQ::mutex);
-	cond.wait_for(lock,PROCESS_INTERVAL,[&]
+	while(!slowq.empty())
 	{
-		if(interrupted.load(std::memory_order_consume))
-			throw Internal("Interrupted");
+		const Ent &ent = slowq.front();
+		if(ent.absolute > steady_clock::now())
+			break;
 
-		return !queue.empty();
+		send(ent.sess,ent.pck);
+		slowq.pop_front();
+	}
+}
+
+
+void SendQ::slowq_add(Ent &ent)
+{
+	slowq.emplace_back(ent);
+	std::sort(slowq.begin(),slowq.end(),[]
+	(const Ent &a, const Ent &b)
+	{
+		return a.absolute < b.absolute;
 	});
+}
 
-	if(queue.empty())
-		return {nullptr};
 
-	const scope pf([]{ queue.pop_front(); });
-	return queue.front();
+void SendQ::process(Ent &ent)
+{
+	if(ent.absolute > steady_clock::now())
+		slowq_add(ent);
+	else
+		send(ent.sess,ent.pck);
 }
 
 
@@ -142,11 +136,19 @@ try
 {
 	while(1)
 	{
-		const Ent ent = next();
-		if(ent.sess)
-			process(ent.sess,ent.pck);
+		std::unique_lock<decltype(SendQ::mutex)> lock(SendQ::mutex);
+		cond.wait_for(lock,slowq_next());
 
-		process_slowq();
+		if(interrupted.load(std::memory_order_consume))
+			throw Internal("Interrupted");
+
+		while(!queue.empty())
+		{
+			const scope pf([]{ queue.pop_front(); });
+			process(queue.front());
+		}
+
+		slowq_process();
     }
 }
 catch(const Internal &e)
