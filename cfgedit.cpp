@@ -19,7 +19,7 @@ int main(int argc, char **argv) try
 
 	if(argc - nargs < 2)
 	{
-		printf("Usage: %s [--dbdir=db] <dbkey | *> [key] [= [val]]\n",argv[0]);
+		printf("Usage: %s [--dbdir=db --db=ircbot] <dbkey | *> [key] [= [val]]\n",argv[0]);
 		printf("\t- dbkey is the channel or account name, i.e \"#SPQF\" or foobar\n");
 		printf("\t- key is the fully qualified JSON key, i.e config.vote.duration\n");
 		printf("\t- omitting value after = is a deletion of this key.\n");
@@ -52,7 +52,8 @@ int main(int argc, char **argv) try
 		std::cin.get();
 	}
 
-	Adb adb(opts["dbdir"] + "/ircbot");
+	const auto db = opts.count("db")? opts["db"] : "ircbot";
+	Adb adb(opts["dbdir"] + "/" + db);
 
 	if(dockey == "*")
 	{
