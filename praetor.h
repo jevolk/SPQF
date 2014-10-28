@@ -43,16 +43,20 @@ class Praetor
 	std::condition_variable cond;
 	Schedule sched;
 
+  public:
+	void add(const id_t &id, const time_t &absolute);
+	void add(std::unique_ptr<Vote> &&vote);
+
+  private:
 	void process(Vote &vote) noexcept;
 	void process(const id_t &id);
 	void process();
 	void worker();
 	std::thread thread;
 
-  public:
-	void add(std::unique_ptr<Vote> &&vote);
-	void add(const id_t &id);
+	void init();
 
+  public:
 	Praetor(Sess &sess, Chans &chans, Users &users, Bot &bot, Vdb &vdb);
 	~Praetor() noexcept;
 };

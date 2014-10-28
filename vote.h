@@ -25,6 +25,7 @@ class Vote : protected Acct
 	Adoc cfg;                                   // Configuration of this vote
 	time_t began;                               // Time vote was activated or 0
 	time_t ended;                               // Time vote was closed or 0
+	time_t expiry;                              // Time vote effects successfully expired.
 	std::string reason;                         // Reason for outcome
 	std::string effect;                         // Effects of outcome
 	std::set<std::string> yea;                  // Accounts voting Yes
@@ -48,6 +49,7 @@ class Vote : protected Acct
 	auto &get_cfg() const                       { return cfg;                                       }
 	auto &get_began() const                     { return began;                                     }
 	auto &get_ended() const                     { return ended;                                     }
+	auto &get_expiry() const                    { return expiry;                                    }
 	auto &get_reason() const                    { return reason;                                    }
 	auto &get_effect() const                    { return effect;                                    }
 	auto &get_yea() const                       { return yea;                                       }
@@ -103,6 +105,7 @@ class Vote : protected Acct
 	void set_effect(const std::string &effect)  { this->effect = effect;                            }
 	void set_began()                            { time(&began);                                     }
 	void set_ended()                            { time(&ended);                                     }
+	void set_expiry()                           { time(&expiry);                                    }
 
 	// One-time internal events                 // Subclass throws from these for abortions at any time.
 	virtual void passed() {}                    // Performs effects after successful vote
@@ -125,13 +128,14 @@ class Vote : protected Acct
 	virtual void event_cnotice(User &u, Chan &c, const std::string &text) {}
 
 	// Various/events while vote is not active.
-	virtual void expire() {}                    // Called by Praetor after some time to undo effects.
+	virtual void expired() {}                   // Reverts the effects after "cfg.for" time
 
-	// Main controls
+	// Main controls used by Voting / Praetor
 	void save()                                 { Acct::set(*this);                                 }
 	void start();
 	void finish();
 	void cancel();
+	void expire();
 
 	// Deserialization ctor
 	Vote(const std::string &type,               // Dummy argument to match main ctor for ...'s

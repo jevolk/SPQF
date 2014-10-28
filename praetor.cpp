@@ -30,7 +30,7 @@ vdb(vdb),
 interrupted(false),
 thread(&Praetor::worker,this)
 {
-
+	std::thread(&Praetor::init,this).detach();
 
 }
 
@@ -44,21 +44,38 @@ noexcept
 }
 
 
-void Praetor::add(const id_t &id)
+void Praetor::init()
 {
+	std::this_thread::sleep_for(std::chrono::seconds(30));
+	std::cout << "[Praetor]: Initiating the schedule."
+	          << " Reading " << vdb.count() << " votes..."
+	          << std::endl;
 
+	for(const auto &pair : vdb)
+	{
+		if(interrupted.load(std::memory_order_consume))
+			break;
 
-}
+		const auto id = lex_cast<id_t>(pair.first);
+		const Adoc doc(pair.second);
 
+		const time_t ended = doc.get<time_t>("ended",0);
+		const time_t expiry = doc.get<time_t>("expiry",0);
+		const time_t cfgfor = doc.get<time_t>("cfg.for",0);
+		if(expiry || !cfgfor || !ended)
+			continue;
 
-void Praetor::add(std::unique_ptr<Vote> &&vote)
-{
-	const id_t id = vote->get_id();
-	const auto cfg = vote->get_cfg();
-	const time_t absolute = time(NULL) + cfg.get<time_t>("for");
-	const std::lock_guard<std::mutex> l(mutex);
-	sched.add(id,absolute);
-	cond.notify_one();
+		const time_t absolute = ended + cfgfor;
+		printf("[Praetor]: Scheduling #%u [expiry: %zd cfgfor: %zd ended: %zd] absolute: %zd relative: %zd\n",
+		       id,
+		       expiry,
+		       cfgfor,
+		       ended,
+		       absolute,
+		       absolute - time(NULL));
+
+		add(id,absolute);
+	}
 }
 
 
@@ -101,11 +118,29 @@ noexcept try
 catch(const std::exception &e)
 {
 	std::cerr << "\033[1;31m"
-	          << "Praetor::Process():"
+	          << "[Praetor]:"
 	          << " Vote #" << vote.get_id()
 	          << " error: " << e.what()
 	          << "\033[0m"
 	          << std::endl;
+}
+
+
+void Praetor::add(std::unique_ptr<Vote> &&vote)
+{
+	const id_t id = vote->get_id();
+	const auto cfg = vote->get_cfg();
+	const time_t absolute = time(NULL) + cfg.get<time_t>("for");
+	add(id,absolute);
+}
+
+
+void Praetor::add(const id_t &id,
+                  const time_t &absolute)
+{
+	const std::lock_guard<std::mutex> l(mutex);
+	sched.add(id,absolute);
+	cond.notify_one();
 }
 
 
