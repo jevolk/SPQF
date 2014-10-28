@@ -87,9 +87,6 @@ void Praetor::process()
 
 void Praetor::process(const id_t &id)
 {
-	const auto type = vdb.get_type(id);
-	std::cout << type << std::endl;
-
 	const std::unique_lock<Bot> lock(bot);
 	const std::unique_ptr<Vote> vote = vdb.get(id,&sess,&chans,&users);
 	process(*vote);
@@ -103,9 +100,11 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	std::cerr << "Praetor::Process():"
+	std::cerr << "\033[1;31m"
+	          << "Praetor::Process():"
 	          << " Vote #" << vote.get_id()
 	          << " error: " << e.what()
+	          << "\033[0m"
 	          << std::endl;
 }
 
