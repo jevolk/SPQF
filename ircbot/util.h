@@ -356,6 +356,19 @@ struct scope
 };
 
 
+template<class M>
+class unlock_guard
+{
+	M &m;
+
+  public:
+	unlock_guard(M &m): m(m)                       { m.unlock();  }
+	unlock_guard(unlock_guard &&) = delete;
+	unlock_guard(const unlock_guard &) = delete;
+	~unlock_guard()                                { m.lock();    }
+};
+
+
 template<int CODE_FOR_SUCCESS = 0,
          class Exception = Internal,
          class Function,
