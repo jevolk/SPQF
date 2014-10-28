@@ -109,6 +109,7 @@ cfg(get("cfg")),
 began(get_val<time_t>("began")),
 ended(get_val<time_t>("ended")),
 reason(get_val("reason")),
+effect(get_val("effect")),
 yea(get("yea").into(yea)),
 nay(get("nay").into(nay)),
 veto(get("veto").into(veto)),
@@ -142,6 +143,7 @@ const
 	doc.put("began",get_began());
 	doc.put("ended",get_ended());
 	doc.put("reason",get_reason());
+	doc.put("effect",get_effect());
 	doc.put_child("cfg",get_cfg());
 	doc.put_child("yea",yea);
 	doc.put_child("nay",nay);

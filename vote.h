@@ -26,6 +26,7 @@ class Vote : protected Acct
 	time_t began;                               // Time vote was activated or 0
 	time_t ended;                               // Time vote was closed or 0
 	std::string reason;                         // Reason for outcome
+	std::string effect;                         // Effects of outcome
 	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
 	std::set<std::string> veto;                 // Accounts voting No with intent to veto
@@ -48,6 +49,7 @@ class Vote : protected Acct
 	auto &get_began() const                     { return began;                                     }
 	auto &get_ended() const                     { return ended;                                     }
 	auto &get_reason() const                    { return reason;                                    }
+	auto &get_effect() const                    { return effect;                                    }
 	auto &get_yea() const                       { return yea;                                       }
 	auto &get_nay() const                       { return nay;                                       }
 	auto &get_hosts() const                     { return hosts;                                     }
@@ -98,6 +100,7 @@ class Vote : protected Acct
 
 	void set_issue(const std::string &issue)    { this->issue = issue;                              }
 	void set_reason(const std::string &reason)  { this->reason = reason;                            }
+	void set_effect(const std::string &effect)  { this->effect = effect;                            }
 	void set_began()                            { time(&began);                                     }
 	void set_ended()                            { time(&ended);                                     }
 
