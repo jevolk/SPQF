@@ -89,8 +89,6 @@ void vote::Import::passed()
 void vote::UnQuiet::passed()
 {
 	Chan &chan = get_chan();
-	const Adoc &cfg = get_cfg();
-	const User &user = get_users().get(get_issue());
 	chan.unquiet(user);
 }
 
@@ -155,12 +153,15 @@ void vote::Opine::passed()
 
 void vote::Kick::passed()
 {
-	Chan &chan = get_chan();
 	const Adoc &cfg = get_cfg();
-	const User &user = get_users().get(get_issue());
+	Chan &chan = get_chan();
 
-	if(cfg["shield.when_away"] == "1" && user.is_away())
-		throw Exception("The user is currently away and shield.when_away == 1");
+	{
+		const Users &users = get_users();
+		const User &user = users.get(this->user.get_nick());
+		if(cfg["shield.when_away"] == "1" && user.is_away())
+			throw Exception("The user is currently away and shield.when_away == 1");
+	}
 
 	chan.kick(user,"Voted off the island");
 }
@@ -310,10 +311,6 @@ void vote::Config::passed()
 
 void NickIssue::starting()
 {
-	if(get_issue().empty())
-		throw Exception("You must specify a nickname for this type of vote.");
-
-	User &user = get_users().get(get_issue());
 	if(user.is_myself())
 		throw Exception("http://en.wikipedia.org/wiki/Leviathan_(book)");
 
@@ -328,6 +325,6 @@ void NickIssue::starting()
 void NickIssue::event_nick(User &user,
                            const std::string &old)
 {
-	if(get_issue() == old)
-		set_issue(user.get_nick());
+	if(this->user.get_nick() == old)
+		this->user = user;
 }

@@ -14,10 +14,12 @@
 
 struct NickIssue : public Vote
 {
+	User user;        // Copy of the user at start of vote
+
 	void event_nick(User &user, const std::string &old) override;
 	void starting() override;
 
-	template<class... Args> NickIssue(Args&&... args): Vote(std::forward<Args>(args)...) {}
+	template<class... Args> NickIssue(Args&&... args);
 };
 
 
@@ -124,6 +126,7 @@ namespace vote
 }
 
 
+
 template<class... Args>
 vote::Config::Config(Args&&... args):
 Vote("config",std::forward<Args>(args)...)
@@ -147,4 +150,14 @@ Vote("config",std::forward<Args>(args)...)
 		tokes.at(1).erase(it,tokes.at(1).end());
 		val = tokes.at(1);
 	}
+}
+
+
+
+template<class... Args>
+NickIssue::NickIssue(Args&&... args):
+Vote(std::forward<Args>(args)...),
+user(get_users().get(get_issue()))
+{
+
 }
