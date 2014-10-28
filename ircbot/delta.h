@@ -57,6 +57,8 @@ struct Deltas : std::vector<Delta>
 	operator std::string() const;
 
 	template<class... T> Deltas &operator<<(T&&... t);
+	Deltas &set_signs(const bool &sign);
+	Deltas &inv_signs();
 
 	Deltas() = default;
 	Deltas(std::vector<Delta> &&vec):       std::vector<Delta>(std::move(vec)) {}
@@ -97,6 +99,26 @@ try
 catch(const std::out_of_range &e)
 {
 	throw Exception("Improperly formatted deltas string.");
+}
+
+
+inline
+Deltas &Deltas::inv_signs()
+{
+	for(auto &d : *this)
+		std::get<Delta::SIGN>(d) =! std::get<Delta::SIGN>(d);
+
+	return *this;
+}
+
+
+inline
+Deltas &Deltas::set_signs(const bool &sign)
+{
+	for(auto &d : *this)
+		std::get<Delta::SIGN>(d) = sign;
+
+	return *this;
 }
 
 
