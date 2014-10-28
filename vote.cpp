@@ -76,7 +76,8 @@ cfg([&]
 	return ret;
 }()),
 began(0),
-ended(0)
+ended(0),
+expiry(0)
 {
 	if(disabled())
 		throw Exception("Votes of this type are disabled by the configuration.");
@@ -109,6 +110,7 @@ issue(get_val("issue")),
 cfg(get("cfg")),
 began(get_val<time_t>("began")),
 ended(get_val<time_t>("ended")),
+expiry(get_val<time_t>("expiry")),
 reason(get_val("reason")),
 effect(get_val("effect")),
 yea(get("yea").into(yea)),
@@ -143,6 +145,7 @@ const
 	doc.put("issue",get_issue());
 	doc.put("began",get_began());
 	doc.put("ended",get_ended());
+	doc.put("expiry",get_expiry());
 	doc.put("reason",get_reason());
 	doc.put("effect",get_effect());
 	doc.put_child("cfg",get_cfg());
@@ -152,6 +155,14 @@ const
 	doc.put_child("hosts",hosts);
 
 	return doc;
+}
+
+
+void Vote::expire()
+{
+	expired();
+	set_expiry();
+	save();
 }
 
 
