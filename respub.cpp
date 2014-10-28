@@ -261,7 +261,7 @@ void ResPublica::handle_vote(const Msg &msg,
 
 		// Administrative
 		default:
-		case hash("help"):     handle_help(msg,user,subtok(toks));                           break;
+		case hash("help"):     handle_help(msg,user<<chan,subtok(toks));                     break;
 		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,chan,user,subtok(toks));                 break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtok(toks));               break;
@@ -385,7 +385,7 @@ void ResPublica::handle_vote_config(const Msg &msg,
 
 	const bool ack_chan = cfg["config.config.ack_chan"] == "1";
 	Locutor &out = ack_chan? static_cast<Locutor &>(chan):
-	                         static_cast<Locutor &>(user);
+	                         static_cast<Locutor &>(user << chan);   // CMSG
 	if(val.empty())
 	{
 		const Adoc &doc = cfg.get_child(key,Adoc());
