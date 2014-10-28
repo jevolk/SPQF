@@ -103,9 +103,21 @@ void vote::UnQuiet::passed()
 void vote::Quiet::passed()
 {
 	Chan &chan = get_chan();
-	const Adoc &cfg = get_cfg();
-	const User &user = get_users().get(get_issue());
-	chan.quiet(user);
+	set_effect(chan.quiet(user));
+}
+
+
+
+void vote::Quiet::revert()
+{
+	const Sess &sess = get_sess();
+	const Server &serv = sess.get_server();
+
+	Deltas deltas(get_effect(),serv);
+	deltas.inv_signs();
+
+	Chan &chan = get_chan();
+	chan.opdo(deltas);
 }
 
 
@@ -119,10 +131,21 @@ void vote::Quiet::passed()
 void vote::Ban::passed()
 {
 	Chan &chan = get_chan();
-	const Adoc &cfg = get_cfg();
-	const User &user = get_users().get(get_issue());
-	chan.ban(user);
+	set_effect(chan.ban(user));
 	chan.remove(user,"And I ain't even mad");
+}
+
+
+void vote::Ban::revert()
+{
+	const Sess &sess = get_sess();
+	const Server &serv = sess.get_server();
+
+	Deltas deltas(get_effect(),serv);
+	deltas.inv_signs();
+
+	Chan &chan = get_chan();
+	chan.opdo(deltas);
 }
 
 

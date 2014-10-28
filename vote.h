@@ -104,7 +104,7 @@ class Vote : protected Acct
 	void set_began()                            { time(&began);                                     }
 	void set_ended()                            { time(&ended);                                     }
 
-	// One-time events                          // Subclass throws from these for abortions at any time.
+	// One-time internal events                 // Subclass throws from these for abortions at any time.
 	virtual void passed() {}                    // Performs effects after successful vote
 	virtual void failed() {}                    // Performs effects after failed vote
 	virtual void vetoed() {}                    // Performs effects after vetoed vote
@@ -123,6 +123,9 @@ class Vote : protected Acct
 	virtual void event_chanmsg(User &u, Chan &c, const std::string &text) {}
 	virtual void event_cnotice(User &u, const std::string &text) {}
 	virtual void event_cnotice(User &u, Chan &c, const std::string &text) {}
+
+	// Various/events while vote is not active.
+	virtual void revert() {}                    // Called by Praetor after some time to undo effects.
 
 	// Main controls
 	void save()                                 { Acct::set(*this);                                 }

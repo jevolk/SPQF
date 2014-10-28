@@ -22,6 +22,7 @@ class ResPublica : public irc::bot::Bot
 	static constexpr auto &flush = Locutor::flush;
 
 	Vdb vdb;
+	Praetor praetor;
 	Voting voting;
 
 	// !vote abstract stack
@@ -34,6 +35,7 @@ class ResPublica : public irc::bot::Bot
 	void handle_vote_list(const Msg &m, User &u, const Tokens &t);
 	void handle_vote_id(const Msg &m, User &u, const Tokens &t);
 	void handle_vote(const Msg &m, User &u, const Tokens &t);
+	void handle_praetor(const Msg &m, User &u, const Tokens &t);
 	void handle_regroup(const Msg &m, User &u, const Tokens &t);
 	void handle_whoami(const Msg &m, User &u, const Tokens &t);
 	void handle_config(const Msg &m, User &u, const Tokens &t);
@@ -65,7 +67,8 @@ template<class... Args>
 ResPublica::ResPublica(Args&&... args):
 irc::bot::Bot(std::forward<Args>(args)...),
 vdb({get_opts()["dbdir"] + "/vote"}),
-voting(vdb,get_sess(),get_chans(),get_users(),get_logs(),*this)
+praetor(get_sess(),get_chans(),get_users(),*this,vdb),
+voting(get_sess(),get_chans(),get_users(),get_logs(),*this,vdb,praetor)
 {
 
 }
