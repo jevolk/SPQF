@@ -159,7 +159,12 @@ Vote("config",std::forward<Args>(args)...)
 template<class... Args>
 NickIssue::NickIssue(Args&&... args):
 Vote(std::forward<Args>(args)...),
-user(get_users().get(get_issue()))
+user([&]
+{
+	const auto &nick = get_issue();
+	Users &users = get_users();
+	return users.has(nick)? users.get(nick) : User(&get_adb(),&get_sess(),nullptr,nick);
+}())
 {
 
 }
