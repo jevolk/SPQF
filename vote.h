@@ -125,7 +125,7 @@ class Vote : protected Acct
 	virtual void event_cnotice(User &u, Chan &c, const std::string &text) {}
 
 	// Various/events while vote is not active.
-	virtual void revert() {}                    // Called by Praetor after some time to undo effects.
+	virtual void expire() {}                    // Called by Praetor after some time to undo effects.
 
 	// Main controls
 	void save()                                 { Acct::set(*this);                                 }

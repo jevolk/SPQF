@@ -96,7 +96,7 @@ void Praetor::process(const id_t &id)
 void Praetor::process(Vote &vote)
 noexcept try
 {
-	vote.revert();
+	vote.expire();
 }
 catch(const std::exception &e)
 {
