@@ -44,9 +44,17 @@ try
 {
 	switch(hash(get_type(id)))
 	{
-		case hash("quiet"):   return std::make_unique<vote::Quiet>(id,*this,std::forward<Args>(args)...);
-		case hash("ban"):     return std::make_unique<vote::Ban>(id,*this,std::forward<Args>(args)...);
-		default:              return std::make_unique<Vote>("",id,*this,std::forward<Args>(args)...);
+		case hash("config"):    return std::make_unique<vote::Config>(id,*this,std::forward<Args>(args)...);
+		case hash("mode"):      return std::make_unique<vote::Mode>(id,*this,std::forward<Args>(args)...);
+		case hash("kick"):      return std::make_unique<vote::Kick>(id,*this,std::forward<Args>(args)...);
+		case hash("invite"):    return std::make_unique<vote::Invite>(id,*this,std::forward<Args>(args)...);
+		case hash("topic"):     return std::make_unique<vote::Topic>(id,*this,std::forward<Args>(args)...);
+		case hash("opine"):     return std::make_unique<vote::Opine>(id,*this,std::forward<Args>(args)...);
+		case hash("ban"):       return std::make_unique<vote::Ban>(id,*this,std::forward<Args>(args)...);
+		case hash("quiet"):     return std::make_unique<vote::Quiet>(id,*this,std::forward<Args>(args)...);
+		case hash("unquiet"):   return std::make_unique<vote::UnQuiet>(id,*this,std::forward<Args>(args)...);
+		case hash("import"):    return std::make_unique<vote::Import>(id,*this,std::forward<Args>(args)...);
+		default:                return std::make_unique<Vote>("",id,*this,std::forward<Args>(args)...);
 	}
 }
 catch(const Exception &e)

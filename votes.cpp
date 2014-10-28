@@ -107,20 +107,6 @@ void vote::Quiet::passed()
 
 
 
-void vote::Quiet::revert()
-{
-	const Sess &sess = get_sess();
-	const Server &serv = sess.get_server();
-
-	Deltas deltas(get_effect(),serv);
-	deltas.inv_signs();
-
-	Chan &chan = get_chan();
-	chan.opdo(deltas);
-}
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Ban
@@ -132,19 +118,6 @@ void vote::Ban::passed()
 	Chan &chan = get_chan();
 	set_effect(chan.ban(user));
 	chan.remove(user,"And I ain't even mad");
-}
-
-
-void vote::Ban::revert()
-{
-	const Sess &sess = get_sess();
-	const Server &serv = sess.get_server();
-
-	Deltas deltas(get_effect(),serv);
-	deltas.inv_signs();
-
-	Chan &chan = get_chan();
-	chan.opdo(deltas);
 }
 
 
@@ -216,8 +189,10 @@ void vote::Mode::passed()
 	const Sess &sess = get_sess();
 	const Server &serv = sess.get_server();
 
+	const Deltas deltas(get_issue(),serv);
 	Chan &chan = get_chan();
-	chan.opdo(Deltas(get_issue(),serv));
+	chan.opdo(deltas);
+	set_effect(deltas);
 }
 
 
@@ -327,7 +302,7 @@ void vote::Config::passed()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Category: NickIssue - All votes with a nickname as the issue
+// Attribute: NickIssue - All votes with a nickname as the issue
 //
 
 
@@ -349,4 +324,24 @@ void NickIssue::event_nick(User &user,
 {
 	if(this->user.get_nick() == old)
 		this->user = user;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Attribute: ModeEffect - All effect strings are invertible mode Deltas
+//
+
+
+void ModeEffect::revert()
+{
+	const Sess &sess = get_sess();
+	const Server &serv = sess.get_server();
+
+	Deltas deltas(get_effect(),serv);
+	deltas.inv_signs();
+
+	Chan &chan = get_chan();
+	chan.opdo(deltas);
 }
