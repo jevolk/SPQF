@@ -13,7 +13,9 @@ class Vdb : public Adb
   public:
 	bool exists(const id_t &id) const               { return Adb::exists(lex_cast(id));  }
 
+	template<class T, class... Args> T get(const id_t &id, Args&&... args);
 	template<class... Args> Vote get(const id_t &id, Args&&... args);
+	std::string get_type(const id_t &id);
 
 	Vdb(const std::string &dir);
 };
@@ -27,12 +29,37 @@ Adb(dir)
 }
 
 
+inline
+std::string Vdb::get_type(const id_t &id)
+{
+	const auto doc = Adb::get(lex_cast(id));
+	return doc["type"];
+}
+
+
+template<class T,
+         class... Args>
+T Vdb::get(const id_t &id,
+           Args&&... args)
+try
+{
+	return T{id,*this,std::forward<Args>(args)...};
+}
+catch(const Exception &e)
+{
+	if(exists(id))
+		throw;
+
+	throw Exception("Could not find a vote by that ID.");
+}
+
+
 template<class... Args>
 Vote Vdb::get(const id_t &id,
               Args&&... args)
 try
 {
-	return {id,*this,std::forward<Args>(args)...};
+	return {std::string(),id,*this,std::forward<Args>(args)...};
 }
 catch(const Exception &e)
 {
