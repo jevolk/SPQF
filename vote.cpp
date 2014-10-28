@@ -87,7 +87,8 @@ ended(0)
 }
 
 
-Vote::Vote(const id_t &id,
+Vote::Vote(const std::string &type,
+           const id_t &id,
            Adb &adb,
            Sess *const &sess,
            Chans *const &chans,

@@ -131,7 +131,8 @@ class Vote : protected Acct
 	void cancel();
 
 	// Deserialization ctor
-	Vote(const id_t &id,
+	Vote(const std::string &type,               // Dummy argument to match main ctor for ...'s
+	     const id_t &id,
 	     Adb &adb,
 	     Sess *const &sess     = nullptr,
 	     Chans *const &chans   = nullptr,
