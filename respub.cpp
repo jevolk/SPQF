@@ -612,7 +612,7 @@ void ResPublica::handle_help(const Msg &msg,
 
 void ResPublica::handle_vote_list(const Msg &msg,
                                   const User &user,
-                                  Locutor out,
+                                  Locutor &out,
                                   const Tokens &toks,
                                   const id_t &id)
 {
@@ -620,6 +620,11 @@ void ResPublica::handle_vote_list(const Msg &msg,
 
 	const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get<Vote>(id);
 	const auto tally = vote.tally();
+	const scope f([&]
+	{
+		// Flush may erase the CNOTICE privilege of this stream so it is only done once
+		out << flush;
+	});
 
 	out << vote << ": ";
 	out << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " ";
@@ -649,15 +654,12 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		else
 			out << BOLD << FG::WHITE << BG::RED << "FAILED" << OFF << BOLD << FG::RED << ": " << vote.get_reason();
 	}
-
-
-	out << flush;
 }
 
 
 void ResPublica::handle_vote_info(const Msg &msg,
                                   const User &user,
-                                  Locutor out,
+                                  Locutor &out,
                                   const Tokens &toks,
                                   const Vote &vote)
 {
@@ -666,6 +668,11 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	const std::string pfx = std::string("#") + string(vote.get_id()) + ": ";
 	const auto cfg = vote.get_cfg();
 	const auto tally = vote.tally();
+	const scope f([&]
+	{
+		// Flush may erase the CNOTICE privilege of this stream so it is only done once
+		out << flush;
+	});
 
 	// Title line
 	out << pfx << "Information on vote " << vote << ": ";
@@ -758,9 +765,6 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		else
 			out << FG::GREEN << "As it stands, the motion will pass."  << "\n";
 	}
-
-	// Flush erases the CNOTICE privilege of this stream, so we only do it once.
-	out << flush;
 }
 
 
