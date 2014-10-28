@@ -12,7 +12,6 @@
 // SPQF
 using namespace irc::bot;
 #include "vote.h"
-#include "vdb.h"
 
 
 Vote::Vote(const std::string &type,

@@ -12,8 +12,8 @@
 // SPQF
 using namespace irc::bot;
 #include "vote.h"
-#include "vdb.h"
 #include "votes.h"
+#include "vdb.h"
 #include "praetor.h"
 
 
@@ -91,8 +91,8 @@ void Praetor::process(const id_t &id)
 	std::cout << type << std::endl;
 
 	const std::unique_lock<Bot> lock(bot);
-	vote::Quiet vote = vdb.get<vote::Quiet>(id,&sess,&chans,&users);
-	process(vote);
+	const std::unique_ptr<Vote> vote = vdb.get(id,&sess,&chans,&users);
+	process(*vote);
 }
 
 

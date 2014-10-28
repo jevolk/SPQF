@@ -12,8 +12,8 @@
 // SPQF
 using namespace irc::bot;
 #include "vote.h"
-#include "vdb.h"
 #include "votes.h"
+#include "vdb.h"
 #include "praetor.h"
 #include "voting.h"
 #include "respub.h"
@@ -293,7 +293,7 @@ try
 
 	if(c)
 	{
-		const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get(id);
+		const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get<Vote>(id);
 		handle_vote_info(msg,user,user<<(*c),subtok(toks),vote);
 	}
 	else handle_vote_list(msg,user,user,subtok(toks),id);
@@ -526,7 +526,7 @@ try
 		return;
 	}
 
-	const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get(id);
+	const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get<Vote>(id);
 	handle_vote_info(msg,user,user<<(*chan),subtok(toks),vote);
 }
 catch(const boost::bad_lexical_cast &e)
@@ -618,7 +618,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 {
 	using namespace colors;
 
-	const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get(id);
+	const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get<Vote>(id);
 	const auto tally = vote.tally();
 
 	out << vote << ": ";
