@@ -60,12 +60,12 @@ namespace vote
 		template<class... Args> Kick(Args&&... args): NickIssue("kick",std::forward<Args>(args)...) {}
 	};
 
-	class Invite : public NickIssue
+	class Invite : public Vote
 	{
 		void passed() override;
 
 	  public:
-		template<class... Args> Invite(Args&&... args): NickIssue("invite",std::forward<Args>(args)...) {}
+		template<class... Args> Invite(Args&&... args): Vote("invite",std::forward<Args>(args)...) {}
 	};
 
 	class Topic : public Vote
