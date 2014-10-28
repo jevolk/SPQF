@@ -14,21 +14,24 @@ using namespace irc::bot;
 #include "vote.h"
 #include "vdb.h"
 #include "votes.h"
+#include "praetor.h"
 #include "voting.h"
 
 
-Voting::Voting(Vdb &vdb,
-               Sess &sess,
+Voting::Voting(Sess &sess,
                Chans &chans,
                Users &users,
                Logs &logs,
-               Bot &bot):
+               Bot &bot,
+               Vdb &vdb,
+               Praetor &praetor):
 sess(sess),
 chans(chans),
 users(users),
 logs(logs),
 bot(bot),
 vdb(vdb),
+praetor(praetor),
 interrupted(false),
 thread(&Voting::worker,this)
 {
@@ -127,7 +130,7 @@ void Voting::del(const id_t &id)
 
 void Voting::del(const decltype(votes.begin()) &it)
 {
-	const Vote &vote = *it->second;
+	auto &vote = it->second;
 	const Vote::id_t &id = it->first;
 	const auto deindex = [&id]
 	(auto &map, const auto &ent)
@@ -144,8 +147,9 @@ void Voting::del(const decltype(votes.begin()) &it)
 			map.erase(it);
 	};
 
-	deindex(chanidx,vote.get_chan_name());
-	deindex(useridx,vote.get_user_acct());
+	deindex(chanidx,vote->get_chan_name());
+	deindex(useridx,vote->get_user_acct());
+	praetor.add(std::move(vote));
 	votes.erase(it);
 }
 

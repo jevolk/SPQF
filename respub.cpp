@@ -14,6 +14,7 @@ using namespace irc::bot;
 #include "vote.h"
 #include "vdb.h"
 #include "votes.h"
+#include "praetor.h"
 #include "voting.h"
 #include "respub.h"
 
@@ -417,6 +418,7 @@ void ResPublica::handle_cmd(const Msg &msg,
 		case hash("config"):   handle_config(msg,user,subtok(toks));   break;
 		case hash("whoami"):   handle_whoami(msg,user,subtok(toks));   break;
 		case hash("regroup"):  handle_regroup(msg,user,subtok(toks));  break;
+		case hash("praetor"):  handle_praetor(msg,user,subtok(toks));  break;
 		default:                                                       break;
 	}
 }
@@ -463,6 +465,16 @@ void ResPublica::handle_regroup(const Msg &msg,
 		throw Exception("You've done this too much. Try again later.");
 
 	user.info();
+}
+
+
+void ResPublica::handle_praetor(const Msg &msg,
+                                User &user,
+                                const Tokens &toks)
+{
+	Chans &chans = get_chans();
+
+
 }
 
 

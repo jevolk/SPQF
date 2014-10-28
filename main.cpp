@@ -16,6 +16,7 @@ using namespace irc::bot;
 #include "vote.h"
 #include "vdb.h"
 #include "votes.h"
+#include "praetor.h"
 #include "voting.h"
 #include "respub.h"
 

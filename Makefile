@@ -47,7 +47,7 @@ clean:
 libircbot:
 	$(MAKE) -C ircbot
 
-spqf: main.o respub.o voting.o votes.o vote.o
+spqf: main.o respub.o voting.o votes.o praetor.o vote.o
 	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
 
 cfgedit: cfgedit.o
@@ -64,6 +64,9 @@ voting.o: voting.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 votes.o: votes.cpp *.h
+	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+
+praetor.o: praetor.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 vote.o: vote.cpp *.h

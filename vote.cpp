@@ -42,6 +42,7 @@ cfg([&]
 	// Default config
 	Adoc ret;
 	ret.put("disable",0);
+	ret.put("for",3600);
 	ret.put("max_active",16);
 	ret.put("max_per_user",1);
 	ret.put("min_ballots",1);

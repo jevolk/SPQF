@@ -88,6 +88,7 @@ namespace vote
 	class Ban : public NickIssue
 	{
 		void passed() override;
+		void revert() override;
 
 	  public:
 		template<class... Args> Ban(Args&&... args): NickIssue("ban",std::forward<Args>(args)...) {}
@@ -96,6 +97,7 @@ namespace vote
 	class Quiet : public NickIssue
 	{
 		void passed() override;
+		void revert() override;
 
 	  public:
 		template<class... Args> Quiet(Args&&... args): NickIssue("quiet",std::forward<Args>(args)...) {}
