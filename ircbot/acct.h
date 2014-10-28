@@ -11,6 +11,7 @@ class Acct
 	Adb *adb;
 	const std::string *acct;                             // the document key ; subclass holds data
 
+  protected:
 	auto &get_adb()                                     { return *adb;                              }
 
   public:
