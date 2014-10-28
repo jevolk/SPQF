@@ -29,6 +29,7 @@ or conduct takeovers.
 * **Mode** - Direct mode interface to the channel.
 * **Opine** - Opinion polls that have no effects.
 * **Config** - Vote to change the voting configuration itself.
+* **Import** - Vote to copy the voting configuration of another channel.
 
 
 *(Any module can be disabled in the configuration)*
@@ -86,7 +87,8 @@ or conduct takeovers.
 * Automatic NickServ ghost and regain on (re)connect.
 * Vote modules can have independent configurations.
 * Database-records of votes, ballots and outcomes.
-* Vote to copy the voting configuration of another channel.
+* Expiration management to undo effects of votes after some time.
+* Vote-time options to set any config variable for a single vote.
 
 
 #### Upcoming Features

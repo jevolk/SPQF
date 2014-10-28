@@ -267,6 +267,17 @@ vote types to be enabled. (see: config.vote.$type in the optional variables sect
 
 
 
+config.vote.for = <time string> [e.g. 1s 2m 3h 4d]
+
+The duration of the effects of this vote. For example, if the vote is a Ban, the ban will
+be unset after this amount of time. The succinctness of this variable name is intended
+to make it easy to use as a vote-time option (!vote ban --for=1d somebody).
+
+A default is set to 1h (one hour).
+
+
+
+
 OPTIONAL VARIABLES:
 
 These are variables that have an effect if set, but won't be written to the configuration
@@ -308,3 +319,19 @@ config.vote.shield.when_away = <bool> [0 - 1]
 Feature requested by Luke-Jr to allow users who set /away to escape being targets.
 
 Disabled by default.
+
+
+
+
+VOTE-TIME VARIABLES:
+
+Vote-time variables override anything in the voting configuration for a single vote.
+They are not saved back to the channel's voting configuration when used. Any config.vote
+variable can be overriden with the syntax --variable=value where variable is anthing under
+config.vote. For example, to override config.vote.duration for a vote:
+
+!vote opine --duration=60 Do you need more time to decide this?
+
+This initiates an opinion vote where config.vote.duration = 60, and the issue is "Do you
+need more time to decide this?" If a vote-type specific variable overrides the global
+default, this vote-time variable overrides both.
