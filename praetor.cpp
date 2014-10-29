@@ -51,13 +51,15 @@ void Praetor::init()
 	          << " Reading " << vdb.count() << " votes..."
 	          << std::endl;
 
-	for(const auto &pair : vdb)
+	auto it = vdb.cbegin(stldb::SNAPSHOT);
+	auto end = vdb.cend();
+	for(; it != end; ++it)
 	{
 		if(interrupted.load(std::memory_order_consume))
 			break;
 
-		const auto id = lex_cast<id_t>(pair.first);
-		const Adoc doc(pair.second);
+		const auto id = lex_cast<id_t>(it->first);
+		const Adoc doc(it->second);
 
 		const time_t ended = doc.get<time_t>("ended",0);
 		const time_t expiry = doc.get<time_t>("expiry",0);

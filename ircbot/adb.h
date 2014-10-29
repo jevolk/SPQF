@@ -11,8 +11,10 @@ class Adb
 	stldb::ldb<std::string,std::string> ldb;
 
   public:
+	template<class... A> auto cbegin(A&&... a) const     { return ldb.begin(std::forward<A>(a)...); }
 	template<class... A> auto begin(A&&... a) const      { return ldb.begin(std::forward<A>(a)...); }
 	template<class... A> auto begin(A&&... a)            { return ldb.begin(std::forward<A>(a)...); }
+	template<class... A> auto cend(A&&... a) const       { return ldb.end(std::forward<A>(a)...);   }
 	template<class... A> auto end(A&&... a) const        { return ldb.end(std::forward<A>(a)...);   }
 	template<class... A> auto end(A&&... a)              { return ldb.end(std::forward<A>(a)...);   }
 
