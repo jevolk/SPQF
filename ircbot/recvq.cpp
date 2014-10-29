@@ -33,7 +33,7 @@ decltype(queue)::value_type next()
 	cond.wait(lock,[]
 	{
 		if(interrupted.load(std::memory_order_consume))
-			throw Internal("Interrupted");
+			throw Internal(-1,"Interrupted");
 
 		return !queue.empty();
 	});
@@ -59,7 +59,11 @@ try
 }
 catch(const Internal &e)
 {
-	return;
+	switch(e.code())
+	{
+		case -1:                                                  return;
+		default:   std::cerr << "[recvq]: " << e << std::endl;    throw;
+	}
 }
 
 
