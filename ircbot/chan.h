@@ -1034,17 +1034,13 @@ void Lists::delta_flag(const Mask &mask,
 inline
 bool Lists::set_mode(const Delta &d)
 {
-	const auto &mask = std::get<Delta::MASK>(d);
-	const auto &sign = std::get<Delta::SIGN>(d);
-	const auto &mode = std::get<Delta::MODE>(d);
-
-	switch(mode)
+	switch(char(d))
 	{
-		case 'b':     return sign? bans.emplace(mask).second:
-		                           bans.erase(mask);
+		case 'b':     return d == '+'? bans.emplace(Mask(d)).second:
+		                               bans.erase(Mask(d));
 
-		case 'q':     return sign? quiets.emplace(mask).second:
-		                           quiets.erase(mask);
+		case 'q':     return d == '+'? quiets.emplace(Mask(d)).second:
+		                               quiets.erase(Mask(d));
 
 		default:      return false;
 	}

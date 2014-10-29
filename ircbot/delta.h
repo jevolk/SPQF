@@ -8,34 +8,41 @@
 
 struct Delta : std::tuple<bool,char,Mask>
 {
-	enum Field                                   { SIGN, MODE, MASK                                 };
-	enum Valid                                   { VALID, NOT_FOUND, NEED_MASK, CANT_MASK           };
+	enum Field                                      { SIGN, MODE, MASK                             };
+	enum Valid                                      { VALID, NOT_FOUND, NEED_MASK, CANT_MASK       };
 
-	static char sign(const bool &b)              { return b? '+' : '-';                             }
-	static bool sign(const char &s)              { return s != '-';                                 }
-	static bool is_sign(const char &s)           { return s == '-' || s == '+';                     }
-	static bool needs_inv_mask(const char &m);   // Modes that take an argument which is not a Mask
+	static char sign(const bool &b)                 { return b? '+' : '-';                         }
+	static bool sign(const char &s)                 { return s != '-';                             }
+	static bool is_sign(const char &s)              { return s == '-' || s == '+';                 }
+	static bool needs_inv_mask(const char &m);      // Modes that take an argument which is not a Mask
 
 	bool need_mask_chan(const Server &s) const;
 	bool need_mask_user(const Server &s) const;
 	bool exists_chan(const Server &s) const;
 	bool exists_user(const Server &s) const;
-	bool valid_mask() const;
+	bool empty_mask() const                         { return std::get<MASK>(*this).empty();        }
 
 	// returns reason
 	Valid check_chan(const Server &s) const;
 	Valid check_user(const Server &s) const;
 
 	// false on not VALID
-	bool valid_chan(const Server &s) const       { return check_chan(s) == VALID;                   }
-	bool valid_user(const Server &s) const       { return check_user(s) == VALID;                   }
+	bool valid_chan(const Server &s) const          { return check_chan(s) == VALID;               }
+	bool valid_user(const Server &s) const          { return check_user(s) == VALID;               }
 
 	// Throws on not VALID
 	void validate_chan(const Server &s) const;
 	void validate_user(const Server &s) const;
 
+	void check() const;                             // Throws why failed
+
+	bool operator==(const Mask::Form &form) const   { return std::get<MASK>(*this) == form;        }
+	bool operator==(const Mask &mask) const         { return std::get<MASK>(*this) == mask;        }
+	bool operator==(const char &mode) const;        // compares with sign (+/-) or mode char
+
+	explicit operator const Mask&() const           { return std::get<MASK>(*this);                }
+	explicit operator const char&() const           { return std::get<MODE>(*this);                }
 	operator std::string() const;
-	void check() const;                          // Throws why failed
 
 	Delta(const bool &sign, const char &mode, const Mask &mask);
 	Delta(const char &sign, const char &mode, const Mask &mask);
@@ -49,7 +56,7 @@ struct Delta : std::tuple<bool,char,Mask>
 struct Deltas : std::vector<Delta>
 {
 	bool all_signs(const bool &sign) const;
-	bool too_many(const Server &s) const         { return size() > s.isupport.get_or_max("MODES");  }
+	bool too_many(const Server &s) const        { return size() > s.isupport.get_or_max("MODES");  }
 	void validate_chan(const Server &s) const;
 	void validate_user(const Server &s) const;
 
@@ -258,12 +265,29 @@ std::tuple<bool,char,Mask>(sign,mode,mask)
 
 
 inline
+Delta::operator std::string()
+const
+{
+	return string(*this);
+}
+
+
+inline
+bool Delta::operator==(const char &mode)
+const
+{
+	return is_sign(mode)? std::get<SIGN>(*this) == sign(mode):
+	                      std::get<MODE>(*this) == mode;
+}
+
+
+inline
 void Delta::check()
 const
 {
-	if(!std::get<MASK>(*this).empty())
+	if(!empty_mask())
 	{
-		if(needs_inv_mask(std::get<MODE>(*this)) && valid_mask())
+		if(needs_inv_mask(std::get<MODE>(*this)) && std::get<MASK>(*this) != Mask::INVALID)
 			throw Exception("Mode does not require a hostmask argument.");
 	}
 }
@@ -306,10 +330,10 @@ const
 	if(!exists_user(s))
 		return NOT_FOUND;
 
-	if(std::get<MASK>(*this).empty() && need_mask_user(s))
+	if(empty_mask() && need_mask_user(s))
 		return NEED_MASK;
 
-	if(!std::get<MASK>(*this).empty() && !need_mask_user(s))
+	if(!empty_mask() && !need_mask_user(s))
 		return CANT_MASK;
 
 	return VALID;
@@ -322,21 +346,13 @@ const
 	if(!exists_chan(s))
 		return NOT_FOUND;
 
-	if(std::get<MASK>(*this).empty() && need_mask_chan(s))
+	if(empty_mask() && need_mask_chan(s))
 		return NEED_MASK;
 
-	if(!std::get<MASK>(*this).empty() && !need_mask_chan(s))
+	if(!empty_mask() && !need_mask_chan(s))
 		return CANT_MASK;
 
 	return VALID;
-}
-
-
-inline
-bool Delta::valid_mask()
-const
-{
-	return std::get<MASK>(*this).get_form() != Mask::INVALID;
 }
 
 
@@ -390,21 +406,13 @@ bool Delta::needs_inv_mask(const char &m)
 
 
 inline
-Delta::operator std::string()
-const
-{
-	return string(*this);
-}
-
-
-inline
 std::ostream &operator<<(std::ostream &s,
                          const Delta &d)
 {
 	s << d.sign(std::get<Delta::SIGN>(d));
 	s << std::get<Delta::MODE>(d);
 
-	if(!std::get<Delta::MASK>(d).empty())
+	if(!d.empty_mask())
 		s << " " << std::get<Delta::MASK>(d);
 
 	return s;
