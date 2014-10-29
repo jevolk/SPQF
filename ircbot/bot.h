@@ -83,6 +83,8 @@ namespace colors
 namespace chan
 {
 	#include "opdo.h"
+	#include "chan_lists.h"
+	#include "chan_users.h"
 	#include "chan.h"
 }
 using Chan = chan::Chan;
