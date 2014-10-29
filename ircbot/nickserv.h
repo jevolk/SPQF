@@ -119,6 +119,10 @@ void NickServ::handle_listchans(const Capture &msg)
 		const auto chan = tok.at(4);
 		sess.access[chan] = flags;
 	}
+
+	// Automatically join the channels where we have access
+	if(sess.has_opt("as-a-service"))
+		chans.servicejoin();
 }
 
 

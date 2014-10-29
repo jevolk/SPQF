@@ -39,6 +39,8 @@ class Chans
 	Chan &join(const std::string &name);               // Add channel with join or return existing
 	bool del(const std::string &name)                  { return chans.erase(name);                  }
 	bool del(const Chan &chan)                         { return del(chan.get_name());               }
+
+	void servicejoin();                                // Joins all channels with access
 	void autojoin();                                   // Joins all channels in the autojoin list
 
 	// We construct before ChanServ; Bot sets this
@@ -56,6 +58,20 @@ void Chans::autojoin()
 {
 	for(const auto &chan : sess.get_opts().autojoin)
 		join(chan);
+}
+
+
+inline
+void Chans::servicejoin()
+{
+	for(const auto &p : sess.get_access())
+	{
+		const auto &chan = p.first;
+		const auto &mode = p.second;
+
+		if(mode.has('A') && (mode.has('o') || mode.has('O')))
+			join(chan);
+	}
 }
 
 

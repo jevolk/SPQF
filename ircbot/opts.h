@@ -34,6 +34,7 @@ struct Opts : public std::map<std::string,std::string>
 		{"owner",               ""                                        },
 		{"services",            "true"                                    },
 		{"flood-increment",     "750"   /* milliseconds */                },
+		{"as-a-service",        "false"                                   },
 	}
 	{
 		if(at("locale").empty())
