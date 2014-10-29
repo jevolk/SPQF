@@ -66,8 +66,7 @@ bool Lists::has_flag(const User &u,
                      const char &flag)
 const
 {
-	const auto &gacct = u.get_val("info.account");
-	return !gacct.empty()? has_flag(gacct,flag) : has_flag(u.get_acct(),flag);
+	return has_flag(u.get_acct(),flag);
 }
 
 
