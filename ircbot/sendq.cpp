@@ -140,7 +140,7 @@ try
 		cond.wait_for(lock,slowq_next());
 
 		if(interrupted.load(std::memory_order_consume))
-			throw Internal(-1,"Interrupted");
+			throw Interrupted("Interrupted");
 
 		while(!queue.empty())
 		{
@@ -153,9 +153,10 @@ try
 }
 catch(const Internal &e)
 {
-	switch(e.code())
-	{
-		case -1:                                                  return;
-		default:   std::cerr << "[sendq]: " << e << std::endl;    throw;
-	}
+	std::cerr << "\033[1;31m[sendq]: " << e << "\033[0m" << std::endl;
+	throw;
+}
+catch(const Interrupted &e)
+{
+	return;
 }

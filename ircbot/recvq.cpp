@@ -33,7 +33,7 @@ decltype(queue)::value_type next()
 	cond.wait(lock,[]
 	{
 		if(interrupted.load(std::memory_order_consume))
-			throw Internal(-1,"Interrupted");
+			throw Interrupted("Interrupted");
 
 		return !queue.empty();
 	});
@@ -57,13 +57,9 @@ try
 		bot.dispatch(msg);
 	}
 }
-catch(const Internal &e)
+catch(const Interrupted &e)
 {
-	switch(e.code())
-	{
-		case -1:                                                  return;
-		default:   std::cerr << "[recvq]: " << e << std::endl;    throw;
-	}
+	return;
 }
 
 

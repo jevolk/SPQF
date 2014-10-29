@@ -7,9 +7,9 @@
 
 
 /**
- * Internal errors hidden from the interlocutor and passed straight through to the console.
+ * Exception base. Used directly when interrupting a thread, possibly to exit.
  */
-class Internal : public std::runtime_error
+class Interrupted : public std::runtime_error
 {
 	int c;
 
@@ -17,19 +17,33 @@ class Internal : public std::runtime_error
 	const int &code() const       { return c;      }
 	operator std::string() const  { return what(); }
 
-	Internal(const int &c, const std::string &what = ""): std::runtime_error(what), c(c) {}
-	Internal(const int &c, std::string &&what): std::runtime_error(std::move(what)), c(c) {}
-	Internal(const std::string &what = ""): std::runtime_error(what), c(0) {}
-	Internal(std::string &&what): std::runtime_error(std::move(what)), c(0) {}
+	Interrupted(const int &c, const std::string &what = ""): std::runtime_error(what), c(c) {}
+	Interrupted(const int &c, std::string &&what): std::runtime_error(std::move(what)), c(c) {}
+	Interrupted(const std::string &what = ""): std::runtime_error(what), c(0) {}
+	Interrupted(std::string &&what): std::runtime_error(std::move(what)), c(0) {}
 
-	template<class T> Internal operator<<(const T &t) const &&
+	template<class T> Interrupted operator<<(const T &t) const &&
 	{
 		return {code(),static_cast<std::stringstream &>(std::stringstream() << what() << t).str()};
 	}
 
-	friend std::ostream &operator<<(std::ostream &s, const Internal &e)
+	friend std::ostream &operator<<(std::ostream &s, const Interrupted &e)
 	{
 		return (s << e.what());
+	}
+};
+
+
+/**
+ * Internal errors hidden from the interlocutor and passed straight through to the console.
+ */
+struct Internal : public Interrupted
+{
+	template<class... Args> Internal(Args&&... args): Interrupted(std::forward<Args&&>(args)...) {}
+
+	template<class T> Internal operator<<(const T &t) const &&
+	{
+		return {code(),static_cast<std::stringstream &>(std::stringstream() << what() << t).str()};
 	}
 };
 

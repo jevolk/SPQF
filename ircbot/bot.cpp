@@ -169,17 +169,14 @@ try
 }
 catch(const Internal &e)
 {
-	switch(e.code())
-	{
-		case -1:
-			throw;
-
-		default:
-			std::cerr << "\033[1;37;41mDispatch Internal:\033[0m"
-			          << " [\033[1;31m" << e << "\033[0m]"
-			          << " Message: [\033[1;31m" << msg << "\033[0;0m]"
-			          << std::endl;
-	}
+	std::cerr << "\033[1;37;41mDispatch Internal:\033[0m"
+	          << " [\033[1;31m" << e << "\033[0m]"
+	          << " Message: [\033[1;31m" << msg << "\033[0;0m]"
+	          << std::endl;
+}
+catch(const Interrupted &e)
+{
+	return;
 }
 catch(const std::exception &e)
 {
@@ -1344,7 +1341,7 @@ void Bot::handle_cannotsendtochan(const Msg &msg)
 
 void Bot::handle_error(const Msg &msg)
 {
-	throw Internal(-1,msg[0]);
+	throw Interrupted(msg[0]);
 }
 
 
