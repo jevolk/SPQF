@@ -240,7 +240,7 @@ void ResPublica::handle_vote(const Msg &msg,
 	}
 
 	// Handle pattern for voting on modes directly
-	if(subcmd.at(0) == '+' || subcmd.at(0) == '-')
+	if(subcmd.size() > 1 && (subcmd.at(0) == '+' || (subcmd.at(0) == '-' && subcmd.at(1) != '-')))
 	{
 		voting.motion<vote::Mode>(chan,user,detok(toks));
 		return;
