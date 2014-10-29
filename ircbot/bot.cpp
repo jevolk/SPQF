@@ -408,7 +408,8 @@ void Bot::handle_join(const Msg &msg)
 	if(msg.get_nick() == get_nick())
 	{
 		// We have joined
-		const FloodGuard guard(sess,5000ms);
+		const Opts &opts = sess.get_opts();
+		const FloodGuard guard(sess,opts.get<uint>("throttle-join"));
 		chan.set_joined(true);
 		chan.mode();
 		chan.who();

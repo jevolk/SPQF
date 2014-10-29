@@ -96,7 +96,7 @@ meth(DEFAULT_METHOD),
 methex(DEFAULT_METHODEX),
 fg(colors::FG::BLACK),
 target(target),
-throttle(sess? sess->get_opts().get<uint>("flood-increment") : 0U)
+throttle(sess? sess->get_opts().get<uint>("throttle-msg") : 0U)
 {
 
 }

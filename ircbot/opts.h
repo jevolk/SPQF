@@ -33,7 +33,8 @@ struct Opts : public std::map<std::string,std::string>
 		{"invite-throttle",     "300"                                     },
 		{"owner",               ""                                        },
 		{"services",            "true"                                    },
-		{"flood-increment",     "750"   /* milliseconds */                },
+		{"throttle-msg",        "666"   /* milliseconds */                },
+		{"throttle-join",       "333"   /* milliseconds */                },
 		{"as-a-service",        "false"                                   },
 	}
 	{

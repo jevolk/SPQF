@@ -13,6 +13,7 @@ class FloodGuard
 
   public:
 	FloodGuard(Sess &sess, const milliseconds &inc);
+	FloodGuard(Sess &sess, const uint64_t &ms): FloodGuard(sess,milliseconds(ms)) {}
 	~FloodGuard();
 };
 
