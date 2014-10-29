@@ -33,7 +33,7 @@ class Locutor : public Stream
 	MethodEx methex;                                    // Stream state for extension to method
 	colors::FG fg;                                      // Stream state for foreground color
 	std::string target;
-	time_point flood;                                   // State for when next message gets sent
+	Throttle throttle;
 
   public:
 	auto &get_sess() const                              { return *sess;                              }
@@ -42,8 +42,7 @@ class Locutor : public Stream
 	auto &get_methex() const                            { return methex;                             }
 	auto &get_target() const                            { return target;                             }
 	auto &get_my_nick() const                           { return get_sess().get_nick();              }
-	auto &get_flood() const                             { return flood;                              }
-	milliseconds calc_delay() const;
+	auto &get_throttle() const                          { return throttle;                           }
 
 	bool operator==(const Locutor &o) const             { return target == o.target;                 }
 	bool operator!=(const Locutor &o) const             { return target != o.target;                 }
@@ -60,12 +59,11 @@ class Locutor : public Stream
 	bool operator>(const std::string &o) const          { return tolower(target) > tolower(o);       }
 
 	void set_target(const std::string &target)          { this->target = target;                     }
-	void inc_flood(const milliseconds &flood)           { this->flood += flood;                      }
 
   protected:
 	auto &get_sess()                                    { return *sess;                              }
+	auto &get_throttle()                                { return throttle;                           }
 
-	milliseconds delay();                               // calc_delay, inc_flood
 	void msg(const char *const &cmd);
 
   public:
@@ -98,7 +96,7 @@ meth(DEFAULT_METHOD),
 methex(DEFAULT_METHODEX),
 fg(colors::FG::BLACK),
 target(target),
-flood(steady_clock::now())
+throttle(sess? sess->get_opts().get<uint>("flood-increment") : 0U)
 {
 
 }
@@ -212,6 +210,7 @@ Locutor &Locutor::operator<<(const flush_t)
 inline
 void Locutor::msg(const char *const &cmd)
 {
+	Throttle &throttle = get_throttle();
 	const auto toks = tokens(packetize(get_str()),"\n");
 
 	switch(methex)
@@ -221,7 +220,7 @@ void Locutor::msg(const char *const &cmd)
 		{
 			const auto prefix = methex == WALLCHOPS? '@' : '+';
 			for(const auto &token : toks)
-				Quote(get_sess(),cmd,delay()) << prefix << get_target() << " :" << token;
+				Quote(get_sess(),cmd,throttle.next()) << prefix << get_target() << " :" << token;
 
 			break;
 		}
@@ -230,7 +229,7 @@ void Locutor::msg(const char *const &cmd)
 		{
 			const auto &chan = toks.at(0);
 			for(auto it = toks.begin()+1; it != toks.end(); ++it)
-				Quote(get_sess(),cmd,delay()) << get_target() << " "  << chan << " :" << *it;
+				Quote(get_sess(),cmd,throttle.next()) << get_target() << " "  << chan << " :" << *it;
 
 			break;
 		}
@@ -239,40 +238,9 @@ void Locutor::msg(const char *const &cmd)
 		default:
 		{
 			for(const auto &token : toks)
-				Quote(get_sess(),cmd,delay()) << get_target() << " :" << token;
+				Quote(get_sess(),cmd,throttle.next()) << get_target() << " :" << token;
 
 			break;
 		}
 	}
-}
-
-
-inline
-milliseconds Locutor::delay()
-{
-	const Sess &sess = get_sess();
-	const Opts &opts = sess.get_opts();
-	const milliseconds inc(opts.get<uint>("flood-increment"));
-	const auto ret = calc_delay();
-
-	if(ret == 0ms)
-		flood = steady_clock::now();
-
-	inc_flood(inc);
-	return ret;
-}
-
-
-inline
-milliseconds Locutor::calc_delay()
-const
-{
-	using namespace std::chrono;
-
-	const auto now = steady_clock::now();
-	if(flood < now)
-		return 0ms;
-
-	return duration_cast<milliseconds>(flood.time_since_epoch()) -
-	       duration_cast<milliseconds>(now.time_since_epoch());
 }

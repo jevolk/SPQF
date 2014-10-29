@@ -38,6 +38,11 @@ static
 void send(irc_session_t *const &sess,
           const std::string &pck)
 {
+	printf("%-24s (%p): %s\n",
+	       "\033[1;36mSEND\033[0m",
+	       (const void*)sess,
+	       pck.c_str());
+
 	while(1) try
 	{
 		irc_call(sess,irc_send_raw,"%s",pck.c_str());

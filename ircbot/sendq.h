@@ -41,15 +41,19 @@ class SendQ
 	irc_session_t *sess;
 	std::ostringstream sendq;
 	milliseconds delay;
+	Throttle throttle;
 
   public:
 	using flush_t = Stream::flush_t;
 	static constexpr flush_t flush {};
 
 	auto &get_sess() const                            { return *sess;                             }
+	auto &get_delay() const                           { return delay;                             }
+	auto &get_throttle() const                        { return throttle;                          }
 	auto has_pending() const                          { return !sendq.str().empty();              }
 
-	void set_delay(const decltype(delay) &delay)      { this->delay = delay;                      }
+	void set_throttle(const milliseconds &inc)        { this->throttle.set_inc(inc);              }
+	void set_delay(const milliseconds &delay)         { this->delay = delay;                      }
 	void clear();
 
 	SendQ &operator<<(const flush_t);
@@ -71,7 +75,9 @@ inline
 SendQ &SendQ::operator<<(const flush_t)
 {
 	const scope clr(std::bind(&SendQ::clear,this));
-	const auto xmit_time = steady_clock::now() + delay;
+	const auto xmit_time = delay == 0ms? throttle.next_abs():
+	                                     steady_clock::now() + delay;
+
 	const std::lock_guard<decltype(mutex)> lock(mutex);
 	queue.push_back({xmit_time,sess,sendq.str()});
 	cond.notify_one();
