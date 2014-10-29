@@ -73,6 +73,7 @@ cfg([&]
 	ret.merge(ret.get_child(type,Adoc()));                   // Import type-specifc overrides up to main
 	ret.merge({Adoc::arg_ctor,issue,ARG_KEYED,ARG_VALUED});  // Any vote-time options from user.
 	ret.merge(cfg);                                          // Any overrides trumping all.
+	ret.put("for",secs_cast(ret["for"]));                    // Translate "1h" to 3600, etc.
 	return ret;
 }()),
 began(0),
