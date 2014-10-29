@@ -579,7 +579,7 @@ void Bot::handle_chanoprivsneeded(const Msg &msg)
 
 	Chans &chans = get_chans();
 	Chan &chan = chans.get(msg[CHANNAME]);
-	chan << Chan::NOTICE << "I need to be +o to do that. (" << msg[REASON] << ")" << Chan::flush;
+	chan << "I'm afraid I can't do that. (" << msg[REASON] << ")" << Chan::flush;
 }
 
 
