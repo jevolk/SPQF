@@ -430,7 +430,30 @@ void ResPublica::handle_config(const Msg &msg,
 try
 {
 	Chans &chans = get_chans();
-	const Chan &chan = chans.get(*toks.at(0));
+	Chan &chan = chans.get(*toks.at(0));
+
+	// Founder config override to fix a broken config
+	if(toks.size() >= 3 && *toks.at(2) == "=" && chan.lists.has_flag(user,'F'))
+	{
+		Adoc cfg = chan.get();
+		const auto &key = *toks.at(1);
+
+		if(toks.size() == 3)
+		{
+			if(!cfg.remove(key))
+				throw Exception("Failed to find and remove anything with key.");
+
+			user << "[FOUNDER OVERRIDE] Removed." << user.flush;
+			return;
+		}
+
+		const auto &val = *toks.at(3);
+		cfg.put(key,val);
+		chan.set(cfg);
+		user << "[FOUNDER OVERRIDE] Success." << user.flush;
+		return;
+	}
+
 	const Adoc &cfg = chan.get();
 	const std::string &key = toks.size() > 1? *toks.at(1) : "";
 	const std::string &val = cfg[key];
