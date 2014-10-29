@@ -240,6 +240,35 @@ std::string strip_args(const std::string &str,
 
 
 inline
+time_t secs_cast(const std::string &dur)
+{
+	if(dur.empty())
+		return 0;
+
+	if(isnumeric(dur))
+		return lex_cast<time_t>(dur);
+
+	if(!isnumeric(dur.begin(),dur.begin()+dur.size()-1))
+		throw Exception("Improperly formatted duration: random non-numerics");
+
+	const char &postfix = dur.at(dur.size() - 1);
+	if(!std::isalpha(postfix,locale))
+		throw Exception("Improperly formatted duration: postfix must be a letter");
+
+	time_t ret = lex_cast<time_t>(dur.substr(0,dur.size()-1));
+	switch(postfix)
+	{
+		case 'w':  ret *= 7;
+		case 'd':  ret *= 24;
+		case 'h':  ret *= 60;
+		case 'm':  ret *= 60;
+		case 's':  return ret;
+		default:   throw Exception("Duration postfix not recognized");
+	}
+}
+
+
+inline
 std::string packetize(std::string &&str,
                       const size_t &max = 390)
 {
