@@ -78,7 +78,7 @@ const
 	return has('!') &&
 	       has('@') &&
 	       num('!') == 1 &&
-	       num('@') == 1;
+	       num('@') == 1 &&
 	       find('!') < find('@') &&
 	       !get_nick().empty() &&
 	       !get_user().empty() &&
