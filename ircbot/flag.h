@@ -73,7 +73,7 @@ mask(deltas.empty()? Mask() : std::get<Delta::MASK>(deltas.at(0))),
 time(time),
 founder(founder)
 {
-	if(!deltas.all_signs(true))
+	if(std::count(deltas.begin(),deltas.end(),false))
 		throw Assertive("No reason to construct a negative flag at this time.");
 
 	for(const Delta &d : deltas)

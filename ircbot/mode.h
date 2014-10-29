@@ -119,10 +119,8 @@ bool Mode::add(const Delta &d)
 {
 	using std::get;
 
-	if(get<Delta::SIGN>(d))
-		return add(get<Delta::MODE>(d));
-	else
-		return rm(get<Delta::MODE>(d));
+	return get<Delta::SIGN>(d)? add(get<Delta::MODE>(d)):
+	                            rm(get<Delta::MODE>(d));
 }
 
 
