@@ -17,14 +17,14 @@ struct Mode : public std::string
 	bool valid_chan(const Server &s) const;
 	bool valid_user(const Server &s) const;
 
-	void add(const char &m) &;
+	bool add(const char &m) &;
 	void add(const Mode &m) &;
-	void add(const Delta &d) &;                   // adding negative delta removes the mode
+	bool add(const Delta &d) &;                   // adding negative delta removes the mode
 	void add(const Deltas &d) &;                  // ^
 
-	void rm(const char &m) &;
+	bool rm(const char &m) &;
 	void rm(const Mode &m) &;
-	void rm(const Delta &d) &;                    // rm of positive or negative delta always removes the mode
+	bool rm(const Delta &d) &;                    // rm of positive or negative delta always removes the mode
 	void rm(const Deltas &d) &;                   // ^
 
 	bool delta(const std::string &str) &;
@@ -114,13 +114,15 @@ void Mode::add(const Deltas &deltas)
 
 
 inline
-void Mode::add(const Delta &d)
+bool Mode::add(const Delta &d)
 &
 {
-	if(std::get<Delta::SIGN>(d))
-		add(std::get<Delta::MODE>(d));
+	using std::get;
+
+	if(get<Delta::SIGN>(d))
+		return add(get<Delta::MODE>(d));
 	else
-		rm(std::get<Delta::MODE>(d));
+		return rm(get<Delta::MODE>(d));
 }
 
 
@@ -134,11 +136,15 @@ void Mode::add(const Mode &m)
 
 
 inline
-void Mode::add(const char &m)
+bool Mode::add(const char &m)
 &
 {
 	if(!has(m))
+	{
 		push_back(m);
+		return true;
+	}
+	else return false;
 }
 
 
@@ -152,10 +158,10 @@ void Mode::rm(const Deltas &deltas)
 
 
 inline
-void Mode::rm(const Delta &d)
+bool Mode::rm(const Delta &d)
 &
 {
-	rm(std::get<Delta::MODE>(d));
+	return rm(std::get<Delta::MODE>(d));
 }
 
 
@@ -169,11 +175,15 @@ void Mode::rm(const Mode &m)
 
 
 inline
-void Mode::rm(const char &m)
+bool Mode::rm(const char &m)
 &
 {
 	if(has(m))
+	{
 		erase(find(m));
+		return true;
+	}
+	else return false;
 }
 
 
