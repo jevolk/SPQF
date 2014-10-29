@@ -106,6 +106,7 @@ class Chan : public Locutor,
 	auto &get_opq() const                                   { return opq;                           }
 
 	bool has_mode(const char &mode) const                   { return get_mode().has(mode);          }
+	bool is_voice() const;
 	bool is_op() const;
 
   protected:
@@ -147,11 +148,16 @@ class Chan : public Locutor,
 	void csunquiet(const User &user);
 	void csquiet(const Mask &user);
 	void csquiet(const User &user);
+	void csdevoice(const User &user);
+	void csvoice(const User &user);
 	void csdeop(const User &user);
 	void csop(const User &user);
 	void recover();                                         // recovery procedure
 	void unban();                                           // unban self
+	void csdevoice();                                       // target is self
 	void csdeop();                                          // target is self
+	void devoice();                                         // target is self
+	void voice();                                           // target is self
 	void deop();                                            // target is self
 	void op();                                              // target is self
 
@@ -417,8 +423,7 @@ inline
 void Chan::op()
 {
 	Service &cs = get_cs();
-	const Sess &sess = get_sess();
-	cs << "OP " << get_name() << " " << sess.get_nick() << flush;
+	cs << "OP " << get_name() << " " << get_my_nick() << flush;
 	cs.terminator_errors();
 }
 
@@ -431,11 +436,35 @@ void Chan::deop()
 
 
 inline
+void Chan::voice()
+{
+	Service &cs = get_cs();
+	cs << "VOICE " << get_name() << " " << get_my_nick() << flush;
+	cs.terminator_errors();
+}
+
+
+inline
+void Chan::devoice()
+{
+	opdo(Delta("-v",get_my_nick()));
+}
+
+
+inline
 void Chan::csdeop()
 {
 	Service &cs = get_cs();
-	const Sess &sess = get_sess();
-	cs << "DEOP " << get_name() << " " << sess.get_nick() << flush;
+	cs << "DEOP " << get_name() << " " << get_my_nick() << flush;
+	cs.terminator_errors();
+}
+
+
+inline
+void Chan::csdevoice()
+{
+	Service &cs = get_cs();
+	cs << "DEVOICE " << get_name() << " " << get_my_nick() << flush;
 	cs.terminator_errors();
 }
 
@@ -472,6 +501,24 @@ void Chan::csdeop(const User &user)
 {
 	Service &cs = get_cs();
 	cs << "DEOP " << get_name() << " " << user.get_nick() << flush;
+	cs.terminator_errors();
+}
+
+
+inline
+void Chan::csvoice(const User &user)
+{
+	Service &cs = get_cs();
+	cs << "VOICE " << get_name() << " " << user.get_nick() << flush;
+	cs.terminator_errors();
+}
+
+
+inline
+void Chan::csdevoice(const User &user)
+{
+	Service &cs = get_cs();
+	cs << "DEVOICE " << get_name() << " " << user.get_nick() << flush;
 	cs.terminator_errors();
 }
 
@@ -772,9 +819,18 @@ void Chan::run_opdo()
 	const auto &sess = get_sess();
 	const auto &acct = sess.get_acct();
 	if(!acct.empty() && lists.has_flag(acct) && !lists.has_flag(acct,'O'))
-		deltas.emplace_back("-o",sess.get_nick());
+		deltas.emplace_back("-o",get_my_nick());
 
 	mode(deltas);
+}
+
+
+inline
+bool Chan::is_voice()
+const
+{
+	const auto &mode = users.mode(get_my_nick());
+	return mode.has('v');
 }
 
 
@@ -782,8 +838,7 @@ inline
 bool Chan::is_op()
 const
 {
-	const auto &sess = get_sess();
-	const auto &mode = users.mode(sess.get_nick());
+	const auto &mode = users.mode(get_my_nick());
 	return mode.has('o');
 }
 
