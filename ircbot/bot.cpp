@@ -286,15 +286,13 @@ void Bot::handle_authenticate(const Msg &msg)
 void Bot::handle_cap(const Msg &msg)
 {
 	using namespace fmt::CAP;
-	using delim = boost::char_separator<char>;
 
 	log_handle(msg,"CAP");
 
 	Sess &sess = get_sess();
 	Server &server = sess.server;
 
-	static const delim sep(" ");
-	const boost::tokenizer<delim> caps(msg[CAPLIST],sep);
+	const auto caps = tokens(msg[CAPLIST]);
 
 	switch(hash(msg[COMMAND]))
 	{
