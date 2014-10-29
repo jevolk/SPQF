@@ -64,6 +64,7 @@ SPQF_FMT( ACCEPTEXIST,       SELFNAME, NICKNAME, REASON                         
 SPQF_FMT( ACCEPTNOT,         SELFNAME, NICKNAME, REASON                                                      )
 SPQF_FMT( ACCEPTFULL,        SELFNAME                                                                        )
 SPQF_FMT( KNOCK,             CHANNAME, CHANNAM2, MASK,     REASON                                            )
+SPQF_FMT( MODEISLOCKED,      SELFNAME, CHANNAME, MODEUSED, LOCKLIST, REASON                                  )
 }
 
 

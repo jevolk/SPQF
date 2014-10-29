@@ -150,6 +150,7 @@ try
 		case 282     /* RPL_ENDOFACCEPT */:       handle_endofaccept(msg);             return;
 		case 710     /* RPL_KNOCK */:             handle_knock(msg);                   return;
 
+		case 742     /* ERR_MODEISLOCKED */:      handle_modeislocked(msg);            return;
 		case 734     /* ERR_MONLISTFULL */:       handle_monlistfull(msg);             return;
 		case 456     /* ERR_ACCEPTFULL */:        handle_acceptfull(msg);              return;
 		case 457     /* ERR_ACCEPTEXIST */:       handle_acceptexist(msg);             return;
@@ -1336,6 +1337,21 @@ void Bot::handle_cannotsendtochan(const Msg &msg)
 {
 	log_handle(msg,"CANNOTSENDTOCHAN");
 
+}
+
+
+void Bot::handle_modeislocked(const Msg &msg)
+{
+	using namespace fmt::MODEISLOCKED;
+
+	log_handle(msg,"MODE IS LOCKED");
+
+	Chans &chans = get_chans();
+	Chan &chan = chans.get(msg[CHANNAME]);
+
+	chan << "I'm sorry " << msg[CHANNAME] << ", I'm afraid I can't do that. '"
+	     << msg[MODEUSED] << "' " << msg[REASON] << "."
+	     << chan.flush;
 }
 
 
