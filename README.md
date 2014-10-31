@@ -106,14 +106,14 @@ or conduct takeovers.
 #### Requirements
 
 * GNU C++ Compiler **4.9** &nbsp; *(tested: 4.9.1)*
-* GNU libstdc++ **4.9** 
-* GCC Locales **4.9**
+	* GNU libstdc++ **4.9**
+	* GCC Locales **4.9**
 * Boost &nbsp; *(tested: 1.54)*
+	* ASIO
     * Tokenizer
     * Lexical Cast
     * Property Tree, JSON Parser
 * LevelDB &nbsp; *(tested: 1.17)*
-* libircclient **1.8** &nbsp; *(tested: 1.8)*
 * STLdb adapter (submodule)
 
 
