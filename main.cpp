@@ -22,7 +22,7 @@ using namespace irc::bot;
 
 
 // Pointer to instance for signals
-static Bot *instance;
+static Bot *bot;
 
 
 static
@@ -34,10 +34,10 @@ void handle_sig(const int sig)
 		case SIGTERM:   std::cout << "TERMINATE..." << std::endl;   break;
 	}
 
-	if(instance)
+	if(bot)
 	{
-		const std::lock_guard<Bot> lock(*instance);
-		instance->quit();
+		const std::lock_guard<Bot> lock(*bot);
+		bot->quit();
 	}
 }
 
@@ -63,15 +63,15 @@ int main(int argc, char **argv) try
 	std::cout << opts << std::endl;
 
 	srand(getpid());
-	ResPublica instance(opts);                 // Create instance of the bot
-	::instance = &instance;                    // Set pointer for sighandlers
-	signal(SIGINT,&handle_sig);                // Register handler for ctrl-c
-	signal(SIGTERM,&handle_sig);               // Register handler for term
-	instance.conn();                           // Connect to server (may throw)
-	instance();                                // Loops in foreground forever
+	ResPublica bot(opts);                 // Create instance of the bot
+	::bot = &bot;                         // Set pointer for sighandlers
+	signal(SIGINT,&handle_sig);           // Register handler for ctrl-c
+	signal(SIGTERM,&handle_sig);          // Register handler for term
+	bot.connect();                        // Connect to server (may throw)
+	bot(bot.FOREGROUND);                  // Loops in foreground forever
 }
-catch(const Exception &e)
+catch(const std::exception &e)
 {
-	std::cerr << "Exception: " << e << std::endl;
+	std::cerr << "Exception: " << e.what() << std::endl;
 	return -1;
 }
