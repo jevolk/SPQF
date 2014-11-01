@@ -25,7 +25,7 @@ using namespace irc::bot;
 //
 
 
-void ResPublica::handle_chanmsg(const Msg &msg,
+void ResPublica::handle_privmsg(const Msg &msg,
                                 Chan &chan,
                                 User &user)
 try
@@ -50,7 +50,6 @@ try
 	});
 
 	// Discard everything not starting with command prefix
-	const auto &opts = get_opts();
 	if(msg[TEXT].find(opts["prefix"]) != 0)
 		return;
 
@@ -71,9 +70,9 @@ catch(const std::out_of_range &e)
 }
 
 
-void ResPublica::handle_cnotice(const Msg &msg,
-                                Chan &chan,
-                                User &user)
+void ResPublica::handle_notice(const Msg &msg,
+                               Chan &chan,
+                               User &user)
 try
 {
 	using namespace fmt::CNOTICE;
@@ -208,7 +207,6 @@ void ResPublica::handle_cmd(const Msg &msg,
 	using namespace fmt::CHANMSG;
 
 	// Chop off cmd prefix and dispatch
-	const auto &opts = get_opts();
 	const std::vector<std::string> tok = tokens(msg[TEXT]);
 	switch(hash(tok.at(0).substr(opts["prefix"].size())))
 	{
@@ -287,7 +285,6 @@ void ResPublica::handle_vote_id(const Msg &msg,
                                 const Tokens &toks)
 try
 {
-	Chans &chans = get_chans();
 	const Chan *const c = chan.is_op()? &chan : chans.find_cnotice(user);
 	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
 
@@ -406,7 +403,6 @@ void ResPublica::handle_cmd(const Msg &msg,
 	using namespace fmt::PRIVMSG;
 
 	// Strip off the command prefix if given
-	const auto &opts = get_opts();
 	const auto toks = tokens(msg[TEXT]);
 	const bool has_prefix = toks.at(0).find(opts["prefix"]) != std::string::npos;
 	const auto cmd = has_prefix? toks.at(0).substr(opts["prefix"].size()) : toks.at(0);
@@ -429,7 +425,6 @@ void ResPublica::handle_config(const Msg &msg,
                                const Tokens &toks)
 try
 {
-	Chans &chans = get_chans();
 	Chan &chan = chans.get(*toks.at(0));
 
 	// Founder config override to fix a broken config
@@ -495,7 +490,6 @@ void ResPublica::handle_praetor(const Msg &msg,
                                 User &user,
                                 const Tokens &toks)
 {
-	Chans &chans = get_chans();
 
 
 }
@@ -541,7 +535,6 @@ try
 {
 	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
 
-	Chans &chans = get_chans();
 	Chan *const chan = chans.find_cnotice(user);
 	if(!chan)
 	{
@@ -563,7 +556,6 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   const Tokens &toks)
 try
 {
-	Chans &chans = get_chans();
 	const Chan &chan = chans.get(*toks.at(0));
 	const Tokens subtoks = subtok(toks);
 

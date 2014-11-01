@@ -52,11 +52,11 @@ class ResPublica : public irc::bot::Bot
 	void handle_cmd(const Msg &m, Chan &c, User &u);
 
 	// Primary dispatch
-	void handle_nick(const Msg &m, User &u) override;
-	void handle_notice(const Msg &m, User &u) override;
-	void handle_privmsg(const Msg &m, User &u) override;
-	void handle_cnotice(const Msg &m, Chan &c, User &u) override;
-	void handle_chanmsg(const Msg &m, Chan &c, User &u) override;
+	void handle_nick(const Msg &m, User &u);
+	void handle_notice(const Msg &m, User &u);
+	void handle_privmsg(const Msg &m, User &u);
+	void handle_notice(const Msg &m, Chan &c, User &u);
+	void handle_privmsg(const Msg &m, Chan &c, User &u);
 
   public:
 	template<class... Args> ResPublica(Args&&... args);
@@ -66,9 +66,13 @@ class ResPublica : public irc::bot::Bot
 template<class... Args>
 ResPublica::ResPublica(Args&&... args):
 irc::bot::Bot(std::forward<Args>(args)...),
-vdb({get_opts()["dbdir"] + "/vote"}),
-praetor(get_sess(),get_chans(),get_users(),*this,vdb),
-voting(get_sess(),get_chans(),get_users(),get_logs(),*this,vdb,praetor)
+vdb({opts["dbdir"] + "/vote"}),
+praetor(sess,chans,users,*this,vdb),
+voting(sess,chans,users,logs,*this,vdb,praetor)
 {
-
+	events.chan_user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2,_3),handler::RECURRING);
+	events.chan_user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2,_3),handler::RECURRING);
+	events.user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2),handler::RECURRING);
+	events.user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2),handler::RECURRING);
+	events.user.add("NICK",boost::bind(&ResPublica::handle_nick,this,_1,_2),handler::RECURRING);
 }
