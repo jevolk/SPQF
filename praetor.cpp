@@ -61,9 +61,9 @@ void Praetor::init()
 		const auto id = lex_cast<id_t>(it->first);
 		const Adoc doc(it->second);
 
-		const time_t ended = doc.get<time_t>("ended",0);
-		const time_t expiry = doc.get<time_t>("expiry",0);
-		const time_t cfgfor = doc.get<time_t>("cfg.for",0);
+		const time_t ended = secs_cast(doc["ended"]);
+		const time_t expiry = secs_cast(doc["expiry"]);
+		const time_t cfgfor = secs_cast(doc["cfg.for"]);
 		if(expiry || !cfgfor || !ended)
 			continue;
 
@@ -132,7 +132,7 @@ void Praetor::add(std::unique_ptr<Vote> &&vote)
 {
 	const id_t id = vote->get_id();
 	const auto cfg = vote->get_cfg();
-	const time_t absolute = time(NULL) + cfg.get<time_t>("for");
+	const time_t absolute = time(NULL) + secs_cast(cfg["for"]);
 	add(id,absolute);
 }
 

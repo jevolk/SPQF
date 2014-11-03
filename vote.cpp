@@ -73,7 +73,6 @@ cfg([&]
 	ret.merge(ret.get_child(type,Adoc()));                   // Import type-specifc overrides up to main
 	ret.merge({Adoc::arg_ctor,issue,ARG_KEYED,ARG_VALUED});  // Any vote-time options from user.
 	ret.merge(cfg);                                          // Any overrides trumping all.
-	ret.put("for",secs_cast(ret["for"]));                    // Translate "1h" to 3600, etc.
 	return ret;
 }()),
 began(0),
@@ -109,9 +108,9 @@ nick(get_val("nick")),
 acct(get_val("acct")),
 issue(get_val("issue")),
 cfg(get("cfg")),
-began(get_val<time_t>("began")),
-ended(get_val<time_t>("ended")),
-expiry(get_val<time_t>("expiry")),
+began(secs_cast(get_val("began"))),
+ended(secs_cast(get_val("ended"))),
+expiry(secs_cast(get_val("expiry"))),
 reason(get_val("reason")),
 effect(get_val("effect")),
 yea(get("yea").into(yea)),
@@ -190,7 +189,7 @@ void Vote::start()
 
 	auto &chan = get_chan();
 	chan << BOLD << "Voting has started!" << OFF << " Issue " << (*this) << ": "
-	     << "You have " << BOLD << cfg.get<uint>("duration") << OFF << " seconds to vote! "
+	     << "You have " << BOLD << secs_cast(cfg["duration"]) << OFF << " seconds to vote! "
 	     << "Type or PM: "
 	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
 	     << " or "
@@ -380,7 +379,7 @@ const
 
 	Logs::SimpleFilter filt;
 	filt.acct = user.get_acct();
-	filt.time.first = get_began() - cfg.get<uint>("qualify.age");
+	filt.time.first = get_began() - secs_cast(cfg["qualify.age"]);
 	filt.time.second = get_began();
 	filt.type = "CHA";
 
@@ -400,7 +399,7 @@ const
 	Logs::SimpleFilter filt;
 	filt.acct = user.get_acct();
 	filt.time.first = 0;
-	filt.time.second = get_began() - cfg.get<uint>("enfranchise.age");
+	filt.time.second = get_began() - secs_cast(cfg["enfranchise.age"]);
 	filt.type = "CHA";
 
 	Logs &logs = get_logs();
