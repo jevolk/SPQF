@@ -68,7 +68,7 @@ void Praetor::init()
 			continue;
 
 		const time_t absolute = ended + cfgfor;
-		printf("[Praetor]: Scheduling #%u [expiry: %zd cfgfor: %zd ended: %zd] absolute: %zd relative: %zd\n",
+		printf("[Praetor]: Scheduling #%u [expiry: %ld cfgfor: %ld ended: %ld] absolute: %ld relative: %ld\n",
 		       id,
 		       expiry,
 		       cfgfor,
