@@ -29,7 +29,8 @@ WFLAGS = -pedantic                             \
          -Wno-unused-label                     \
          -Wsuggest-attribute=format
 
-CCFLAGS += -std=c++14 -Istldb
+VERSTR = $(shell git describe --tags)
+CCFLAGS += -std=c++14 -Istldb -DSPQF_VERSION=\"$(VERSTR)\"
 LDFLAGS = -lircbot -lleveldb -lboost_system -lpthread
 LIBPATH = -Lircbot/
 

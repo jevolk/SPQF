@@ -211,9 +211,21 @@ void ResPublica::handle_cmd(const Msg &msg,
 	switch(hash(tok.at(0).substr(opts["prefix"].size())))
 	{
 		case hash("vote"):     handle_vote(msg,chan,user,subtok(tok));    break;
+		case hash("version"):  handle_version(msg,chan,user,subtok(tok)); break;
 		default:                                                          break;
 	}
 }
+
+
+
+void ResPublica::handle_version(const Msg &msg,
+                                Chan &chan,
+                                User &user,
+                                const Tokens &toks)
+{
+	user << SPQF_VERSION << flush;
+}
+
 
 
 void ResPublica::handle_vote(const Msg &msg,
@@ -410,6 +422,7 @@ void ResPublica::handle_cmd(const Msg &msg,
 	switch(hash(cmd))
 	{
 		case hash("vote"):     handle_vote(msg,user,subtok(toks));     break;
+		case hash("version"):  handle_version(msg,user,subtok(toks));  break;
 		case hash("help"):     handle_help(msg,user,subtok(toks));     break;
 		case hash("config"):   handle_config(msg,user,subtok(toks));   break;
 		case hash("whoami"):   handle_whoami(msg,user,subtok(toks));   break;
@@ -493,6 +506,15 @@ void ResPublica::handle_praetor(const Msg &msg,
 
 
 }
+
+
+void ResPublica::handle_version(const Msg &msg,
+                                User &user,
+                                const Tokens &toks)
+{
+	user << SPQF_VERSION << flush;
+}
+
 
 
 void ResPublica::handle_vote(const Msg &msg,
