@@ -70,8 +70,8 @@ int main(int argc, char **argv) try
 	::bot = &bot;                         // Set pointer for sighandlers
 	signal(SIGINT,&handle_sig);           // Register handler for ctrl-c
 	signal(SIGTERM,&handle_sig);          // Register handler for term
-	bot.connect();                        // Connect to server (may throw)
-	bot(bot.FOREGROUND);                  // Loops in foreground forever
+	bot.connect();                        // Connect to server (async)
+	bot(bot.FOREGROUND);                  // Loops in foreground forever or exception
 }
 catch(const std::exception &e)
 {
