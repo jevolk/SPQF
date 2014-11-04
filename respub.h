@@ -21,6 +21,7 @@ class ResPublica : public irc::bot::Bot
 
 	static constexpr auto &flush = Locutor::flush;
 
+	Logs logs;
 	Vdb vdb;
 	Praetor praetor;
 	Voting voting;
@@ -61,20 +62,5 @@ class ResPublica : public irc::bot::Bot
 	void handle_privmsg(const Msg &m, Chan &c, User &u);
 
   public:
-	template<class... Args> ResPublica(Args&&... args);
+	ResPublica(const Opts &opts);
 };
-
-
-template<class... Args>
-ResPublica::ResPublica(Args&&... args):
-irc::bot::Bot(std::forward<Args>(args)...),
-vdb({opts["dbdir"] + "/vote"}),
-praetor(sess,chans,users,*this,vdb),
-voting(sess,chans,users,logs,*this,vdb,praetor)
-{
-	events.chan_user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2,_3),handler::RECURRING);
-	events.chan_user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2,_3),handler::RECURRING);
-	events.user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2),handler::RECURRING);
-	events.user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2),handler::RECURRING);
-	events.user.add("NICK",boost::bind(&ResPublica::handle_nick,this,_1,_2),handler::RECURRING);
-}

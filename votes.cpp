@@ -11,6 +11,8 @@
 
 // SPQF
 using namespace irc::bot;
+#include "log.h"
+#include "logs.h"
 #include "vote.h"
 #include "votes.h"
 

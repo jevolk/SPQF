@@ -13,6 +13,8 @@
 
 // SPQF
 using namespace irc::bot;
+#include "log.h"
+#include "logs.h"
 #include "vote.h"
 #include "votes.h"
 #include "vdb.h"
@@ -46,9 +48,13 @@ int main(int argc, char **argv) try
 {
 	srand(getpid());
 
+	// Setup defaults
 	Opts opts;
+	opts["logdir"] = "logs";
 	opts["logging"] = "true";
 	opts["database"] = "true";
+
+	// Parse command line
 	opts.parse({argv+1,argv+argc});
 
 	if(opts["nick"].empty())

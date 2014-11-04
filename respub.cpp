@@ -11,12 +11,35 @@
 
 // SPQF
 using namespace irc::bot;
+#include "log.h"
+#include "logs.h"
 #include "vote.h"
 #include "votes.h"
 #include "vdb.h"
 #include "praetor.h"
 #include "voting.h"
 #include "respub.h"
+
+
+ResPublica::ResPublica(const Opts &opts):
+irc::bot::Bot(opts),
+logs(sess,chans,users),
+vdb({opts["dbdir"] + "/vote"}),
+praetor(sess,chans,users,*this,vdb),
+voting(sess,chans,users,logs,*this,vdb,praetor)
+{
+	// Channel->User catch-all for logging
+	events.chan_user.add(handler::ALL,boost::bind(&Logs::log,&logs,_1,_2,_3),handler::RECURRING);
+
+	// Channel->User based handlers
+	events.chan_user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2,_3),handler::RECURRING);
+	events.chan_user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2,_3),handler::RECURRING);
+
+	// User based handlers
+	events.user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2),handler::RECURRING);
+	events.user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2),handler::RECURRING);
+	events.user.add("NICK",boost::bind(&ResPublica::handle_nick,this,_1,_2),handler::RECURRING);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////

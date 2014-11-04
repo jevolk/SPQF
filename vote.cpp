@@ -11,6 +11,8 @@
 
 // SPQF
 using namespace irc::bot;
+#include "log.h"
+#include "logs.h"
 #include "vote.h"
 
 
@@ -381,11 +383,11 @@ const
 	filt.acct = user.get_acct();
 	filt.time.first = get_began() - secs_cast(cfg["qualify.age"]);
 	filt.time.second = get_began();
-	filt.type = "CHA";
+	filt.type = "PRI";  // PRIVMSG
 
 	Logs &logs = get_logs();
 	const Chan &chan = get_chan();
-	return logs.atleast(chan,filt,cfg.get<uint>("qualify.lines"));
+	return logs.atleast(chan.get_name(),filt,cfg.get<uint>("qualify.lines"));
 }
 
 
@@ -400,11 +402,11 @@ const
 	filt.acct = user.get_acct();
 	filt.time.first = 0;
 	filt.time.second = get_began() - secs_cast(cfg["enfranchise.age"]);
-	filt.type = "CHA";
+	filt.type = "PRI";  // PRIVMSG
 
 	Logs &logs = get_logs();
 	const Chan &chan = get_chan();
-	return logs.atleast(chan,filt,cfg.get<uint>("enfranchise.lines"));
+	return logs.atleast(chan.get_name(),filt,cfg.get<uint>("enfranchise.lines"));
 }
 
 
