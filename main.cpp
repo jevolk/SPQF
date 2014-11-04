@@ -44,7 +44,11 @@ void handle_sig(const int sig)
 
 int main(int argc, char **argv) try
 {
+	srand(getpid());
+
 	Opts opts;
+	opts["logging"] = "true";
+	opts["database"] = "true";
 	opts.parse({argv+1,argv+argc});
 
 	if(opts["nick"].empty())
@@ -62,7 +66,6 @@ int main(int argc, char **argv) try
 	printf("Current configuration:\n");
 	std::cout << opts << std::endl;
 
-	srand(getpid());
 	ResPublica bot(opts);                 // Create instance of the bot
 	::bot = &bot;                         // Set pointer for sighandlers
 	signal(SIGINT,&handle_sig);           // Register handler for ctrl-c
