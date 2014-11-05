@@ -31,14 +31,17 @@ voting(sess,chans,users,logs,*this,vdb,praetor)
 	// Channel->User catch-all for logging
 	events.chan_user.add(handler::ALL,boost::bind(&Logs::log,&logs,_1,_2,_3),handler::RECURRING);
 
-	// Channel->User based handlers
+	// Channel command handlers
 	events.chan_user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2,_3),handler::RECURRING);
 	events.chan_user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2,_3),handler::RECURRING);
 
-	// User based handlers
+	// Private command handlers
 	events.user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2),handler::RECURRING);
 	events.user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2),handler::RECURRING);
+
+	// Misc handlers
 	events.user.add("NICK",boost::bind(&ResPublica::handle_nick,this,_1,_2),handler::RECURRING);
+	events.chan.add(LIBIRC_RFC_ERR_CHANOPRIVSNEEDED,boost::bind(&ResPublica::handle_not_op,this,_1,_2),handler::RECURRING);
 }
 
 
@@ -215,6 +218,15 @@ void ResPublica::handle_nick(const Msg &msg,
 	{
 		vote.event_nick(user,old_nick);
 	});
+}
+
+
+void ResPublica::handle_not_op(const Msg &msg,
+                               Chan &chan)
+{
+	using namespace fmt::CHANOPRIVSNEEDED;
+
+	chan << "I'm afraid I can't do that. (" << msg[REASON] << ")" << chan.flush;
 }
 
 

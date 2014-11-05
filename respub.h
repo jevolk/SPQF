@@ -55,6 +55,7 @@ class ResPublica : public irc::bot::Bot
 	void handle_cmd(const Msg &m, Chan &c, User &u);
 
 	// Primary dispatch
+	void handle_not_op(const Msg &m, Chan &c);
 	void handle_nick(const Msg &m, User &u);
 	void handle_notice(const Msg &m, User &u);
 	void handle_privmsg(const Msg &m, User &u);
