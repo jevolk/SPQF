@@ -42,6 +42,7 @@ voting(sess,chans,users,logs,*this,vdb,praetor)
 	// Misc handlers
 	events.user.add("NICK",boost::bind(&ResPublica::handle_nick,this,_1,_2),handler::RECURRING);
 	events.chan.add(LIBIRC_RFC_ERR_CHANOPRIVSNEEDED,boost::bind(&ResPublica::handle_not_op,this,_1,_2),handler::RECURRING);
+	events.chan_user.add(LIBIRC_RFC_ERR_USERONCHANNEL,boost::bind(&ResPublica::handle_on_chan,this,_1,_2,_3),handler::RECURRING);
 }
 
 
@@ -227,6 +228,16 @@ void ResPublica::handle_not_op(const Msg &msg,
 	using namespace fmt::CHANOPRIVSNEEDED;
 
 	chan << "I'm afraid I can't do that. (" << msg[REASON] << ")" << chan.flush;
+}
+
+
+void ResPublica::handle_on_chan(const Msg &msg,
+                                Chan &chan,
+                                User &user)
+{
+	using namespace fmt::USERONCHANNEL;
+
+	chan << "It seems " << msg[NICKNAME] << " " << msg[REASON] << "." << chan.flush;
 }
 
 
