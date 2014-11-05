@@ -92,8 +92,10 @@ void Praetor::worker()
 
 void Praetor::process()
 {
+	using system_clock = std::chrono::system_clock;
+
 	std::unique_lock<decltype(mutex)> lock(mutex);
-	cond.wait_for(lock,std::chrono::seconds(sched.next_rel()));
+	cond.wait_until(lock,system_clock::from_time_t(sched.next_abs()));
 
 	while(sched.next_rel() <= 0)
 	{

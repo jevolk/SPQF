@@ -15,7 +15,7 @@ class Schedule
 	void sort();
 
   public:
-	static constexpr time_t max()   { return std::numeric_limits<int>::max();                   }
+	static constexpr time_t max()   { return std::numeric_limits<time_t>::max();                }
 
 	bool empty() const              { return sched.empty();                                     }
 	auto size() const               { return sched.size();                                      }
