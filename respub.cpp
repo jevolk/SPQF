@@ -43,6 +43,7 @@ voting(sess,chans,users,logs,*this,vdb,praetor)
 	events.user.add("NICK",boost::bind(&ResPublica::handle_nick,this,_1,_2),handler::RECURRING);
 	events.chan.add(LIBIRC_RFC_ERR_CHANOPRIVSNEEDED,boost::bind(&ResPublica::handle_not_op,this,_1,_2),handler::RECURRING);
 	events.chan_user.add(LIBIRC_RFC_ERR_USERONCHANNEL,boost::bind(&ResPublica::handle_on_chan,this,_1,_2,_3),handler::RECURRING);
+	events.chan.add(/* RPL_KNOCK */ 710,boost::bind(&ResPublica::handle_knock,this,_1,_2),handler::RECURRING);
 }
 
 
@@ -238,6 +239,15 @@ void ResPublica::handle_on_chan(const Msg &msg,
 	using namespace fmt::USERONCHANNEL;
 
 	chan << "It seems " << msg[NICKNAME] << " " << msg[REASON] << "." << chan.flush;
+}
+
+
+void ResPublica::handle_knock(const Msg &msg,
+                              Chan &chan)
+{
+	using namespace fmt::KNOCK;
+
+	chan << "It seems " << msg[MASK] << " " << msg[REASON] << "." << chan.flush;
 }
 
 
