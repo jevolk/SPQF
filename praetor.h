@@ -46,6 +46,7 @@ class Praetor
   public:
 	void add(const id_t &id, const time_t &absolute);
 	void add(std::unique_ptr<Vote> &&vote);
+	void add(const Adoc &serialized);
 
   private:
 	void process(Vote &vote) noexcept;

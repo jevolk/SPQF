@@ -55,38 +55,29 @@ void Praetor::init()
 
 	auto it = vdb.cbegin(stldb::SNAPSHOT);
 	auto end = vdb.cend();
-	for(; it != end; ++it)
+	for(; it != end && !interrupted.load(std::memory_order_consume); ++it) try
 	{
-		if(interrupted.load(std::memory_order_consume))
-			break;
-
-		const auto id = lex_cast<id_t>(it->first);
 		const Adoc doc(it->second);
-
-		const time_t ended = secs_cast(doc["ended"]);
-		const time_t expiry = secs_cast(doc["expiry"]);
-		const time_t cfgfor = secs_cast(doc["cfg.for"]);
-		if(expiry || !cfgfor || !ended)
-			continue;
-
-		const time_t absolute = ended + cfgfor;
-		printf("[Praetor]: Scheduling #%u [expiry: %ld cfgfor: %ld ended: %ld] absolute: %ld relative: %ld\n",
-		       id,
-		       expiry,
-		       cfgfor,
-		       ended,
-		       absolute,
-		       absolute - time(NULL));
-
-		add(id,absolute);
+		add(doc);
+	}
+	catch(const Exception &e)
+	{
+		const auto id = lex_cast<id_t>(it->first);
+		std::cerr << "[Praetor]: Init reading #" << id << ": \033[1;31m" << e << "\033[0m" << std::endl;
 	}
 }
 
 
 void Praetor::worker()
 {
-	while(!interrupted.load(std::memory_order_consume))
+	while(!interrupted.load(std::memory_order_consume)) try
+	{
 		process();
+	}
+	catch(const Internal &e)
+	{
+		std::cerr << "[Praetor]: \033[1;41m" << e << "\033[0m" << std::endl;
+	}
 }
 
 
@@ -129,6 +120,28 @@ catch(const std::exception &e)
 	          << " error: " << e.what()
 	          << "\033[0m"
 	          << std::endl;
+}
+
+
+void Praetor::add(const Adoc &doc)
+{
+	const id_t id = lex_cast<id_t>(doc["id"]);
+	const time_t ended = secs_cast(doc["ended"]);
+	const time_t expiry = secs_cast(doc["expiry"]);
+	const time_t cfgfor = secs_cast(doc["cfg.for"]);
+	if(expiry || !cfgfor || !ended)
+		return;
+
+	const time_t absolute = ended + cfgfor;
+	printf("[Praetor]: Scheduling #%u [expiry: %ld cfgfor: %ld ended: %ld] absolute: %ld relative: %ld\n",
+	       id,
+	       expiry,
+	       cfgfor,
+	       ended,
+	       absolute,
+	       absolute - time(NULL));
+
+	add(id,absolute);
 }
 
 

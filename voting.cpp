@@ -76,10 +76,14 @@ void Voting::cancel(Vote &vote,
 
 void Voting::worker()
 {
-	while(!interrupted.load(std::memory_order_consume))
+	while(!interrupted.load(std::memory_order_consume)) try
 	{
 		poll_votes();
 		sleep();
+	}
+	catch(const Internal &e)
+	{
+		std::cerr << "[Voting]: \033[1;41m" << e << "\033[0m" << std::endl;
 	}
 }
 
@@ -115,8 +119,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	std::cerr << "Voting worker: UNHANDLED EXCEPTION: " << e.what() << std::endl;
-	return;
+	std::cerr << "[Voting]: Vote::finish unhandled: \033[1;31m" << e.what() << "\033[0m" << std::endl;
 }
 
 
@@ -132,8 +135,9 @@ void Voting::del(const id_t &id)
 
 void Voting::del(const decltype(votes.begin()) &it)
 {
-	auto &vote = it->second;
 	const Vote::id_t &id = it->first;
+	auto vote = std::move(it->second);
+
 	const auto deindex = [&id]
 	(auto &map, const auto &ent)
 	{
@@ -151,8 +155,9 @@ void Voting::del(const decltype(votes.begin()) &it)
 
 	deindex(chanidx,vote->get_chan_name());
 	deindex(useridx,vote->get_user_acct());
-	praetor.add(std::move(vote));
 	votes.erase(it);
+
+	praetor.add(std::move(vote));
 }
 
 
