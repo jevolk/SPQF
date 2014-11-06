@@ -51,8 +51,8 @@ class Voting
   private:
 	id_t get_next_id() const;
 
-	void del(const decltype(votes.begin()) &it);
-	void del(const id_t &id);
+	std::unique_ptr<Vote> del(const decltype(votes.begin()) &it);
+	std::unique_ptr<Vote> del(const id_t &id);
 
 	void call_finish(Vote &vote) noexcept;
 	void poll_votes();

@@ -105,7 +105,8 @@ void Voting::poll_votes()
 		if(vote.remaining() <= 0 || vote.interceded())
 		{
 			call_finish(vote);
-			del(it++);
+			auto vote = del(it++);
+			praetor.add(std::move(vote));
 		}
 		else ++it;
 	}
@@ -123,17 +124,17 @@ catch(const std::exception &e)
 }
 
 
-void Voting::del(const id_t &id)
+std::unique_ptr<Vote> Voting::del(const id_t &id)
 {
 	const auto vit = votes.find(id);
 	if(vit == votes.end())
 		throw Exception("Could not delete any vote by this ID.");
 
-	del(vit);
+	return del(vit);
 }
 
 
-void Voting::del(const decltype(votes.begin()) &it)
+std::unique_ptr<Vote> Voting::del(const decltype(votes.begin()) &it)
 {
 	const Vote::id_t &id = it->first;
 	auto vote = std::move(it->second);
@@ -157,7 +158,7 @@ void Voting::del(const decltype(votes.begin()) &it)
 	deindex(useridx,vote->get_user_acct());
 	votes.erase(it);
 
-	praetor.add(std::move(vote));
+	return std::move(vote);
 }
 
 
