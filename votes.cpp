@@ -253,32 +253,15 @@ void vote::Config::starting()
 	if(!val.empty() && cfg[key] == val)
 		throw Exception("Variable already set to that value.");
 
-	if(val.empty())
-		chan << "Note: vote deletes variable [" << BOLD << key << OFF << "] "
-		     << BOLD << "and all child variables" << OFF << "."
-		     << flush;
-
-	// Hacking manual type checking here  //TODO: key typing
 	if(!val.empty())
 	{
-		// Key conforms to types that want mode strings
-		if(key.find(".access") != std::string::npos ||
-		   key.find(".mode") != std::string::npos)
-		{
-
-			if(!isalpha(val))
-				throw Exception("Must use letters only for value for this key.");
-
-		} else {
-
-			if(!std::all_of(val.begin(),val.end(),[](auto&& c) { return isdigit(c) || c == '.'; }))
-				throw Exception("Must use a numerical value for this key.");
-
-			if(std::count(val.begin(),val.end(),'.') > 1)
-				throw Exception("One dot only, please.");
-
-		}
+		Adoc tmp;
+		tmp.put(key,val);
+		valid(tmp);            // throws if
 	}
+	else chan << "Note: vote deletes variable [" << BOLD << key << OFF << "] "
+	          << BOLD << "and all child variables" << OFF << "."
+	          << flush;
 
 	chan << "Note: "
 	     << UNDER2 << "Changing the configuration can be " << BOLD << "DANGEROUS" << OFF << ", "

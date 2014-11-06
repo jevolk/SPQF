@@ -127,7 +127,8 @@ class Vote : protected Acct
 	virtual void event_cnotice(User &u, const std::string &text) {}
 	virtual void event_cnotice(User &u, Chan &c, const std::string &text) {}
 
-	// Various/events while vote is not active.
+	// Various/events                           // (possibly while vote is not active)
+	virtual void valid(const Adoc &cfg) const;  // Checks validity of the cfg document
 	virtual void expired() {}                   // Reverts the effects after "cfg.for" time
 
 	// Main controls used by Voting / Praetor

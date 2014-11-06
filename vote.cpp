@@ -274,6 +274,56 @@ catch(const Exception &e)
 }
 
 
+void Vote::valid(const Adoc &cfg)
+const
+{
+	const auto valid_num = [](const auto &val)
+	{
+		if(!std::all_of(val.begin(),val.end(),[](auto&& c) { return isdigit(c) || c == '.'; }))
+			throw Exception("Must use a numerical value for this key.");
+
+		if(std::count(val.begin(),val.end(),'.') > 1)
+			throw Exception("One dot only, please.");
+	};
+
+	const auto valid_mode = [](const auto &val)
+	{
+		if(!isalpha(val))
+			throw Exception("Must use letters only as value for this key.");
+	};
+
+	const auto valid_secs = [](const auto &val)
+	{
+		secs_cast(val);  // throws if invalid
+	};
+
+	const auto chk = [&](const auto &key, const auto &val)
+	{
+		static const auto mode_keys =
+		{
+			"access",
+			"mode",
+		};
+
+		static const auto secs_keys =
+		{
+			"for",
+			"age",
+			"duration",
+		};
+
+		if(endswith_any(key,mode_keys.begin(),mode_keys.end()))
+			valid_mode(val);
+		else if(endswith_any(key,secs_keys.begin(),secs_keys.end()))
+			valid_secs(val);
+		else
+			valid_num(val);
+	};
+
+	cfg.for_each(chk);
+}
+
+
 void Vote::event_vote(User &user,
                       const Ballot &ballot)
 try

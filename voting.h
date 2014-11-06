@@ -90,10 +90,11 @@ try
 		using limits = std::numeric_limits<size_t>;
 
 		Vote &vote = dynamic_cast<Vote &>(*iit.first->second);
+		const Adoc &cfg = vote.get_cfg();
 		const User &user = vote.get_user();
 		const Chan &chan = vote.get_chan();
-		const Adoc &cfg = vote.get_cfg();
 
+		vote.valid(cfg);
 		chanidx.emplace(chan.get_name(),id);
 		useridx.emplace(user.get_acct(),id);
 
