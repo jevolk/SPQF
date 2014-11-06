@@ -30,7 +30,7 @@ WFLAGS = -pedantic                             \
          -Wsuggest-attribute=format
 
 VERSTR = $(shell git describe --tags)
-CCFLAGS += -std=c++14 -Istldb -DSPQF_VERSION=\"$(VERSTR)\" -fstack-protector
+CCFLAGS += -std=c++14 -Iircbot/stldb -DSPQF_VERSION=\"$(VERSTR)\" -fstack-protector
 LDFLAGS = -lircbot -lleveldb -lboost_system -lpthread
 LIBPATH = -Lircbot/
 

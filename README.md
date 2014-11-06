@@ -119,10 +119,13 @@ or conduct takeovers.
 
 #### Compilation
 
-	git submodule update --init stldb/
+	git fetch --tags
+	git submodule update --init --recursive
+	git submodule foreach --recursive git fetch --tags
 	make
 
 *(If linking error occurs, type make again)*
+*(Fetching tags is necessary for a complete version string)*
 
 
 #### Execution
