@@ -216,8 +216,7 @@ void ResPublica::handle_nick(const Msg &msg,
 	const auto &old_nick = msg.get_nick();
 	const auto &new_nick = user.get_nick();
 
-	voting.for_each([&]
-	(Vote &vote)
+	voting.for_each([&](Vote &vote)
 	{
 		vote.event_nick(user,old_nick);
 	});
@@ -418,8 +417,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 
 	if(toks.empty())
 	{
-		voting.for_each(chan,[&]
-		(const Vote &vote)
+		voting.for_each(chan,[&](const Vote &vote)
 		{
 			const auto &id = vote.get_id();
 			handle_vote_list(msg,chan,user,subtoks,id);
@@ -651,8 +649,7 @@ try
 
 	if(subtoks.empty())
 	{
-		voting.for_each(chan,[&]
-		(const Vote &vote)
+		voting.for_each(chan,[&](const Vote &vote)
 		{
 			const auto &id = vote.get_id();
 			handle_vote_list(msg,user,user,subtoks,id);
