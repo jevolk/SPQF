@@ -335,3 +335,8 @@ config.vote. For example, to override config.vote.duration for a vote:
 This initiates an opinion vote where config.vote.duration = 60, and the issue is "Do you
 need more time to decide this?" If a vote-type specific variable overrides the global
 default, this vote-time variable overrides both.
+
+
+config.vote.audibles = <string> [letters with spaces]
+
+Space separated white-list of allowed vote-time config keys.

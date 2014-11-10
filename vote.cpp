@@ -44,6 +44,7 @@ cfg([&]
 	Adoc ret;
 	ret.put("disable",0);
 	ret.put("for",3600);
+	ret.put("audibles","");
 	ret.put("max_active",16);
 	ret.put("max_per_user",1);
 	ret.put("min_ballots",1);
@@ -73,7 +74,17 @@ cfg([&]
 	ret.merge(chan.get("config.vote"));                      // Overwrite defaults with saved config
 	chan.set("config.vote",ret);                             // Write back combined result to db
 	ret.merge(ret.get_child(type,Adoc()));                   // Import type-specifc overrides up to main
-	ret.merge({Adoc::arg_ctor,issue,ARG_KEYED,ARG_VALUED});  // Any vote-time options from user.
+
+	// Parse and validate any vote-time "audibles" from user.
+	const Adoc auds(Adoc::arg_ctor,issue,ARG_KEYED,ARG_VALUED);
+	const auto valid_auds = tokens(ret["audibles"]);
+	auds.for_each([&](const auto &key, const auto &val)
+	{
+		if(!std::count(valid_auds.begin(),valid_auds.end(),key))
+			throw Exception("You cannot specify that option at vote-time.");
+	});
+
+	ret.merge(auds);
 	ret.merge(cfg);                                          // Any overrides trumping all.
 	return ret;
 }()),
