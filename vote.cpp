@@ -277,6 +277,17 @@ catch(const Exception &e)
 void Vote::valid(const Adoc &cfg)
 const
 {
+	const auto valid_sentence = [](const auto &val)
+	{
+		const auto isalpha_or_sp = [&](auto&& c)
+		{
+			return std::isalpha(c,locale) || c == ' ';
+		};
+
+		if(!std::all_of(val.begin(),val.end(),isalpha_or_sp))
+			throw Exception("Must use letters only as value for this key.");
+	};
+
 	const auto valid_num = [](const auto &val)
 	{
 		if(!std::all_of(val.begin(),val.end(),[](auto&& c) { return isdigit(c) || c == '.'; }))
@@ -299,6 +310,11 @@ const
 
 	const auto chk = [&](const auto &key, const auto &val)
 	{
+		static const auto sentence_keys =
+		{
+			"audibles",
+		};
+
 		static const auto mode_keys =
 		{
 			"access",
@@ -312,7 +328,9 @@ const
 			"duration",
 		};
 
-		if(endswith_any(key,mode_keys.begin(),mode_keys.end()))
+		if(endswith_any(key,sentence_keys.begin(),sentence_keys.end()))
+			valid_sentence(val);
+		else if(endswith_any(key,mode_keys.begin(),mode_keys.end()))
 			valid_mode(val);
 		else if(endswith_any(key,secs_keys.begin(),secs_keys.end()))
 			valid_secs(val);
