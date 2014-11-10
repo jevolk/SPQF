@@ -170,25 +170,18 @@ template<class... Args>
 vote::Config::Config(Args&&... args):
 Vote("config",std::forward<Args>(args)...)
 {
-	std::vector<std::string> tokes = tokens(get_issue(),"=");
+	const auto tokes = tokens(get_issue()," = ");
 
 	if(tokes.size() > 8)
 		throw Exception("Path nesting too deep.");
 
 	if(tokes.size() > 0)
-	{
-		const auto it = std::remove(tokes.at(0).begin(),tokes.at(0).end(),' ');
-		tokes.at(0).erase(it,tokes.at(0).end());
-		key = tokes.at(0);
-	}
-	else throw Exception("Invalid syntax to assign a configuration variable.");
+		key = chomp(tokes.at(0)," ");
+	else
+		throw Exception("Invalid syntax to assign a configuration variable.");
 
 	if(tokes.size() > 1)
-	{
-		const auto it = std::remove(tokes.at(1).begin(),tokes.at(1).end(),' ');
-		tokes.at(1).erase(it,tokes.at(1).end());
-		val = tokes.at(1);
-	}
+		val = chomp(tokes.at(1)," ");
 }
 
 
