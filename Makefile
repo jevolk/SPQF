@@ -27,12 +27,13 @@ WFLAGS = -pedantic                             \
          -Wmissing-format-attribute            \
          -Wno-unused-parameter                 \
          -Wno-unused-label                     \
+         -Wno-unused-variable                  \
          -Wsuggest-attribute=format
 
 VERSTR = $(shell git describe --tags)
 CCFLAGS += -std=c++14 -Iircbot/stldb -DSPQF_VERSION=\"$(VERSTR)\" -fstack-protector
-LDFLAGS = -lircbot -lleveldb -lboost_system -lpthread
-LIBPATH = -Lircbot/
+LDFLAGS += -lircbot -lleveldb -lboost_system -lpthread
+LIBPATH += -Lircbot/
 
 LIBRARIES = libircbot
 TARGETS = spqf cfgedit

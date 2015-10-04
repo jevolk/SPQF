@@ -53,7 +53,7 @@ void Praetor::init()
 	          << " Reading " << vdb.count() << " votes..."
 	          << std::endl;
 
-	auto it = vdb.cbegin(stldb::SNAPSHOT);
+	auto it = vdb.cbegin();
 	auto end = vdb.cend();
 	for(; it != end && !interrupted.load(std::memory_order_consume); ++it) try
 	{
