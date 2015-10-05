@@ -192,8 +192,8 @@ void vote::Mode::passed()
 	const Server &serv = sess.get_server();
 
 	const Deltas deltas(get_issue(),serv);
-	Chan &chan = get_chan();
-	chan.opdo(deltas);
+	Chan &chan(get_chan());
+	chan(deltas);
 	set_effect(deltas);
 }
 
@@ -327,6 +327,6 @@ void ModeEffect::expired()
 	Deltas deltas(get_effect(),serv);
 	deltas.inv_signs();
 
-	Chan &chan = get_chan();
-	chan.opdo(deltas);
+	Chan &chan(get_chan());
+	chan(deltas);
 }
