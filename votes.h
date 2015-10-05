@@ -147,6 +147,30 @@ namespace vote
 		                                NickIssue("unquiet",std::forward<Args>(args)...) {}
 	};
 
+	class Voice : public virtual Vote,
+	              public virtual NickIssue,
+	              public virtual ModeEffect
+	{
+		void passed() override;
+
+	  public:
+		template<class... Args> Voice(Args&&... args):
+		                              Vote("voice",std::forward<Args>(args)...),
+		                              NickIssue("voice",std::forward<Args>(args)...),
+		                              ModeEffect("voice",std::forward<Args>(args)...) {}
+	};
+
+	class DeVoice : public virtual Vote,
+	                public virtual NickIssue
+	{
+		void passed() override;
+
+	  public:
+		template<class... Args> DeVoice(Args&&... args):
+		                                Vote("devoice",std::forward<Args>(args)...),
+		                                NickIssue("devoice",std::forward<Args>(args)...) {}
+	};
+
 	class Import : public Vote
 	{
 		std::stringstream received;

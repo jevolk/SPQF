@@ -53,6 +53,8 @@ try
 		case hash("ban"):       return std::make_unique<vote::Ban>(id,*this,std::forward<Args>(args)...);
 		case hash("quiet"):     return std::make_unique<vote::Quiet>(id,*this,std::forward<Args>(args)...);
 		case hash("unquiet"):   return std::make_unique<vote::UnQuiet>(id,*this,std::forward<Args>(args)...);
+		case hash("voice"):     return std::make_unique<vote::Voice>(id,*this,std::forward<Args>(args)...);
+		case hash("devoice"):   return std::make_unique<vote::DeVoice>(id,*this,std::forward<Args>(args)...);
 		case hash("import"):    return std::make_unique<vote::Import>(id,*this,std::forward<Args>(args)...);
 		default:                return std::make_unique<Vote>("",id,*this,std::forward<Args>(args)...);
 	}
