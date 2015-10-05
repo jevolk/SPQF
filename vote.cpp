@@ -55,7 +55,7 @@ cfg([&]
 	ret.put("speaker.access","");
 	ret.put("speaker.mode","");
 	ret.put("veto.access","");
-	ret.put("veto.mode","v");
+	ret.put("veto.mode","o");
 	ret.put("veto.min",1);
 	ret.put("veto.quick",1);
 	ret.put("enfranchise.age",1800);
