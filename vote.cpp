@@ -72,6 +72,9 @@ cfg([&]
 	ret.put("result.ack_chan",1);
 	ret.put("visible.ballots",0);
 	ret.put("visible.veto",1);
+	ret.put("weight.yea",0);
+	ret.put("weight.nay",0);
+
 	ret.merge(chan.get("config.vote"));                      // Overwrite defaults with saved config
 	chan.set("config.vote",ret);                             // Write back combined result to db
 	ret.merge(ret.get_child(type,Adoc()));                   // Import type-specifc overrides up to main
@@ -271,6 +274,15 @@ try
 		     << " Yeas: " << FG::GREEN << BOLD << yea.size() << OFF << "."
 		     << " Nays: " << FG::RED << nay.size() << OFF << "."
 		     << flush;
+
+	// Adjust the final "for" time value using the weighting system
+	{
+		const time_t min(secs_cast(cfg["for"]));
+		const time_t add(secs_cast(cfg["weight.yea"]) * this->yea.size());
+		const time_t sub(secs_cast(cfg["weight.nay"]) * this->nay.size());
+		const time_t val(min + add - sub);
+		cfg.put("for",val);
+	}
 
 	passed();
 }
