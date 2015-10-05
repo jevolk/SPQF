@@ -61,6 +61,7 @@ cfg([&]
 	ret.put("enfranchise.age",1800);
 	ret.put("enfranchise.lines",0);
 	ret.put("enfranchise.access","");
+	ret.put("enfranchise.mode","");
 	ret.put("qualify.age",900);
 	ret.put("qualify.lines",0);
 	ret.put("qualify.access","");
@@ -476,6 +477,9 @@ const
 	const Adoc &cfg = get_cfg();
 	if(cfg.has("enfranchise.access"))
 		return has_access(user,cfg["enfranchise.access"]);
+
+	if(cfg.has("enfranchise.mode"))
+		return has_mode(user,cfg["enfranchise.mode"]);
 
 	Logs::SimpleFilter filt;
 	filt.acct = user.get_acct();
