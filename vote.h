@@ -64,7 +64,7 @@ class Vote : protected Acct
 	bool disabled() const                       { return cfg.get<bool>("disable");                  }
 	bool interceded() const;
 	uint plurality() const;
-	uint minimum() const;
+	uint quorum() const;
 	uint required() const;
 
 	operator Adoc() const;                                  // Serialize to Adoc/JSON

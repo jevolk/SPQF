@@ -22,8 +22,9 @@ or conduct takeovers.
 
 ### Vote Modules
 * **Kick** - Kick users from the channel.
-* **Quiet** - Quiet users in the channel.
 * **Ban** - Ban users from the channel.
+* **Quiet** - Quiet users in the channel.
+* **Voice** - Voice users in the channel.
 * **Invite** - Invite users to the channel.
 * **Topic** - Change the topic of the channel.
 * **Mode** - Direct mode interface to the channel.
@@ -39,19 +40,30 @@ or conduct takeovers.
 
 
 ### Ruleset Features
-* **Basic voting**
+* ** General **
+    * The duration of a voting motion.
+    * The duration of effects passed by a vote.
+    * The duration each yea or nay vote adds or subtracts from the effects, respectively.
+    * Effects are reserved asynchronously when they expire.
+
+
+* **Limits**
     * Maximum number of votes at any given time.
     * Maximum number of votes per account.
+    * The time limit for votes.
+
+
+* **Quorum**
     * Minimum required ballot submissions for a valid vote.
     * Minimum yes ballot submissions for a valid vote.
     * The percentage that constitutes a passing majority.
     * Turnout percentage of your channel that must submit a ballot for a valid vote.
-    * The time limit for votes.
 
 
 * **Enfranchisement**
     * The minimum amount of time a user has to spend in a channel to begin voting at all.
     * The minimum number of lines a user has to say before being able to vote at all.
+	* Granting voting power to those only with a current channel mode (+o/+v).
     * Reads ChanServ access flags potentially allowing only those with certain flags to vote.
 
 

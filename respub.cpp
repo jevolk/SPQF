@@ -437,7 +437,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   const Tokens &toks,
                                   const id_t &id)
 {
-	if(chan.get("config.vote.list")["ack_chan"] == "1")
+	if(chan.get("config.vote.list")["ack.chan"] == "1")
 		handle_vote_list(msg,user,chan,toks,id);
 	else
 		handle_vote_list(msg,user,user<<chan,toks,id);
@@ -460,7 +460,7 @@ void ResPublica::handle_vote_config(const Msg &msg,
 	const std::string &key = *toks.at(0);
 	const std::string &val = cfg[key];
 
-	const bool ack_chan = cfg["config.config.ack_chan"] == "1";
+	const bool ack_chan = cfg["config.config.ack.chan"] == "1";
 	Locutor &out = ack_chan? static_cast<Locutor &>(chan):
 	                         static_cast<Locutor &>(user << chan);   // CMSG
 	if(val.empty())
@@ -746,8 +746,8 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	{
 		out << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
 
-		if(vote.total() < vote.minimum())
-			out << BOLD << (vote.minimum() - vote.total()) << OFF << " more votes are required. ";
+		if(vote.total() < vote.quorum())
+			out << BOLD << (vote.quorum() - vote.total()) << OFF << " more votes are required. ";
 		else if(tally.first < vote.required())
 			out << BOLD << (vote.required() - tally.first) << OFF << " more yeas are required to pass. ";
 		else
@@ -806,7 +806,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	if(tally.first)
 	{
 		out << pfx << BOLD << "YEA" << OFF << "      : " << BOLD << FG::GREEN << tally.first << OFF;
-		if(cfg["visible.ballot"] == "1")
+		if(cfg["visible.ballots"] == "1")
 		{
 			out << " - ";
 			for(const auto &acct : vote.get_yea())
@@ -819,7 +819,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	if(tally.second)
 	{
 		out << pfx << BOLD << "NAY" << OFF << "      : " << BOLD << FG::RED << tally.second << OFF;
-		if(cfg["visible.ballot"] == "1")
+		if(cfg["visible.ballots"] == "1")
 		{
 			out << " - ";
 			for(const auto &acct : vote.get_nay())
@@ -862,8 +862,8 @@ void ResPublica::handle_vote_info(const Msg &msg,
 			out << BOLD << FG::WHITE << BG::RED << "FAILED" << OFF << BOLD << FG::RED << ": " << vote.get_reason() << "\n";
 	} else {
 		out << pfx << BOLD << "STATUS" << OFF << "   : ";
-		if(vote.total() < vote.minimum())
-			out << BOLD << FG::BLUE << (vote.minimum() - vote.total()) << " more votes are required to reach minimums."  << "\n";
+		if(vote.total() < vote.quorum())
+			out << BOLD << FG::BLUE << (vote.quorum() - vote.total()) << " more votes are required to reach minimums."  << "\n";
 		else if(tally.first < vote.required())
 			out << BOLD << FG::ORANGE << (vote.required() - tally.first) << " more votes are required to pass."  << "\n";
 		else

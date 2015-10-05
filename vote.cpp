@@ -45,18 +45,18 @@ cfg([&]
 	ret.put("disable",0);
 	ret.put("for",3600);
 	ret.put("audibles","");
-	ret.put("max_active",16);
-	ret.put("max_per_user",1);
-	ret.put("min_ballots",1);
-	ret.put("min_yea",1);
-	ret.put("turnout",0.00);
+	ret.put("limit.active",16);
+	ret.put("limit.user",1);
+	ret.put("quorum.ballots",1);
+	ret.put("quorum.yea",1);
+	ret.put("quorum.turnout",0.00);
+	ret.put("quorum.plurality",0.51);
 	ret.put("duration",30);
-	ret.put("plurality",0.51);
 	ret.put("speaker.access","");
 	ret.put("speaker.mode","");
 	ret.put("veto.access","");
 	ret.put("veto.mode","o");
-	ret.put("veto.min",1);
+	ret.put("veto.quorum",1);
 	ret.put("veto.quick",1);
 	ret.put("enfranchise.age",1800);
 	ret.put("enfranchise.lines",0);
@@ -65,11 +65,11 @@ cfg([&]
 	ret.put("qualify.age",900);
 	ret.put("qualify.lines",0);
 	ret.put("qualify.access","");
-	ret.put("ballot.ack_chan",0);
-	ret.put("ballot.ack_priv",1);
-	ret.put("ballot.rej_chan",0);
-	ret.put("ballot.rej_priv",1);
-	ret.put("result.ack_chan",1);
+	ret.put("ballot.ack.chan",0);
+	ret.put("ballot.ack.priv",1);
+	ret.put("ballot.rej.chan",0);
+	ret.put("ballot.rej.priv",1);
+	ret.put("result.ack.chan",1);
 	ret.put("visible.ballots",0);
 	ret.put("visible.veto",1);
 	ret.put("weight.yea",0);
@@ -189,7 +189,7 @@ void Vote::cancel()
 	set_reason("canceled");
 	canceled();
 
-	if(cfg.get<bool>("result.ack_chan"))
+	if(cfg.get<bool>("result.ack.chan"))
 	{
 		Chan &chan = get_chan();
 		chan << "The vote " << (*this) << " has been canceled." << flush;
@@ -226,7 +226,7 @@ try
 	if(interceded())
 	{
 		auto &chan = get_chan();
-		if(cfg.get<bool>("result.ack_chan"))
+		if(cfg.get<bool>("result.ack.chan"))
 			chan << "The vote " << (*this) << " has been vetoed." << flush;
 
 		set_reason("vetoed");
@@ -234,19 +234,19 @@ try
 		return;
 	}
 
-	if(total() < minimum())
+	if(total() < quorum())
 	{
 		auto &chan = get_chan();
-		if(cfg.get<bool>("result.ack_chan"))
+		if(cfg.get<bool>("result.ack.chan"))
 			chan << (*this) << ": "
-			     << "Failed to reach minimum number of votes: "
+			     << "Failed to reach a quorum: "
 			     << BOLD << total() << OFF
 			     << " of "
-			     << BOLD << minimum() << OFF
+			     << BOLD << quorum() << OFF
 			     << " required."
 			     << flush;
 
-		set_reason("minimums");
+		set_reason("quorum");
 		failed();
 		return;
 	}
@@ -254,7 +254,7 @@ try
 	if(yea.size() < required())
 	{
 		auto &chan = get_chan();
-		if(cfg.get<bool>("result.ack_chan"))
+		if(cfg.get<bool>("result.ack.chan"))
 			chan << (*this) << ": "
 			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF
 			     << " Yeas: " << FG::GREEN << yea.size() << OFF << "."
@@ -268,7 +268,7 @@ try
 	}
 
 	auto &chan = get_chan();
-	if(cfg.get<bool>("result.ack_chan"))
+	if(cfg.get<bool>("result.ack.chan"))
 		chan << (*this) << ": "
 		     << FG::WHITE << BG::GREEN << BOLD << "The yeas have it." << OFF
 		     << " Yeas: " << FG::GREEN << BOLD << yea.size() << OFF << "."
@@ -290,7 +290,7 @@ catch(const Exception &e)
 {
 	set_reason(e.what());
 
-	if(cfg.get<bool>("result.ack_chan"))
+	if(cfg.get<bool>("result.ack.chan"))
 	{
 		auto &chan = get_chan();
 		chan << "The vote " << (*this) << " was rejected: " << e << flush;
@@ -378,19 +378,19 @@ try
 		case ADDED:
 			hosts.emplace(user.get_host());
 
-			if(cfg.get<bool>("ballot.ack_chan"))
+			if(cfg.get<bool>("ballot.ack.chan"))
 				chan << user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
-			if(cfg.get<bool>("ballot.ack_priv"))
+			if(cfg.get<bool>("ballot.ack.priv"))
 				user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
 			break;
 
 		case CHANGED:
-			if(cfg.get<bool>("ballot.ack_chan"))
+			if(cfg.get<bool>("ballot.ack.chan"))
 				chan << user << "You have changed your vote on " << (*this) << "!" << flush;
 
-			if(cfg.get<bool>("ballot.ack_priv"))
+			if(cfg.get<bool>("ballot.ack.priv"))
 				user << "You have changed your vote on " << (*this) << "!" << flush;
 
 			break;
@@ -402,13 +402,13 @@ catch(const Exception &e)
 {
 	using namespace colors;
 
-	if(cfg.get<bool>("ballot.rej_chan"))
+	if(cfg.get<bool>("ballot.rej.chan"))
 	{
 		Chan &chan = get_chan();
 		chan << user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
 	}
 
-	if(cfg.get<bool>("ballot.rej_priv"))
+	if(cfg.get<bool>("ballot.rej.priv"))
 		user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
 }
 
@@ -568,26 +568,26 @@ uint Vote::required()
 const
 {
 	const auto plura = plurality();
-	const auto min_yea = cfg.get<uint>("min_yea");
+	const auto min_yea = cfg.get<uint>("quorum.yea");
 	return std::max(min_yea,plura);
 }
 
 
-uint Vote::minimum()
+uint Vote::quorum()
 const
 {
 	std::vector<uint> sel
 	{{
-		cfg.get<uint>("min_yea"),
-		cfg.get<uint>("min_ballots"),
+		cfg.get<uint>("quorum.yea"),
+		cfg.get<uint>("quorum.ballots"),
 	}};
 
-	if(cfg.get<float>("turnout") <= 0.0)
+	if(cfg.get<float>("quorum.turnout") <= 0.0)
 		return *std::max_element(sel.begin(),sel.end());
 
 	const Chan &chan = get_chan();
 	const float eligible = chan.users.count_logged_in();
-	sel.emplace_back(ceil(eligible * cfg.get<float>("turnout")));
+	sel.emplace_back(ceil(eligible * cfg.get<float>("quorum.turnout")));
 	return *std::max_element(sel.begin(),sel.end());
 }
 
@@ -596,7 +596,7 @@ uint Vote::plurality()
 const
 {
 	const float &total = this->total();
-	const auto plura = cfg.get<float>("plurality");
+	const auto plura = cfg.get<float>("quorum.plurality");
 	return ceil(total * plura);
 }
 
@@ -604,7 +604,7 @@ const
 bool Vote::interceded()
 const
 {
-	const auto vmin = std::max(cfg.get<uint>("veto.min"),1U);
+	const auto vmin = std::max(cfg.get<uint>("veto.quorum"),1U);
 	if(num_vetoes() < vmin)
 		return false;
 

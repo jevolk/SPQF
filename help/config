@@ -23,7 +23,13 @@ they will reappear with default values at the start of the next vote.
 
 
 
-config.vote.max_active = <int>
+config.vote.duration = <int> [seconds]
+
+The amount of time a vote lasts in seconds.
+
+
+
+config.vote.limit.active = <int>
 
 The hard maximum number of votes active in a channel at any given time.
 
@@ -32,7 +38,7 @@ to be spammed with new votes, you want room to create additional votes to ban th
 
 
 
-config.vote.max_per_user = <int>
+config.vote.limit.user = <int>
 
 The maximum number of votes a user can initiate at the same time.
 
@@ -40,7 +46,7 @@ This should be set very low.
 
 
 
-config.vote.min_ballots = <int>
+config.vote.quorum.ballots = <int>
 
 The minimum number of ballots that must be cast (whether yea or nay) for the result to not be
 summarily tossed.
@@ -49,7 +55,7 @@ Is is recommended this be set to at least 1 or 2.
 
 
 
-config.vote.min_yea = <int>
+config.vote.quorum.yea = <int>
 
 The minimum number of yes votes that must be cast for any result to not be summarily tossed.
 
@@ -57,7 +63,7 @@ It is recommended this be set to at least 1 or 2.
 
 
 
-config.vote.turnout = <real> [0.00 - 1.00]
+config.vote.quorum.turnout = <real> [0.00 - 1.00]
 
 The percentage of all users in the channel who are logged in to nickserv that must vote
 for any result to not be summarily tossed.
@@ -67,13 +73,7 @@ In the future, this will be more useful as a temporary parameter on a per-vote b
 
 
 
-config.vote.duration = <int> [seconds]
-
-The amount of time a vote lasts in seconds.
-
-
-
-config.vote.plurality = <real> [0.00 - 1.00]
+config.vote.quorum.plurality = <real> [0.00 - 1.00]
 
 The percentage of YEA votes of the total votes cast which constitutes a winning majority.
 
@@ -107,10 +107,23 @@ by low-profile lurkers and idle plants.
 
 
 
+config.vote.enfranchise.mode = <string> [a-z]
+
+If set, any of these modes toggle enfranchisement of a user. Other config.vote.enfranchise
+rules are ignored except config.vote.enfranchise.access which will take priority over this.
+
+Note: Omit any leading '+' in the mode string.
+This is unset by default, but this feature is not entirely discouraged. It is a safe and
+easy way to bootstrap a potentially large access list of regular/semi-trusted users or
+to censure abusive users. For example, if set to 'v' the existing enfranchised users
+can vote on voicing or devoicing other users to control enfranchisement.
+
+
+
 config.vote.enfranchise.access = <string> [a-z]
 
 If set, a user will never become enfranchised unless they have any of the ChanServ
-access flags specified in this string. If set, no other config.enfranchise rules apply,
+access flags specified in this string. If set, no other config.vote.enfranchise rules apply,
 and the matching users are instantly the only eligible voters.
 
 Note: Omit any leading '+' in the mode string.
@@ -175,13 +188,13 @@ If this is set and config.vote.veto.access is unset, a user will still have veto
 matching.
 
 Note: Omit any leading '+' in the mode string.
-This is set to "v" by default, thus cannot be erased. Careful when voting nay with voice.
+This is set to "o" by default, thus cannot be erased. Careful when voting nay with ops.
 Note: This extra step of upgrading one's mode in order to veto is in congruence with
 Freenode's culture of only upgrading to authoritative powers when necessary.
 
 
 
-config.vote.veto.min = <int>
+config.vote.veto.quorum = <int>
 
 The minimum number of vetoes required to have an effective veto of the vote.
 
@@ -222,10 +235,10 @@ This is unset by default.
 
 
 
-config.vote.ballot.ack_chan = <bool> [0 - 1]
-config.vote.ballot.ack_priv = <bool> [0 - 1]
-config.vote.ballot.rej_chan = <bool> [0 - 1]
-config.vote.ballot.rej_priv = <bool> [0 - 1]
+config.vote.ballot.ack.chan = <bool> [0 - 1]
+config.vote.ballot.ack.priv = <bool> [0 - 1]
+config.vote.ballot.rej.chan = <bool> [0 - 1]
+config.vote.ballot.rej.priv = <bool> [0 - 1]
 
 Reply settings for a user indicating that their ballot was accepted or rejected via the
 channel or pm.
@@ -274,6 +287,19 @@ be unset after this amount of time. The succinctness of this variable name is in
 to make it easy to use as a vote-time option (!vote ban --for=1d somebody).
 
 A default is set to 1h (one hour).
+
+
+
+config.vote.weight.yea = <time string> [e.g. 1s 2m 3h 4d]
+config.vote.weight.nay = <time string> [e.g. 1s 2m 3h 4d]
+
+
+The duration adjustments to calculate a final 'for' value at the end of each vote.
+config.vote.for is thus a starting value, and each yea vote adds weight.yea to the
+final value. Each nay vote subtracts the weight.nay value from the final value.
+
+A default is set to 0 for both values.
+The nay value is a subtrahend, and should always be positive.
 
 
 
