@@ -53,12 +53,11 @@ void Praetor::init()
 	          << " Reading " << vdb.count() << " votes..."
 	          << std::endl;
 
-	auto it = vdb.cbegin();
+	auto it = vdb.cbegin(stldb::SNAPSHOT);
 	auto end = vdb.cend();
 	for(; it != end && !interrupted.load(std::memory_order_consume); ++it) try
 	{
-		const Adoc doc(it->second);
-		add(doc);
+		add(Adoc(it->second));
 	}
 	catch(const Exception &e)
 	{
@@ -129,7 +128,7 @@ void Praetor::add(const Adoc &doc)
 	const time_t ended = secs_cast(doc["ended"]);
 	const time_t expiry = secs_cast(doc["expiry"]);
 	const time_t cfgfor = secs_cast(doc["cfg.for"]);
-	if(expiry || !cfgfor || !ended)
+	if(expiry || !cfgfor || !ended || doc.has("reason"))
 		return;
 
 	const time_t absolute = ended + cfgfor;
