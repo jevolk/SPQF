@@ -277,6 +277,7 @@ void ResPublica::handle_cmd(const Msg &msg,
 	const std::vector<std::string> tok = tokens(msg[TEXT]);
 	switch(hash(tok.at(0).substr(opts["prefix"].size())))
 	{
+		case hash("v"):
 		case hash("vote"):     handle_vote(msg,chan,user,subtok(tok));    break;
 		case hash("version"):  handle_version(msg,chan,user,subtok(tok)); break;
 		default:                                                          break;
@@ -489,6 +490,7 @@ void ResPublica::handle_cmd(const Msg &msg,
 
 	switch(hash(cmd))
 	{
+		case hash("v"):
 		case hash("vote"):     handle_vote(msg,user,subtok(toks));     break;
 		case hash("version"):  handle_version(msg,user,subtok(toks));  break;
 		case hash("help"):     handle_help(msg,user,subtok(toks));     break;
@@ -851,6 +853,16 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		out << BOLD << FG::WHITE << BG::RED << "NAY" << "\n";
 	else
 		out << FG::BLACK << BG::LGRAY << "???" << "\n";
+
+	// Effect lines
+	if(!vote.get_effect().empty())
+	{
+		// Effect line
+		out << pfx << BOLD << "EFFECT" << OFF << "   : " << vote.get_effect() << "\n";
+
+		// For line
+		out << pfx << BOLD << "FOR" << OFF << "      : " << cfg["for"] << " seconds\n";
+	}
 
 	// Result/Status line
 	if(vote.get_ended())
