@@ -171,6 +171,17 @@ namespace vote
 		                                NickIssue("devoice",std::forward<Args>(args)...) {}
 	};
 
+	class Flags : public Vote
+	{
+		void passed() override;
+		void expired() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> Flags(Args&&... args):
+		                              Vote("flags",std::forward<Args>(args)...) {}
+	};
+
 	class Import : public Vote
 	{
 		std::stringstream received;

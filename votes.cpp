@@ -154,6 +154,65 @@ void vote::Ban::passed()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// Flags
+//
+
+
+void vote::Flags::passed()
+{
+	const auto toks(tokens(get_issue()));
+	const Users &users(get_users());
+	const User &user(users.get(toks.at(0)));
+	const Deltas deltas(toks.at(1));
+
+	std::stringstream effect;
+	effect << user.get_acct() << " " << deltas;
+
+	Chan &chan = get_chan();
+	chan.flags(user,deltas);
+	set_effect(effect.str());
+}
+
+
+void vote::Flags::expired()
+{
+//	const Sess &sess = get_sess();
+//	const Server &serv = sess.get_server();
+
+	const auto toks(tokens(get_issue()));
+
+	const auto &acct(toks.at(0));
+	const User user(&get_adb(),&get_sess(),nullptr,acct,"",acct);
+
+	Deltas deltas(toks.at(1));
+	deltas.inv_signs();
+
+	Chan &chan(get_chan());
+	chan.flags(user,deltas);
+}
+
+
+void vote::Flags::starting()
+{
+//	const Sess &sess = get_sess();
+//	const Server &serv = sess.get_server();
+
+	const auto toks(tokens(get_issue()));
+	const Users &users(get_users());
+	const User &user(users.get(toks.at(0)));
+	const Deltas deltas(toks.at(1));
+
+	const Adoc &cfg(get_cfg());
+	const irc::bot::Mode allowed(cfg["flags.access"]);
+	for(const auto &delta : deltas)
+		if(!allowed.has(delta))
+			throw Assertive("Voting on this flag is not permitted");
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // Opine
 //
 
