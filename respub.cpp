@@ -342,6 +342,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("help"):     handle_help(msg,user<<chan,subtok(toks));                     break;
 		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,chan,user,subtok(toks));                 break;
+		case hash("info"):     handle_vote_id(msg,chan,user,subtok(toks));                   break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtok(toks));               break;
 
 		// Actual vote types
@@ -615,6 +616,7 @@ void ResPublica::handle_vote(const Msg &msg,
 
 		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,user,subtok(toks));                break;
+		case hash("info"):     handle_vote_id(msg,user,subtok(toks));                  break;
 		default:
 		case hash("help"):     handle_help(msg,user,subtok(toks));                     break;
 	}
@@ -744,6 +746,8 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		out << BOLD << UNDER2 << FG::WHITE << BG::GREEN << "YEA" << OFF << " ";
 	else if(vote.position(user) == Vote::NAY)
 		out << BOLD << UNDER2 << FG::WHITE << BG::RED << "NAY" << OFF << " ";
+
+	out << "| " << BOLD << vote.get_type() << OFF << ": " << UNDER2 << vote.get_issue() << OFF << " ";
 
 	if(vote.remaining() >= 0)
 	{
