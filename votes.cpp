@@ -206,7 +206,7 @@ void vote::Flags::starting()
 	const irc::bot::Mode allowed(cfg["flags.access"]);
 	for(const auto &delta : deltas)
 		if(!allowed.has(delta))
-			throw Assertive("Voting on this flag is not permitted");
+			throw Exception("Voting on this flag is not permitted");
 }
 
 
