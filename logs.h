@@ -69,11 +69,11 @@ class Logs
 
 	// Reading 
 	// returns false if break early - "remain true to the end"
-	bool for_each(const std::string &path, const Closure &closure) const;
-	bool for_each(const std::string &path, const Filter &filter, const Closure &closure) const;
-	size_t count(const std::string &path, const Filter &filter) const;
-	bool atleast(const std::string &path, const Filter &filter, const size_t &count) const;
-	bool exists(const std::string &path, const Filter &filter) const;
+	bool for_each(const std::string &name, const Closure &closure) const;
+	bool for_each(const std::string &name, const Filter &filter, const Closure &closure) const;
+	size_t count(const std::string &name, const Filter &filter) const;
+	bool atleast(const std::string &name, const Filter &filter, const size_t &count) const;
+	bool exists(const std::string &name, const Filter &filter) const;
 
 	bool log(const Msg &msg, const Chan &chan, const User &user);
 
@@ -120,11 +120,11 @@ catch(const Internal &e)
 
 
 inline
-bool Logs::exists(const std::string &path,
+bool Logs::exists(const std::string &name,
                   const Filter &filter)
 const
 {
-	return !for_each(path,[&filter]
+	return !for_each(name,[&filter]
 	(const ClosureArgs &a) -> bool
 	{
 		return !filter(a);
@@ -133,13 +133,13 @@ const
 
 
 inline
-bool Logs::atleast(const std::string &path,
+bool Logs::atleast(const std::string &name,
                    const Filter &filter,
                    const size_t &count)
 const
 {
 	size_t ret = 0;
-	return !count || !for_each(path,[&filter,&ret,&count]
+	return !count || !for_each(name,[&filter,&ret,&count]
 	(const ClosureArgs &a) -> bool
 	{
 		ret += filter(a);
@@ -149,12 +149,12 @@ const
 
 
 inline
-size_t Logs::count(const std::string &path,
+size_t Logs::count(const std::string &name,
                    const Filter &filter)
 const
 {
 	size_t ret = 0;
-	for_each(path,[&filter,&ret]
+	for_each(name,[&filter,&ret]
 	(const ClosureArgs &a) -> bool
 	{
 		ret += filter(a);
@@ -166,12 +166,12 @@ const
 
 
 inline
-bool Logs::for_each(const std::string &path,
+bool Logs::for_each(const std::string &name,
                     const Filter &filter,
                     const Closure &closure)
 const
 {
-	return for_each(path,[&filter,&closure]
+	return for_each(name,[&filter,&closure]
 	(const ClosureArgs &a)
 	{
 		if(!filter(a))
@@ -183,11 +183,12 @@ const
 
 
 inline
-bool Logs::for_each(const std::string &path,
+bool Logs::for_each(const std::string &name,
                     const Closure &closure)
 const try
 {
 	std::ifstream file;
+	const auto path(get_path(name));
 	file.exceptions(std::ios_base::badbit);
 	file.open(path,std::ios_base::in);
 
