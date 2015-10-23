@@ -586,8 +586,14 @@ const
 	if(cfg.get<float>("quorum.turnout") <= 0.0)
 		return *std::max_element(sel.begin(),sel.end());
 
-	const Chan &chan = get_chan();
-	const float eligible = chan.users.count_logged_in();
+	auto eligible(0);
+	const Chan &chan(get_chan());
+	chan.users.for_each([this,&eligible]
+	(const User &user)
+	{
+		eligible += enfranchised(user);
+	});
+
 	sel.emplace_back(ceil(eligible * cfg.get<float>("quorum.turnout")));
 	return *std::max_element(sel.begin(),sel.end());
 }
