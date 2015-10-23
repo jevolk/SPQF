@@ -34,7 +34,8 @@ class ModeEffect : virtual Vote
 	void expired() override;
 
   protected:
-	template<class... Args> ModeEffect(Args&&... args): Vote(std::forward<Args>(args)...) {}
+	template<class... Args> ModeEffect(Args&&... args):
+	                                   Vote(std::forward<Args>(args)...) {}
 };
 
 

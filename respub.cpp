@@ -629,7 +629,6 @@ void ResPublica::handle_vote_id(const Msg &msg,
 try
 {
 	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
-
 	Chan *const chan = chans.find_cnotice(user);
 	if(!chan)
 	{
