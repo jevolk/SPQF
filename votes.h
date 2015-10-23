@@ -19,11 +19,9 @@ class NickIssue : virtual Vote
   protected:
 	User user;        // Copy of the user at start of vote
 
-  private:
 	void event_nick(User &user, const std::string &old) override;
 	void starting() override;
 
-  protected:
 	template<class... Args> NickIssue(Args&&... args);
 };
 
