@@ -198,6 +198,33 @@ namespace vote
 		template<class... Args> Import(Args&&... args):
 		                               Vote("import",std::forward<Args>(args)...) {}
 	};
+
+	class Civis : public virtual Vote,
+	              public virtual NickIssue
+	{
+		void passed() override;
+		void expired() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> Civis(Args&&... args):
+		                              Vote("civis",std::forward<Args>(args)...),
+		                              NickIssue("civis",std::forward<Args>(args)...) {}
+	};
+
+	class Censure : public virtual Vote,
+	                public virtual NickIssue
+	{
+		void passed() override;
+		void expired() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> Censure(Args&&... args):
+		                                Vote("censure",std::forward<Args>(args)...),
+		                                NickIssue("censure",std::forward<Args>(args)...) {}
+	};
+
 }
 
 

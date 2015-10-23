@@ -354,6 +354,8 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("voice"):    voting.motion<vote::Voice>(chan,user,detok(subtok(toks)));    break;
 		case hash("devoice"):  voting.motion<vote::DeVoice>(chan,user,detok(subtok(toks)));  break;
 		case hash("flags"):    voting.motion<vote::Flags>(chan,user,detok(subtok(toks)));    break;
+		case hash("civis"):    voting.motion<vote::Civis>(chan,user,detok(subtok(toks)));    break;
+		case hash("censure"):  voting.motion<vote::Censure>(chan,user,detok(subtok(toks)));  break;
 		case hash("invite"):   voting.motion<vote::Invite>(chan,user,detok(subtok(toks)));   break;
 		case hash("topic"):    voting.motion<vote::Topic>(chan,user,detok(subtok(toks)));    break;
 		case hash("opine"):    voting.motion<vote::Opine>(chan,user,detok(subtok(toks)));    break;

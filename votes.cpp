@@ -213,6 +213,97 @@ void vote::Flags::starting()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// Civis
+//
+
+
+void vote::Civis::starting()
+{
+	NickIssue::starting();
+
+	Logs &logs(get_logs());
+	const Adoc &cfg(get_cfg());
+	const Chan &chan(get_chan());
+	if(chan.lists.has_flag(user,'V'))
+		throw Exception("User at issue is already enfranchised");
+
+	Logs::SimpleFilter filt;
+	filt.acct = user.get_acct();
+	filt.time.first = 0;
+	filt.time.second = time(NULL) - cfg.get<uint>("eligible.age");
+	filt.type = "PRI";  // PRIVMSG
+	if(!logs.atleast(chan.get_name(),filt,1))
+		throw Exception("User at issue has not been present long enough for enfranchisement");
+
+	filt.time.first = 0;
+	filt.time.second = time(NULL);
+	if(!logs.atleast(chan.get_name(),filt,cfg.get<uint>("eligible.lines")))
+		throw Exception("User at issue has not been active enough for enfranchisement");
+}
+
+
+void vote::Civis::passed()
+{
+	const Delta delta("+V");
+
+	std::stringstream effect;
+	effect << user.get_acct() << " " << delta;
+
+	Chan &chan(get_chan());
+	chan.flags(user,delta);
+	set_effect(effect.str());
+}
+
+
+void vote::Civis::expired()
+{
+	const Delta delta("-V");
+	Chan &chan(get_chan());
+	chan.flags(user,delta);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Censure
+//
+
+
+void vote::Censure::starting()
+{
+	NickIssue::starting();
+
+	const Chan &chan(get_chan());
+	if(!chan.lists.has_flag(user,'V'))
+		throw Exception("User at issue is not a civis and cannot be censured");
+}
+
+
+void vote::Censure::passed()
+{
+	const Delta delta("-V");
+
+	std::stringstream effect;
+	effect << user.get_acct() << " " << delta;
+
+	Chan &chan(get_chan());
+	chan.flags(user,delta);
+	set_effect(effect.str());
+}
+
+
+void vote::Censure::expired()
+{
+	const Delta delta("+V");
+	Chan &chan(get_chan());
+	chan.flags(user,delta);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // Opine
 //
 
