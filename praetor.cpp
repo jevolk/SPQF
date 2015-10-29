@@ -48,20 +48,22 @@ noexcept
 
 void Praetor::init()
 {
-	std::this_thread::sleep_for(std::chrono::seconds(30));
+	std::this_thread::sleep_for(std::chrono::seconds(45));
+
+	const std::lock_guard<Bot> l(bot);
 	std::cout << "[Praetor]: Initiating the schedule."
 	          << " Reading " << vdb.count() << " votes..."
 	          << std::endl;
 
-	auto it = vdb.cbegin(stldb::SNAPSHOT);
-	auto end = vdb.cend();
+	auto it(vdb.cbegin(stldb::SNAPSHOT));
+	const auto end(vdb.cend());
 	for(; it != end && !interrupted.load(std::memory_order_consume); ++it) try
 	{
 		add(Adoc(it->second));
 	}
 	catch(const Exception &e)
 	{
-		const auto id = lex_cast<id_t>(it->first);
+		const auto id(lex_cast<id_t>(it->first));
 		std::cerr << "[Praetor]: Init reading #" << id << ": \033[1;31m" << e << "\033[0m" << std::endl;
 	}
 }
@@ -132,7 +134,8 @@ void Praetor::add(const Adoc &doc)
 		return;
 
 	const time_t absolute = ended + cfgfor;
-	printf("[Praetor]: Scheduling #%u [expiry: %ld cfgfor: %ld ended: %ld] absolute: %ld relative: %ld\n",
+	printf("%lu [Praetor]: Scheduling #%u [expiry: %ld cfgfor: %ld ended: %ld] absolute: %ld relative: %ld\n",
+	       time(NULL),
 	       id,
 	       expiry,
 	       cfgfor,

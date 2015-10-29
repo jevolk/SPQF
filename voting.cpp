@@ -76,6 +76,8 @@ void Voting::cancel(Vote &vote,
 
 void Voting::worker()
 {
+	init();
+
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
 		poll_votes();
@@ -84,6 +86,40 @@ void Voting::worker()
 	catch(const Internal &e)
 	{
 		std::cerr << "[Voting]: \033[1;41m" << e << "\033[0m" << std::endl;
+	}
+}
+
+
+void Voting::init()
+{
+	std::this_thread::sleep_for(std::chrono::seconds(30));
+
+	const std::lock_guard<Bot> lock(bot);
+	std::cout << "[Voting]: Adding previously open votes."
+	          << " Reading " << vdb.count() << " votes..."
+	          << std::endl;
+
+	auto it(vdb.cbegin(stldb::SNAPSHOT));
+	const auto end(vdb.cend());
+	for(; it != end && !interrupted.load(std::memory_order_consume); ++it) try
+	{
+		const auto id(lex_cast<id_t>(it->first));
+		auto vote(vdb.get(id,&sess,&chans,&users,&logs));
+		if(!vote->get_ended())
+		{
+			std::cout << "Adding open vote #" << id << std::endl;
+			const auto iit(votes.emplace(id,std::move(vote)));
+			const auto &vote(*iit.first->second);
+			const auto &chan(vote.get_chan());
+			const auto &user(vote.get_user());
+			chanidx.emplace(chan.get_name(),id);
+			useridx.emplace(user.get_acct(),id);
+		}
+	}
+	catch(const Exception &e)
+	{
+		const auto id(lex_cast<id_t>(it->first));
+		std::cerr << "[Voting]: Failed reading #" << id << ": \033[1;31m" << e << "\033[0m" << std::endl;
 	}
 }
 

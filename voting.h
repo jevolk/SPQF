@@ -56,6 +56,7 @@ class Voting
 
 	void call_finish(Vote &vote) noexcept;
 	void poll_votes();
+	void init();
 	void sleep();
 	void worker();
 	std::thread thread;
