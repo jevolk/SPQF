@@ -28,6 +28,7 @@ or conduct takeovers.
 * **Invite** - Invite users to the channel.
 * **Topic** - Change the topic of the channel.
 * **Mode** - Direct mode interface to the channel.
+* **Flags** - Direct flags interface to ChanServ.
 * **Opine** - Opinion polls that have no effects.
 * **Config** - Vote to change the voting configuration itself.
 * **Import** - Vote to copy the voting configuration of another channel.
@@ -100,6 +101,7 @@ or conduct takeovers.
 * Vote modules can have independent configurations.
 * Database-records of votes, ballots and outcomes.
 * Expiration management to undo effects of votes after some time.
+* Increment/Decrement effects-time based on number of yea and nay votes.
 * Vote-time options to set any config variable for a single vote.
 
 

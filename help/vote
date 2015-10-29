@@ -25,6 +25,10 @@ Issues:
   ban        <nickname>            : Vote to kick-ban.
   quiet      <nickname>            : Vote to quiet.
   unquiet    <nickname>            : Vote to unquiet.
+  voice      <nickname>            : Vote to voice.
+  devoice    <nickname>            : Vote to devoice.
   invite     <nickname>            : Vote to invite a user to the channel.
+  flags      <delta> <nickname>    : Vote to change ChanServ access flags on the account behind nickname.
   topic      <message>             : Vote to change the topic.
   opine      <issue>               : Vote on an opinion with no effects.
+  import     <channel>             : Vote to import configuration from channel.
