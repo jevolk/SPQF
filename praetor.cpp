@@ -23,12 +23,14 @@ Praetor::Praetor(Sess &sess,
                  Chans &chans,
                  Users &users,
                  Bot &bot,
-                 Vdb &vdb):
+                 Vdb &vdb,
+                 Logs &logs):
 sess(sess),
 chans(chans),
 users(users),
 bot(bot),
 vdb(vdb),
+logs(logs),
 interrupted(false),
 thread(&Praetor::worker,this)
 {
@@ -103,7 +105,7 @@ void Praetor::process()
 void Praetor::process(const id_t &id)
 {
 	const std::unique_lock<Bot> lock(bot);
-	const std::unique_ptr<Vote> vote = vdb.get(id,&sess,&chans,&users);
+	const std::unique_ptr<Vote> vote = vdb.get(id,&sess,&chans,&users,&logs);
 	process(*vote);
 }
 

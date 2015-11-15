@@ -25,7 +25,7 @@ ResPublica::ResPublica(const Opts &opts):
 irc::bot::Bot(opts),
 logs(sess,chans,users),
 vdb({opts["dbdir"] + "/vote"}),
-praetor(sess,chans,users,*this,vdb),
+praetor(sess,chans,users,*this,vdb,logs),
 voting(sess,chans,users,logs,*this,vdb,praetor)
 {
 	// Channel->User catch-all for logging

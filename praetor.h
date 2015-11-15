@@ -37,6 +37,7 @@ class Praetor
 	Users &users;
 	Bot &bot;
 	Vdb &vdb;
+	Logs &logs;
 
 	std::mutex mutex;
 	std::atomic<bool> interrupted;
@@ -58,6 +59,6 @@ class Praetor
 	void init();
 
   public:
-	Praetor(Sess &sess, Chans &chans, Users &users, Bot &bot, Vdb &vdb);
+	Praetor(Sess &sess, Chans &chans, Users &users, Bot &bot, Vdb &vdb, Logs &logs);
 	~Praetor() noexcept;
 };
