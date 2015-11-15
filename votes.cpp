@@ -197,16 +197,26 @@ void vote::Flags::starting()
 //	const Sess &sess = get_sess();
 //	const Server &serv = sess.get_server();
 
-	const auto toks(tokens(get_issue()));
 	const Users &users(get_users());
+	const Chan &chan(get_chan());
+	const Adoc &cfg(get_cfg());
+
+	const auto toks(tokens(get_issue()));
 	const User &user(users.get(toks.at(0)));
 	const Deltas deltas(toks.at(1));
 
-	const Adoc &cfg(get_cfg());
 	const irc::bot::Mode allowed(cfg["flags.access"]);
 	for(const auto &delta : deltas)
+	{
 		if(!allowed.has(delta))
 			throw Exception("Voting on this flag is not permitted");
+
+		if(bool(delta) && chan.lists.has_flag(user,char(delta)))
+			throw Exception("User at issue already has one or more of the specified flags");
+
+		if(!bool(delta) && !chan.lists.has_flag(user,char(delta)))
+			throw Exception("User at issue does not have one or more of the specified flags");
+	}
 }
 
 
