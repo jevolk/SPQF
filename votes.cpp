@@ -509,8 +509,10 @@ void NickIssue::event_nick(User &user,
 
 void ModeEffect::expired()
 {
-	const Sess &sess = get_sess();
-	const Server &serv = sess.get_server();
+	const Sess &sess(get_sess());
+	const Server &serv(sess.get_server());
+	if(get_effect().empty())
+		return;
 
 	Deltas deltas(get_effect(),serv);
 	deltas.inv_signs();
