@@ -371,12 +371,12 @@ void ResPublica::handle_vote_id(const Msg &msg,
                                 const Tokens &toks)
 try
 {
-	const Chan *const c = chan.is_op()? &chan : chans.find_cnotice(user);
-	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
+	const Chan *const c(chan.is_op()? &chan : chans.find_cnotice(user));
+	const auto id(lex_cast<Vote::id_t>(*toks.at(0)));
 
 	if(c)
 	{
-		const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get<Vote>(id);
+		const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
 		handle_vote_info(msg,user,user<<(*c),subtok(toks),vote);
 	}
 	else handle_vote_list(msg,user,user,subtok(toks),id);
@@ -420,17 +420,22 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   User &user,
                                   const Tokens &toks)
 {
-	const Tokens subtoks = subtok(toks);
-
+	const Tokens subtoks(subtok(toks));
 	if(toks.empty())
 	{
-		voting.for_each(chan,[&](const Vote &vote)
+		if(!voting.exists(chan))
 		{
-			const auto &id = vote.get_id();
+			const Chan *const &cmsg_chan(chans.find_cnotice(user));
+			user << cmsg_chan << "No active votes for this channel." << user.flush;
+		}
+		else voting.for_each(chan,[this,&msg,&chan,&user,&subtoks]
+		(const Vote &vote)
+		{
+			const auto &id(vote.get_id());
 			handle_vote_list(msg,chan,user,subtoks,id);
 		});
 	} else {
-		const auto &id = lex_cast<Vote::id_t>(*toks.at(0));
+		const auto &id(lex_cast<Vote::id_t>(*toks.at(0)));
 		handle_vote_list(msg,chan,user,subtoks,id);
 	}
 }
@@ -630,15 +635,15 @@ void ResPublica::handle_vote_id(const Msg &msg,
                                 const Tokens &toks)
 try
 {
-	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
-	Chan *const chan = chans.find_cnotice(user);
+	Chan *const chan(chans.find_cnotice(user));
+	const auto id(lex_cast<Vote::id_t>(*toks.at(0)));
 	if(!chan)
 	{
 		handle_vote_list(msg,user,user,subtok(toks),id);
 		return;
 	}
 
-	const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get<Vote>(id);
+	const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
 	handle_vote_info(msg,user,user<<(*chan),subtok(toks),vote);
 }
 catch(const boost::bad_lexical_cast &e)
@@ -652,18 +657,23 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   const Tokens &toks)
 try
 {
-	const Chan &chan = chans.get(*toks.at(0));
-	const Tokens subtoks = subtok(toks);
-
+	const Chan &chan(chans.get(*toks.at(0)));
+	const Tokens subtoks(subtok(toks));
 	if(subtoks.empty())
 	{
-		voting.for_each(chan,[&](const Vote &vote)
+		if(!voting.exists(chan))
 		{
-			const auto &id = vote.get_id();
+			const Chan *const &cmsg_chan(chans.find_cnotice(user));
+			user << cmsg_chan << "No active votes for this channel." << user.flush;
+		}
+		else voting.for_each(chan,[this,&msg,&user,&subtoks]
+		(const Vote &vote)
+		{
+			const auto &id(vote.get_id());
 			handle_vote_list(msg,user,user,subtoks,id);
 		});
 	} else {
-		const auto &id = lex_cast<Vote::id_t>(*subtoks.at(0));
+		const auto &id(lex_cast<Vote::id_t>(*subtoks.at(0)));
 		handle_vote_list(msg,user,user,subtoks,id);
 	}
 }
