@@ -105,6 +105,17 @@ int main(int argc, char **argv) try
 		return 0;
 	}
 
+	if(key.empty())
+	{
+		printf("OVERWRITNG THE DOCUMENT [%s]\n",dockey.c_str());
+		printf("Press any key to continue or ctrl-c to quit...\n");
+		std::cin.get();
+
+		acct.set(Adoc(val));
+		printf("Done.\n");
+		return 0;
+	}
+
 	acct.set_val(key,val);
 	printf("Done.\n");
 	return 0;
