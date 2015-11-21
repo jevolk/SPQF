@@ -208,6 +208,9 @@ void vote::Flags::starting()
 	const irc::bot::Mode allowed(cfg["flags.access"]);
 	for(const auto &delta : deltas)
 	{
+		if(char(delta) == 'f' || char(delta) == 'F')
+			throw Exception("Voting on +f/+F is hardcoded to be illegal");
+
 		if(!allowed.has(delta))
 			throw Exception("Voting on this flag is not permitted");
 
