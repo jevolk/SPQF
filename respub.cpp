@@ -762,12 +762,16 @@ void ResPublica::handle_vote_list(const Msg &msg,
 
 	if(vote.remaining() >= 0)
 	{
-		out << "There are " << BOLD << vote.remaining() << BOLD << " seconds left. ";
+		out << "There are " << BOLD << secs_cast(vote.remaining()) << BOLD << " left. ";
 
-		if(vote.total() < vote.quorum())
-			out << BOLD << (vote.quorum() - vote.total()) << OFF << " more votes are required. ";
-		else if(tally.first < vote.required())
-			out << BOLD << (vote.required() - tally.first) << OFF << " more yeas are required to pass. ";
+		const auto total(vote.total());
+		const auto quorum(vote.quorum());
+		const auto required(vote.required());
+
+		if(total < quorum)
+			out << BOLD << (quorum - total) << OFF << " more votes are required for a quorum. ";
+		else if(tally.first < required)
+			out << BOLD << (required - tally.first) << OFF << " more yeas are required to pass. ";
 		else
 			out << "As it stands, the motion will pass.";
 	} else {
@@ -889,11 +893,15 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		else
 			out << BOLD << FG::WHITE << BG::RED << "FAILED" << OFF << BOLD << FG::RED << ": " << vote.get_reason() << "\n";
 	} else {
+		const auto total(vote.total());
+		const auto quorum(vote.quorum());
+		const auto required(vote.required());
+
 		out << pfx << BOLD << "STATUS" << OFF << "   : ";
-		if(vote.total() < vote.quorum())
-			out << BOLD << FG::BLUE << (vote.quorum() - vote.total()) << " more votes are required to reach minimums."  << "\n";
-		else if(tally.first < vote.required())
-			out << BOLD << FG::ORANGE << (vote.required() - tally.first) << " more votes are required to pass."  << "\n";
+		if(total < quorum)
+			out << BOLD << FG::BLUE << (quorum - total) << " more votes are required for a quorum."  << "\n";
+		else if(tally.first < required)
+			out << BOLD << FG::ORANGE << (required - tally.first) << " more yeas are required to pass."  << "\n";
 		else
 			out << FG::GREEN << "As it stands, the motion will pass."  << "\n";
 	}
