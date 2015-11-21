@@ -223,10 +223,10 @@ try
 
 	set_ended();
 	const scope s([&]{ save(); });
+	auto &chan(get_chan());
 
 	if(interceded())
 	{
-		auto &chan = get_chan();
 		if(cfg.get<bool>("result.ack.chan"))
 			chan << "The vote " << (*this) << " has been vetoed." << flush;
 
@@ -235,15 +235,15 @@ try
 		return;
 	}
 
-	if(total() < quorum())
+	const auto quorum(this->quorum());
+	if(total() < quorum)
 	{
-		auto &chan = get_chan();
 		if(cfg.get<bool>("result.ack.chan"))
 			chan << (*this) << ": "
 			     << "Failed to reach a quorum: "
 			     << BOLD << total() << OFF
 			     << " of "
-			     << BOLD << quorum() << OFF
+			     << BOLD << quorum << OFF
 			     << " required."
 			     << flush;
 
@@ -254,7 +254,6 @@ try
 
 	if(yea.size() < required())
 	{
-		auto &chan = get_chan();
 		if(cfg.get<bool>("result.ack.chan"))
 			chan << (*this) << ": "
 			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF
@@ -268,7 +267,6 @@ try
 		return;
 	}
 
-	auto &chan = get_chan();
 	if(cfg.get<bool>("result.ack.chan"))
 		chan << (*this) << ": "
 		     << FG::WHITE << BG::GREEN << BOLD << "The yeas have it." << OFF
@@ -478,7 +476,7 @@ const
 	filt.time.second = get_began();
 	filt.type = "PRI";  // PRIVMSG
 
-	Logs &logs = get_logs();
+	const Logs &logs = get_logs();
 	const Chan &chan = get_chan();
 	return logs.atleast(chan.get_name(),filt,cfg.get<uint>("qualify.lines"));
 }
@@ -500,7 +498,7 @@ const
 	filt.time.second = get_began() - secs_cast(cfg["enfranchise.age"]);
 	filt.type = "PRI";  // PRIVMSG
 
-	Logs &logs = get_logs();
+	const Logs &logs = get_logs();
 	const Chan &chan = get_chan();
 	return logs.atleast(chan.get_name(),filt,cfg.get<uint>("enfranchise.lines"));
 }
