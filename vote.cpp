@@ -207,7 +207,7 @@ void Vote::start()
 	auto &chan = get_chan();
 	chan << BOLD << "Voting has started!" << OFF << " Issue " << (*this) << ": "
 	     << BOLD << UNDER2 << get_type() << OFF << ": " << BOLD << get_issue() << OFF << ". "
-	     << "You have " << BOLD << secs_cast(cfg["duration"]) << OFF << " seconds to vote! "
+	     << "You have " << BOLD << secs_cast(secs_cast(cfg["duration"])) << OFF << " to vote! "
 	     << "Type or PM: "
 	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
 	     << " or "
