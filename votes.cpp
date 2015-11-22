@@ -231,6 +231,7 @@ void vote::Flags::starting()
 
 
 void vote::Civis::starting()
+try
 {
 	NickIssue::starting();
 
@@ -250,8 +251,16 @@ void vote::Civis::starting()
 
 	filt.time.first = 0;
 	filt.time.second = time(NULL);
-	if(!logs.atleast(chan.get_name(),filt,cfg.get<uint>("eligible.lines")))
-		throw Exception("User at issue has not been active enough for enfranchisement");
+	const auto has_lines(logs.count(chan.get_name(),filt));
+	const auto min_lines(cfg.get<uint>("eligible.lines"));
+	if(has_lines < min_lines)
+		throw Exception("User at issue has ") << has_lines << " of " << min_lines << " required lines";
+}
+catch(const Exception &e)
+{
+	Chan &chan(get_chan());
+	chan << "Can't start civis vote: " << e << flush;
+	throw;
 }
 
 
