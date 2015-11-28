@@ -111,10 +111,8 @@ void Voting::init()
 			std::cout << "Adding open vote #" << id << std::endl;
 			const auto iit(votes.emplace(id,std::move(vote)));
 			const auto &vote(*iit.first->second);
-			const auto &chan(vote.get_chan());
-			const auto &user(vote.get_user());
-			chanidx.emplace(chan.get_name(),id);
-			useridx.emplace(user.get_acct(),id);
+			chanidx.emplace(vote.get_chan_name(),id);
+			useridx.emplace(vote.get_user_acct(),id);
 		}
 	}
 	catch(const Exception &e)
@@ -136,14 +134,13 @@ void Voting::sleep()
 void Voting::poll_votes()
 {
 	const std::unique_lock<Bot> lock(bot);
-	for(auto it = votes.begin(); it != votes.end();)
+	for(auto it(votes.begin()); it != votes.end();)
 	{
-		Vote &vote = *it->second;
+		Vote &vote(*it->second);
 		if(vote.remaining() <= 0 || vote.interceded())
 		{
 			call_finish(vote);
-			auto vote = del(it++);
-			praetor.add(std::move(vote));
+			praetor.add(std::move(del(it++)));
 		}
 		else ++it;
 	}

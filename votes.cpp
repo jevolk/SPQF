@@ -246,12 +246,11 @@ try
 	filt.time.first = 0;
 	filt.time.second = time(NULL) - cfg.get<uint>("eligible.age");
 	filt.type = "PRI";  // PRIVMSG
-	if(!logs.atleast(chan.get_name(),filt,1))
+	if(!logs.atleast(get_chan_name(),filt,1))
 		throw Exception("User at issue has not been present long enough for enfranchisement");
 
-	filt.time.first = 0;
 	filt.time.second = time(NULL);
-	const auto has_lines(logs.count(chan.get_name(),filt));
+	const auto has_lines(logs.count(get_chan_name(),filt));
 	const auto min_lines(cfg.get<uint>("eligible.lines"));
 	if(has_lines < min_lines)
 		throw Exception("User at issue has ") << has_lines << " of " << min_lines << " required lines";

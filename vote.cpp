@@ -140,7 +140,7 @@ hosts(get("hosts").into(hosts))
 	if(cfg.empty())
 		throw Assertive("The configuration for this vote is missing and required.");
 }
-catch(const std::runtime_error &e)
+catch(const std::exception &e)
 {
 	throw Assertive("Failed to reconstruct Vote data: ") << e.what();
 }
@@ -479,9 +479,8 @@ const
 	filt.time.second = get_began();
 	filt.type = "PRI";  // PRIVMSG
 
-	const Logs &logs = get_logs();
-	const Chan &chan = get_chan();
-	return logs.atleast(chan.get_name(),filt,cfg.get<uint>("qualify.lines"));
+	const Logs &logs(get_logs());
+	return logs.atleast(get_chan_name(),filt,cfg.get<uint>("qualify.lines"));
 }
 
 
@@ -501,9 +500,8 @@ const
 	filt.time.second = get_began() - secs_cast(cfg["enfranchise.age"]);
 	filt.type = "PRI";  // PRIVMSG
 
-	const Logs &logs = get_logs();
-	const Chan &chan = get_chan();
-	return logs.atleast(chan.get_name(),filt,cfg.get<uint>("enfranchise.lines"));
+	const Logs &logs(get_logs());
+	return logs.atleast(get_chan_name(),filt,cfg.get<uint>("enfranchise.lines"));
 }
 
 

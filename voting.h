@@ -127,7 +127,7 @@ try
 		del(id);
 		throw;
 	}
-	else throw Exception("Failed to track this vote (internal error)");
+	else throw Assertive("Failed to track this vote");
 }
 catch(const Exception &e)
 {
