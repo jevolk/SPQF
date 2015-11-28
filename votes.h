@@ -252,8 +252,9 @@ NickIssue::NickIssue(Args&&... args):
 Vote(std::forward<Args>(args)...),
 user([&]
 {
-	const auto &nick = get_issue();
-	Users &users = get_users();
+	Users &users(get_users());
+	const auto toks(tokens(get_issue()));
+	const auto &nick(toks.at(0));
 	return users.has(nick)? users.get(nick) : User(&get_adb(),&get_sess(),nullptr,nick);
 }())
 {
