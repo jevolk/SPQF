@@ -156,7 +156,16 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	std::cerr << "[Voting]: Vote::finish unhandled: \033[1;31m" << e.what() << "\033[0m" << std::endl;
+	std::stringstream err;
+	err << "An internal error occurred in Vote::finish(): " << e.what() << ".";
+
+	std::cerr << "[Voting]: \033[1;31m" << err.str() << "\033[0m" << std::endl;
+
+	if(chans.has(vote.get_chan_name()))
+	{
+		Chan &chan(vote.get_chan());
+		chan << err.str() << chan.flush;
+	}
 }
 
 
