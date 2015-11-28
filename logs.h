@@ -55,7 +55,7 @@ class Logs
 
 	struct SimpleFilter : public Filter
 	{
-		enum {START, END};
+		enum { START = 0, END = 1 };
 
 		std::pair<time_t,time_t> time {0,0};
 		std::string acct;
@@ -75,6 +75,7 @@ class Logs
 	bool atleast(const std::string &name, const Filter &filter, const size_t &count) const;
 	bool exists(const std::string &name, const Filter &filter) const;
 
+	// Writing
 	bool log(const Msg &msg, const Chan &chan, const User &user);
 
 	Logs(Sess &sess, Chans &chans, Users &users);
@@ -125,7 +126,7 @@ bool Logs::exists(const std::string &name,
 const
 {
 	return !for_each(name,[&filter]
-	(const ClosureArgs &a) -> bool
+	(const ClosureArgs &a)
 	{
 		return !filter(a);
 	});
@@ -138,9 +139,10 @@ bool Logs::atleast(const std::string &name,
                    const size_t &count)
 const
 {
-	size_t ret = 0;
+	size_t ret(0);
 	return !count || !for_each(name,[&filter,&ret,&count]
-	(const ClosureArgs &a) -> bool
+	(const ClosureArgs &a)
+	mutable
 	{
 		ret += filter(a);
 		return ret < count;
@@ -153,9 +155,10 @@ size_t Logs::count(const std::string &name,
                    const Filter &filter)
 const
 {
-	size_t ret = 0;
+	size_t ret(0);
 	for_each(name,[&filter,&ret]
-	(const ClosureArgs &a) -> bool
+	(const ClosureArgs &a)
+	mutable
 	{
 		ret += filter(a);
 		return true;
@@ -188,9 +191,8 @@ bool Logs::for_each(const std::string &name,
 const try
 {
 	std::ifstream file;
-	const auto path(get_path(name));
 	file.exceptions(std::ios_base::badbit);
-	file.open(path,std::ios_base::in);
+	file.open(get_path(name),std::ios_base::in);
 
 	while(1)
 	{
@@ -212,6 +214,9 @@ const try
 
 		while(i < field.size())
 			field[i++] = nullptr;
+
+		if(__builtin_expect((!field[Log::VERS] || *field[Log::VERS] != '0'),0))
+			throw Assertive("Log file corruption detected. I'm afraid I must abort...");
 
 		const ClosureArgs args
 		{
