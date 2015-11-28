@@ -203,6 +203,7 @@ void Vote::start()
 
 	starting();
 	set_began();
+	save();
 
 	auto &chan = get_chan();
 	chan << BOLD << "Voting has started!" << OFF << " Issue " << (*this) << ": "
