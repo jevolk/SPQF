@@ -49,6 +49,8 @@ cfg([&]
 	ret.put("limit.user",1);
 	ret.put("quorum.ballots",1);
 	ret.put("quorum.yea",1);
+	ret.put("quorum.age",0);
+	ret.put("quorum.lines",0);
 	ret.put("quorum.turnout",0.00);
 	ret.put("quorum.plurality",0.51);
 	ret.put("duration",30);
