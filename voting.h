@@ -22,6 +22,7 @@ class Voting
 	std::multimap<std::string, id_t> chanidx;        // Index of votes  : chan => id
 	std::multimap<std::string, id_t> useridx;        // Index of votes  : acct => id
 	std::atomic<bool> interrupted;                   // Worker exits on interrupted state
+	std::atomic<bool> initialized;                   // Voting cannot begin until initialized
 	std::condition_variable sem;                     // Notify worker of new work
 
   public:
@@ -78,6 +79,9 @@ template<class Vote,
 Vote &Voting::motion(Args&&... args)
 try
 {
+	if(!initialized.load(std::memory_order_consume))
+		throw Exception("Voting not yet initialized: try again in a few minutes");
+
 	const id_t id = get_next_id();
 	const auto iit = votes.emplace(id,std::make_unique<Vote>(id,
 	                                                         vdb,

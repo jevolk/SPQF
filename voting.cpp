@@ -35,6 +35,7 @@ bot(bot),
 vdb(vdb),
 praetor(praetor),
 interrupted(false),
+initialized(false),
 thread(&Voting::worker,this)
 {
 
@@ -76,7 +77,9 @@ void Voting::cancel(Vote &vote,
 
 void Voting::worker()
 {
+	std::this_thread::sleep_for(std::chrono::seconds(30));
 	init();
+	initialized.store(true,std::memory_order_release);
 
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
@@ -92,8 +95,6 @@ void Voting::worker()
 
 void Voting::init()
 {
-	std::this_thread::sleep_for(std::chrono::seconds(30));
-
 	const std::lock_guard<Bot> lock(bot);
 	std::cout << "[Voting]: Adding previously open votes."
 	          << " Reading " << vdb.count() << " votes..."
