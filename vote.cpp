@@ -189,6 +189,7 @@ void Vote::cancel()
 {
 	set_ended();
 	set_reason("canceled");
+	const scope s([&]{ save(); });
 	canceled();
 
 	if(cfg.get<bool>("result.ack.chan"))
