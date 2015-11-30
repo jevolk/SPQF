@@ -26,6 +26,18 @@ class NickIssue : virtual Vote
 };
 
 
+// The issue is an account name
+class AcctIssue : virtual Vote
+{
+  protected:
+	User user;        // Copy of the user at start of vote
+
+	void event_nick(User &user, const std::string &old) override;
+
+	template<class... Args> AcctIssue(Args&&... args);
+};
+
+
 // The effect is a reversible mode Delta
 class ModeEffect : virtual Vote
 {
@@ -198,7 +210,7 @@ namespace vote
 	};
 
 	class Civis : public virtual Vote,
-	              public virtual NickIssue
+	              public virtual AcctIssue
 	{
 		void passed() override;
 		void expired() override;
@@ -207,11 +219,11 @@ namespace vote
 	  public:
 		template<class... Args> Civis(Args&&... args):
 		                              Vote("civis",std::forward<Args>(args)...),
-		                              NickIssue("civis",std::forward<Args>(args)...) {}
+		                              AcctIssue("civis",std::forward<Args>(args)...) {}
 	};
 
 	class Censure : public virtual Vote,
-	                public virtual NickIssue
+	                public virtual AcctIssue
 	{
 		void passed() override;
 		void expired() override;
@@ -220,7 +232,7 @@ namespace vote
 	  public:
 		template<class... Args> Censure(Args&&... args):
 		                                Vote("censure",std::forward<Args>(args)...),
-		                                NickIssue("censure",std::forward<Args>(args)...) {}
+		                                AcctIssue("censure",std::forward<Args>(args)...) {}
 	};
 
 }
@@ -258,5 +270,32 @@ user([&]
 	return users.has(nick)? users.get(nick) : User(&get_adb(),&get_sess(),nullptr,nick);
 }())
 {
+}
 
+
+
+template<class... Args>
+AcctIssue::AcctIssue(Args&&... args):
+Vote(std::forward<Args>(args)...),
+user([&]
+{
+	const auto toks(tokens(get_issue()));
+	const auto &name(toks.at(0));
+
+	// If the vote has started we populate the account name only
+	if(get_began())
+		return User(&get_adb(),&get_sess(),nullptr,"","",name);
+
+	Users &users(get_users());
+	if(!users.has(name))
+		throw Exception("Unable to find this nickname to resolve into an account name");
+
+	User &user(users.get(name));
+	if(!user.is_logged_in())
+		throw Exception("This nickname is not logged in, and I must resolve an account name");
+
+	set_issue(user.get_acct());
+	return user;
+}())
+{
 }

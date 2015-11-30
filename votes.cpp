@@ -233,8 +233,6 @@ void vote::Flags::starting()
 void vote::Civis::starting()
 try
 {
-	NickIssue::starting();
-
 	Logs &logs(get_logs());
 	const Adoc &cfg(get_cfg());
 	const Chan &chan(get_chan());
@@ -293,8 +291,6 @@ void vote::Civis::expired()
 
 void vote::Censure::starting()
 {
-	NickIssue::starting();
-
 	const Chan &chan(get_chan());
 	if(!chan.lists.has_flag(user,'V'))
 		throw Exception("User at issue is not a civis and cannot be censured");
@@ -507,6 +503,26 @@ void NickIssue::event_nick(User &user,
                            const std::string &old)
 {
 	if(this->user.get_nick() == old)
+		this->user = user;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Attribute: AcctIssue - All votes with an account name as the issue,
+// exception when starting (constructor) where a nickname must be resolved
+// into an account name.
+//
+
+
+void AcctIssue::event_nick(User &user,
+                           const std::string &old)
+{
+	if(this->user.get_nick() == old && this->user.get_acct() == user.get_acct())
+		this->user = user;
+
+	if(this->user.get_nick().empty() && this->user.get_acct() == user.get_acct())
 		this->user = user;
 }
 
