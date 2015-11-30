@@ -25,7 +25,6 @@ inline
 Vdb::Vdb(const std::string &dir):
 Adb(dir)
 {
-
 }
 
 

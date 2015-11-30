@@ -19,7 +19,7 @@ class ResPublica : public irc::bot::Bot
 {
 	using Meth = Locutor::Method;
 
-	static constexpr auto &flush = Locutor::flush;
+	static constexpr auto flush = Locutor::flush;
 
 	Logs logs;
 	Vdb vdb;

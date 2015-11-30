@@ -80,7 +80,7 @@ void Log::operator()(const Msg &msg,
                      const User &user)
 try
 {
-	static const uint VERSION = 0;
+	static const uint VERSION(0);
 	static time_t time;
 	std::time(&time);
 

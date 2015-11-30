@@ -8,8 +8,8 @@
 
 class Vote : protected Acct
 {
-	static constexpr const char *const ARG_KEYED = "--";
-	static constexpr const char *const ARG_VALUED = "=";
+	static constexpr auto ARG_KEYED = "--";
+	static constexpr auto ARG_VALUED = "=";
 
 	Sess *sess;
 	Chans *chans;
@@ -88,7 +88,7 @@ class Vote : protected Acct
 	bool voted(const User &user) const;
 
   protected:
-	static constexpr auto &flush = Locutor::flush;
+	static constexpr auto flush = Locutor::flush;
 
 	auto &get_sess() const                      { return *sess;                                     }
 	auto &get_users() const                     { return *users;                                    }
