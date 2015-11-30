@@ -287,6 +287,7 @@ try
 		cfg.put("for",val);
 	}
 
+	set_reason("");
 	passed();
 }
 catch(const Exception &e)
