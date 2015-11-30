@@ -569,8 +569,8 @@ const
 uint Vote::required()
 const
 {
-	const auto plura = plurality();
-	const auto min_yea = cfg.get<uint>("quorum.yea");
+	const auto plura(plurality());
+	const auto min_yea(cfg.get<uint>("quorum.yea"));
 	return std::max(min_yea,plura);
 }
 
@@ -603,9 +603,9 @@ const
 uint Vote::plurality()
 const
 {
-	const float &total = this->total();
-	const auto plura = cfg.get<float>("quorum.plurality");
-	return ceil(total * plura);
+	const float &total(this->total());
+	const float count((total - yea.size()) + nay.size());
+	return ceil(count * cfg.get<float>("quorum.plurality"));
 }
 
 
