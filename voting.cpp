@@ -126,7 +126,7 @@ void Voting::init()
 void Voting::sleep()
 {
 	//TODO: calculate next deadline. Recalculate on semaphore.
-	std::unique_lock<std::mutex> lock(bot);
+	std::unique_lock<decltype(mutex)> lock(mutex);
 	sem.wait_for(lock,std::chrono::seconds(2));
 }
 

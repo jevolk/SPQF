@@ -15,12 +15,18 @@ Tokens subtok(const std::vector<std::string> &tokens);
 Tokens subtok(const Tokens &tokens);
 
 
-class ResPublica : public irc::bot::Bot
+class ResPublica
 {
 	using Meth = Locutor::Method;
 
 	static constexpr auto flush = Locutor::flush;
 
+	Bot &bot;
+	Opts &opts;
+	Sess &sess;
+	Users &users;
+	Chans &chans;
+	Events &events;
 	Logs logs;
 	Vdb vdb;
 	Praetor praetor;
@@ -66,5 +72,6 @@ class ResPublica : public irc::bot::Bot
 	void handle_privmsg(const Msg &m, Chan &c, User &u);
 
   public:
-	ResPublica(const Opts &opts);
+	ResPublica(Bot &bot);
+	~ResPublica() noexcept;
 };

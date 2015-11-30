@@ -2,6 +2,7 @@ spqf
 helpgen
 *.o
 *.a
+*.so
 db
 logs
 core

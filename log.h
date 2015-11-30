@@ -81,13 +81,10 @@ void Log::operator()(const Msg &msg,
 try
 {
 	static const uint VERSION(0);
-	static time_t time;
-	std::time(&time);
-
-	const std::string &acct = user.is_logged_in()? user.get_acct() : "*";
-	const std::string &nick = user.get_nick();
-	const std::string &type = !msg.get_code()? msg.get_name().substr(0,3):
-	                                           lex_cast(msg.get_code());
+	const time_t time(std::time(nullptr));
+	const std::string &acct(user.is_logged_in()? user.get_acct() : "*");
+	const std::string &nick(user.get_nick());
+	const std::string &type(!msg.get_code()? msg.get_name().substr(0,3): lex_cast(msg.get_code()));
 	file << VERSION
 	     << ' '
 	     << time

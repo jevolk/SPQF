@@ -32,48 +32,50 @@ WFLAGS = -pedantic                             \
 
 VERSTR = $(shell git describe --tags)
 CCFLAGS += -std=c++14 -Iircbot/stldb -DSPQF_VERSION=\"$(VERSTR)\" -fstack-protector
-LDFLAGS += -lircbot -lleveldb -lboost_system -lpthread
+LDFLAGS += -fuse-ld=gold -Wl,--no-gnu-unique
 LIBPATH += -Lircbot/
 
 LIBRARIES = libircbot
-TARGETS = spqf cfgedit
+TARGETS = spqf respub cfgedit
 
 
 all:  $(LIBRARIES) $(TARGETS)
 
 clean:
 	$(MAKE) -C ircbot clean
-	rm -f *.o $(TARGETS)
+	rm -f *.o *.so $(TARGETS)
 
 
 libircbot:
 	$(MAKE) -C ircbot
 
-spqf: main.o respub.o voting.o votes.o praetor.o vote.o
-	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
+respub: respub.o voting.o votes.o praetor.o vote.o
+	$(CC) -o $@.so $(CCFLAGS) -shared $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
+
+spqf: main.o
+	$(CC) -o $@ $(CCFLAGS) -rdynamic $(WFLAGS) $(LIBPATH) $^ -lircbot -lleveldb -lboost_system -lpthread -ldl
 
 cfgedit: cfgedit.o
-	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
+	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS) -lircbot -lleveldb -lboost_system -lpthread
 
 
-main.o: main.cpp *.h
+main.o: main.cpp
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 respub.o: respub.cpp *.h
-	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+	$(CC) -c -o $@ $(CCFLAGS) -fPIC $(WFLAGS) $<
 
 voting.o: voting.cpp *.h
-	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+	$(CC) -c -o $@ $(CCFLAGS) -fPIC $(WFLAGS) $<
 
 votes.o: votes.cpp *.h
-	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+	$(CC) -c -o $@ $(CCFLAGS) -fPIC $(WFLAGS) $<
 
 praetor.o: praetor.cpp *.h
-	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
+	$(CC) -c -o $@ $(CCFLAGS) -fPIC $(WFLAGS) $<
 
 vote.o: vote.cpp *.h
-	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
-
+	$(CC) -c -o $@ $(CCFLAGS) -fPIC $(WFLAGS) $<
 
 cfgedit.o: cfgedit.cpp *.h
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<

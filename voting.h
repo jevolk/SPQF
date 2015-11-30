@@ -17,13 +17,13 @@ class Voting
 	Bot &bot;
 	Vdb &vdb;
 	Praetor &praetor;
-
+	std::mutex mutex;                                // mutex for sem
+	std::condition_variable sem;                     // Notify worker of new work
+	std::atomic<bool> interrupted;                   // Worker exits on interrupted state
+	std::atomic<bool> initialized;                   // Voting cannot begin until initialized
 	std::map<id_t, std::unique_ptr<Vote>> votes;     // Standing votes  : id => vote
 	std::multimap<std::string, id_t> chanidx;        // Index of votes  : chan => id
 	std::multimap<std::string, id_t> useridx;        // Index of votes  : acct => id
-	std::atomic<bool> interrupted;                   // Worker exits on interrupted state
-	std::atomic<bool> initialized;                   // Voting cannot begin until initialized
-	std::condition_variable sem;                     // Notify worker of new work
 
   public:
 	auto exists(const Chan &chan) const -> bool      { return chanidx.count(chan.get_name());   }

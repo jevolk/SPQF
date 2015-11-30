@@ -21,12 +21,56 @@ using namespace irc::bot;
 #include "respub.h"
 
 
-ResPublica::ResPublica(const Opts &opts):
-irc::bot::Bot(opts),
+static const ResPublica *respub;
+
+
+extern "C" __attribute__((constructor))
+void module_ctor()
+noexcept
+{
+    printf("Adding RexPublica...\n");
+}
+
+
+extern "C" __attribute__((destructor))
+void module_dtor()
+noexcept
+{
+	printf("Removing RexPublica...\n");
+}
+
+
+extern "C"
+void module_init(Bot *const bot)
+noexcept
+{
+	const std::lock_guard<Bot> lock(*bot);
+	printf("Construct RexPublica...\n");
+	respub = new ResPublica(*bot);
+}
+
+
+extern "C"
+void module_fini(Bot *const bot)
+noexcept
+{
+	const std::lock_guard<Bot> lock(*bot);
+	printf("Destruct RexPublica...\n");
+	delete respub;
+}
+
+
+ResPublica::ResPublica(Bot &bot):
+bot(bot),
+opts(bot.opts),
+sess(bot.sess),
+users(bot.users),
+chans(bot.chans),
+events(bot.events),
 logs(sess,chans,users),
 vdb({opts["dbdir"] + "/vote"}),
-praetor(sess,chans,users,*this,vdb,logs),
-voting(sess,chans,users,logs,*this,vdb,praetor)
+praetor(sess,chans,users,bot,vdb,logs),
+voting(sess,chans,users,logs,bot,vdb,praetor)
 {
 	// Channel->User catch-all for logging
 	events.chan_user.add(handler::ALL,boost::bind(&Logs::log,&logs,_1,_2,_3),handler::RECURRING);
@@ -45,6 +89,15 @@ voting(sess,chans,users,logs,*this,vdb,praetor)
 	events.chan_user.add(LIBIRC_RFC_ERR_USERONCHANNEL,boost::bind(&ResPublica::handle_on_chan,this,_1,_2,_3),handler::RECURRING);
 	events.chan.add(/* RPL_KNOCK */ 710,boost::bind(&ResPublica::handle_knock,this,_1,_2),handler::RECURRING);
 	events.chan.add(/* ERR_MODEISLOCKED */ 742,boost::bind(&ResPublica::handle_mlock,this,_1,_2),handler::RECURRING);
+}
+
+
+ResPublica::~ResPublica()
+noexcept
+{
+	events.chan_user.clear(handler::Prio::USER);
+	events.user.clear(handler::Prio::USER);
+	events.chan.clear(handler::Prio::USER);
 }
 
 
