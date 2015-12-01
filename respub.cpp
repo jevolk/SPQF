@@ -78,6 +78,7 @@ voting(sess,chans,users,logs,bot,vdb,praetor)
 	// Channel command handlers
 	events.chan_user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2,_3),handler::RECURRING);
 	events.chan_user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2,_3),handler::RECURRING);
+	events.chan.add("MODE",boost::bind(&ResPublica::handle_cmode,this,_1,_2),handler::RECURRING);
 
 	// Private command handlers
 	events.user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2),handler::RECURRING);
@@ -188,6 +189,28 @@ catch(const Exception &e)
 catch(const std::out_of_range &e)
 {
 	user << chan << "You did not supply required arguments. Use the help command." << flush;
+}
+
+
+void ResPublica::handle_cmode(const Msg &msg,
+                              Chan &chan)
+{
+	using namespace fmt::MODE;
+
+	User &user(users.get(msg.get_nick()));
+	if(user.is_myself())
+		return;
+
+	const auto &serv(sess.get_server());
+	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
+	for(const auto &delta : deltas)
+	{
+		if(bool(delta) && (delta == 'q' || delta == 'b'))
+		{
+			voting.motion<vote::Mode>(chan,user,std::string(~delta));
+			chan << user.get_nick() << "'s action has invoked this automatic appeal process." << flush;
+		}
+	}
 }
 
 

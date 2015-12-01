@@ -69,6 +69,7 @@ class ResPublica
 	void handle_nick(const Msg &m, User &u);
 	void handle_notice(const Msg &m, User &u);
 	void handle_privmsg(const Msg &m, User &u);
+	void handle_cmode(const Msg &m, Chan &c);
 	void handle_notice(const Msg &m, Chan &c, User &u);
 	void handle_privmsg(const Msg &m, Chan &c, User &u);
 
