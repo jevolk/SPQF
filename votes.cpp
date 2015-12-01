@@ -184,11 +184,9 @@ void vote::Flags::expired()
 	const auto &acct(toks.at(0));
 	const User user(&get_adb(),&get_sess(),nullptr,acct,"",acct);
 
-	Deltas deltas(toks.at(1));
-	deltas.inv_signs();
-
+	const Deltas deltas(toks.at(1));
 	Chan &chan(get_chan());
-	chan.flags(user,deltas);
+	chan.flags(user,~deltas);
 }
 
 
@@ -541,9 +539,7 @@ void ModeEffect::expired()
 	if(get_effect().empty())
 		return;
 
-	Deltas deltas(get_effect(),serv);
-	deltas.inv_signs();
-
+	const Deltas deltas(get_effect(),serv);
 	Chan &chan(get_chan());
-	chan(deltas);
+	chan(~deltas);
 }
