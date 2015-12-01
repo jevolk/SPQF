@@ -739,6 +739,12 @@ try
 		return;
 	}
 
+	static const std::map<std::string,std::string> aliases
+	{
+		{ "speaker", "nick"      },
+		{ "channel", "chan"      },
+	};
+
 	std::map<std::string,std::string> options
 	{
 		{ "limit", "10"          },
@@ -764,6 +770,9 @@ try
 
 		if(!isalpha(key))
 			throw Exception("Search keys must contain alpha characters only");
+
+		if(aliases.count(key))
+			key = aliases.at(key);
 
 		if(options.count(key))
 			options.at(key) = val;
