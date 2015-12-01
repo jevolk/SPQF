@@ -50,6 +50,7 @@ class ResPublica
 	void handle_cmd(const Msg &m, User &u);
 
 	// !vote channel stack
+	void handle_vote_eligible(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_config(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t);

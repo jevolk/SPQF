@@ -397,6 +397,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("list"):     handle_vote_list(msg,chan,user,subtok(toks));                 break;
 		case hash("info"):     handle_vote_id(msg,chan,user,subtok(toks));                   break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtok(toks));               break;
+		case hash("eligible"): handle_vote_eligible(msg,chan,user,subtok(toks));             break;
 
 		// Actual vote types
 		case hash("ban"):      voting.motion<vote::Ban>(chan,user,detok(subtok(toks)));      break;
@@ -532,6 +533,90 @@ void ResPublica::handle_vote_config(const Msg &msg,
 		out << doc << flush;
 	}
 	else out << key << " = " << val << flush;
+}
+
+
+void ResPublica::handle_vote_eligible(const Msg &msg,
+                                      Chan &chan,
+                                      User &user,
+                                      const Tokens &toks)
+try
+{
+	if(!chan.users.mode(user).has('o'))
+	{
+		user << "You must be an operator to run this command" << flush;
+		return;
+	}
+
+	std::map<std::string,uint> count;
+	std::map<std::string,std::string> accts;
+
+	const Adoc &cfg(chan.get("config.vote"));
+	const auto lines(cfg.get<uint>("civis.eligible.lines"));
+	const auto age(secs_cast(cfg["civis.eligible.age"]));
+
+	chan << "Just a moment while I find users with >" << lines << " lines "
+	     << "before " << secs_cast(age) << " ago."
+	     << flush;
+
+	Logs::SimpleFilter filt;
+	filt.time.first = 0;
+	filt.time.second = time(NULL) - age;
+	filt.type = "PRI";  // PRIVMSG
+
+	logs.for_each(chan.get_name(),filt,[&count,&accts]
+	(const Logs::ClosureArgs &a)
+	{
+		if(strlen(a.acct) == 0 || *a.acct == '*')
+			return true;
+
+		{
+			auto iit(count.emplace(a.acct,0));
+			if(!iit.second)
+			{
+				auto &lines(iit.first->second);
+				++lines;
+			}
+		}
+		{
+			auto iit(accts.emplace(a.acct,a.nick));
+			if(!iit.second)
+			{
+				auto &nick(iit.first->second);
+				if(nick != a.nick)
+					nick = a.nick;
+			}
+		}
+
+		return true;
+	});
+
+	std::stringstream str;
+	for(const auto &p : count) try
+	{
+		const auto &acct(p.first);
+		const auto &linecnt(p.second);
+		if(linecnt < lines)
+			continue;
+
+		const auto &nick(accts.at(acct));
+		const User user(&bot.adb,&bot.sess,&bot.ns,nick,"",acct);
+		if(chan.lists.has_flag(user,'V'))
+			continue;
+
+		str << nick << " (" << acct << " : " << linecnt << ") ";
+	}
+	catch(const std::out_of_range &e)
+	{
+		printf("error on %s (%u)\n",p.first.c_str(),p.second);
+		continue;
+	}
+
+	chan << user.get_nick() << ", results: " << str.str() << flush;
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("Need a channel name because this is PM.");
 }
 
 
