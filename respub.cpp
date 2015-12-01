@@ -722,11 +722,11 @@ try
 			return;
 		}
 
-		voting.for_each(chan,[this,&msg,&user,&subtoks]
+		voting.for_each(chan,[this,&msg,&user,&subtoks,&cmsg_chan]
 		(const Vote &vote)
 		{
 			const auto &id(vote.get_id());
-			handle_vote_list(msg,user,user,subtoks,id);
+			handle_vote_list(msg,user,(user<<cmsg_chan),subtoks,id);
 		});
 
 		return;
