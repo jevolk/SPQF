@@ -21,7 +21,7 @@ using namespace irc::bot;
 #include "respub.h"
 
 
-static const ResPublica *respub;
+const ResPublica *respub;
 
 
 extern "C" __attribute__((constructor))
@@ -113,7 +113,7 @@ void ResPublica::handle_privmsg(const Msg &msg,
                                 User &user)
 try
 {
-	using namespace fmt::CHANMSG;
+	using namespace fmt::PRIVMSG;
 
 	// Discard empty without exception
 	if(msg[TEXT].empty())
@@ -158,7 +158,7 @@ void ResPublica::handle_notice(const Msg &msg,
                                User &user)
 try
 {
-	using namespace fmt::CNOTICE;
+	using namespace fmt::NOTICE;
 
 	// Discard empty without exception
 	if(msg[TEXT].empty())
@@ -347,7 +347,7 @@ void ResPublica::handle_cmd(const Msg &msg,
                             Chan &chan,
                             User &user)
 {
-	using namespace fmt::CHANMSG;
+	using namespace fmt::PRIVMSG;
 
 	// Chop off cmd prefix and dispatch
 	const std::vector<std::string> tok = tokens(msg[TEXT]);
