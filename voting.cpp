@@ -77,7 +77,6 @@ void Voting::cancel(Vote &vote,
 
 void Voting::worker()
 {
-	std::this_thread::sleep_for(std::chrono::seconds(30));
 	init();
 	initialized.store(true,std::memory_order_release);
 
@@ -137,7 +136,8 @@ void Voting::poll_votes()
 	for(auto it(votes.begin()); it != votes.end();)
 	{
 		Vote &vote(*it->second);
-		if(vote.remaining() <= 0 || vote.interceded())
+		const auto finished(vote.remaining() <= 0 || vote.interceded());
+		if(finished && chans.has(vote.get_chan_name()))
 		{
 			call_finish(vote);
 			praetor.add(std::move(del(it++)));

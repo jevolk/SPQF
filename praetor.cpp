@@ -32,10 +32,9 @@ bot(bot),
 vdb(vdb),
 logs(logs),
 interrupted(false),
-thread(&Praetor::worker,this)
+thread(&Praetor::worker,this),
+init_thread(&Praetor::init,this)
 {
-	std::thread(&Praetor::init,this).detach();
-
 }
 
 
@@ -44,14 +43,13 @@ noexcept
 {
 	interrupted.store(true,std::memory_order_release);
 	cond.notify_all();
+	init_thread.join();
 	thread.join();
 }
 
 
 void Praetor::init()
 {
-	std::this_thread::sleep_for(std::chrono::seconds(45));
-
 	const std::lock_guard<Bot> l(bot);
 	std::cout << "[Praetor]: Initiating the schedule."
 	          << " Reading " << vdb.count() << " votes..."
@@ -93,27 +91,35 @@ void Praetor::process()
 
 	while(sched.next_rel() <= 0)
 	{
-		const id_t id = sched.next_id();
+		const id_t id(sched.next_id());
 		sched.pop();
 
 		const unlock_guard<decltype(lock)> unlock(lock);
-		process(id);
+		if(!process(id))
+		{
+			const time_t retry_absolute(time(NULL) + 300);
+			add(id,retry_absolute);
+		}
 	}
 }
 
 
-void Praetor::process(const id_t &id)
+bool Praetor::process(const id_t &id)
 {
 	const std::unique_lock<Bot> lock(bot);
-	const std::unique_ptr<Vote> vote = vdb.get(id,&sess,&chans,&users,&logs);
-	process(*vote);
+	const std::unique_ptr<Vote> vote(vdb.get(id,&sess,&chans,&users,&logs));
+	return process(*vote);
 }
 
 
-void Praetor::process(Vote &vote)
+bool Praetor::process(Vote &vote)
 noexcept try
 {
+	if(!chans.has(vote.get_chan_name()))
+		return false;
+
 	vote.expire();
+	return true;
 }
 catch(const std::exception &e)
 {
@@ -123,6 +129,8 @@ catch(const std::exception &e)
 	          << " error: " << e.what()
 	          << "\033[0m"
 	          << std::endl;
+
+	return false;
 }
 
 

@@ -50,13 +50,14 @@ class Praetor
 	void add(const Adoc &serialized);
 
   private:
-	void process(Vote &vote) noexcept;
-	void process(const id_t &id);
+	bool process(Vote &vote) noexcept;
+	bool process(const id_t &id);
 	void process();
 	void worker();
 	std::thread thread;
 
 	void init();
+	std::thread init_thread;
 
   public:
 	Praetor(Sess &sess, Chans &chans, Users &users, Bot &bot, Vdb &vdb, Logs &logs);
