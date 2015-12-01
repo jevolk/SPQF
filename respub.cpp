@@ -1052,12 +1052,24 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	// Initiator line
 	out << pfx << BOLD << "SPEAKER" << OFF << "  : " << vote.get_user_acct() << "\n";
 
+	// Time lines
+	struct tm tm;
+	char timestr[64] {0};
+
 	// Started line
-	out << pfx << BOLD << "STARTED" << OFF << "  : " << vote.get_began() << "\n";
+	const auto began(vote.get_began());
+	gmtime_r(&began,&tm);
+	strftime(timestr,sizeof(timestr),"%c",&tm);
+	out << pfx << BOLD << "STARTED" << OFF << "  : " << began << " (" << timestr << ")\n";
 
 	// Ended line
-	if(vote.get_ended())
-		out << pfx << BOLD << "ENDED" << OFF << "    : " << vote.get_ended() << "\n";
+	const auto ended(vote.get_ended());
+	if(ended)
+	{
+		gmtime_r(&ended,&tm);
+		strftime(timestr,sizeof(timestr),"%c",&tm);
+		out << pfx << BOLD << "ENDED" << OFF << "    : " << ended << " (" << timestr << ")\n";
+	}
 
 	// Yea votes line
 	if(tally.first)
@@ -1116,7 +1128,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		out << pfx << BOLD << "EFFECT" << OFF << "   : " << vote.get_effect() << "\n";
 
 		// For line
-		out << pfx << BOLD << "FOR" << OFF << "      : " << cfg["for"] << " seconds\n";
+		out << pfx << BOLD << "FOR" << OFF << "      : " << cfg["for"] << " seconds (" << secs_cast(cfg.get<uint>("for",0)) << ")\n";
 	}
 
 	// Result/Status line
