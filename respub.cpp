@@ -860,8 +860,8 @@ void ResPublica::handle_vote_list(const Msg &msg,
 {
 	using namespace colors;
 
-	const Vote &vote = voting.exists(id)? voting.get(id) : vdb.get<Vote>(id);
-	const auto tally = vote.tally();
+	const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
+	const auto tally(vote.tally());
 	const scope f([&]
 	{
 		// Flush may erase the CNOTICE privilege of this stream so it is only done once
@@ -869,39 +869,44 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	});
 
 	out << vote << ": ";
-	out << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << std::setw(3) << std::setfill(' ') << tally.first << OFF << " ";
-	out << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << std::setw(3) << std::setfill(' ') << tally.second << OFF << " ";
+	out << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " ";
+	out << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " ";
 	out << BOLD << "YOU" << OFF << ": ";
 
 	if(!vote.voted(user))
 		out << BOLD << FG::BLACK << "---" << OFF << " ";
 	else if(vote.position(user) == Vote::YEA)
-		out << BOLD << UNDER2 << FG::WHITE << BG::GREEN << "YEA" << OFF << " ";
+		out << BOLD << FG::WHITE << BG::GREEN << "YEA" << OFF << " ";
 	else if(vote.position(user) == Vote::NAY)
-		out << BOLD << UNDER2 << FG::WHITE << BG::RED << "NAY" << OFF << " ";
+		out << BOLD << FG::WHITE << BG::RED << "NAY" << OFF << " ";
+
+	if(vote.remaining() >= 0)
+		out << BOLD << FG::WHITE << BG::ORANGE << "ACTIVE" << OFF << " ";
+	else if(vote.get_reason().empty())
+		out << BOLD << UNDER2 << FG::WHITE << BG::GREEN << "PASSED" << OFF << " ";
+	else
+		out << BOLD << UNDER2 << FG::WHITE << BG::RED << "FAILED" << OFF << " ";
 
 	out << "| " << BOLD << vote.get_type() << OFF << ": " << UNDER2 << vote.get_issue() << OFF << " ";
 
 	if(vote.remaining() >= 0)
 	{
-		out << "There are " << BOLD << secs_cast(vote.remaining()) << BOLD << " left. ";
+		out << " - There are " << BOLD << secs_cast(vote.remaining()) << OFF << " left. ";
 
 		const auto total(vote.total());
 		const auto quorum(vote.quorum());
 		const auto required(vote.required());
 
 		if(total < quorum)
-			out << BOLD << (quorum - total) << OFF << " more votes are required for a quorum. ";
+			out << BOLD << (quorum - total) << OFF << " more votes are required for a quorum.";
 		else if(tally.first < required)
-			out << BOLD << (required - tally.first) << OFF << " more yeas are required to pass. ";
+			out << BOLD << (required - tally.first) << OFF << " more yeas are required to pass.";
 		else
 			out << "As it stands, the motion will pass.";
-	} else {
-		if(vote.get_reason().empty())
-			out << BOLD << FG::WHITE << BG::GREEN << "PASSED";
-		else
-			out << BOLD << FG::WHITE << BG::RED << "FAILED" << OFF << BOLD << FG::RED << ": " << vote.get_reason();
 	}
+
+	if(!vote.get_reason().empty())
+		out << " - " << BOLD << FG::RED << vote.get_reason() << OFF;
 }
 
 
