@@ -103,11 +103,14 @@ try
 		chanidx.emplace(chan.get_name(),id);
 		useridx.emplace(user.get_acct(),id);
 
-		if(chanidx.count(chan.get_name()) > cfg.get("limit.active",limits::max()))
-			throw Exception("Too many active votes for this channel.");
+		if(!chan.users.mode(user).has('o'))
+		{
+			if(chanidx.count(chan.get_name()) > cfg.get("limit.active",limits::max()))
+				throw Exception("Too many active votes for this channel.");
 
-		if(useridx.count(user.get_acct()) > cfg.get("limit.user",limits::max()))
-			throw Exception("Too many active votes started by you on this channel.");
+			if(useridx.count(user.get_acct()) > cfg.get("limit.user",limits::max()))
+				throw Exception("Too many active votes started by you on this channel.");
+		}
 
 		if(!vote.speaker(user))
 			throw Exception("You are not able to create votes on this channel.");
