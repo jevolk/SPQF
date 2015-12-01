@@ -17,6 +17,9 @@ class Vdb : public Adb
 	template<class... Args> std::unique_ptr<Vote> get(const id_t &id, Args&&... args);
 	std::string get_type(const id_t &id);
 
+	using Term = std::pair<std::string,std::string>;
+	std::list<id_t> find(const std::forward_list<Term> &terms);
+
 	Vdb(const std::string &dir);
 };
 
@@ -29,10 +32,35 @@ Adb(dir)
 
 
 inline
+std::list<id_t>
+Vdb::find(const std::forward_list<Term> &terms)
+{
+	std::list<id_t> ret;
+	const auto num_terms(std::distance(terms.begin(),terms.end()));
+	for(auto it(cbegin()); it != cend(); ++it)
+	{
+		auto match(0);
+		const auto &id(lex_cast<id_t>(it->first));
+		const Adoc doc{std::string{it->second}};
+		for(const auto &term : terms)
+		{
+			const auto &key(term.first);
+			const auto &val(term.second);
+			match += tolower(doc[key]) == val;
+		}
+
+		if(match == num_terms)
+			ret.emplace_back(id);
+	}
+
+	return ret;
+}
+
+
+inline
 std::string Vdb::get_type(const id_t &id)
 {
-	const auto doc = Adb::get(std::nothrow,lex_cast(id));
-	return doc["type"];
+	return Adb::get(std::nothrow,lex_cast(id))["type"];
 }
 
 

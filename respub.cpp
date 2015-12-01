@@ -710,25 +710,85 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   const Tokens &toks)
 try
 {
-	const Chan &chan(chans.get(*toks.at(0)));
-	const Tokens subtoks(subtok(toks));
+	auto &chan(chans.get(*toks.at(0)));
+	const auto *const cmsg_chan(chans.find_cnotice(user));
+	const auto subtoks(subtok(toks));
+
 	if(subtoks.empty())
 	{
 		if(!voting.exists(chan))
 		{
-			const Chan *const &cmsg_chan(chans.find_cnotice(user));
 			user << cmsg_chan << "No active votes for this channel." << user.flush;
+			return;
 		}
-		else voting.for_each(chan,[this,&msg,&user,&subtoks]
+
+		voting.for_each(chan,[this,&msg,&user,&subtoks]
 		(const Vote &vote)
 		{
 			const auto &id(vote.get_id());
 			handle_vote_list(msg,user,user,subtoks,id);
 		});
-	} else {
+
+		return;
+	}
+
+	if(isnumeric(*subtoks.at(0)))
+	{
 		const auto &id(lex_cast<Vote::id_t>(*subtoks.at(0)));
 		handle_vote_list(msg,user,user,subtoks,id);
+		return;
 	}
+
+	std::map<std::string,std::string> options
+	{
+		{ "limit", "10"          },
+		{ "order", "descending"  },
+	};
+
+	std::forward_list<Vdb::Term> terms
+	{
+		{ "chan", "##politics" },
+	};
+
+	parse_args(detok(subtoks),"--","="," ",[&terms,&options]
+	(std::pair<std::string,std::string> kv)
+	mutable
+	{
+		auto &key(kv.first);
+		auto &val(kv.second);
+		key = tolower(key);
+		val = tolower(val);
+
+		if(key.empty() || val.empty())
+			throw Exception("Usage: !vote list <#channel> <--key=value> [--key=value]");
+
+		if(!isalpha(key))
+			throw Exception("Search keys must contain alpha characters only");
+
+		if(options.count(key))
+			options.at(key) = val;
+		else
+			terms.emplace_front(kv);
+	});
+
+	auto res(vdb.find(terms));
+	res.sort();
+
+	if(options.at("order") == "descending")
+		std::reverse(res.begin(),res.end());
+
+	const size_t max_limit(cmsg_chan? 100 : 10);
+	const auto limit(lex_cast<size_t>(options.at("limit")));
+	res.resize(std::min(res.size(),limit));
+
+	if(limit > max_limit)
+		throw Exception("Exceeded the maximum --limit=") << max_limit;
+
+	if(!res.empty())
+		for(const auto &id : res)
+			handle_vote_list(msg,user,(user<<cmsg_chan),{},id);
+	else
+		user << cmsg_chan << "No matching results." << user.flush;
 }
 catch(const boost::bad_lexical_cast &e)
 {
@@ -800,8 +860,8 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	});
 
 	out << vote << ": ";
-	out << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " ";
-	out << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " ";
+	out << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << std::setw(3) << std::setfill(' ') << tally.first << OFF << " ";
+	out << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << std::setw(3) << std::setfill(' ') << tally.second << OFF << " ";
 	out << BOLD << "YOU" << OFF << ": ";
 
 	if(!vote.voted(user))
