@@ -350,7 +350,7 @@ void ResPublica::handle_cmd(const Msg &msg,
 	using namespace fmt::PRIVMSG;
 
 	// Chop off cmd prefix and dispatch
-	const std::vector<std::string> tok = tokens(msg[TEXT]);
+	const auto tok(tokens(msg[TEXT]));
 	switch(hash(tok.at(0).substr(opts["prefix"].size())))
 	{
 		case hash("v"):
@@ -375,9 +375,14 @@ void ResPublica::handle_version(const Msg &msg,
 void ResPublica::handle_vote(const Msg &msg,
                              Chan &chan,
                              User &user,
-                             const Tokens &toks)
+                             Tokens toks)
 {
-	const std::string subcmd = !toks.empty()? *toks.at(0) : "help";
+	// For UI ease-of-use, when a user ought to be typing !vote yes $id
+	// allow them to reverse the syntax
+	if(toks.size() == 2 && isnumeric(*toks.at(0)) && Vote::is_ballot(*toks.at(1)))
+		std::reverse(toks.begin(),toks.end());
+
+	const std::string &subcmd(!toks.empty()? *toks.at(0) : "help");
 
 	// Handle pattern for accessing vote by ID
 	if(isnumeric(subcmd))
@@ -400,19 +405,15 @@ void ResPublica::handle_vote(const Msg &msg,
 		return;
 	}
 
+	if(Vote::is_ballot(subcmd))
+	{
+		handle_vote_ballot(msg,chan,user,subtok(toks),Vote::ballot(subcmd));
+		return;
+	}
+
 	// Handle various sub-keywords
 	switch(hash(subcmd))
 	{
-		// Ballot
-		case hash("yes"):
-		case hash("yea"):
-		case hash("Y"):
-		case hash("y"):        handle_vote_ballot(msg,chan,user,subtok(toks),Vote::YEA);     break;
-		case hash("nay"):
-		case hash("no"):
-		case hash("N"):
-		case hash("n"):        handle_vote_ballot(msg,chan,user,subtok(toks),Vote::NAY);     break;
-
 		// Administrative
 		default:
 		case hash("help"):     handle_help(msg,user<<chan,subtok(toks));                     break;
@@ -438,7 +439,6 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("opine"):    voting.motion<vote::Opine>(chan,user,detok(subtok(toks)));    break;
 		case hash("import"):   voting.motion<vote::Import>(chan,user,detok(subtok(toks)));   break;
 	}
-
 }
 
 
@@ -759,8 +759,13 @@ void ResPublica::handle_version(const Msg &msg,
 
 void ResPublica::handle_vote(const Msg &msg,
                              User &user,
-                             const Tokens &toks)
+                             Tokens toks)
 {
+	// For UI ease-of-use, when a user ought to be typing !vote yes $id
+	// allow them to reverse the syntax
+	if(toks.size() == 2 && isnumeric(*toks.at(0)) && Vote::is_ballot(*toks.at(1)))
+		std::reverse(toks.begin(),toks.end());
+
 	const std::string subcmd = !toks.empty()? *toks.at(0) : "help";
 
 	// Handle pattern for accessing vote by ID
@@ -770,18 +775,14 @@ void ResPublica::handle_vote(const Msg &msg,
 		return;
 	}
 
+	if(Vote::is_ballot(subcmd))
+	{
+		handle_vote_ballot(msg,user,subtok(toks),Vote::ballot(subcmd));
+		return;
+	}
+
 	switch(hash(subcmd))
 	{
-		// Ballot
-		case hash("yea"):
-		case hash("yes"):
-		case hash("Y"):
-		case hash("y"):        handle_vote_ballot(msg,user,subtok(toks),Vote::YEA);    break;
-		case hash("nay"):
-		case hash("no"):
-		case hash("N"):
-		case hash("n"):        handle_vote_ballot(msg,user,subtok(toks),Vote::NAY);    break;
-
 		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,user,subtok(toks));                break;
 		case hash("info"):     handle_vote_id(msg,user,subtok(toks));                  break;

@@ -16,6 +16,12 @@ using namespace irc::bot;
 #include "vote.h"
 
 
+decltype(Vote::ystr) Vote::ystr                  { "yea", "yes", "yea", "Y", "y"                   };
+decltype(Vote::nstr) Vote::nstr                  { "nay", "no", "N", "n"                           };
+decltype(Vote::ARG_KEYED) Vote::ARG_KEYED        { "--"                                            };
+decltype(Vote::ARG_VALUED) Vote::ARG_VALUED      { "="                                             };
+
+
 Vote::Vote(const std::string &type,
            const id_t &id,
            Adb &adb,
@@ -563,6 +569,24 @@ const
 	return yea.count(acct)? YEA:
 	       nay.count(acct)? NAY:
 	                        throw Exception("No position taken.");
+}
+
+
+Vote::Ballot Vote::ballot(const std::string &str)
+{
+	if(ystr.count(str))
+		return Ballot::YEA;
+
+	if(nstr.count(str))
+		return Ballot::NAY;
+
+	throw Exception("Supplied string is not a valid Ballot");
+}
+
+
+bool Vote::is_ballot(const std::string &str)
+{
+	return ystr.count(str) || nstr.count(str);
 }
 
 

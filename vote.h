@@ -8,8 +8,10 @@
 
 class Vote : protected Acct
 {
-	static constexpr auto ARG_KEYED = "--";
-	static constexpr auto ARG_VALUED = "=";
+	static const std::string ARG_KEYED;
+	static const std::string ARG_VALUED;
+	static const std::set<std::string> ystr;
+	static const std::set<std::string> nstr;
 
 	Sess *sess;
 	Chans *chans;
@@ -70,6 +72,8 @@ class Vote : protected Acct
 	operator Adoc() const;                                  // Serialize to Adoc/JSON
 	friend Locutor &operator<<(Locutor &l, const Vote &v);  // Appends formatted #ID to the stream
 
+	static bool is_ballot(const std::string &str);
+	static Ballot ballot(const std::string &str);
 	Ballot position(const std::string &acct) const;         // Throws if user hasn't taken a position
 	uint voted_host(const std::string &host) const;
 	bool voted_acct(const std::string &acct) const;
