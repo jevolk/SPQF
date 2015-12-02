@@ -57,10 +57,15 @@ class Voting
 
 	void call_finish(Vote &vote) noexcept;
 	void poll_votes();
-	void init();
-	void sleep();
-	void worker();
-	std::thread thread;
+	void poll_init();
+	void poll_sleep();
+	void poll_worker();
+	std::thread poll_thread;
+
+	void remind_votes();
+	bool remind_sleep();
+	void remind_worker();
+	std::thread remind_thread;
 
   public:
 	void cancel(Vote &vote, const Chan &chan, const User &user);

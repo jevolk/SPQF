@@ -36,10 +36,9 @@ vdb(vdb),
 praetor(praetor),
 interrupted(false),
 initialized(false),
-thread(&Voting::worker,this)
+poll_thread(&Voting::poll_worker,this),
+remind_thread(&Voting::remind_worker,this)
 {
-
-
 }
 
 
@@ -47,7 +46,8 @@ Voting::~Voting() noexcept
 {
 	interrupted.store(true,std::memory_order_release);
 	sem.notify_all();
-	thread.join();
+	remind_thread.join();
+	poll_thread.join();
 }
 
 
@@ -75,24 +75,94 @@ void Voting::cancel(Vote &vote,
 }
 
 
-void Voting::worker()
+void Voting::remind_worker()
 {
-	init();
-	initialized.store(true,std::memory_order_release);
+	{
+		std::unique_lock<decltype(mutex)> lock(mutex);
+		sem.wait(lock,[this]
+		{
+			return initialized.load(std::memory_order_consume) ||
+			       interrupted.load(std::memory_order_consume);
+		});
+	}
 
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
-		poll_votes();
-		sleep();
+		if(remind_sleep())
+			remind_votes();
 	}
 	catch(const Internal &e)
 	{
-		std::cerr << "[Voting]: \033[1;41m" << e << "\033[0m" << std::endl;
+		std::cerr << "[Voting (remind worker)]: \033[1;41m" << e << "\033[0m" << std::endl;
 	}
 }
 
 
-void Voting::init()
+bool Voting::remind_sleep()
+{
+	using std::chrono::steady_clock;
+
+	const auto now(steady_clock::now());
+	const auto fut(now + std::chrono::hours(24));
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	return sem.wait_until(lock,fut) == std::cv_status::timeout;
+}
+
+
+void Voting::remind_votes()
+{
+	using namespace colors;
+
+	const std::unique_lock<Bot> lock(bot);
+	static const milliseconds delay(750);
+	//const FloodGuard guard(bot.sess,delay);
+	for(auto it(votes.cbegin()); it != votes.cend(); ++it)
+	{
+		const Vote &vote(*it->second);
+		if(!chans.has(vote.get_chan_name()))
+			continue;
+
+		Chan &chan(vote.get_chan());
+		chan.users.for_each([&](User &user)
+		{
+			if(vote.voted(user))
+				return;
+
+			if(!vote.enfranchised(user))
+				return;
+
+			user << user.PRIVMSG << chan << user.get_nick() << ", I see you have not yet voted on issue "
+			     << vote << ", " << BOLD << vote.get_type() << OFF << ": " << UNDER2 << vote.get_issue() << OFF << ". "
+			     << "Your participation as a citizen of " << chan.get_name() << " is highly valued to maintain a fair and democratic community. "
+			     << "Please consider " << BOLD << FG::GREEN << "!v y " << vote.get_id() << OFF << " or " << BOLD << FG::RED << "!v n " << vote.get_id() << OFF
+			     << " before the issue closes in " << BOLD << secs_cast(vote.remaining()) << OFF << ". "
+			     << user.flush;
+
+			std::this_thread::sleep_for(delay);
+		});
+	}
+}
+
+
+void Voting::poll_worker()
+{
+	poll_init();
+	initialized.store(true,std::memory_order_release);
+	sem.notify_all();
+
+	while(!interrupted.load(std::memory_order_consume)) try
+	{
+		poll_votes();
+		poll_sleep();
+	}
+	catch(const Internal &e)
+	{
+		std::cerr << "[Voting (poll worker)]: \033[1;41m" << e << "\033[0m" << std::endl;
+	}
+}
+
+
+void Voting::poll_init()
 {
 	const std::lock_guard<Bot> lock(bot);
 	std::cout << "[Voting]: Adding previously open votes."
@@ -122,7 +192,7 @@ void Voting::init()
 }
 
 
-void Voting::sleep()
+void Voting::poll_sleep()
 {
 	//TODO: calculate next deadline. Recalculate on semaphore.
 	std::unique_lock<decltype(mutex)> lock(mutex);
