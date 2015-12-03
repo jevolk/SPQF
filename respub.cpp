@@ -583,33 +583,23 @@ try
 	     << flush;
 
 	Logs::SimpleFilter filt;
+	filt.type = "PRI";  // PRIVMSG
 	filt.time.first = 0;
 	filt.time.second = time(NULL) - age;
-	filt.type = "PRI";  // PRIVMSG
-
 	logs.for_each(chan.get_name(),filt,[&count,&accts]
 	(const Logs::ClosureArgs &a)
 	{
 		if(strlen(a.acct) == 0 || *a.acct == '*')
 			return true;
 
-		{
-			auto iit(count.emplace(a.acct,0));
-			if(!iit.second)
-			{
-				auto &lines(iit.first->second);
-				++lines;
-			}
-		}
-		{
-			auto iit(accts.emplace(a.acct,a.nick));
-			if(!iit.second)
-			{
-				auto &nick(iit.first->second);
-				if(nick != a.nick)
-					nick = a.nick;
-			}
-		}
+		++count[a.acct];
+		const auto iit(accts.emplace(a.acct,a.nick));
+		if(iit.second)
+			return true;
+
+		auto &nick(iit.first->second);
+		if(nick != a.nick)
+			nick = a.nick;
 
 		return true;
 	});
