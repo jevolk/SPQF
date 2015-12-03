@@ -1003,8 +1003,8 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		out << " - There are " << BOLD << secs_cast(vote.remaining()) << OFF << " left. ";
 
 		const auto total(vote.total());
-		const auto quorum(vote.quorum());
 		const auto required(vote.required());
+		const auto quorum(vote.get_quorum());
 
 		if(total < quorum)
 			out << BOLD << (quorum - total) << OFF << " more votes are required for a quorum.";
@@ -1052,6 +1052,10 @@ void ResPublica::handle_vote_info(const Msg &msg,
 
 	// Initiator line
 	out << pfx << BOLD << "SPEAKER" << OFF << "  : " << vote.get_user_acct() << "\n";
+
+	// Quorum line
+	if(vote.get_quorum() > 0)
+		out << pfx << BOLD << "QUORUM" << OFF << "   : " << vote.get_quorum() << "\n";
 
 	// Time lines
 	struct tm tm;
@@ -1142,7 +1146,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 			out << BOLD << FG::WHITE << BG::RED << "FAILED" << OFF << BOLD << FG::RED << ": " << vote.get_reason() << "\n";
 	} else {
 		const auto total(vote.total());
-		const auto quorum(vote.quorum());
+		const auto quorum(vote.get_quorum());
 		const auto required(vote.required());
 
 		out << pfx << BOLD << "STATUS" << OFF << "   : ";

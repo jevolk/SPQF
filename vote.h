@@ -28,6 +28,7 @@ class Vote : protected Acct
 	time_t began;                               // Time vote was activated or 0
 	time_t ended;                               // Time vote was closed or 0
 	time_t expiry;                              // Time vote effects successfully expired.
+	size_t quorum;                              // Quorum required
 	std::string reason;                         // Reason for outcome
 	std::string effect;                         // Effects of outcome
 	std::set<std::string> yea;                  // Accounts voting Yes
@@ -58,6 +59,7 @@ class Vote : protected Acct
 	auto &get_nay() const                       { return nay;                                       }
 	auto &get_hosts() const                     { return hosts;                                     }
 	auto &get_veto() const                      { return veto;                                      }
+	auto &get_quorum() const                    { return quorum;                                    }
 	auto num_vetoes() const                     { return veto.size();                               }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
 	auto remaining() const                      { return secs_cast(cfg["duration"]) - elapsed();    }
@@ -66,8 +68,8 @@ class Vote : protected Acct
 	bool disabled() const                       { return cfg.get<bool>("disable");                  }
 	bool interceded() const;
 	uint plurality() const;
-	uint quorum() const;
 	uint required() const;
+	uint calc_quorum() const;
 
 	operator Adoc() const;                                  // Serialize to Adoc/JSON
 	friend Locutor &operator<<(Locutor &l, const Vote &v);  // Appends formatted #ID to the stream
@@ -110,6 +112,7 @@ class Vote : protected Acct
 	void set_began()                            { time(&began);                                     }
 	void set_ended()                            { time(&ended);                                     }
 	void set_expiry()                           { time(&expiry);                                    }
+	void set_quorum(const uint &quorum)         { this->quorum = quorum;                            }
 
 	// One-time internal events                 // Subclass throws from these for abortions at any time.
 	virtual void passed() {}                    // Performs effects after successful vote

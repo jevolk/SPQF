@@ -102,7 +102,8 @@ cfg([&]
 }()),
 began(0),
 ended(0),
-expiry(0)
+expiry(0),
+quorum(0)
 {
 	if(disabled())
 		throw Exception("Votes of this type are disabled by the configuration.");
@@ -136,6 +137,7 @@ cfg(get("cfg")),
 began(secs_cast(get_val("began"))),
 ended(secs_cast(get_val("ended"))),
 expiry(secs_cast(get_val("expiry"))),
+quorum(has("quorum")? get_val<uint>("quorum") : 0),
 reason(get_val("reason")),
 effect(get_val("effect")),
 yea(get("yea").into(yea)),
@@ -171,6 +173,7 @@ const
 	doc.put("began",get_began());
 	doc.put("ended",get_ended());
 	doc.put("expiry",get_expiry());
+	doc.put("quorum",get_quorum());
 	doc.put("reason",get_reason());
 	doc.put("effect",get_effect());
 	doc.put_child("cfg",get_cfg());
@@ -210,6 +213,9 @@ void Vote::start()
 {
 	using namespace colors;
 
+	if(!get_quorum())
+		set_quorum(calc_quorum());
+
 	starting();
 	set_began();
 	save();
@@ -246,15 +252,14 @@ try
 		return;
 	}
 
-	const auto quorum(this->quorum());
-	if(total() < quorum)
+	if(total() < get_quorum())
 	{
 		if(cfg.get<bool>("result.ack.chan"))
 			chan << (*this) << ": "
 			     << "Failed to reach a quorum: "
 			     << BOLD << total() << OFF
 			     << " of "
-			     << BOLD << quorum << OFF
+			     << BOLD << get_quorum() << OFF
 			     << " required."
 			     << flush;
 
@@ -599,33 +604,12 @@ bool Vote::is_ballot(const std::string &str)
 uint Vote::required()
 const
 {
-	const auto plura(plurality());
-	const auto min_yea(cfg.get<uint>("quorum.yea"));
-	return std::max(min_yea,plura);
-}
-
-
-uint Vote::quorum()
-const
-{
-	std::vector<uint> sel
+	const std::vector<uint> sel
 	{{
-		cfg.get<uint>("quorum.yea"),
-		cfg.get<uint>("quorum.ballots"),
+		plurality(),
+		cfg.get<uint>("quorum.yea",0)
 	}};
 
-	if(cfg.get<float>("quorum.turnout") <= 0.0)
-		return *std::max_element(sel.begin(),sel.end());
-
-	auto eligible(0);
-	const Chan &chan(get_chan());
-	chan.users.for_each([this,&eligible]
-	(const User &user)
-	{
-		eligible += enfranchised(user);
-	});
-
-	sel.emplace_back(ceil(eligible * cfg.get<float>("quorum.turnout")));
 	return *std::max_element(sel.begin(),sel.end());
 }
 
@@ -648,6 +632,64 @@ const
 
 	const auto quick = cfg.get<bool>("veto.quick");
 	return quick? true : !remaining();
+}
+
+
+uint Vote::calc_quorum()
+const
+{
+	const Adoc &cfg(get_cfg());
+	const Chan &chan(get_chan());
+	const Logs &logs(get_logs());
+
+	std::vector<uint> sel
+	{{
+		cfg.get<uint>("quorum.yea"),
+		cfg.get<uint>("quorum.ballots"),
+		0
+	}};
+
+	const auto turnout(cfg.get<float>("quorum.turnout"));
+	if(turnout <= 0.0)
+		return *std::max_element(sel.begin(),sel.end());
+
+    std::map<std::string,uint> count;
+	chan.users.for_each([this,&count]
+	(const User &user)
+	{
+		if(enfranchised(user))
+			count.emplace(user.get_acct(),0);
+	});
+
+	Logs::SimpleFilter filt;
+	const auto curtime(time(nullptr));
+	const auto min_age(secs_cast(cfg["quorum.age"]));
+	filt.time.first = curtime - min_age;
+	filt.time.second = curtime;
+	filt.type = "PRI";  // PRIVMSG
+	logs.for_each(get_chan_name(),filt,[&count]
+	(const Logs::ClosureArgs &a)
+	{
+		const auto it(count.find(a.acct));
+		if(it == count.end())
+			return true;
+
+		uint &lines(it->second);
+		++lines;
+		return true;
+	});
+
+	const auto min_lines(cfg.get<uint>("quorum.lines",0U));
+	const auto has_lines(std::count_if(count.begin(),count.end(),[&min_lines]
+	(const auto &p)
+	{
+		const auto &acct(p.first);
+		const auto &lines(p.second);
+		return lines >= min_lines;
+	}));
+
+	sel.back() = ceil(has_lines * turnout);
+	return *std::max_element(sel.begin(),sel.end());
 }
 
 
