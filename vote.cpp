@@ -214,10 +214,11 @@ void Vote::start()
 	set_began();
 	save();
 
-	auto &chan = get_chan();
-	chan << BOLD << "Voting has started!" << OFF << " Issue " << (*this) << ": "
-	     << BOLD << UNDER2 << get_type() << OFF << ": " << BOLD << get_issue() << OFF << ". "
-	     << "You have " << BOLD << secs_cast(secs_cast(cfg["duration"])) << OFF << " to vote! "
+	auto &chan(get_chan());
+	chan << "Vote " << (*this) << ": "
+	     << BOLD << get_type() << OFF << ": " << UNDER2 << get_issue() << OFF << ". "
+	     << "You have " << BOLD << secs_cast(secs_cast(cfg["duration"])) << OFF << " to vote; "
+	     << BOLD << get_quorum() << OFF << " votes are required for a quorum! "
 	     << "Type or PM: "
 	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
 	     << " or "
@@ -266,6 +267,8 @@ try
 	{
 		if(cfg.get<bool>("result.ack.chan"))
 			chan << (*this) << ": "
+			     << BOLD << get_type() << OFF << ": "
+			     << UNDER2 << get_issue() << OFF << ". "
 			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF
 			     << " Yeas: " << FG::GREEN << yea.size() << OFF << "."
 			     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
@@ -277,20 +280,23 @@ try
 		return;
 	}
 
-	if(cfg.get<bool>("result.ack.chan"))
-		chan << (*this) << ": "
-		     << FG::WHITE << BG::GREEN << BOLD << "The yeas have it." << OFF
-		     << " Yeas: " << FG::GREEN << BOLD << yea.size() << OFF << "."
-		     << " Nays: " << FG::RED << nay.size() << OFF << "."
-		     << flush;
-
-	// Adjust the final "for" time value using the weighting system
 	{
+		// Adjust the final "for" time value using the weighting system
 		const time_t min(secs_cast(cfg["for"]));
 		const time_t add(secs_cast(cfg["weight.yea"]) * this->yea.size());
 		const time_t sub(secs_cast(cfg["weight.nay"]) * this->nay.size());
 		const time_t val(min + add - sub);
 		cfg.put("for",val);
+
+		if(cfg.get<bool>("result.ack.chan"))
+			chan << (*this) << ": "
+			     << BOLD << get_type() << OFF << ": "
+			     << UNDER2 << get_issue() << OFF << ". "
+			     << FG::WHITE << BG::GREEN << BOLD << "The yeas have it." << OFF
+			     << " Yeas: " << FG::GREEN << BOLD << yea.size() << OFF << "."
+			     << " Nays: " << FG::RED << nay.size() << OFF << "."
+			     << " Effective for " << BOLD << secs_cast(cfg.get<uint>("for")) << OFF << "."
+			     << flush;
 	}
 
 	set_reason("");
