@@ -197,11 +197,11 @@ void ResPublica::handle_cmode(const Msg &msg,
 {
 	using namespace fmt::MODE;
 
-	User &user(users.get(msg.get_nick()));
-	if(user.is_myself())
+	if(msg.from("chanserv") || msg.from(sess.get_nick()))
 		return;
 
 	const auto &serv(sess.get_server());
+	User &user(users.get(msg.get_nick()));
 	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
 	for(const auto &delta : deltas)
 	{
