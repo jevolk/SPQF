@@ -297,14 +297,10 @@ void Voting::for_each(const User &user,
                       const std::function<void (Vote &vote)> &closure)
 {
 	auto pit = useridx.equal_range(user.get_acct());
-	for(; pit.first != pit.second; ++pit.first) try
+	for(; pit.first != pit.second; ++pit.first)
 	{
 		const auto &id = pit.first->second;
 		closure(get(id));
-	}
-	catch(const Exception &e)
-	{
-		std::cerr << "Voting index user[" << user.get_acct() << "]: " << e << std::endl;
 	}
 }
 
@@ -313,14 +309,10 @@ void Voting::for_each(const Chan &chan,
                       const std::function<void (Vote &vote)> &closure)
 {
 	auto pit = chanidx.equal_range(chan.get_name());
-	for(; pit.first != pit.second; ++pit.first) try
+	for(; pit.first != pit.second; ++pit.first)
 	{
 		const auto &id = pit.first->second;
 		closure(get(id));
-	}
-	catch(const Exception &e)
-	{
-		std::cerr << "Voting index chan[" << chan.get_name() << "]: " << e << std::endl;
 	}
 }
 
@@ -338,14 +330,10 @@ void Voting::for_each(const User &user,
 const
 {
 	auto pit = useridx.equal_range(user.get_acct());
-	for(; pit.first != pit.second; ++pit.first) try
+	for(; pit.first != pit.second; ++pit.first)
 	{
 		const auto &id = pit.first->second;
 		closure(get(id));
-	}
-	catch(const Exception &e)
-	{
-		std::cerr << "Voting index user[" << user.get_acct() << "]: " << e << std::endl;
 	}
 }
 
@@ -355,14 +343,10 @@ void Voting::for_each(const Chan &chan,
 const
 {
 	auto pit = chanidx.equal_range(chan.get_name());
-	for(; pit.first != pit.second; ++pit.first) try
+	for(; pit.first != pit.second; ++pit.first)
 	{
 		const auto &id = pit.first->second;
 		closure(get(id));
-	}
-	catch(const Exception &e)
-	{
-		std::cerr << "Voting index chan[" << chan.get_name() << "]: " << e << std::endl;
 	}
 }
 
