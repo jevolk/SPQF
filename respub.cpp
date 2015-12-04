@@ -1175,22 +1175,3 @@ std::string detok(const Tokens &tokens)
 
 	return str.str();
 }
-
-Selection karma_tokens(const Tokens &tokens,
-                       const Chan &chan,
-                       const std::string &oper)
-{
-	Selection ret;
-	for(auto it = tokens.begin(); it != tokens.end(); ++it)
-	{
-		const std::string &token = **it;
-		if(token.find_last_of(oper) == std::string::npos)
-			continue;
-
-		const std::string nick = token.substr(0,token.size()-oper.size());
-		if(chan.users.has(nick))
-			ret.push_front(it);
-	}
-
-	return ret;
-}

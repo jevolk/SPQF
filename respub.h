@@ -9,7 +9,6 @@
 using Tokens = std::vector<const std::string *>;
 using Selection = std::forward_list<Tokens::const_iterator>;
 
-Selection karma_tokens(const Tokens &tokens, const Chan &c, const std::string &oper = "++");
 std::string detok(const Tokens &tokens);
 Tokens subtok(const std::vector<std::string> &tokens);
 Tokens subtok(const Tokens &tokens);
