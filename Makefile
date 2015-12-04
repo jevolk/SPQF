@@ -52,14 +52,14 @@ libircbot:
 respub: respub.o voting.o votes.o praetor.o vote.o
 	$(CC) -o $@.so $(CCFLAGS) -shared $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS)
 
-spqf: main.o
+spqf: spqf.o
 	$(CC) -o $@ $(CCFLAGS) -rdynamic $(WFLAGS) $(LIBPATH) $^ -lircbot -lleveldb -lboost_system -lpthread -ldl
 
 cfgedit: cfgedit.o
 	$(CC) -o $@ $(CCFLAGS) $(WFLAGS) $(LIBPATH) $^ $(LDFLAGS) -lircbot -lleveldb -lboost_system -lpthread
 
 
-main.o: main.cpp
+spqf.o: spqf.cpp
 	$(CC) -c -o $@ $(CCFLAGS) $(WFLAGS) $<
 
 respub.o: respub.cpp *.h
