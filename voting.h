@@ -99,10 +99,10 @@ try
 	{
 		using limits = std::numeric_limits<size_t>;
 
-		Vote &vote = dynamic_cast<Vote &>(*iit.first->second);
-		const Adoc &cfg = vote.get_cfg();
-		const User &user = vote.get_user();
-		const Chan &chan = vote.get_chan();
+		Vote &vote(dynamic_cast<Vote &>(*iit.first->second));
+		const Adoc &cfg(vote.get_cfg());
+		const User &user(vote.get_user());
+		const Chan &chan(vote.get_chan());
 
 		vote.valid(cfg);
 		chanidx.emplace(chan.get_name(),id);
@@ -126,6 +126,23 @@ try
 		if(!vote.qualified(user))
 			throw Exception("You have not been participating enough to start a vote.");
 
+		for_each(chan,[&vote](::Vote &abstract)
+		{
+			if(vote.get_type() != abstract.get_type())
+				return;
+
+			if(vote.get_id() == abstract.get_id())
+				return;
+
+			Vote &existing(dynamic_cast<Vote &>(abstract));
+			if(tolower(vote.get_issue()) != tolower(existing.get_issue()))
+				return;
+
+			auto &user(vote.get_user());
+			existing.event_vote(user,Vote::YEA);
+			throw Exception("Instead an attempt was made to cast a ballot for #") << existing.get_id() << ".";
+		});
+
 		vote.start();
 		sem.notify_one();
 		return vote;
@@ -139,5 +156,5 @@ try
 }
 catch(const Exception &e)
 {
-	throw Exception() << "Vote is not valid: " << e;
+	throw Exception() << "New motion is not valid: " << e;
 }
