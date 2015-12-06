@@ -337,6 +337,32 @@ void vote::Opine::passed()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// Quote
+//
+
+
+void vote::Quote::starting()
+{
+	Chan &chan(get_chan());
+	if(!chan.users.has(user))
+		throw Exception("You can only quote people currently online in this channel. Remember to surround nickname with < and >.");
+}
+
+
+void vote::Quote::passed()
+{
+	using namespace colors;
+
+	Chan &chan = get_chan();
+	chan << "The People of " << chan.get_name() << " quoted "
+	     << BOLD << get_issue() << OFF
+	     << flush;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // Kick
 //
 

@@ -147,6 +147,17 @@ namespace vote
 		                              Vote("opine",std::forward<Args>(args)...) {}
 	};
 
+	class Quote : public Vote
+	{
+		User user;
+
+		void starting() override;
+		void passed() override;
+
+	  public:
+		template<class... Args> Quote(Args&&... args);
+	};
+
 	class Ban : public virtual Vote,
 	            public virtual NickIssue,
 	            public virtual ModeEffect
@@ -347,4 +358,22 @@ Vote(std::forward<Args>(args)...)
 {
 	auto &cfg(get_cfg());
 	cfg["for"] = "0";
+}
+
+
+
+template<class... Args>
+vote::Quote::Quote(Args&&... args):
+Vote("quote",std::forward<Args>(args)...),
+user([this]
+{
+	Users &users(get_users());
+	const auto toks(tokens(get_issue()));
+	if(toks.size() < 2)
+		throw Exception("Usage: !vote quote <nickname> <message...>  | note that nickname must actually be surrounded by classic IRC < and > brackets.");
+
+	const auto &nick(between(toks.at(0),"<",">"));
+	return users.has(nick)? users.get(nick) : User(&get_adb(),&get_sess(),nullptr,nick);
+}())
+{
 }

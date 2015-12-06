@@ -437,6 +437,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("invite"):   voting.motion<vote::Invite>(chan,user,detok(subtok(toks)));   break;
 		case hash("topic"):    voting.motion<vote::Topic>(chan,user,detok(subtok(toks)));    break;
 		case hash("opine"):    voting.motion<vote::Opine>(chan,user,detok(subtok(toks)));    break;
+		case hash("quote"):    voting.motion<vote::Quote>(chan,user,detok(subtok(toks)));    break;
 		case hash("import"):   voting.motion<vote::Import>(chan,user,detok(subtok(toks)));   break;
 	}
 }
