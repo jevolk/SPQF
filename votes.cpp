@@ -90,7 +90,7 @@ void vote::Import::passed()
 void vote::UnQuiet::passed()
 {
 	Chan &chan = get_chan();
-	chan.unquiet(user);
+	set_effect(chan.unquiet(user));
 }
 
 
@@ -118,7 +118,7 @@ void vote::Quiet::passed()
 void vote::DeVoice::passed()
 {
 	Chan &chan = get_chan();
-	chan.devoice(user);
+	set_effect(chan.devoice(user));
 }
 
 

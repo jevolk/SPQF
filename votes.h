@@ -49,6 +49,14 @@ class ModeEffect : virtual Vote
 };
 
 
+// There is no 'for' time with a future expiration
+class ForNow : virtual Vote
+{
+  protected:
+	template<class... Args> ForNow(Args&&... args);
+};
+
+
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -83,23 +91,27 @@ namespace vote
 	};
 
 	class Kick : public virtual Vote,
-	             public virtual NickIssue
+	             public virtual NickIssue,
+	             public virtual ForNow
 	{
 		void passed() override;
 
 	  public:
 		template<class... Args> Kick(Args&&... args):
 		                             Vote("kick",std::forward<Args>(args)...),
-		                             NickIssue("kick",std::forward<Args>(args)...) {}
+		                             NickIssue("kick",std::forward<Args>(args)...),
+		                             ForNow("kick",std::forward<Args>(args)...) {}
 	};
 
-	class Invite : public Vote
+	class Invite : public virtual Vote,
+	               public virtual ForNow
 	{
 		void passed() override;
 
 	  public:
 		template<class... Args> Invite(Args&&... args):
-		                               Vote("invite",std::forward<Args>(args)...) {}
+		                               Vote("invite",std::forward<Args>(args)...),
+		                               ForNow("invite",std::forward<Args>(args)...) {}
 	};
 
 	class Topic : public Vote
@@ -148,14 +160,18 @@ namespace vote
 	};
 
 	class UnQuiet : public virtual Vote,
-	                public virtual NickIssue
+	                public virtual NickIssue,
+	                public virtual ModeEffect,
+	                public virtual ForNow
 	{
 		void passed() override;
 
 	  public:
 		template<class... Args> UnQuiet(Args&&... args):
 		                                Vote("unquiet",std::forward<Args>(args)...),
-		                                NickIssue("unquiet",std::forward<Args>(args)...) {}
+		                                NickIssue("unquiet",std::forward<Args>(args)...),
+		                                ModeEffect("unquiet",std::forward<Args>(args)...),
+		                                ForNow("unquiet",std::forward<Args>(args)...) {}
 	};
 
 	class Voice : public virtual Vote,
@@ -172,14 +188,18 @@ namespace vote
 	};
 
 	class DeVoice : public virtual Vote,
-	                public virtual NickIssue
+	                public virtual NickIssue,
+	                public virtual ModeEffect,
+	                public virtual ForNow
 	{
 		void passed() override;
 
 	  public:
 		template<class... Args> DeVoice(Args&&... args):
 		                                Vote("devoice",std::forward<Args>(args)...),
-		                                NickIssue("devoice",std::forward<Args>(args)...) {}
+		                                NickIssue("devoice",std::forward<Args>(args)...),
+		                                ModeEffect("devoice",std::forward<Args>(args)...),
+		                                ForNow("devoice",std::forward<Args>(args)...) {}
 	};
 
 	class Flags : public Vote
@@ -193,7 +213,8 @@ namespace vote
 		                              Vote("flags",std::forward<Args>(args)...) {}
 	};
 
-	class Import : public Vote
+	class Import : public virtual Vote,
+	               public virtual ForNow
 	{
 		std::stringstream received;
 
@@ -206,7 +227,8 @@ namespace vote
 
 	  public:
 		template<class... Args> Import(Args&&... args):
-		                               Vote("import",std::forward<Args>(args)...) {}
+		                               Vote("import",std::forward<Args>(args)...),
+		                               ForNow("import",std::forward<Args>(args)...) {}
 	};
 
 	class Civis : public virtual Vote,
@@ -301,4 +323,14 @@ user([&]
 	return user;
 }())
 {
+}
+
+
+
+template<class... Args>
+ForNow::ForNow(Args&&... args):
+Vote(std::forward<Args>(args)...)
+{
+	auto &cfg(get_cfg());
+	cfg["for"] = "0";
 }

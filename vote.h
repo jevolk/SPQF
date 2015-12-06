@@ -63,6 +63,7 @@ class Vote : protected Acct
 	auto num_vetoes() const                     { return veto.size();                               }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
 	auto remaining() const                      { return secs_cast(cfg["duration"]) - elapsed();    }
+	auto expires() const                        { return get_ended() + secs_cast(cfg["for"]);       }
 	auto tally() const -> std::pair<uint,uint>  { return {yea.size(),nay.size()};                   }
 	auto total() const                          { return yea.size() + nay.size();                   }
 	bool disabled() const                       { return cfg.get<bool>("disable");                  }

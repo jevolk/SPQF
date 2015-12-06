@@ -257,6 +257,7 @@ try
 		return;
 	}
 
+	if(cfg.get<time_t>("for") > 0)
 	{
 		// Adjust the final "for" time value using the weighting system
 		const time_t min(secs_cast(cfg["for"]));
