@@ -1048,7 +1048,10 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		out << BOLD << FG::RED << "CLOSED" << "\n";
 
 	// Issue line
-	out << pfx << "[" << BOLD << vote.get_type() << OFF << "]: " << UNDER2 << vote.get_issue() << "\n";
+	out << pfx << BOLD << "ISSUE" << OFF << "    : " << vote.get_issue() << "\n";
+
+	// Type line
+	out << pfx << BOLD << "TYPE" << OFF << "     : " << vote.get_type() << "\n";
 
 	// Chan line
 	out << pfx << BOLD << "CHANNEL" << OFF << "  : " << vote.get_chan_name() << "\n";
