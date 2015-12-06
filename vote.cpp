@@ -59,6 +59,7 @@ cfg([&]
 	ret.put("quorum.lines",0);
 	ret.put("quorum.turnout",0.00);
 	ret.put("quorum.plurality",0.51);
+	ret.put("motion.quorum",1);
 	ret.put("duration",30);
 	ret.put("speaker.access","");
 	ret.put("speaker.mode","");
@@ -199,13 +200,10 @@ void Vote::cancel()
 	set_ended();
 	set_reason("canceled");
 	const scope s([&]{ save(); });
-	canceled();
+	if(total() >= cfg.get<uint>("motion.quorum"))
+		announce_canceled();
 
-	if(cfg.get<bool>("result.ack.chan"))
-	{
-		Chan &chan = get_chan();
-		chan << "The vote " << (*this) << " has been canceled." << flush;
-	}
+	canceled();
 }
 
 
@@ -220,67 +218,41 @@ void Vote::start()
 	set_began();
 	save();
 
-	auto &chan(get_chan());
-	chan << "Vote " << (*this) << ": "
-	     << BOLD << get_type() << OFF << ": " << UNDER2 << get_issue() << OFF << ". "
-	     << "You have " << BOLD << secs_cast(secs_cast(cfg["duration"])) << OFF << " to vote; "
-	     << BOLD << get_quorum() << OFF << " votes are required for a quorum! "
-	     << "Type or PM: "
-	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
-	     << " or "
-	     << BOLD << FG::RED << "!vote n" << OFF << " " << BOLD << get_id() << OFF
-	     << flush;
+	if(cfg.get<uint>("motion.quorum") == 1)
+		announce_starting();
 }
 
 
 void Vote::finish()
 try
 {
-	using namespace colors;
-
 	set_ended();
 	const scope s([&]{ save(); });
-	auto &chan(get_chan());
 
 	if(interceded())
 	{
-		if(cfg.get<bool>("result.ack.chan"))
-			chan << "The vote " << (*this) << " has been vetoed." << flush;
-
 		set_reason("vetoed");
+		announce_vetoed();
 		vetoed();
 		return;
 	}
 
 	if(total() < get_quorum())
 	{
-		if(cfg.get<bool>("result.ack.chan"))
-			chan << (*this) << ": "
-			     << "Failed to reach a quorum: "
-			     << BOLD << total() << OFF
-			     << " of "
-			     << BOLD << get_quorum() << OFF
-			     << " required."
-			     << flush;
-
 		set_reason("quorum");
+		if(total() >= cfg.get<uint>("motion.quorum"))
+			announce_failed_quorum();
+
 		failed();
 		return;
 	}
 
 	if(yea.size() < required())
 	{
-		if(cfg.get<bool>("result.ack.chan"))
-			chan << (*this) << ": "
-			     << BOLD << get_type() << OFF << ": "
-			     << UNDER2 << get_issue() << OFF << ". "
-			     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF
-			     << " Yeas: " << FG::GREEN << yea.size() << OFF << "."
-			     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
-			     << " Required at least: " << BOLD << required() << OFF << " yeas."
-			     << flush;
-
 		set_reason("plurality");
+		if(total() >= cfg.get<uint>("motion.quorum"))
+			announce_failed_required();
+
 		failed();
 		return;
 	}
@@ -292,19 +264,10 @@ try
 		const time_t sub(secs_cast(cfg["weight.nay"]) * this->nay.size());
 		const time_t val(min + add - sub);
 		cfg.put("for",val);
-
-		if(cfg.get<bool>("result.ack.chan"))
-			chan << (*this) << ": "
-			     << BOLD << get_type() << OFF << ": "
-			     << UNDER2 << get_issue() << OFF << ". "
-			     << FG::WHITE << BG::GREEN << BOLD << "The yeas have it." << OFF
-			     << " Yeas: " << FG::GREEN << BOLD << yea.size() << OFF << "."
-			     << " Nays: " << FG::RED << nay.size() << OFF << "."
-			     << " Effective for " << BOLD << secs_cast(cfg.get<uint>("for")) << OFF << "."
-			     << flush;
 	}
 
 	set_reason("");
+	announce_passed();
 	passed();
 }
 catch(const Exception &e)
@@ -397,6 +360,7 @@ try
 	switch(cast(ballot,user))
 	{
 		case ADDED:
+		{
 			hosts.emplace(user.get_host());
 
 			if(cfg.get<bool>("ballot.ack.chan"))
@@ -405,9 +369,14 @@ try
 			if(cfg.get<bool>("ballot.ack.priv"))
 				user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
+			if(cfg.get<uint>("motion.quorum") == total())
+				announce_starting();
+
 			break;
+		}
 
 		case CHANGED:
+		{
 			if(cfg.get<bool>("ballot.ack.chan"))
 				chan << user << "You have changed your vote on " << (*this) << "!" << flush;
 
@@ -415,6 +384,7 @@ try
 				user << "You have changed your vote on " << (*this) << "!" << flush;
 
 			break;
+		}
 	}
 
 	save();
@@ -465,6 +435,98 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 		default:
 			throw Exception("Ballot type not accepted.");
 	}
+}
+
+
+void Vote::announce_starting()
+{
+	using namespace colors;
+
+	auto &chan(get_chan());
+	chan << "Vote " << (*this) << ": "
+	     << BOLD << get_type() << OFF << ": " << UNDER2 << get_issue() << OFF << ". "
+	     << "You have " << BOLD << secs_cast(secs_cast(cfg["duration"])) << OFF << " to vote; "
+	     << BOLD << get_quorum() << OFF << " votes are required for a quorum! "
+	     << "Type or PM: "
+	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
+	     << " or "
+	     << BOLD << FG::RED << "!vote n" << OFF << " " << BOLD << get_id() << OFF
+	     << flush;
+}
+
+
+void Vote::announce_passed()
+{
+	using namespace colors;
+
+	auto &chan(get_chan());
+	if(cfg.get<bool>("result.ack.chan"))
+	{
+		chan << (*this) << ": "
+		     << BOLD << get_type() << OFF << ": "
+		     << UNDER2 << get_issue() << OFF << ". "
+		     << FG::WHITE << BG::GREEN << BOLD << "The yeas have it." << OFF
+		     << " Yeas: " << FG::GREEN << BOLD << yea.size() << OFF << "."
+		     << " Nays: " << FG::RED << nay.size() << OFF << ".";
+
+		if(cfg.get<time_t>("for") > 0)
+			chan << " Effective for " << BOLD << secs_cast(cfg.get<time_t>("for")) << OFF << ".";
+
+		chan << flush;
+	}
+}
+
+
+void Vote::announce_vetoed()
+{
+	using namespace colors;
+
+	auto &chan(get_chan());
+	if(cfg.get<bool>("result.ack.chan"))
+		chan << "The vote " << (*this) << " has been vetoed." << flush;
+}
+
+
+void Vote::announce_canceled()
+{
+	using namespace colors;
+
+	auto &chan(get_chan());
+	if(cfg.get<bool>("result.ack.chan"))
+		chan << "The vote " << (*this) << " has been canceled." << flush;
+}
+
+
+void Vote::announce_failed_required()
+{
+	using namespace colors;
+
+	auto &chan(get_chan());
+	if(cfg.get<bool>("result.ack.chan"))
+		chan << (*this) << ": "
+		     << BOLD << get_type() << OFF << ": "
+		     << UNDER2 << get_issue() << OFF << ". "
+		     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF
+		     << " Yeas: " << FG::GREEN << yea.size() << OFF << "."
+		     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
+		     << " Required at least: " << BOLD << required() << OFF << " yeas."
+		     << flush;
+}
+
+
+void Vote::announce_failed_quorum()
+{
+	using namespace colors;
+
+	auto &chan(get_chan());
+	if(cfg.get<bool>("result.ack.chan"))
+		chan << (*this) << ": "
+		     << "Failed to reach a quorum: "
+		     << BOLD << total() << OFF
+		     << " of "
+		     << BOLD << get_quorum() << OFF
+		     << " required."
+		     << flush;
 }
 
 

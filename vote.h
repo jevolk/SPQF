@@ -114,6 +114,13 @@ class Vote : protected Acct
 	void set_expiry()                           { time(&expiry);                                    }
 	void set_quorum(const uint &quorum)         { this->quorum = quorum;                            }
 
+	void announce_failed_required();
+	void announce_failed_quorum();
+	void announce_canceled();
+	void announce_vetoed();
+	void announce_passed();
+	void announce_starting();
+
 	// One-time internal events                 // Subclass throws from these for abortions at any time.
 	virtual void passed() {}                    // Performs effects after successful vote
 	virtual void failed() {}                    // Performs effects after failed vote
