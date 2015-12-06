@@ -90,6 +90,20 @@ namespace vote
 		                             ModeEffect("mode",std::forward<Args>(args)...) {}
 	};
 
+	class Appeal : public virtual Vote,
+	               public virtual ModeEffect,
+	               public virtual ForNow
+	{
+		void passed() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> Appeal(Args&&... args):
+		                               Vote("appeal",std::forward<Args>(args)...),
+		                               ModeEffect("appeal",std::forward<Args>(args)...),
+		                               ForNow("appeal",std::forward<Args>(args)...) {}
+	};
+
 	class Kick : public virtual Vote,
 	             public virtual NickIssue,
 	             public virtual ForNow

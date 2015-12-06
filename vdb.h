@@ -73,6 +73,7 @@ try
 	{
 		case hash("config"):    return std::make_unique<vote::Config>(id,*this,std::forward<Args>(args)...);
 		case hash("mode"):      return std::make_unique<vote::Mode>(id,*this,std::forward<Args>(args)...);
+		case hash("appeal"):    return std::make_unique<vote::Appeal>(id,*this,std::forward<Args>(args)...);
 		case hash("kick"):      return std::make_unique<vote::Kick>(id,*this,std::forward<Args>(args)...);
 		case hash("invite"):    return std::make_unique<vote::Invite>(id,*this,std::forward<Args>(args)...);
 		case hash("topic"):     return std::make_unique<vote::Topic>(id,*this,std::forward<Args>(args)...);

@@ -207,8 +207,8 @@ void ResPublica::handle_cmode(const Msg &msg,
 	{
 		if(bool(delta) && (delta == 'q' || delta == 'b'))
 		{
-			voting.motion<vote::Mode>(chan,user,std::string(~delta));
-			chan << user.get_nick() << "'s action has invoked this automatic appeal process." << flush;
+			voting.motion<vote::Appeal>(chan,user,std::string(~delta));
+			chan << user.get_nick() << "'s unilateral executive decision invoked this automatic appeal process." << flush;
 		}
 	}
 }

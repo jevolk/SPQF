@@ -410,6 +410,37 @@ void vote::Mode::starting()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// Appeal
+//
+
+
+void vote::Appeal::passed()
+{
+	const Sess &sess(get_sess());
+	const Server &serv(sess.get_server());
+	const Deltas deltas(get_issue(),serv);
+
+	Chan &chan(get_chan());
+	chan(deltas);
+	set_effect(deltas);
+}
+
+
+void vote::Appeal::starting()
+{
+	const Sess &sess(get_sess());
+	const Server &serv(sess.get_server());
+	const Deltas deltas(get_issue(),serv);
+	deltas.validate_chan(serv);
+
+	const User &user(get_user());
+	cast(Ballot::NAY,user);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // Topic
 //
 
