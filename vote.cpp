@@ -435,7 +435,7 @@ catch(const Exception &e)
 
 
 Vote::Stat Vote::cast(const Ballot &ballot,
-                      User &user)
+                      const User &user)
 {
 	if(!voted(user))
 	{

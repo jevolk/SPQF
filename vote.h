@@ -121,7 +121,7 @@ class Vote : protected Acct
 	virtual void canceled() {}                  // Performs effects after canceled vote
 	virtual void starting() {}                  // Called after ctor, before broadcast to chan
 
-	Stat cast(const Ballot &b, User &u);
+	Stat cast(const Ballot &b, const User &u);
 
   public:
 	// Various events while this vote is active.

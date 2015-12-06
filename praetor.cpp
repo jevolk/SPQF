@@ -136,11 +136,11 @@ catch(const std::exception &e)
 
 void Praetor::add(const Adoc &doc)
 {
-	const id_t id = lex_cast<id_t>(doc["id"]);
-	const time_t ended = secs_cast(doc["ended"]);
-	const time_t expiry = secs_cast(doc["expiry"]);
-	const time_t cfgfor = secs_cast(doc["cfg.for"]);
-	if(expiry || !cfgfor || !ended || doc.has("reason"))
+	const auto id(lex_cast<id_t>(doc["id"]));
+	const auto ended(secs_cast(doc["ended"]));
+	const auto expiry(secs_cast(doc["expiry"]));
+	const auto cfgfor(secs_cast(doc["cfg.for"]));
+	if(expiry || (cfgfor <= 0) || !ended || doc.has("reason"))
 		return;
 
 	const time_t absolute = ended + cfgfor;
