@@ -493,6 +493,10 @@ void NickIssue::starting()
 	if(!chan.users.has(user))
 		throw Exception("You cannot make a vote about someone in another channel.");
 
+	const auto toks(tokens(get_issue()));
+	if(toks.size() > 1)
+		throw Exception("This vote requires only a nickname as the issue.");
+
 	user.whois();
 }
 

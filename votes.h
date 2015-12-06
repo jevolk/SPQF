@@ -280,6 +280,9 @@ Vote(std::forward<Args>(args)...),
 user([&]
 {
 	const auto toks(tokens(get_issue()));
+	if(toks.size() > 1)
+		throw Exception("This vote requires only an authenticated nickname as the issue.");
+
 	const auto &name(toks.at(0));
 
 	// If the vote has started we populate the account name only
