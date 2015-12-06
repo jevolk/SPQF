@@ -960,6 +960,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	using namespace colors;
 
 	const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
+	const auto cfg(vote.get_cfg());
 	const auto tally(vote.tally());
 	const scope f([&]
 	{
@@ -979,22 +980,25 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	else if(vote.position(user) == Vote::NAY)
 		out << BOLD << FG::WHITE << BG::RED << "NAY" << OFF << " ";
 
-	if(vote.remaining() >= 0)
-		out << BOLD << FG::WHITE << BG::ORANGE << "ACTIVE" << OFF << " ";
-	else if(vote.get_reason().empty())
+	if(vote.remaining() < 0 && vote.get_reason().empty())
 		out << BOLD << UNDER2 << FG::WHITE << BG::GREEN << "PASSED" << OFF << " ";
+	else if(vote.remaining() >= 0 && vote.get_reason().empty())
+		out << BOLD << FG::WHITE << BG::ORANGE << "ACTIVE" << OFF << " ";
 	else
 		out << BOLD << UNDER2 << FG::WHITE << BG::RED << "FAILED" << OFF << " ";
 
-	out << "| " << BOLD << vote.get_type() << OFF << ": " << UNDER2 << vote.get_issue() << OFF << " ";
+	out << "| " << BOLD << vote.get_type() << OFF << ": " << UNDER2 << vote.get_issue() << OFF << " - ";
 
-	if(vote.remaining() >= 0)
+	if(vote.remaining() >= 0 && vote.get_reason().empty())
 	{
-		out << " - There are " << BOLD << secs_cast(vote.remaining()) << OFF << " left. ";
-
 		const auto total(vote.total());
 		const auto required(vote.required());
 		const auto quorum(vote.get_quorum());
+
+		if(cfg.get<time_t>("for") > 0)
+			out << "For " << BOLD << secs_cast(cfg.get<time_t>("for")) << OFF << ". ";
+
+		out << "There are " << BOLD << secs_cast(vote.remaining()) << OFF << " left. ";
 
 		if(total < quorum)
 			out << BOLD << (quorum - total) << OFF << " more votes are required for a quorum.";
@@ -1002,10 +1006,18 @@ void ResPublica::handle_vote_list(const Msg &msg,
 			out << BOLD << (required - tally.first) << OFF << " more yeas are required to pass.";
 		else
 			out << "As it stands, the motion will pass.";
-	}
+	} else
+	{
+		const auto ago(time(nullptr) - vote.get_ended());
+		const auto eff(vote.expires() - time(nullptr));
 
-	if(!vote.get_reason().empty())
-		out << " - " << BOLD << FG::RED << vote.get_reason() << OFF;
+		if(!vote.get_reason().empty())
+			out << BOLD << FG::RED << vote.get_reason() << OFF << ". ";
+		else if(cfg.get<time_t>("for") > 0 && eff > 0)
+			out << BOLD << FG::GREEN << "effective " << OFF << secs_cast(eff) << " more. ";
+
+		out << secs_cast(ago) << " ago.";
+	}
 }
 
 
@@ -1017,9 +1029,9 @@ void ResPublica::handle_vote_info(const Msg &msg,
 {
 	using namespace colors;
 
-	const std::string pfx = std::string("#") + string(vote.get_id()) + ": ";
-	const auto cfg = vote.get_cfg();
-	const auto tally = vote.tally();
+	const std::string pfx(std::string("#") + string(vote.get_id()) + ": ");
+	const auto &cfg(vote.get_cfg());
+	const auto tally(vote.tally());
 	const scope f([&]
 	{
 		// Flush may erase the CNOTICE privilege of this stream so it is only done once
@@ -1116,15 +1128,12 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	else
 		out << FG::BLACK << BG::LGRAY << "???" << "\n";
 
-	// Effect lines
+	// Effect
 	if(!vote.get_effect().empty())
-	{
-		// Effect line
 		out << pfx << BOLD << "EFFECT" << OFF << "   : " << vote.get_effect() << "\n";
 
-		// For line
-		out << pfx << BOLD << "FOR" << OFF << "      : " << cfg["for"] << " seconds (" << secs_cast(cfg.get<uint>("for",0)) << ")\n";
-	}
+	if(cfg.get<time_t>("for") > 0)
+		out << pfx << BOLD << "FOR" << OFF << "      : " << cfg["for"] << " seconds (" << secs_cast(cfg.get<time_t>("for",0)) << ")\n";
 
 	// Result/Status line
 	if(vote.get_ended())
