@@ -142,7 +142,6 @@ const
 	size_t ret(0);
 	return !count || !for_each(name,[&filter,&ret,&count]
 	(const ClosureArgs &a)
-	mutable
 	{
 		ret += filter(a);
 		return ret < count;
@@ -158,7 +157,6 @@ const
 	size_t ret(0);
 	for_each(name,[&filter,&ret]
 	(const ClosureArgs &a)
-	mutable
 	{
 		ret += filter(a);
 		return true;
