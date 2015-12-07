@@ -174,14 +174,18 @@ void Voting::poll_init()
 	for(; it != end && !interrupted.load(std::memory_order_consume); ++it) try
 	{
 		const auto id(lex_cast<id_t>(it->first));
-		auto vote(vdb.get(id,&sess,&chans,&users,&logs));
-		if(!vote->get_ended())
+		const Adoc doc(it->second);
+		const auto ended(secs_cast(doc["ended"]));
+		if(!ended)
 		{
 			std::cout << "Adding open vote #" << id << std::endl;
+			auto vote(vdb.get(id,&sess,&chans,&users,&logs));
 			const auto iit(votes.emplace(id,std::move(vote)));
-			const auto &vote(*iit.first->second);
-			chanidx.emplace(vote.get_chan_name(),id);
-			useridx.emplace(vote.get_user_acct(),id);
+			{
+				const auto &vote(*iit.first->second);
+				chanidx.emplace(vote.get_chan_name(),id);
+				useridx.emplace(vote.get_user_acct(),id);
+			}
 		}
 	}
 	catch(const Exception &e)
