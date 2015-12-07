@@ -144,10 +144,11 @@ void Praetor::add(const Adoc &doc)
 		return;
 
 	const time_t absolute = ended + cfgfor;
-	printf("%lu [Praetor]: Scheduling #%u [expiry: %ld cfgfor: %ld ended: %ld] absolute: %ld relative: %ld\n",
+	printf("%lu [Praetor]: Scheduling #%u [type: %s chan: %s cfgfor: %ld ended: %ld] absolute: %ld relative: %ld\n",
 	       time(NULL),
 	       id,
-	       expiry,
+	       doc["type"].c_str(),
+	       doc["chan"].c_str(),
 	       cfgfor,
 	       ended,
 	       absolute,

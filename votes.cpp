@@ -231,7 +231,7 @@ void vote::Flags::starting()
 void vote::Civis::starting()
 try
 {
-	Logs &logs(get_logs());
+	const Logs &logs(get_logs());
 	const Adoc &cfg(get_cfg());
 	const Chan &chan(get_chan());
 	if(chan.lists.has_flag(user,'V'))
