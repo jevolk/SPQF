@@ -851,7 +851,7 @@ try
 
 	std::forward_list<Vdb::Term> terms
 	{
-		{ "chan", "##politics" },
+		{ "chan", *toks.at(0)   },
 	};
 
 	parse_args(detok(subtoks),"--","="," ",[&terms,&options]
