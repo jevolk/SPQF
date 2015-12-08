@@ -673,21 +673,30 @@ void ResPublica::handle_config(const Msg &msg,
                                const Tokens &toks)
 try
 {
-	Chan &chan(chans.get(*toks.at(0)));
+	auto &chan(chans.get(*toks.at(0)));
 
 	// Founder config override to fix a broken config
 	if(toks.size() >= 3 && *toks.at(2) == "=" && chan.lists.has_flag(user,'F'))
 	{
-		Adoc cfg(chan.get());
+		auto cfg(chan.get());
 		const auto &key(*toks.at(1));
 
 		if(toks.size() == 3)
 		{
 			if(!cfg.remove(key))
 				throw Exception("Failed to find and remove anything with key.");
-		} else {
+		}
+		else if(toks.size() == 4)
+		{
 			const auto &val(*toks.at(3));
 			cfg.put(key,val);
+		} else
+		{
+			Adoc val;
+			for(auto it(toks.begin()+3); it != toks.end(); ++it)
+				val.push(**it);
+
+			cfg.put_child(key,val);
 		}
 
 		chan.set(cfg);
@@ -695,13 +704,13 @@ try
 		return;
 	}
 
-	const Adoc &cfg = chan.get();
-	const std::string &key = toks.size() > 1? *toks.at(1) : "";
-	const std::string &val = cfg[key];
+	const auto &cfg(chan.get());
+	const auto &key(toks.size() > 1? *toks.at(1) : "");
+	const auto &val(cfg[key]);
 
 	if(val.empty())
 	{
-		const Adoc &doc = cfg.get_child(key,Adoc());
+		const Adoc doc(cfg.get_child(key,Adoc()));
 		user << doc << flush;
 	}
 	else user << key << " = " << val << flush;
