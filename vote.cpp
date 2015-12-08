@@ -59,6 +59,7 @@ cfg([&]
 	ret.put("quorum.lines",0);
 	ret.put("quorum.turnout",0.00);
 	ret.put("quorum.plurality",0.51);
+	ret.put("quorum.quick",0);
 	ret.put("motion.quorum",1);
 	ret.put("duration",30);
 	ret.put("speaker.access","");
@@ -229,8 +230,14 @@ void Vote::start()
 void Vote::finish()
 try
 {
-	set_ended();
-	const scope s([&]{ save(); });
+	const scope s([this]
+	{
+		if(!std::current_exception())
+			save();
+	});
+
+	if(!get_ended())
+		set_ended();
 
 	if(interceded())
 	{
@@ -274,14 +281,15 @@ try
 	announce_passed();
 	passed();
 }
-catch(const Exception &e)
+catch(const std::exception &e)
 {
 	set_reason(e.what());
+	save();
 
 	if(cfg.get<bool>("result.ack.chan"))
 	{
 		auto &chan = get_chan();
-		chan << "The vote " << (*this) << " was rejected: " << e << flush;
+		chan << "The vote " << (*this) << " was rejected: " << e.what() << flush;
 	}
 }
 
@@ -391,6 +399,9 @@ try
 		}
 	}
 
+	if(cfg.get<bool>("quorum.quick",0) && total() >= get_quorum() && yea.size() >= required())
+		set_ended();
+
 	save();
 }
 catch(const Exception &e)
@@ -411,6 +422,9 @@ catch(const Exception &e)
 Vote::Stat Vote::cast(const Ballot &ballot,
                       const User &user)
 {
+	if(get_ended())
+		throw Exception("Vote has already ended.");
+
 	if(!voted(user))
 	{
 		if(voted_host(user.get_host()) > 0)

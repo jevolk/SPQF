@@ -209,8 +209,14 @@ void Voting::poll_votes()
 	const std::unique_lock<Bot> lock(bot);
 	for(auto it(votes.begin()); it != votes.end();)
 	{
-		Vote &vote(*it->second);
-		const auto finished(vote.remaining() <= 0 || vote.interceded());
+		auto &vote(*it->second);
+		const bool finished
+		{
+			vote.get_ended()       ||
+			vote.remaining() <= 0  ||
+			vote.interceded()
+		};
+
 		if(finished && chans.has(vote.get_chan_name()))
 		{
 			call_finish(vote);
