@@ -91,10 +91,10 @@ cfg([&]
 
 	// Parse and validate any vote-time "audibles" from user.
 	const Adoc auds(Adoc::arg_ctor,issue,ARG_KEYED,ARG_VALUED);
-	const auto valid_auds = tokens(ret["audibles"]);
-	auds.for_each([&](const auto &key, const auto &val)
+	const auto valid_auds(tokens(ret["audibles"]));
+	auds.for_each([&valid_auds](const auto &key, const auto &val)
 	{
-		if(!std::count(valid_auds.begin(),valid_auds.end(),key))
+		if(std::find(valid_auds.begin(),valid_auds.end(),key) == valid_auds.end())
 			throw Exception("You cannot specify that option at vote-time.");
 	});
 
