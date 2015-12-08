@@ -66,7 +66,8 @@ class ForNow : virtual Vote
 
 namespace vote
 {
-	class Config : public Vote
+	class Config : public virtual Vote,
+	               public virtual ForNow
 	{
 		std::string key;
 		std::string val;
@@ -288,7 +289,8 @@ namespace vote
 
 template<class... Args>
 vote::Config::Config(Args&&... args):
-Vote("config",std::forward<Args>(args)...)
+Vote("config",std::forward<Args>(args)...),
+ForNow("config",std::forward<Args>(args)...)
 {
 	const auto tokes = tokens(get_issue()," = ");
 
