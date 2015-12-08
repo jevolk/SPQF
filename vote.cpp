@@ -381,7 +381,7 @@ try
 			if(cfg.get<bool>("ballot.ack.priv"))
 				user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
-			if(cfg.get<uint>("motion.quorum") == total())
+			if(total() > 1 && cfg.get<uint>("motion.quorum") == total())
 				announce_starting();
 
 			break;
