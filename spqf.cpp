@@ -17,7 +17,31 @@ std::unique_ptr<Bot> bot;
 // Synchronization for some signals etc
 std::mutex mutex;
 std::condition_variable cond;
-bool hangup;
+bool hangup, interrupt;
+
+
+static
+void handle_hup()
+{
+	const std::lock_guard<decltype(mutex)> lock(mutex);
+	if(hangup)
+		return;
+
+	hangup = true;
+	cond.notify_all();
+}
+
+
+static
+void handle_int()
+{
+	const std::lock_guard<decltype(mutex)> lock(mutex);
+	if(interrupt)
+		return;
+
+	interrupt = true;
+	cond.notify_all();
+}
 
 
 static
@@ -25,36 +49,9 @@ void handle_sig(const int sig)
 {
 	switch(sig)
 	{
-		case SIGHUP:
-		{
-			std::cout << "Hangup..." << std::endl;
-
-			const std::lock_guard<decltype(mutex)> lock(mutex);
-			hangup = true;
-			cond.notify_all();
-			break;
-		}
-
-		case SIGINT:
-		{
-			std::cout << "Interrupted..." << std::endl;
-
-			if(bot)
-			{
-				const std::lock_guard<Bot> lock(*bot);
-				bot->quit();
-			}
-
-			break;
-		}
-
-		case SIGTERM:
-		{
-			std::cout << "Terminated..." << std::endl;
-
-			exit(0);
-			break;
-		}
+		case SIGHUP:     handle_hup();     break;
+		case SIGINT:     handle_int();     break;
+		case SIGTERM:    exit(0);          break;
 	}
 }
 
@@ -94,7 +91,7 @@ int main(int argc, char **argv) try
 	signal(SIGTERM,&handle_sig);          // Register handler for term
 	(*bot)(Bot::BACKGROUND);
 
-	while(1)
+	while(!interrupt)
 	{
 		using mod_call_t = void (*)(Bot *);
 
@@ -119,7 +116,7 @@ int main(int argc, char **argv) try
 		module_init(bot.get());
 		{
 			std::unique_lock<decltype(mutex)> lock(mutex);
-			cond.wait(lock,[]{ return hangup; });
+			cond.wait(lock,[]{ return hangup || interrupt; });
 			hangup = false;
 		}
 		module_fini(bot.get());
@@ -127,6 +124,9 @@ int main(int argc, char **argv) try
 		if(dlclose(module) != 0)
 			throw Assertive("Fatal dlclose() error: ") << dlerror();
 	}
+
+	bot->quit();
+	recvq::ios.poll();
 }
 catch(const std::exception &e)
 {
