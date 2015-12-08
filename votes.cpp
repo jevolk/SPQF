@@ -232,8 +232,14 @@ void vote::Civis::starting()
 try
 {
 	const Logs &logs(get_logs());
-	const Adoc &cfg(get_cfg());
 	const Chan &chan(get_chan());
+	const Adoc &cfg(get_cfg());
+
+	const Adoc excludes(cfg.get_child("civis.eligible.exclude",Adoc()));
+	const auto exclude(excludes.into<std::set<std::string>>());
+	if(exclude.count(user.get_acct()))
+		throw Exception("User at issue is excluded by the channel configuration");
+
 	if(chan.lists.has_flag(user,'V'))
 		throw Exception("User at issue is already enfranchised");
 

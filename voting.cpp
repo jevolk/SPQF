@@ -37,7 +37,8 @@ praetor(praetor),
 interrupted(false),
 initialized(false),
 poll_thread(&Voting::poll_worker,this),
-remind_thread(&Voting::remind_worker,this)
+remind_thread(&Voting::remind_worker,this),
+eligible_thread(&Voting::eligible_worker,this)
 {
 }
 
@@ -46,6 +47,7 @@ Voting::~Voting() noexcept
 {
 	interrupted.store(true,std::memory_order_release);
 	sem.notify_all();
+	eligible_thread.join();
 	remind_thread.join();
 	poll_thread.join();
 }
@@ -72,6 +74,165 @@ void Voting::cancel(Vote &vote,
 
 	vote.cancel();
 	del(vote.get_id());
+}
+
+
+void Voting::eligible_worker()
+{
+	{
+		std::unique_lock<decltype(mutex)> lock(mutex);
+		sem.wait(lock,[this]
+		{
+			return initialized.load(std::memory_order_consume) ||
+			       interrupted.load(std::memory_order_consume);
+		});
+	}
+
+	while(!interrupted.load(std::memory_order_consume)) try
+	{
+		{
+			const std::lock_guard<Bot> lock(bot);
+			chans.for_each([this](Chan &chan)
+			{
+				eligible_add(chan);
+			});
+		}
+
+		if(!eligible_sleep())
+			continue;
+	}
+	catch(const Internal &e)
+	{
+		std::cerr << "[Voting (eligible worker)]: \033[1;41m" << e << "\033[0m" << std::endl;
+	}
+}
+
+
+bool Voting::eligible_sleep()
+{
+	using std::chrono::steady_clock;
+
+	const auto now(steady_clock::now());
+	const auto fut(now + std::chrono::hours(24));
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	return sem.wait_until(lock,fut) == std::cv_status::timeout;
+}
+
+
+void Voting::eligible_add(Chan &chan)
+try
+{
+	const auto civis(chan.get("config.vote.civis"));
+	const auto age(secs_cast(civis["eligible.age"]));
+	const auto lines(civis.get<uint>("eligible.lines",0));
+	const Adoc excludes(civis.get_child("eligible.exclude",Adoc()));
+	const auto exclude(excludes.into<std::set<std::string>>());
+	if(lines == 0 || age == 0)
+		return;
+
+	std::cout << "Running eligible add for channel " << chan.get_name() << "lines: " << lines << " age: " << age << std::endl;
+
+	Logs::SimpleFilter filt;
+	filt.type = "PRI";  // PRIVMSG
+	filt.time.first = 0;
+	filt.time.second = time(NULL) - age;
+	std::map<std::string,uint> count;
+	std::map<std::string,std::string> accts;
+	logs.for_each(chan.get_name(),filt,[&count,&accts]
+	(const Logs::ClosureArgs &a)
+	{
+		if(strlen(a.acct) == 0 || *a.acct == '*')
+			return true;
+
+		++count[a.acct];
+		const auto iit(accts.emplace(a.acct,a.nick));
+		if(iit.second)
+			return true;
+
+		auto &nick(iit.first->second);
+		if(nick != a.nick)
+			nick = a.nick;
+
+		return true;
+	});
+
+	for(const auto &p : count) try
+	{
+		const auto &acct(p.first);
+		if(exclude.count(acct))
+			continue;
+
+		const auto &linecnt(p.second);
+		if(linecnt < lines)
+			continue;
+
+		const auto &nick(accts.at(acct));
+		if(!users.has(nick))
+			continue;
+
+		User &user(users.get(nick));
+		if(chan.lists.has_flag(user,'V'))
+			continue;
+
+		bool exists(false);
+		for_each([&exists,&acct](const Vote &vote)
+		{
+			if(vote.get_type() == "civis" && vote.get_issue() == acct)
+				exists = true;
+		});
+
+		if(exists)
+			continue;
+
+		const auto qid(eligible_last_vote(chan,nick,"quiet"));
+		const auto bid(eligible_last_vote(chan,nick,"ban"));
+		const auto &id(std::max(qid,bid));
+		if(id)
+		{
+			filt.acct = acct;
+			filt.time.first = lex_cast<time_t>(vdb.get_value(id,"ended"));
+			const auto recount(logs.count(chan.get_name(),filt));
+			if(recount < lines)
+				continue;
+		}
+
+		User &myself(users.get(sess.get_nick()));
+		const auto &vote(motion<vote::Civis>(chan,myself,nick));
+		user << "You are now eligible to be a citizen of " << chan.get_name() << "! ";
+		user << " Remind people to vote for issue #" << vote.get_id() << "!";
+		user << user.flush;
+	}
+	catch(const std::out_of_range &e)
+	{
+		std::cerr << "error on " << p.first << " : " << p.second << std::endl;
+		continue;
+	}
+}
+catch(const std::exception &e)
+{
+	std::cerr << "Voting::eligible_add(" << chan.get_name() << "): " << e.what() << std::endl;
+}
+
+
+Voting::id_t Voting::eligible_last_vote(const Chan &chan,
+                                        const std::string &issue,
+                                        const std::string &type)
+{
+	const std::forward_list<Vdb::Term> terms
+	{
+		{ "type",    type             },
+		{ "issue",   tolower(issue)   },
+		{ "reason",  ""               },
+		{ "chan",    chan.get_name()  },
+	};
+
+	auto res(vdb.find(terms));
+	if(res.empty())
+		return 0;    // note sentinel 0 is a valid vote id but ignored here
+
+	res.reverse();
+	res.resize(1);
+	return res.front();
 }
 
 

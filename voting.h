@@ -67,6 +67,12 @@ class Voting
 	void remind_worker();
 	std::thread remind_thread;
 
+	id_t eligible_last_vote(const Chan &chan, const std::string &nick, const std::string &type);
+	void eligible_add(Chan &chan);
+	bool eligible_sleep();
+	void eligible_worker();
+	std::thread eligible_thread;
+
   public:
 	void cancel(Vote &vote, const Chan &chan, const User &user);
 	void cancel(const id_t &id, const Chan &chan, const User &user);
