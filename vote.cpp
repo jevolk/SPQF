@@ -145,10 +145,10 @@ expiry(secs_cast(get_val("expiry"))),
 quorum(has("quorum")? get_val<uint>("quorum") : 0),
 reason(get_val("reason")),
 effect(get_val("effect")),
-yea(get("yea").into(yea)),
-nay(get("nay").into(nay)),
-veto(get("veto").into(veto)),
-hosts(get("hosts").into(hosts))
+yea(get("yea").into<decltype(yea)>()),
+nay(get("nay").into<decltype(nay)>()),
+veto(get("veto").into<decltype(veto)>()),
+hosts(get("hosts").into<decltype(hosts)>())
 {
 	if(cfg.empty())
 		throw Assertive("The configuration for this vote is missing and required.");
