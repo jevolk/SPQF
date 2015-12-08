@@ -41,6 +41,7 @@ class ResPublica
 	void handle_vote_list(const Msg &m, User &u, const Tokens &t);
 	void handle_vote_id(const Msg &m, User &u, const Tokens &t);
 	void handle_vote(const Msg &m, User &u, Tokens t);
+	void handle_debug(const Msg &m, User &u, const Tokens &t);
 	void handle_version(const Msg &m, User &u, const Tokens &t);
 	void handle_praetor(const Msg &m, User &u, const Tokens &t);
 	void handle_regroup(const Msg &m, User &u, const Tokens &t);

@@ -659,6 +659,7 @@ void ResPublica::handle_cmd(const Msg &msg,
 		case hash("whoami"):   handle_whoami(msg,user,subtok(toks));   break;
 		case hash("regroup"):  handle_regroup(msg,user,subtok(toks));  break;
 		case hash("praetor"):  handle_praetor(msg,user,subtok(toks));  break;
+		case hash("debug"):    handle_debug(msg,user,subtok(toks));    break;
 		default:                                                       break;
 	}
 }
@@ -732,8 +733,7 @@ void ResPublica::handle_praetor(const Msg &msg,
                                 User &user,
                                 const Tokens &toks)
 {
-
-
+	user << "Not implemented." << user.flush;
 }
 
 
@@ -744,6 +744,23 @@ void ResPublica::handle_version(const Msg &msg,
 	user << SPQF_VERSION << flush;
 }
 
+
+void ResPublica::handle_debug(const Msg &msg,
+                              User &user,
+                              const Tokens &toks)
+try
+{
+	if(!user.is_owner())
+		return;
+
+	std::cout << "--- debug by " << user.get_nick() << " ---" << std::endl;
+	auto &chan(chans.get(*toks.at(0)));
+	std::cout << chan << std::endl;
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("Need a channel name because this is PM.");
+}
 
 
 void ResPublica::handle_vote(const Msg &msg,
