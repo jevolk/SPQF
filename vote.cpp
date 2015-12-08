@@ -573,11 +573,9 @@ bool Vote::enfranchised(const User &user)
 const
 {
 	const Adoc &cfg = get_cfg();
-	if(cfg.has("enfranchise.access"))
-		return has_access(user,cfg["enfranchise.access"]);
-
-	if(cfg.has("enfranchise.mode"))
-		return has_mode(user,cfg["enfranchise.mode"]);
+	if(cfg.has("enfranchise.access") || cfg.has("enfranchise.mode"))
+		return has_mode(user,cfg["enfranchise.mode"]) ||
+		       has_access(user,cfg["enfranchise.access"]);
 
 	Logs::SimpleFilter filt;
 	filt.acct = user.get_acct();
