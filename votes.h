@@ -356,8 +356,13 @@ template<class... Args>
 ForNow::ForNow(Args&&... args):
 Vote(std::forward<Args>(args)...)
 {
-	auto &cfg(get_cfg());
-	cfg["for"] = "0";
+	const auto &cfg(get_cfg());
+	if(cfg.get<time_t>("for",0) != 0)
+	{
+		auto cpy(cfg);
+		cpy.put("for",0);
+		set_cfg(cpy);
+	}
 }
 
 

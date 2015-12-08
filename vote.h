@@ -107,6 +107,7 @@ class Vote : protected Acct
 	auto &get_chans()                           { return *chans;                                    }
 	auto &get_logs()                            { return *logs;                                     }
 
+	void set_cfg(const Adoc &cfg)               { this->cfg = cfg;                                  }
 	void set_issue(const std::string &issue)    { this->issue = issue;                              }
 	void set_reason(const std::string &reason)  { this->reason = reason;                            }
 	void set_effect(const std::string &effect)  { this->effect = effect;                            }
