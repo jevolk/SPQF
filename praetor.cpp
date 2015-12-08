@@ -160,9 +160,9 @@ void Praetor::add(const Adoc &doc)
 
 void Praetor::add(std::unique_ptr<Vote> &&vote)
 {
-	const id_t id = vote->get_id();
-	const auto cfg = vote->get_cfg();
-	const time_t absolute = time(NULL) + secs_cast(cfg["for"]);
+	const id_t &id(vote->get_id());
+	const auto &cfg(vote->get_cfg());
+	const time_t absolute(time(NULL) + secs_cast(cfg["for"]));
 	add(id,absolute);
 }
 
