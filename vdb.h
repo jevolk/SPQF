@@ -15,6 +15,8 @@ class Vdb : public Adb
 
 	template<class T, class... Args> T get(const id_t &id, Args&&... args);
 	template<class... Args> std::unique_ptr<Vote> get(const id_t &id, Args&&... args);
+
+	std::string get_value(const id_t &id, const std::string &key);
 	std::string get_type(const id_t &id);
 
 	using Term = std::pair<std::string,std::string>;
@@ -41,7 +43,7 @@ Vdb::find(const std::forward_list<Term> &terms)
 	{
 		auto match(0);
 		const auto &id(lex_cast<id_t>(it->first));
-		const Adoc doc{std::string{it->second}};
+		const Adoc doc(it->second);
 		for(const auto &term : terms)
 		{
 			const auto &key(term.first);
@@ -60,7 +62,15 @@ Vdb::find(const std::forward_list<Term> &terms)
 inline
 std::string Vdb::get_type(const id_t &id)
 {
-	return Adb::get(std::nothrow,lex_cast(id))["type"];
+	return get_value(id,"type");
+}
+
+
+inline
+std::string Vdb::get_value(const id_t &id,
+                           const std::string &key)
+{
+	return Adb::get(std::nothrow,lex_cast(id))[key];
 }
 
 
