@@ -69,6 +69,7 @@ class Voting
 
 	id_t eligible_last_vote(const Chan &chan, const std::string &nick, const std::string &type);
 	void eligible_add(Chan &chan);
+	void eligible_add();
 	bool eligible_sleep();
 	void eligible_worker();
 	std::thread eligible_thread;

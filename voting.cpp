@@ -90,21 +90,23 @@ void Voting::eligible_worker()
 
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
-		{
-			const std::lock_guard<Bot> lock(bot);
-			chans.for_each([this](Chan &chan)
-			{
-				eligible_add(chan);
-			});
-		}
-
-		if(!eligible_sleep())
-			continue;
+		eligible_add();
+		eligible_sleep();
 	}
 	catch(const Internal &e)
 	{
 		std::cerr << "[Voting (eligible worker)]: \033[1;41m" << e << "\033[0m" << std::endl;
 	}
+}
+
+
+void Voting::eligible_add()
+{
+	const std::lock_guard<Bot> lock(bot);
+	chans.for_each([this](Chan &chan)
+	{
+		eligible_add(chan);
+	});
 }
 
 
@@ -130,7 +132,7 @@ try
 	if(lines == 0 || age == 0)
 		return;
 
-	std::cout << "Running eligible add for channel " << chan.get_name() << "lines: " << lines << " age: " << age << std::endl;
+	std::cout << "Finding eligible for channel " << chan.get_name() << std::endl;
 
 	Logs::SimpleFilter filt;
 	filt.type = "PRI";  // PRIVMSG
@@ -202,11 +204,12 @@ try
 		user << " Remind people to vote for issue #" << vote.get_id() << "!";
 		user << user.flush;
 	}
-	catch(const std::out_of_range &e)
+	catch(const std::exception &e)
 	{
-		std::cerr << "error on " << p.first << " : " << p.second << std::endl;
-		continue;
+		std::cerr << "Error on: [" << p.first << " : " << p.second << "]: " << e.what() << std::endl;
 	}
+
+	std::cout << "Finished eligible for channel " << chan.get_name() << std::endl;
 }
 catch(const std::exception &e)
 {
@@ -249,8 +252,8 @@ void Voting::remind_worker()
 
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
-		if(remind_sleep())
-			remind_votes();
+		remind_votes();
+		remind_sleep();
 	}
 	catch(const Internal &e)
 	{
@@ -277,10 +280,15 @@ void Voting::remind_votes()
 	const std::unique_lock<Bot> lock(bot);
 	static const milliseconds delay(750);
 	//const FloodGuard guard(bot.sess,delay);
+
 	for(auto it(votes.cbegin()); it != votes.cend(); ++it)
 	{
 		const Vote &vote(*it->second);
 		if(!chans.has(vote.get_chan_name()))
+			continue;
+
+		const auto &cfg(vote.get_cfg());
+		if(!cfg.get<bool>("remind.enable",false))
 			continue;
 
 		Chan &chan(vote.get_chan());
@@ -299,6 +307,7 @@ void Voting::remind_votes()
 			     << " before the issue closes in " << BOLD << secs_cast(vote.remaining()) << OFF << ". "
 			     << user.flush;
 
+			// TODO: fix guard
 			std::this_thread::sleep_for(delay);
 		});
 	}
