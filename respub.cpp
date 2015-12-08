@@ -78,7 +78,6 @@ voting(sess,chans,users,logs,bot,vdb,praetor)
 	// Channel command handlers
 	events.chan_user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2,_3),handler::RECURRING);
 	events.chan_user.add("NOTICE",boost::bind(&ResPublica::handle_notice,this,_1,_2,_3),handler::RECURRING);
-	events.chan.add("MODE",boost::bind(&ResPublica::handle_cmode,this,_1,_2),handler::RECURRING);
 
 	// Private command handlers
 	events.user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2),handler::RECURRING);
@@ -90,6 +89,7 @@ voting(sess,chans,users,logs,bot,vdb,praetor)
 	events.chan_user.add(LIBIRC_RFC_ERR_USERONCHANNEL,boost::bind(&ResPublica::handle_on_chan,this,_1,_2,_3),handler::RECURRING);
 	events.chan.add(/* RPL_KNOCK */ 710,boost::bind(&ResPublica::handle_knock,this,_1,_2),handler::RECURRING);
 	events.chan.add(/* ERR_MODEISLOCKED */ 742,boost::bind(&ResPublica::handle_mlock,this,_1,_2),handler::RECURRING);
+	events.chan.add("MODE",boost::bind(&ResPublica::handle_cmode,this,_1,_2),handler::RECURRING);
 }
 
 
@@ -192,28 +192,6 @@ catch(const std::out_of_range &e)
 }
 
 
-void ResPublica::handle_cmode(const Msg &msg,
-                              Chan &chan)
-{
-	using namespace fmt::MODE;
-
-	if(msg.from("chanserv") || msg.from(sess.get_nick()))
-		return;
-
-	const auto &serv(sess.get_server());
-	User &user(users.get(msg.get_nick()));
-	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
-	for(const auto &delta : deltas)
-	{
-		if(bool(delta) && (delta == 'q' || delta == 'b'))
-		{
-			voting.motion<vote::Appeal>(chan,user,std::string(~delta));
-			chan << user.get_nick() << "'s unilateral executive decision invoked this automatic appeal process." << flush;
-		}
-	}
-}
-
-
 void ResPublica::handle_privmsg(const Msg &msg,
                                 User &user)
 try
@@ -283,6 +261,31 @@ catch(const Exception &e)
 catch(const std::out_of_range &e)
 {
 	user << "You did not supply required arguments. Use the help command." << flush;
+}
+
+
+void ResPublica::handle_cmode(const Msg &msg,
+                              Chan &chan)
+{
+	using namespace fmt::MODE;
+
+	if(msg.from("chanserv") || msg.from(sess.get_nick()))
+		return;
+
+	const auto &serv(sess.get_server());
+	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
+
+	size_t appeals(0);
+	User &user(users.get(msg.get_nick()));
+	for(const auto &delta : deltas)
+		if(bool(delta) && (delta == 'q' || delta == 'b'))
+		{
+			voting.motion<vote::Appeal>(chan,user,std::string(~delta));
+			++appeals;
+		}
+
+	if(appeals)
+		chan << user.get_nick() << "'s unilateral executive decision invoked this automatic appeal process." << flush;
 }
 
 
