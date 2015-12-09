@@ -51,7 +51,7 @@ class Voting
 
   private:
 	id_t get_next_id() const;
-
+	template<class Duration> void worker_sleep(Duration&& duration);
 	std::unique_ptr<Vote> del(const decltype(votes.begin()) &it);
 	std::unique_ptr<Vote> del(const id_t &id);
 
@@ -63,14 +63,13 @@ class Voting
 	std::thread poll_thread;
 
 	void remind_votes();
-	bool remind_sleep();
+	void remind_sleep();
 	void remind_worker();
 	std::thread remind_thread;
 
 	id_t eligible_last_vote(const Chan &chan, const std::string &nick, const std::string &type);
 	void eligible_add(Chan &chan);
 	void eligible_add();
-	bool eligible_sleep();
 	void eligible_worker();
 	std::thread eligible_thread;
 

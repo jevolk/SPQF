@@ -91,7 +91,7 @@ void Voting::eligible_worker()
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
 		eligible_add();
-		eligible_sleep();
+		worker_sleep(std::chrono::hours(12));
 	}
 	catch(const Internal &e)
 	{
@@ -107,17 +107,6 @@ void Voting::eligible_add()
 	{
 		eligible_add(chan);
 	});
-}
-
-
-bool Voting::eligible_sleep()
-{
-	using std::chrono::steady_clock;
-
-	const auto now(steady_clock::now());
-	const auto fut(now + std::chrono::hours(24));
-	std::unique_lock<decltype(mutex)> lock(mutex);
-	return sem.wait_until(lock,fut) == std::cv_status::timeout;
 }
 
 
@@ -253,23 +242,12 @@ void Voting::remind_worker()
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
 		remind_votes();
-		remind_sleep();
+		worker_sleep(std::chrono::hours(24));
 	}
 	catch(const Internal &e)
 	{
 		std::cerr << "[Voting (remind worker)]: \033[1;41m" << e << "\033[0m" << std::endl;
 	}
-}
-
-
-bool Voting::remind_sleep()
-{
-	using std::chrono::steady_clock;
-
-	const auto now(steady_clock::now());
-	const auto fut(now + std::chrono::hours(24));
-	std::unique_lock<decltype(mutex)> lock(mutex);
-	return sem.wait_until(lock,fut) == std::cv_status::timeout;
 }
 
 
@@ -323,7 +301,7 @@ void Voting::poll_worker()
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
 		poll_votes();
-		poll_sleep();
+		worker_sleep(std::chrono::seconds(2));
 	}
 	catch(const Internal &e)
 	{
@@ -363,14 +341,6 @@ void Voting::poll_init()
 		const auto id(lex_cast<id_t>(it->first));
 		std::cerr << "[Voting]: Failed reading #" << id << ": \033[1;31m" << e << "\033[0m" << std::endl;
 	}
-}
-
-
-void Voting::poll_sleep()
-{
-	//TODO: calculate next deadline. Recalculate on semaphore.
-	std::unique_lock<decltype(mutex)> lock(mutex);
-	sem.wait_for(lock,std::chrono::seconds(2));
 }
 
 
@@ -452,6 +422,19 @@ std::unique_ptr<Vote> Voting::del(const decltype(votes.begin()) &it)
 	votes.erase(it);
 
 	return std::move(vote);
+}
+
+
+template<class Duration>
+void Voting::worker_sleep(Duration&& duration)
+{
+	using std::cv_status;
+	using std::chrono::steady_clock;
+
+	const auto now(steady_clock::now());
+	const auto fut(now + duration);
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	while(sem.wait_until(lock,fut) != cv_status::timeout && !interrupted.load(std::memory_order_consume));
 }
 
 
