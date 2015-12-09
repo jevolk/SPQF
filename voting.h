@@ -67,7 +67,7 @@ class Voting
 	void remind_worker();
 	std::thread remind_thread;
 
-	id_t eligible_last_vote(const Chan &chan, const std::string &nick, const std::string &type);
+	id_t eligible_last_vote(const Chan &chan, const std::string &nick, Vdb::Terms terms);
 	void eligible_add(Chan &chan);
 	void eligible_add();
 	void eligible_worker();

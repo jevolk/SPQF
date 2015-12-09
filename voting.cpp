@@ -163,6 +163,9 @@ try
 			continue;
 
 		User &user(users.get(nick));
+		if(!user.is_logged_in())
+			continue;
+
 		if(chan.lists.has_flag(user,'V'))
 			continue;
 
@@ -176,9 +179,28 @@ try
 		if(exists)
 			continue;
 
-		const auto qid(eligible_last_vote(chan,nick,"quiet"));
-		const auto bid(eligible_last_vote(chan,nick,"ban"));
-		const auto &id(std::max(qid,bid));
+		const auto ids =
+		{
+			eligible_last_vote(chan,nick,
+			{
+				Vdb::Term { "type",   "==", "quiet"      },
+				Vdb::Term { "reason", "==", ""           },
+			}),
+
+			eligible_last_vote(chan,nick,
+			{
+				Vdb::Term { "type",   "==", "ban"        },
+				Vdb::Term { "reason", "==", ""           },
+			}),
+
+			eligible_last_vote(chan,nick,
+			{
+				Vdb::Term { "type",   "==", "civis"      },
+				Vdb::Term { "reason", "==", "plurality"  },
+			}),
+		};
+
+		const auto &id(*std::max_element(std::begin(ids),std::end(ids)));
 		if(id)
 		{
 			filt.acct = acct;
@@ -208,16 +230,11 @@ catch(const std::exception &e)
 
 
 Voting::id_t Voting::eligible_last_vote(const Chan &chan,
-                                        const std::string &issue,
-                                        const std::string &type)
+                                        const std::string &nick,
+                                        Vdb::Terms terms)
 {
-	const Vdb::Terms terms
-	{
-		Vdb::Term { "type",   "==",  type             },
-		Vdb::Term { "issue",  "==",  tolower(issue)   },
-		Vdb::Term { "reason", "==",  ""               },
-		Vdb::Term { "chan",   "==",  chan.get_name()  },
-	};
+	terms.emplace_front(Vdb::Term{"issue","==",nick});
+	terms.emplace_front(Vdb::Term{"chan","==",chan.get_name()});
 
 	auto res(vdb.query(terms,1));
 	return !res.empty()? res.front() : 0;   // note sentinel 0 is a valid vote id but ignored here
