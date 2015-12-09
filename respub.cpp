@@ -515,10 +515,14 @@ void ResPublica::handle_vote_list(const Msg &msg,
 			const auto &id(vote.get_id());
 			handle_vote_list(msg,chan,user,subtoks,id);
 		});
-	} else {
-		const auto &id(lex_cast<Vote::id_t>(*toks.at(0)));
-		handle_vote_list(msg,chan,user,subtoks,id);
+
+		return;
 	}
+
+	if(chan.get("config.vote.list")["ack.chan"] == "1")
+		handle_vote_list(msg,chan,user,chan,toks);
+	else
+		handle_vote_list(msg,chan,user,user<<chan,toks);
 }
 
 
@@ -808,92 +812,7 @@ try
 {
 	auto &chan(chans.get(*toks.at(0)));
 	const auto *const cmsg_chan(chans.find_cnotice(user));
-	const auto subtoks(subtok(toks));
-
-	if(subtoks.empty())
-	{
-		if(!voting.exists(chan))
-		{
-			user << cmsg_chan << "No active votes for this channel." << user.flush;
-			return;
-		}
-
-		voting.for_each(chan,[this,&msg,&user,&subtoks,&cmsg_chan]
-		(const Vote &vote)
-		{
-			const auto &id(vote.get_id());
-			handle_vote_list(msg,user,(user<<cmsg_chan),subtoks,id);
-		});
-
-		return;
-	}
-
-	if(isnumeric(*subtoks.at(0)))
-	{
-		const auto &id(lex_cast<Vote::id_t>(*subtoks.at(0)));
-		handle_vote_list(msg,user,user,subtoks,id);
-		return;
-	}
-
-	static const std::map<std::string,std::string> aliases
-	{
-		{ "speaker", "nick"      },
-		{ "channel", "chan"      },
-	};
-
-	std::map<std::string,std::string> options
-	{
-		{ "limit", "10"          },
-		{ "order", "descending"  },
-	};
-
-	std::forward_list<Vdb::Term> terms
-	{
-		std::make_tuple("chan", "=", *toks.at(0)),
-	};
-
-	static const std::vector<std::string> opers
-	{
-		std::begin(Vdb::operators), std::end(Vdb::operators)
-	};
-
-	parse_args(detok(subtoks),"--",opers," ",[&terms,&options]
-	(std::string key, const std::string &op, std::string val)
-	{
-		key = tolower(key);
-		val = tolower(val);
-
-		if(key.empty() || val.empty() || op.empty())
-			throw Exception("Usage: !vote list <#channel> <--key<op>value> [--key<op>value]   (ex: --type=opine --time<=1234 )");
-
-		if(!isalpha(key))
-			throw Exception("Search keys must contain alpha characters only");
-
-		if(aliases.count(key))
-			key = aliases.at(key);
-
-		if(op == "=" && options.count(key))
-			options.at(key) = val;
-		else
-			terms.emplace_front(std::make_tuple(key,op,val));
-	});
-
-	static const auto max_limit(100);
-	const auto limit(lex_cast<size_t>(options.at("limit")));
-	if(limit > max_limit)
-		throw Exception("Exceeded the maximum --limit=") << max_limit;
-
-	const bool descending(options.at("order") == "descending");
-	auto res(vdb.query(terms,limit,descending));
-	if(!res.empty())
-		for(const auto &id : res)
-			handle_vote_list(msg,user,(user<<cmsg_chan),{},id);
-	else
-		user << cmsg_chan << "No matching results." << user.flush;
-}
-catch(const boost::bad_lexical_cast &e)
-{
-	throw Exception("You supplied a bad ID number.");
+	handle_vote_list(msg,chan,user,user<<cmsg_chan,subtok(toks));
 }
 catch(const std::out_of_range &e)
 {
@@ -945,6 +864,127 @@ void ResPublica::handle_help(const Msg &msg,
 
 
 void ResPublica::handle_vote_list(const Msg &msg,
+                                  const Chan &chan,
+                                  const User &user,
+                                  Locutor &out,
+                                  const Tokens &toks)
+try
+{
+	if(toks.empty())
+	{
+		if(!voting.exists(chan))
+		{
+			out << "No active votes for this channel." << user.flush;
+			return;
+		}
+
+		voting.for_each(chan,[this,&msg,&user,&toks,&out]
+		(const Vote &vote)
+		{
+			const auto &id(vote.get_id());
+			handle_vote_list(msg,user,out,toks,id);
+		});
+
+		return;
+	}
+
+	if(isnumeric(*toks.at(0)))
+	{
+		const auto &id(lex_cast<Vote::id_t>(*toks.at(0)));
+		handle_vote_list(msg,user,out,toks,id);
+		return;
+	}
+
+	static const std::map<std::string,std::string> aliases
+	{
+		{ "speaker", "nick"      },
+		{ "channel", "chan"      },
+		{ "started", "began"     },
+	};
+
+	std::map<std::string,std::string> options
+	{
+		{ "limit",    "10"          },
+		{ "order",    "descending"  },
+		{ "oneline",  "0"           },
+	};
+
+	std::forward_list<Vdb::Term> terms
+	{
+		std::make_tuple("chan", "=", chan.get_name()),
+	};
+
+	static const std::vector<std::string> opers
+	{
+		std::begin(Vdb::operators), std::end(Vdb::operators)
+	};
+
+	parse_args(detok(toks),"--",opers," ",[&terms,&options]
+	(std::string key, std::string op, std::string val)
+	{
+		key = tolower(key);
+		val = tolower(val);
+
+		if(key.empty())
+			throw Exception("Usage: !vote list <#channel> <--key<op>value> [--key<op>value]   (ex: --type=opine --time<=1234 )");
+
+		if(!isalpha(key))
+			throw Exception("Search keys must contain alpha characters only");
+
+		if(aliases.count(key))
+			key = aliases.at(key);
+
+		// These are key-only, no-value no-operator shortcut recipes i.e "--foobar"
+		if(val.empty())
+		{
+			if(key == "passed")
+			{
+				terms.emplace_front(std::make_tuple("reason","=",std::string()));      // empty reason is a pass
+				terms.emplace_front(std::make_tuple("ended","!=","0"));                // non-zero ended isn't active
+			}
+			else if(key == "failed")
+			{
+				terms.emplace_front(std::make_tuple("reason","!=",std::string()));     // non-empty reason is a fail
+			}
+			else if(key == "active")
+			{
+				terms.emplace_front(std::make_tuple("ended","=","0"));                 // zero ended is still active
+			}
+			else if(key == "oneline")
+			{
+				options["oneline"] = "1";
+			}
+		}
+		else if(op == "=" && options.count(key))
+			options.at(key) = val;
+		else
+			terms.emplace_front(std::make_tuple(key,op,val));
+	});
+
+	static const auto max_limit(100);
+	const auto limit(lex_cast<size_t>(options.at("limit")));
+	if(limit > max_limit)
+		throw Exception("Exceeded the maximum --limit=") << max_limit;
+
+	const bool descending(options.at("order") == "descending");
+	auto res(vdb.query(terms,limit,descending));
+	if(!res.empty())
+	{
+		if(options.at("oneline") != "0")
+			vote_list_oneline(chan,user,out,res);
+		else
+			for(const auto &id : res)
+				handle_vote_list(msg,user,out,{},id);
+	}
+	else out << "No matching results." << out.flush;
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw Exception("You supplied a bad ID number.");
+}
+
+
+void ResPublica::handle_vote_list(const Msg &msg,
                                   const User &user,
                                   Locutor &out,
                                   const Tokens &toks,
@@ -973,7 +1013,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	else if(vote.position(user) == Vote::NAY)
 		out << BOLD << FG::WHITE << BG::RED << "NAY" << OFF << " ";
 
-	if(vote.remaining() < 0 && vote.get_reason().empty())
+	if(vote.get_ended() && vote.get_reason().empty())
 		out << BOLD << UNDER2 << FG::WHITE << BG::GREEN << "PASSED" << OFF << " ";
 	else if(vote.remaining() >= 0 && vote.get_reason().empty())
 		out << BOLD << FG::WHITE << BG::ORANGE << "ACTIVE" << OFF << " ";
@@ -1152,6 +1192,40 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		else
 			out << FG::GREEN << "As it stands, the motion will pass."  << "\n";
 	}
+}
+
+
+void ResPublica::vote_list_oneline(const Chan &c,
+                                   const User &u,
+                                   Locutor &out,
+                                   const std::list<id_t> &result)
+{
+	using namespace colors;
+
+	for(const auto &id : result)
+	{
+		const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
+
+		static const size_t truncmax(16);
+		const auto &issue(vote.get_issue());
+		const auto truncsz(std::min(issue.size(),truncmax));
+		const auto opine(vote.get_type() == "opine");
+		const auto &isout(opine? (issue.substr(0,truncsz) + "...") : issue);
+
+		const auto tally(vote.tally());
+		const auto quorum(vote.total() >= vote.get_quorum());
+		const auto majority(tally.first > tally.second);
+		const auto active(!vote.get_ended());
+
+		out << BOLD << "#" << vote.get_id() << OFF << " "
+		    << (active? FG::ORANGE : quorum && majority? FG::GREEN : quorum? FG::RED : FG::GRAY)
+		    << vote.get_type() << OFF << " "
+		    << UNDER2 << isout << OFF << " "
+		    << BOLD << FG::GREEN << tally.first << OFF << "v"
+		    << BOLD << FG::RED << tally.second << OFF << ". ";
+	}
+
+	out << flush;
 }
 
 

@@ -32,8 +32,10 @@ class ResPublica
 	Voting voting;
 
 	// !vote abstract stack
+	void vote_list_oneline(const Chan &c, const User &u, Locutor &out, const std::list<id_t> &result);
 	void handle_vote_info(const Msg &m, const User &u, Locutor &out, const Tokens &t, const Vote &vote);
 	void handle_vote_list(const Msg &m, const User &u, Locutor &out, const Tokens &t, const id_t &id);
+	void handle_vote_list(const Msg &m, const Chan &c, const User &u, Locutor &out, const Tokens &t);
 	void handle_help(const Msg &m, Locutor &out, const Tokens &t);
 
 	// Privmsg stack
