@@ -116,9 +116,10 @@ try
 	const auto civis(chan.get("config.vote.civis"));
 	const auto age(secs_cast(civis["eligible.age"]));
 	const auto lines(civis.get<uint>("eligible.lines",0));
+	const auto automat(civis.get<bool>("eligible.automatic",0));
 	const Adoc excludes(civis.get_child("eligible.exclude",Adoc()));
 	const auto exclude(excludes.into<std::set<std::string>>());
-	if(lines == 0 || age == 0)
+	if(!lines || !age || !automat)
 		return;
 
 	std::cout << "Finding eligible for channel " << chan.get_name() << std::endl;
@@ -210,21 +211,16 @@ Voting::id_t Voting::eligible_last_vote(const Chan &chan,
                                         const std::string &issue,
                                         const std::string &type)
 {
-	const std::forward_list<Vdb::Term> terms
+	const Vdb::Terms terms
 	{
-		{ "type",    type             },
-		{ "issue",   tolower(issue)   },
-		{ "reason",  ""               },
-		{ "chan",    chan.get_name()  },
+		Vdb::Term { "type",   "==",  type             },
+		Vdb::Term { "issue",  "==",  tolower(issue)   },
+		Vdb::Term { "reason", "==",  ""               },
+		Vdb::Term { "chan",   "==",  chan.get_name()  },
 	};
 
-	auto res(vdb.find(terms));
-	if(res.empty())
-		return 0;    // note sentinel 0 is a valid vote id but ignored here
-
-	res.reverse();
-	res.resize(1);
-	return res.front();
+	auto res(vdb.query(terms,1));
+	return !res.empty()? res.front() : 0;   // note sentinel 0 is a valid vote id but ignored here
 }
 
 

@@ -6,21 +6,36 @@
  */
 
 
-class Vdb : public Adb
+struct Vdb : Adb
 {
 	using id_t = Vote::id_t;
+	using Term = std::tuple<std::string,std::string,std::string>;
+	using Terms = std::forward_list<Term>;
+	using Results = std::list<id_t>;
+	static constexpr auto operators =
+	{
+		"",     // empty operator checks if key exists (and is non-empty)
+		"=",    // equality operator aliased to ==
+		"==",   // case insensitive string equality
+		"!=",   // case insensitive string inequality
+		"<",    // integer less than
+		">",    // integer greater than
+		"<=",   // integer less than or equals
+		">=",   // integer greater than or equals
+	};
 
-  public:
-	bool exists(const id_t &id) const               { return Adb::exists(lex_cast(id));  }
-
+	bool exists(const id_t &id) const;
 	template<class T, class... Args> T get(const id_t &id, Args&&... args);
 	template<class... Args> std::unique_ptr<Vote> get(const id_t &id, Args&&... args);
-
 	std::string get_value(const id_t &id, const std::string &key);
 	std::string get_type(const id_t &id);
 
-	using Term = std::pair<std::string,std::string>;
-	std::list<id_t> find(const std::forward_list<Term> &terms);
+  private:
+	static bool match(const Adoc &doc, const Term &term);
+	template<class It> static void query(const Terms &terms, const size_t &limit, It&& begin, It&& end, Results &ret);
+
+  public:
+	Results query(const Terms &terms, const size_t &limit = 0, const bool &descending = true);
 
 	Vdb(const std::string &dir);
 };
@@ -34,28 +49,90 @@ Adb(dir)
 
 
 inline
-std::list<id_t>
-Vdb::find(const std::forward_list<Term> &terms)
+Vdb::Results Vdb::query(const Terms &terms,
+                        const size_t &limit,
+                        const bool &descending)
 {
-	std::list<id_t> ret;
-	const auto num_terms(std::distance(terms.begin(),terms.end()));
-	for(auto it(cbegin()); it != cend(); ++it)
-	{
-		auto match(0);
-		const auto &id(lex_cast<id_t>(it->first));
-		const Adoc doc(it->second);
-		for(const auto &term : terms)
-		{
-			const auto &key(term.first);
-			const auto &val(term.second);
-			match += tolower(doc[key]) == val;
-		}
+	Results ret;
 
-		if(match == num_terms)
-			ret.emplace_back(id);
-	}
+	// TODO: Until stldb reverse iterators and propert sorting are fixed hack this for now...
+	query(terms,0,cbegin(),cend(),ret);
+	ret.sort();
+
+	if(descending)
+		ret.reverse();
+
+	if(limit)
+		ret.resize(std::min(limit,ret.size()));
 
 	return ret;
+}
+
+
+template<class It>
+void Vdb::query(const Terms &terms,
+                const size_t &limit,
+                It&& begin,
+                It&& end,
+                Results &ret)
+{
+	size_t rets(0);
+	for(auto it(begin); it != end && (!limit || rets < limit); ++it)
+	{
+		const auto &id(lex_cast<id_t>(it->first));
+		const Adoc doc(it->second);
+		const auto matched(std::all_of(terms.begin(),terms.end(),[&doc]
+		(const auto &term)
+		{
+			return match(doc,term);
+		}));
+
+		if(matched)
+		{
+			ret.emplace_back(id);
+			++rets;
+		}
+	}
+}
+
+
+inline
+bool Vdb::match(const Adoc &doc,
+                const Term &term)
+try
+{
+	const auto &key(std::get<0>(term));
+	const auto &op(std::get<1>(term));
+	const auto &val(std::get<2>(term));
+
+	switch(hash(op))
+	{
+		case hash("="):
+		case hash("=="):  return boost::iequals(doc[key],val);
+		case hash("!="):  return !boost::iequals(doc[key],val);
+		case hash("<="):  return doc.get<int64_t>(key) <= lex_cast<int64_t>(val);
+		case hash(">="):  return doc.get<int64_t>(key) >= lex_cast<int64_t>(val);
+		case hash("<"):   return doc.get<int64_t>(key) < lex_cast<int64_t>(val);
+		case hash(">"):   return doc.get<int64_t>(key) > lex_cast<int64_t>(val);
+		case hash(""):    return doc.has(key);
+		default:          throw Assertive("Unrecognized query term operator");
+	};
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw Exception("This comparison operator requires a number.");
+}
+catch(const boost::property_tree::ptree_bad_path &e)
+{
+	throw Exception("A key is not recognized: ") << e.what();
+}
+catch(const boost::property_tree::ptree_bad_data &e)
+{
+	throw Exception("A key can not be compared to the argument: ") << e.what();
+}
+catch(const boost::property_tree::ptree_error &e)
+{
+	throw Assertive(e.what());
 }
 
 
@@ -124,4 +201,12 @@ catch(const Exception &e)
 		throw;
 
 	throw Exception("Could not find a vote by that ID.");
+}
+
+
+inline
+bool Vdb::exists(const id_t &id)
+const
+{
+	return Adb::exists(lex_cast(id));
 }

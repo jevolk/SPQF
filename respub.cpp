@@ -575,39 +575,7 @@ try
 		return;
 	}
 
-	std::map<std::string,uint> count;
-	std::map<std::string,std::string> accts;
-
-	const Adoc &cfg(chan.get("config.vote"));
-	const auto lines(cfg.get<uint>("civis.eligible.lines"));
-	const auto age(secs_cast(cfg["civis.eligible.age"]));
-
-	chan << "Just a moment while I find users with >" << lines << " lines "
-	     << "before " << secs_cast(age) << " ago."
-	     << flush;
-
-	Logs::SimpleFilter filt;
-	filt.type = "PRI";  // PRIVMSG
-	filt.time.first = 0;
-	filt.time.second = time(NULL) - age;
-	logs.for_each(chan.get_name(),filt,[&count,&accts]
-	(const Logs::ClosureArgs &a)
-	{
-		if(strlen(a.acct) == 0 || *a.acct == '*')
-			return true;
-
-		++count[a.acct];
-		const auto iit(accts.emplace(a.acct,a.nick));
-		if(iit.second)
-			return true;
-
-		auto &nick(iit.first->second);
-		if(nick != a.nick)
-			nick = a.nick;
-
-		return true;
-	});
-
+/*
 	std::stringstream str;
 	for(const auto &p : count) try
 	{
@@ -630,6 +598,7 @@ try
 	}
 
 	chan << user.get_nick() << ", results: " << str.str() << flush;
+*/
 }
 catch(const std::out_of_range &e)
 {
@@ -880,20 +849,22 @@ try
 
 	std::forward_list<Vdb::Term> terms
 	{
-		{ "chan", *toks.at(0)   },
+		std::make_tuple("chan", "=", *toks.at(0)),
 	};
 
-	parse_args(detok(subtoks),"--","="," ",[&terms,&options]
-	(std::pair<std::string,std::string> kv)
-	mutable
+	static const std::vector<std::string> opers
 	{
-		auto &key(kv.first);
-		auto &val(kv.second);
+		std::begin(Vdb::operators), std::end(Vdb::operators)
+	};
+
+	parse_args(detok(subtoks),"--",opers," ",[&terms,&options]
+	(std::string key, const std::string &op, std::string val)
+	{
 		key = tolower(key);
 		val = tolower(val);
 
-		if(key.empty() || val.empty())
-			throw Exception("Usage: !vote list <#channel> <--key=value> [--key=value]");
+		if(key.empty() || val.empty() || op.empty())
+			throw Exception("Usage: !vote list <#channel> <--key<op>value> [--key<op>value]   (ex: --type=opine --time<=1234 )");
 
 		if(!isalpha(key))
 			throw Exception("Search keys must contain alpha characters only");
@@ -901,25 +872,19 @@ try
 		if(aliases.count(key))
 			key = aliases.at(key);
 
-		if(options.count(key))
+		if(op == "=" && options.count(key))
 			options.at(key) = val;
 		else
-			terms.emplace_front(kv);
+			terms.emplace_front(std::make_tuple(key,op,val));
 	});
 
-	auto res(vdb.find(terms));
-	res.sort();
-
-	if(options.at("order") == "descending")
-		std::reverse(res.begin(),res.end());
-
-	const size_t max_limit(cmsg_chan? 100 : 10);
+	static const auto max_limit(100);
 	const auto limit(lex_cast<size_t>(options.at("limit")));
-	res.resize(std::min(res.size(),limit));
-
 	if(limit > max_limit)
 		throw Exception("Exceeded the maximum --limit=") << max_limit;
 
+	const bool descending(options.at("order") == "descending");
+	auto res(vdb.query(terms,limit,descending));
 	if(!res.empty())
 		for(const auto &id : res)
 			handle_vote_list(msg,user,(user<<cmsg_chan),{},id);
@@ -932,7 +897,7 @@ catch(const boost::bad_lexical_cast &e)
 }
 catch(const std::out_of_range &e)
 {
-	throw Exception("Need a channel name because this is PM.");
+	throw Exception("Need a channel name because this is PM. Usage: !vote list <#channel>");
 }
 
 
