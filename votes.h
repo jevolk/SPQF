@@ -70,6 +70,7 @@ namespace vote
 	               public virtual ForNow
 	{
 		std::string key;
+		std::string oper;
 		std::string val;
 
 		void passed() override;
@@ -288,22 +289,22 @@ namespace vote
 
 
 template<class... Args>
-vote::Config::Config(Args&&... args):
+vote::Config::Config(Args&&... args)
+try:
 Vote("config",std::forward<Args>(args)...),
-ForNow("config",std::forward<Args>(args)...)
+ForNow("config",std::forward<Args>(args)...),
+key(tokens(get_issue()).at(0)),
+oper(tokens(get_issue()).at(1)),
+val([this]
 {
-	const auto tokes = tokens(get_issue()," = ");
-
-	if(tokes.size() > 8)
-		throw Exception("Path nesting too deep.");
-
-	if(tokes.size() > 0)
-		key = chomp(tokes.at(0)," ");
-	else
-		throw Exception("Invalid syntax to assign a configuration variable.");
-
-	if(tokes.size() > 1)
-		val = chomp(tokes.at(1)," ");
+	const auto toks(tokens(get_issue()));
+	return toks.size() >= 3? detok(toks.begin()+2,toks.end()) : std::string();
+}())
+{
+}
+catch(const std::out_of_range &e)
+{
+	throw Exception("Invalid syntax to assign a configuration variable.");
 }
 
 

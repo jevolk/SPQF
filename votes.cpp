@@ -503,11 +503,21 @@ void vote::Config::starting()
 {
 	using namespace colors;
 
-	Chan &chan = get_chan();
-	const Adoc &cfg = chan.get();
+	Chan &chan(get_chan());
+	const Adoc &cfg(chan.get());
 
-	if(!val.empty() && cfg[key] == val)
-		throw Exception("Variable already set to that value.");
+	if(val.empty())
+	{
+		chan << "Note: vote deletes variable [" << BOLD << key << OFF << "] "
+		     << BOLD << "and all child variables" << OFF << "."
+		     << flush;
+	}
+
+	if(!val.empty() && oper == "=")
+	{
+		if(cfg[key] == val)
+			throw Exception("Variable already set to that value.");
+	}
 
 	if(!val.empty())
 	{
@@ -515,9 +525,6 @@ void vote::Config::starting()
 		tmp.put(key,val);
 		valid(tmp);            // throws if
 	}
-	else chan << "Note: vote deletes variable [" << BOLD << key << OFF << "] "
-	          << BOLD << "and all child variables" << OFF << "."
-	          << flush;
 
 	chan << "Note: "
 	     << UNDER2 << "Changing the configuration can be " << BOLD << "DANGEROUS" << OFF << ", "
@@ -528,13 +535,49 @@ void vote::Config::starting()
 
 void vote::Config::passed()
 {
-	Chan &chan = get_chan();
-	Adoc cfg = chan.get();
+	Chan &chan(get_chan());
+	Adoc cfg(chan.get());
 
-	if(!val.empty())
+	const auto toks(tokens(val));
+	if(oper == "=" && toks.empty())
+	{
+		if(!cfg.remove(key))
+			throw Exception("The configuration key was not found.");
+	}
+	else if(oper == "=" && toks.size() == 1)
+	{
 		cfg.put(key,val);
-	else if(!cfg.remove(key))
-		throw Exception("The configuration key was not found.");
+	}
+	else if(oper == "=" && toks.size() > 1)
+	{
+		Adoc val;
+		for(const auto &tok : toks)
+			val.push(tok);
+
+		cfg.put_child(key,val);
+	}
+	else if(oper == "+=" && !toks.empty())
+	{
+		Adoc val(cfg.get_child(key,Adoc()));
+		for(const auto &tok : toks)
+			val.push(tok);
+
+		cfg.put_child(key,val);
+	}
+	else if(oper == "-=" && !toks.empty())
+	{
+		Adoc dst;
+		const Adoc src(cfg.get_child(key,Adoc()));
+		for(const auto &pair : src)
+		{
+			const auto &val(pair.second.get("",std::string()));
+			if(std::find(toks.begin(),toks.end(),val) == toks.end())
+				dst.push(val);
+		}
+
+		cfg.put_child(key,dst);
+	}
+	else throw Exception("Configuration update could not be parsed");
 
 	chan.set(cfg);
 }
