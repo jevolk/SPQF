@@ -1022,7 +1022,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 
 	out << "| " << BOLD << vote.get_type() << OFF << ": " << UNDER2 << vote.get_issue() << OFF << " - ";
 
-	if(vote.remaining() >= 0 && vote.get_reason().empty())
+	if(!vote.get_ended())
 	{
 		const auto total(vote.total());
 		const auto required(vote.required());
