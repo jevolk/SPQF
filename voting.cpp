@@ -79,15 +79,7 @@ void Voting::cancel(Vote &vote,
 
 void Voting::eligible_worker()
 {
-	{
-		std::unique_lock<decltype(mutex)> lock(mutex);
-		sem.wait(lock,[this]
-		{
-			return initialized.load(std::memory_order_consume) ||
-			       interrupted.load(std::memory_order_consume);
-		});
-	}
-
+	worker_wait_init();
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
 		eligible_add();
@@ -243,15 +235,7 @@ Voting::id_t Voting::eligible_last_vote(const Chan &chan,
 
 void Voting::remind_worker()
 {
-	{
-		std::unique_lock<decltype(mutex)> lock(mutex);
-		sem.wait(lock,[this]
-		{
-			return initialized.load(std::memory_order_consume) ||
-			       interrupted.load(std::memory_order_consume);
-		});
-	}
-
+	worker_wait_init();
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
 		remind_votes();
@@ -448,6 +432,17 @@ void Voting::worker_sleep(Duration&& duration)
 	const auto fut(now + duration);
 	std::unique_lock<decltype(mutex)> lock(mutex);
 	while(sem.wait_until(lock,fut) != cv_status::timeout && !interrupted.load(std::memory_order_consume));
+}
+
+
+void Voting::worker_wait_init()
+{
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	sem.wait(lock,[this]
+	{
+		return initialized.load(std::memory_order_consume) ||
+		       interrupted.load(std::memory_order_consume);
+	});
 }
 
 

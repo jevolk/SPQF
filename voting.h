@@ -51,6 +51,7 @@ class Voting
 
   private:
 	id_t get_next_id() const;
+	void worker_wait_init();
 	template<class Duration> void worker_sleep(Duration&& duration);
 	std::unique_ptr<Vote> del(const decltype(votes.begin()) &it);
 	std::unique_ptr<Vote> del(const id_t &id);
