@@ -428,6 +428,7 @@ void ResPublica::handle_vote(const Msg &msg,
 
 		// Actual vote types
 		case hash("ban"):      voting.motion<vote::Ban>(chan,user,detok(subtok(toks)));      break;
+		case hash("unban"):    voting.motion<vote::UnBan>(chan,user,detok(subtok(toks)));    break;
 		case hash("kick"):     voting.motion<vote::Kick>(chan,user,detok(subtok(toks)));     break;
 		case hash("mode"):     voting.motion<vote::Mode>(chan,user,detok(subtok(toks)));     break;
 		case hash("quiet"):    voting.motion<vote::Quiet>(chan,user,detok(subtok(toks)));    break;

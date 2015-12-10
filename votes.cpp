@@ -154,6 +154,61 @@ void vote::Ban::passed()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// UnBan
+//
+
+
+void vote::UnBan::starting()
+{
+	const Users &users(get_users());
+	const Chan &chan(get_chan());
+	const Mask mask(get_issue());
+
+	if(mask.get_form() != mask.INVALID)
+	{
+		if(!chan.lists.bans.count(mask))
+			throw Exception("Can't find this mask in the ban list");
+
+		return;
+	}
+
+	const User &user(users.get(mask));
+	const auto &bans(chan.lists.bans);
+	if(!bans.count(user.mask(mask.NICK)) &&
+	   !bans.count(user.mask(mask.HOST)) &&
+	   !bans.count(user.mask(mask.ACCT)))
+		throw Exception("Can't find any trivial match to this user in the ban list. Try the exact ban mask.");
+}
+
+
+void vote::UnBan::passed()
+try
+{
+	Chan &chan(get_chan());
+	const Mask mask(get_issue());
+
+	if(mask.get_form() == mask.INVALID)
+	{
+		const Users &users(get_users());
+		const User &user(users.get(mask));
+		set_effect(chan.unban(user));
+		return;
+	}
+
+	const Delta delta("-b",mask);
+	chan(delta);
+	set_effect(delta);
+}
+catch(const Exception &e)
+{
+	Chan &chan(get_chan());
+	chan << "Error attempting to unban: " << e << chan.flush;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // Flags
 //
 

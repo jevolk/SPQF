@@ -173,6 +173,20 @@ namespace vote
 		                            ModeEffect("ban",std::forward<Args>(args)...) {}
 	};
 
+	class UnBan : public virtual Vote,
+	              public virtual ModeEffect,
+	              public virtual ForNow
+	{
+		void starting() override;
+		void passed() override;
+
+	  public:
+		template<class... Args> UnBan(Args&&... args):
+		                              Vote("unban",std::forward<Args>(args)...),
+		                              ModeEffect("unban",std::forward<Args>(args)...),
+		                              ForNow("unban",std::forward<Args>(args)...) {}
+	};
+
 	class Quiet : public virtual Vote,
 	              public virtual NickIssue,
 	              public virtual ModeEffect
