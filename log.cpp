@@ -132,8 +132,8 @@ const try
 		if(!len)
 			return true;
 
-		size_t i = 0;
-		const char *ptr = buf, *const end = buf + len;
+		size_t i(0);
+		const char *ptr(buf), *const end(buf + len);
 		std::array<const char *, Log::_NUM_FIELDS> field;
 		while(ptr < end)
 		{
@@ -248,23 +248,34 @@ catch(const std::ios_base::failure &f)
 // log:: misc
 //
 
-bool SimpleFilter::operator()(const ClosureArgs &args)
+bool FilterAny::operator()(const ClosureArgs &args)
 const
 {
-	if(std::get<START>(time) && args.time < std::get<START>(time))
-		return false;
+    return std::any_of(this->begin(),this->end(),[&args]
+    (const auto &filter)
+    {
+        return filter(args);
+    });
+}
 
-	if(std::get<END>(time) && args.time >= std::get<END>(time))
-		return false;
 
-	if(!acct.empty() && acct != args.acct)
-		return false;
+bool FilterAll::operator()(const ClosureArgs &args)
+const
+{
+    return std::all_of(this->begin(),this->end(),[&args]
+    (const auto &filter)
+    {
+        return filter(args);
+    });
+}
 
-	if(!nick.empty() && nick != args.nick)
-		return false;
 
-	if(!type.empty() && type != args.type)
-		return false;
-
-	return true;
+bool FilterNone::operator()(const ClosureArgs &args)
+const
+{
+    return std::none_of(this->begin(),this->end(),[&args]
+    (const auto &filter)
+    {
+        return filter(args);
+    });
 }

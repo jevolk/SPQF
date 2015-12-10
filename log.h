@@ -17,48 +17,40 @@ struct ClosureArgs
 	const char *const &type;
 };
 
-struct Filter
+using Closure = std::function<bool (const ClosureArgs &)>;
+
+
+class Filter : protected std::vector<Closure>
 {
+  public:
 	virtual bool operator()(const ClosureArgs &args) const = 0;
+
+  protected:
+	template<class... A> Filter(A&&... a): std::vector<Closure>{std::forward<A>(a)...} {}
 };
 
-template<class F>
-struct FilterAny : Filter,
-                   std::vector<F>
+class FilterAny : public Filter
 {
 	bool operator()(const ClosureArgs &args) const override;
 
-	template<class... A> FilterAny(A&&... a): std::vector<F>{std::forward<A>(a)...} {}
+  public:
+	template<class... A> FilterAny(A&&... a): Filter(std::forward<A>(a)...) {}
 };
 
-template<class F>
-struct FilterAll : Filter,
-                   std::vector<F>
-{
-
-	bool operator()(const ClosureArgs &args) const override;
-	template<class... A> FilterAll(A&&... a): std::vector<F>{std::forward<A>(a)...} {}
-};
-
-template<class F>
-struct FilterNone : Filter,
-                    std::vector<F>
+class FilterAll : public Filter
 {
 	bool operator()(const ClosureArgs &args) const override;
 
-	template<class... A> FilterNone(A&&... a): std::vector<F>{std::forward<A>(a)...} {}
+  public:
+	template<class... A> FilterAll(A&&... a): Filter(std::forward<A>(a)...) {}
 };
 
-struct SimpleFilter : Filter
+class FilterNone : public Filter
 {
-	enum { START = 0, END = 1 };
-
-	std::pair<time_t,time_t> time {0,0};
-	std::string acct;
-	std::string nick;
-	std::string type;
-
 	bool operator()(const ClosureArgs &args) const override;
+
+  public:
+	template<class... A> FilterNone(A&&... a): Filter(std::forward<A>(a)...) {}
 };
 
 
@@ -100,8 +92,6 @@ class Logs
 	std::string get_path(const std::string &name) const;
 
   public:
-	using Closure = std::function<bool (const ClosureArgs &)>;
-
 	// Reading 
 	// returns false if break early - "remain true to the end"
 	bool for_each(const std::string &name, const Closure &closure) const;
@@ -119,40 +109,3 @@ class Logs
 
 } // namespace log
 } // namespace irc
-
-
-
-template<class F>
-bool irc::log::FilterAny<F>::operator()(const ClosureArgs &args)
-const
-{
-	return std::any_of(this->begin(),this->end(),[&args]
-	(const F &filter)
-	{
-		return filter(args);
-	});
-}
-
-
-template<class F>
-bool irc::log::FilterAll<F>::operator()(const ClosureArgs &args)
-const
-{
-	return std::all_of(this->begin(),this->end(),[&args]
-	(const F &filter)
-	{
-		return filter(args);
-	});
-}
-
-
-template<class F>
-bool irc::log::FilterNone<F>::operator()(const ClosureArgs &args)
-const
-{
-	return std::none_of(this->begin(),this->end(),[&args]
-	(const F &filter)
-	{
-		return filter(args);
-	});
-}

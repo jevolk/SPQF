@@ -116,16 +116,19 @@ try
 
 	std::cout << "Finding eligible for channel " << chan.get_name() << std::endl;
 
-	irc::log::SimpleFilter filt;
-	filt.type = "PRI";  // PRIVMSG
-	filt.time.first = 0;
-	filt.time.second = time(NULL) - age;
 	std::map<std::string,uint> count;
 	std::map<std::string,std::string> accts;
-	logs.for_each(chan.get_name(),filt,[&count,&accts]
+	const auto endtime(time(NULL) - age);
+	logs.for_each(chan.get_name(),[&count,&accts,&endtime]
 	(const irc::log::ClosureArgs &a)
 	{
-		if(strlen(a.acct) == 0 || *a.acct == '*')
+		if(a.time > endtime)
+			return true;
+
+		if(strncmp(a.type,"PRI",3) != 0)  // PRIVMSG
+			return true;
+
+		if(strnlen(a.acct,16) == 0 || *a.acct == '*')
 			return true;
 
 		++count[a.acct];
@@ -195,10 +198,20 @@ try
 		const auto &id(*std::max_element(std::begin(ids),std::end(ids)));
 		if(id)
 		{
-			filt.acct = acct;
-			filt.time.first = lex_cast<time_t>(vdb.get_value(id,"ended"));
-			const auto recount(logs.count(chan.get_name(),filt));
-			if(recount < lines)
+			const auto startfrom(lex_cast<time_t>(vdb.get_value(id,"ended")));
+			const irc::log::FilterAny filt([&acct,&startfrom]
+			(const irc::log::ClosureArgs &a)
+			{
+				if(a.time < startfrom)
+					return false;
+
+				if(strncmp(a.type,"PRI",3) != 0)   // PRIVMSG
+					return false;
+
+				return strncmp(a.acct,acct.c_str(),16) == 0;
+			});
+
+			if(logs.count(chan.get_name(),filt) < lines)
 				continue;
 		}
 

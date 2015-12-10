@@ -73,7 +73,7 @@ praetor(sess,chans,users,bot,vdb,logs),
 voting(sess,chans,users,logs,bot,vdb,praetor)
 {
 	// Channel->User catch-all for logging
-	events.chan_user.add(handler::ALL,boost::bind(&Logs::log,&logs,_1,_2,_3),handler::RECURRING);
+	events.chan_user.add(handler::ALL,boost::bind(&irc::log::Logs::log,&logs,_1,_2,_3),handler::RECURRING);
 
 	// Channel command handlers
 	events.chan_user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2,_3),handler::RECURRING);

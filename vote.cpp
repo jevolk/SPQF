@@ -576,11 +576,19 @@ const
 	if(has_access(user,cfg["qualify.access"]))
 		return true;
 
-	irc::log::SimpleFilter filt;
-	filt.acct = user.get_acct();
-	filt.time.first = get_began() - secs_cast(cfg["qualify.age"]);
-	filt.time.second = get_began();
-	filt.type = "PRI";  // PRIVMSG
+	const auto &acct(user.get_acct());
+	const auto endtime(get_began() - secs_cast(cfg["qualify.age"]));
+	const irc::log::FilterAll filt([&acct,&endtime]
+	(const irc::log::ClosureArgs &a)
+	{
+		if(a.time > endtime)
+			return false;
+
+		if(strncmp(a.type,"PRI",3) != 0)  // PRIVMSG
+			return false;
+
+		return strncmp(a.acct,acct.c_str(),16) == 0;
+	});
 
 	const Logs &logs(get_logs());
 	return logs.atleast(get_chan_name(),filt,cfg.get<uint>("qualify.lines"));
@@ -590,16 +598,24 @@ const
 bool Vote::enfranchised(const User &user)
 const
 {
-	const Adoc &cfg = get_cfg();
+	const Adoc &cfg(get_cfg());
 	if(cfg.has("enfranchise.access") || cfg.has("enfranchise.mode"))
 		return has_mode(user,cfg["enfranchise.mode"]) ||
 		       has_access(user,cfg["enfranchise.access"]);
 
-	irc::log::SimpleFilter filt;
-	filt.acct = user.get_acct();
-	filt.time.first = 0;
-	filt.time.second = get_began() - secs_cast(cfg["enfranchise.age"]);
-	filt.type = "PRI";  // PRIVMSG
+	const auto &acct(user.get_acct());
+	const auto endtime(get_began() - secs_cast(cfg["enfranchise.age"]));
+	const irc::log::FilterAll filt([&acct,&endtime]
+	(const irc::log::ClosureArgs &a)
+	{
+		if(a.time > endtime)
+			return false;
+
+		if(strncmp(a.type,"PRI",3) != 0)  // PRIVMSG
+			return false;
+
+		return strncmp(a.acct,acct.c_str(),16) == 0;
+	});
 
 	const Logs &logs(get_logs());
 	return logs.atleast(get_chan_name(),filt,cfg.get<uint>("enfranchise.lines"));
@@ -721,9 +737,6 @@ uint Vote::calc_quorum()
 const
 {
 	const Adoc &cfg(get_cfg());
-	const Chan &chan(get_chan());
-	const Logs &logs(get_logs());
-
 	std::vector<uint> sel
 	{{
 		cfg.get<uint>("quorum.yea"),
@@ -735,7 +748,8 @@ const
 	if(turnout <= 0.0)
 		return *std::max_element(sel.begin(),sel.end());
 
-    std::map<std::string,uint> count;
+	const Chan &chan(get_chan());
+	std::map<std::string,uint> count;
 	chan.users.for_each([this,&count]
 	(const User &user)
 	{
@@ -743,21 +757,29 @@ const
 			count.emplace(user.get_acct(),0);
 	});
 
-	irc::log::SimpleFilter filt;
+	const Logs &logs(get_logs());
 	const auto curtime(time(nullptr));
 	const auto min_age(secs_cast(cfg["quorum.age"]));
-	filt.time.first = curtime - min_age;
-	filt.time.second = curtime;
-	filt.type = "PRI";  // PRIVMSG
-	logs.for_each(get_chan_name(),filt,[&count]
+	const auto start_time(curtime - min_age);
+	logs.for_each(get_chan_name(),[&count,&start_time]
 	(const irc::log::ClosureArgs &a)
 	{
-		const auto it(count.find(a.acct));
-		if(it == count.end())
+		if(a.time < start_time)
 			return true;
 
-		uint &lines(it->second);
-		++lines;
+		if(strncmp(a.type,"PRI",3) != 0)  // PRIVMSG
+			return true;
+
+		if(strnlen(a.acct,16) == 0 || *a.acct == '*')
+			return true;
+
+		const auto it(count.find(a.acct));
+		if(it != count.end())
+		{
+			auto &lines(it->second);
+			++lines;
+		}
+
 		return true;
 	});
 
