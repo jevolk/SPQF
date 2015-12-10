@@ -8,7 +8,6 @@
 
 // libircbot irc::bot::
 #include "ircbot/bot.h"
-
 using namespace irc::bot;
 
 

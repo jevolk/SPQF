@@ -8,11 +8,11 @@
 
 // libircbot irc::bot::
 #include "ircbot/bot.h"
+using namespace irc::bot;
 
 // SPQF
-using namespace irc::bot;
 #include "log.h"
-#include "logs.h"
+using irc::log::Logs;
 #include "vote.h"
 
 
@@ -576,7 +576,7 @@ const
 	if(has_access(user,cfg["qualify.access"]))
 		return true;
 
-	Logs::SimpleFilter filt;
+	irc::log::SimpleFilter filt;
 	filt.acct = user.get_acct();
 	filt.time.first = get_began() - secs_cast(cfg["qualify.age"]);
 	filt.time.second = get_began();
@@ -595,7 +595,7 @@ const
 		return has_mode(user,cfg["enfranchise.mode"]) ||
 		       has_access(user,cfg["enfranchise.access"]);
 
-	Logs::SimpleFilter filt;
+	irc::log::SimpleFilter filt;
 	filt.acct = user.get_acct();
 	filt.time.first = 0;
 	filt.time.second = get_began() - secs_cast(cfg["enfranchise.age"]);
@@ -743,14 +743,14 @@ const
 			count.emplace(user.get_acct(),0);
 	});
 
-	Logs::SimpleFilter filt;
+	irc::log::SimpleFilter filt;
 	const auto curtime(time(nullptr));
 	const auto min_age(secs_cast(cfg["quorum.age"]));
 	filt.time.first = curtime - min_age;
 	filt.time.second = curtime;
 	filt.type = "PRI";  // PRIVMSG
 	logs.for_each(get_chan_name(),filt,[&count]
-	(const Logs::ClosureArgs &a)
+	(const irc::log::ClosureArgs &a)
 	{
 		const auto it(count.find(a.acct));
 		if(it == count.end())

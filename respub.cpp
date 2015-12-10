@@ -8,11 +8,11 @@
 
 // libircbot irc::bot::
 #include "ircbot/bot.h"
+using namespace irc::bot;
 
 // SPQF
-using namespace irc::bot;
 #include "log.h"
-#include "logs.h"
+using irc::log::Logs;
 #include "vote.h"
 #include "votes.h"
 #include "vdb.h"

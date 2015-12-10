@@ -8,11 +8,11 @@
 
 // libircbot irc::bot::
 #include "ircbot/bot.h"
+using namespace irc::bot;
 
 // SPQF
-using namespace irc::bot;
 #include "log.h"
-#include "logs.h"
+using irc::log::Logs;
 #include "vote.h"
 #include "votes.h"
 
@@ -243,7 +243,7 @@ try
 	if(chan.lists.has_flag(user,'V'))
 		throw Exception("User at issue is already enfranchised");
 
-	Logs::SimpleFilter filt;
+	irc::log::SimpleFilter filt;
 	filt.acct = user.get_acct();
 	filt.time.first = 0;
 	filt.time.second = time(NULL) - cfg.get<uint>("eligible.age");

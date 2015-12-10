@@ -8,11 +8,11 @@
 
 // libircbot irc::bot::
 #include "ircbot/bot.h"
+using namespace irc::bot;
 
 // SPQF
-using namespace irc::bot;
 #include "log.h"
-#include "logs.h"
+using irc::log::Logs;
 #include "vote.h"
 #include "votes.h"
 #include "vdb.h"
@@ -116,14 +116,14 @@ try
 
 	std::cout << "Finding eligible for channel " << chan.get_name() << std::endl;
 
-	Logs::SimpleFilter filt;
+	irc::log::SimpleFilter filt;
 	filt.type = "PRI";  // PRIVMSG
 	filt.time.first = 0;
 	filt.time.second = time(NULL) - age;
 	std::map<std::string,uint> count;
 	std::map<std::string,std::string> accts;
 	logs.for_each(chan.get_name(),filt,[&count,&accts]
-	(const Logs::ClosureArgs &a)
+	(const irc::log::ClosureArgs &a)
 	{
 		if(strlen(a.acct) == 0 || *a.acct == '*')
 			return true;
