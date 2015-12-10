@@ -150,6 +150,46 @@ try
 			throw Exception("Instead an attempt was made to cast a ballot for #") << existing.get_id() << ".";
 		});
 
+		const auto now(time(nullptr));
+		const auto limit_age(cfg.get<time_t>("limit.age",0));
+		const auto limit_quorum(cfg.get<time_t>("limit.quorum.age",0));
+		const auto limit_plurality(cfg.get<time_t>("limit.plurality.age",0));
+
+		const Vdb::Terms age_query
+		{
+			Vdb::Term { "ended",  ">=", lex_cast(now - limit_age)        },
+			Vdb::Term { "issue",  "==", vote.get_issue()                 },
+			Vdb::Term { "type",   "==", vote.get_type()                  },
+			Vdb::Term { "chan",   "==", chan.get_name()                  },
+		};
+
+		const Vdb::Terms quorum_query
+		{
+			Vdb::Term { "reason", "==", "quorum"                         },
+			Vdb::Term { "ended",  ">=", lex_cast(now - limit_quorum)     },
+			Vdb::Term { "issue",  "==", vote.get_issue()                 },
+			Vdb::Term { "type",   "==", vote.get_type()                  },
+			Vdb::Term { "chan",   "==", chan.get_name()                  },
+		};
+
+		const Vdb::Terms plurality_query
+		{
+			Vdb::Term { "reason", "==", "plurality"                      },
+			Vdb::Term { "ended",  ">=", lex_cast(now - limit_plurality)  },
+			Vdb::Term { "issue",  "==", vote.get_issue()                 },
+			Vdb::Term { "type",   "==", vote.get_type()                  },
+			Vdb::Term { "chan",   "==", chan.get_name()                  },
+		};
+
+		if(limit_age && !vdb.query(age_query,1).empty())
+			throw Exception("This vote was made too recently. Try again later.");
+
+		if(limit_quorum && !vdb.query(quorum_query,1).empty())
+			throw Exception("This vote failed without a quorum too recently. Try again later.");
+
+		if(limit_plurality && !vdb.query(plurality_query,1).empty())
+			throw Exception("This vote failed with plurality too recently. Try again later.");
+
 		vote.start();
 		sem.notify_one();
 		return vote;

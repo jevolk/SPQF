@@ -53,6 +53,9 @@ cfg([&]
 	ret.put("audibles","");
 	ret.put("limit.active",16);
 	ret.put("limit.user",1);
+	ret.put("limit.age",0);
+	ret.put("limit.quorum.age",120);
+	ret.put("limit.plurality.age",1800);
 	ret.put("quorum.ballots",1);
 	ret.put("quorum.yea",1);
 	ret.put("quorum.age",0);
