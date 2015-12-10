@@ -138,6 +138,10 @@ try
 
 	handle_cmd(msg,chan,user);
 }
+catch(const std::out_of_range &e)
+{
+	user << chan << "You did not supply required arguments. Use the help command." << flush;
+}
 catch(const Assertive &e)
 {
 	user << chan << "Internal Error: " << e << flush;
@@ -146,10 +150,6 @@ catch(const Assertive &e)
 catch(const Exception &e)
 {
 	user << chan << "Failed: " << e << flush;
-}
-catch(const std::out_of_range &e)
-{
-	user << chan << "You did not supply required arguments. Use the help command." << flush;
 }
 
 
@@ -177,6 +177,10 @@ try
 			vote.event_cnotice(user,msg[TEXT]);
 	});
 }
+catch(const std::out_of_range &e)
+{
+	user << chan << "You did not supply required arguments. Use the help command." << flush;
+}
 catch(const Assertive &e)
 {
 	user << chan << "Internal Error: " << e << flush;
@@ -185,10 +189,6 @@ catch(const Assertive &e)
 catch(const Exception &e)
 {
 	user << chan << "Failed: " << e << flush;
-}
-catch(const std::out_of_range &e)
-{
-	user << chan << "You did not supply required arguments. Use the help command." << flush;
 }
 
 
@@ -214,6 +214,10 @@ try
 
 	handle_cmd(msg,user);
 }
+catch(const std::out_of_range &e)
+{
+	user << "You did not supply required arguments. Use the help command." << flush;
+}
 catch(const Assertive &e)
 {
 	user << "Internal Error: " << e << flush;
@@ -222,10 +226,6 @@ catch(const Assertive &e)
 catch(const Exception &e)
 {
 	user << "Failed: " << e << flush;
-}
-catch(const std::out_of_range &e)
-{
-	user << "You did not supply required arguments. Use the help command." << flush;
 }
 
 
@@ -249,6 +249,10 @@ try
 		vote.event_notice(user,msg[TEXT]);
 	});
 }
+catch(const std::out_of_range &e)
+{
+	user << "You did not supply required arguments. Use the help command." << flush;
+}
 catch(const Assertive &e)
 {
 	user << "Internal Error: " << e << flush;
@@ -257,10 +261,6 @@ catch(const Assertive &e)
 catch(const Exception &e)
 {
 	user << "Failed: " << e << flush;
-}
-catch(const std::out_of_range &e)
-{
-	user << "You did not supply required arguments. Use the help command." << flush;
 }
 
 

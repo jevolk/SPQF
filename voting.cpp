@@ -228,7 +228,7 @@ Voting::id_t Voting::eligible_last_vote(const Chan &chan,
 	terms.emplace_front(Vdb::Term{"issue","==",nick});
 	terms.emplace_front(Vdb::Term{"chan","==",chan.get_name()});
 
-	auto res(vdb.query(terms,1));
+	const auto res(vdb.query(terms,1));
 	return !res.empty()? res.front() : 0;   // note sentinel 0 is a valid vote id but ignored here
 }
 
