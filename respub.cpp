@@ -1003,6 +1003,10 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   const id_t &id)
 {
 	using namespace colors;
+	using std::setfill;
+	using std::setw;
+	using std::right;
+	using std::left;
 
 	const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
 	const auto cfg(vote.get_cfg());
@@ -1014,10 +1018,13 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	});
 
 	out << vote << ": ";
-	out << BOLD << "YEA" << OFF << ": " << BOLD << FG::GREEN << tally.first << OFF << " ";
-	out << BOLD << "NAY" << OFF << ": " << BOLD << FG::RED << tally.second << OFF << " ";
-	out << BOLD << "YOU" << OFF << ": ";
+	out << BOLD << "YEA" << OFF << ": "
+	    << BOLD << FG::GREEN << setw(2) << setfill(' ') << left << tally.first << OFF << " ";
 
+	out << BOLD << "NAY" << OFF << ": "
+	    << BOLD << FG::RED << setw(2) << setfill(' ') << left << tally.second << OFF << " ";
+
+	out << BOLD << "YOU" << OFF << ": ";
 	if(!vote.voted(user))
 		out << BOLD << FG::BLACK << "---" << OFF << " ";
 	else if(vote.position(user) == Vote::YEA)
