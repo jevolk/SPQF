@@ -487,9 +487,18 @@ void ResPublica::handle_vote_ballot(const Msg &msg,
                                     const Vote::Ballot &ballot)
 try
 {
-	auto &vote = !toks.empty()? voting.get(lex_cast<Vote::id_t>(*toks.at(0))):
-	                            voting.get(chan);
-	vote.event_vote(user,ballot);
+	if(toks.empty())
+	{
+		auto &vote(voting.get(chan));
+		vote.event_vote(user,ballot);
+		return;
+	}
+
+	for(const auto &tok : toks)
+	{
+		auto &vote(voting.get(lex_cast<Vote::id_t>(*tok)));
+		vote.event_vote(user,ballot);
+	}
 }
 catch(const boost::bad_lexical_cast &e)
 {
@@ -827,9 +836,11 @@ void ResPublica::handle_vote_ballot(const Msg &msg,
                                     const Vote::Ballot &ballot)
 try
 {
-	const auto id = lex_cast<Vote::id_t>(*toks.at(0));
-	auto &vote = voting.get(id);
-	vote.event_vote(user,ballot);
+	for(const auto &tok : toks)
+	{
+		auto &vote(voting.get(lex_cast<Vote::id_t>(*tok)));
+		vote.event_vote(user,ballot);
+	}
 }
 catch(const boost::bad_lexical_cast &e)
 {
