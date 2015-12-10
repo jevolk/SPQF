@@ -55,6 +55,7 @@ class Voting
 	template<class Duration> void worker_sleep(Duration&& duration);
 	std::unique_ptr<Vote> del(const decltype(votes.begin()) &it);
 	std::unique_ptr<Vote> del(const id_t &id);
+	void valid_motion(Vote &vote);  // throws out
 
 	void call_finish(Vote &vote) noexcept;
 	void poll_votes();
@@ -94,102 +95,20 @@ try
 	if(!initialized.load(std::memory_order_consume))
 		throw Exception("Voting not yet initialized: try again in a few minutes");
 
-	const id_t id = get_next_id();
-	const auto iit = votes.emplace(id,std::make_unique<Vote>(id,
-	                                                         vdb,
-	                                                         sess,
-	                                                         chans,
-	                                                         users,
-	                                                         logs,
-	                                                         std::forward<Args>(args)...));
+	const id_t id(get_next_id());
+	const auto iit(votes.emplace(id,std::make_unique<Vote>(id,
+	                                                       vdb,
+	                                                       sess,
+	                                                       chans,
+	                                                       users,
+	                                                       logs,
+	                                                       std::forward<Args>(args)...)));
 	if(iit.second) try
 	{
-		using limits = std::numeric_limits<size_t>;
-
 		Vote &vote(dynamic_cast<Vote &>(*iit.first->second));
-		const Adoc &cfg(vote.get_cfg());
-		const User &user(vote.get_user());
-		const Chan &chan(vote.get_chan());
-
-		vote.valid(cfg);
-		chanidx.emplace(chan.get_name(),id);
-		useridx.emplace(user.get_acct(),id);
-
-		if(!chan.users.mode(user).has('o'))
-		{
-			if(chanidx.count(chan.get_name()) > cfg.get("limit.active",limits::max()))
-				throw Exception("Too many active votes for this channel.");
-
-			if(useridx.count(user.get_acct()) > cfg.get("limit.user",limits::max()))
-				throw Exception("Too many active votes started by you on this channel.");
-		}
-
-		if(!vote.speaker(user))
-			throw Exception("You are not able to create votes on this channel.");
-
-		if(!vote.enfranchised(user))
-			throw Exception("You are not yet enfranchised in this channel.");
-
-		if(!vote.qualified(user))
-			throw Exception("You have not been participating enough to start a vote.");
-
-		for_each(chan,[&vote](::Vote &abstract)
-		{
-			if(vote.get_type() != abstract.get_type())
-				return;
-
-			if(vote.get_id() == abstract.get_id())
-				return;
-
-			Vote &existing(dynamic_cast<Vote &>(abstract));
-			if(tolower(vote.get_issue()) != tolower(existing.get_issue()))
-				return;
-
-			auto &user(vote.get_user());
-			existing.event_vote(user,Vote::YEA);
-			throw Exception("Instead an attempt was made to cast a ballot for #") << existing.get_id() << ".";
-		});
-
-		const auto now(time(nullptr));
-		const auto limit_age(cfg.get<time_t>("limit.age",0));
-		const auto limit_quorum(cfg.get<time_t>("limit.quorum.age",0));
-		const auto limit_plurality(cfg.get<time_t>("limit.plurality.age",0));
-
-		const Vdb::Terms age_query
-		{
-			Vdb::Term { "ended",  ">=", lex_cast(now - limit_age)        },
-			Vdb::Term { "issue",  "==", vote.get_issue()                 },
-			Vdb::Term { "type",   "==", vote.get_type()                  },
-			Vdb::Term { "chan",   "==", chan.get_name()                  },
-		};
-
-		const Vdb::Terms quorum_query
-		{
-			Vdb::Term { "reason", "==", "quorum"                         },
-			Vdb::Term { "ended",  ">=", lex_cast(now - limit_quorum)     },
-			Vdb::Term { "issue",  "==", vote.get_issue()                 },
-			Vdb::Term { "type",   "==", vote.get_type()                  },
-			Vdb::Term { "chan",   "==", chan.get_name()                  },
-		};
-
-		const Vdb::Terms plurality_query
-		{
-			Vdb::Term { "reason", "==", "plurality"                      },
-			Vdb::Term { "ended",  ">=", lex_cast(now - limit_plurality)  },
-			Vdb::Term { "issue",  "==", vote.get_issue()                 },
-			Vdb::Term { "type",   "==", vote.get_type()                  },
-			Vdb::Term { "chan",   "==", chan.get_name()                  },
-		};
-
-		if(limit_age && !vdb.query(age_query,1).empty())
-			throw Exception("This vote was made too recently. Try again later.");
-
-		if(limit_quorum && !vdb.query(quorum_query,1).empty())
-			throw Exception("This vote failed without a quorum too recently. Try again later.");
-
-		if(limit_plurality && !vdb.query(plurality_query,1).empty())
-			throw Exception("This vote failed with plurality too recently. Try again later.");
-
+		chanidx.emplace(vote.get_chan_name(),id);
+		useridx.emplace(vote.get_user_acct(),id);
+		valid_motion(vote);
 		vote.start();
 		sem.notify_one();
 		return vote;

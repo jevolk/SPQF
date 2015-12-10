@@ -397,6 +397,92 @@ catch(const std::exception &e)
 }
 
 
+void Voting::valid_motion(Vote &vote)
+{
+	using limits = std::numeric_limits<size_t>;
+
+	const Adoc &cfg(vote.get_cfg());
+	const User &user(vote.get_user());
+	const Chan &chan(vote.get_chan());
+
+	vote.valid(cfg);
+
+	if(!chan.users.mode(user).has('o') && user.get_nick() != sess.get_nick())
+	{
+		if(chanidx.count(chan.get_name()) > cfg.get("limit.active",limits::max()))
+			throw Exception("Too many active votes for this channel.");
+
+		if(useridx.count(user.get_acct()) > cfg.get("limit.user",limits::max()))
+			throw Exception("Too many active votes started by you on this channel.");
+	}
+
+	if(!vote.speaker(user))
+		throw Exception("You are not able to create votes on this channel.");
+
+	if(!vote.enfranchised(user))
+		throw Exception("You are not yet enfranchised in this channel.");
+
+	if(!vote.qualified(user))
+		throw Exception("You have not been participating enough to start a vote.");
+
+	for_each(chan,[&vote](Vote &existing)
+	{
+		if(vote.get_id() == existing.get_id())
+			return;
+
+		if(vote.get_type() != existing.get_type())
+			return;
+
+		if(!boost::iequals(vote.get_issue(),existing.get_issue()))
+			return;
+
+		auto &user(vote.get_user());
+		existing.event_vote(user,Vote::YEA);
+		throw Exception("Instead an attempt was made to cast a ballot for #") << existing.get_id() << ".";
+	});
+
+	const auto now(time(nullptr));
+	const auto limit_age(cfg.get<time_t>("limit.age",0));
+	const auto limit_quorum(cfg.get<time_t>("limit.quorum.age",0));
+	const auto limit_plurality(cfg.get<time_t>("limit.plurality.age",0));
+
+	const Vdb::Terms age_query
+	{
+		Vdb::Term { "ended",  ">=", lex_cast(now - limit_age)        },
+		Vdb::Term { "issue",  "==", vote.get_issue()                 },
+		Vdb::Term { "type",   "==", vote.get_type()                  },
+		Vdb::Term { "chan",   "==", chan.get_name()                  },
+	};
+
+	const Vdb::Terms quorum_query
+	{
+		Vdb::Term { "reason", "==", "quorum"                         },
+		Vdb::Term { "ended",  ">=", lex_cast(now - limit_quorum)     },
+		Vdb::Term { "issue",  "==", vote.get_issue()                 },
+		Vdb::Term { "type",   "==", vote.get_type()                  },
+		Vdb::Term { "chan",   "==", chan.get_name()                  },
+	};
+
+	const Vdb::Terms plurality_query
+	{
+		Vdb::Term { "reason", "==", "plurality"                      },
+		Vdb::Term { "ended",  ">=", lex_cast(now - limit_plurality)  },
+		Vdb::Term { "issue",  "==", vote.get_issue()                 },
+		Vdb::Term { "type",   "==", vote.get_type()                  },
+		Vdb::Term { "chan",   "==", chan.get_name()                  },
+	};
+
+	if(limit_age && !vdb.query(age_query,1).empty())
+		throw Exception("This vote was made too recently. Try again later.");
+
+	if(limit_quorum && !vdb.query(quorum_query,1).empty())
+		throw Exception("This vote failed without a quorum too recently. Try again later.");
+
+	if(limit_plurality && !vdb.query(plurality_query,1).empty())
+		throw Exception("This vote failed with plurality too recently. Try again later.");
+}
+
+
 std::unique_ptr<Vote> Voting::del(const id_t &id)
 {
 	const auto vit = votes.find(id);
