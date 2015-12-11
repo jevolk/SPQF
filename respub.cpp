@@ -659,7 +659,7 @@ try
 	auto &chan(chans.get(*toks.at(0)));
 
 	// Founder config override to fix a broken config
-	if(toks.size() >= 3 && *toks.at(2) == "=" && chan.lists.has_flag(user,'F'))
+	if(toks.size() >= 3 && *toks.at(2) == "=" && (chan.lists.has_flag(user,'F') || user.is_owner()))
 	{
 		auto cfg(chan.get());
 		const auto &key(*toks.at(1));
