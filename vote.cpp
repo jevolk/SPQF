@@ -572,7 +572,10 @@ const
 bool Vote::qualified(const User &user)
 const
 {
-	const Adoc &cfg = get_cfg();
+	if(!user.is_logged_in())
+		return false;
+
+	const Adoc &cfg(get_cfg());
 	if(has_access(user,cfg["qualify.access"]))
 		return true;
 
@@ -598,6 +601,9 @@ const
 bool Vote::enfranchised(const User &user)
 const
 {
+	if(!user.is_logged_in())
+		return false;
+
 	const Adoc &cfg(get_cfg());
 	if(cfg.has("enfranchise.access") || cfg.has("enfranchise.mode"))
 		return has_mode(user,cfg["enfranchise.mode"]) ||
