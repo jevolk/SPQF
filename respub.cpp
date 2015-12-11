@@ -919,6 +919,7 @@ try
 		{ "limit",    "10"          },
 		{ "order",    "descending"  },
 		{ "oneline",  "0"           },
+		{ "count",    "0"           },
 	};
 
 	std::forward_list<Vdb::Term> terms
@@ -966,6 +967,10 @@ try
 			{
 				options["oneline"] = "1";
 			}
+			else if(key == "count")
+			{
+				options["count"] = "1";
+			}
 		}
 		else if(op == "=" && options.count(key))
 			options.at(key) = val;
@@ -974,13 +979,14 @@ try
 	});
 
 	static const auto max_limit(100);
-	const auto limit(lex_cast<size_t>(options.at("limit")));
-	if(limit > max_limit)
+	const auto optlim(lex_cast<uint>(options.at("limit")));
+	if(optlim > max_limit)
 		throw Exception("Exceeded the maximum --limit=") << max_limit;
 
 	const bool descending(options.at("order") == "descending");
+	const auto limit(options.at("count") != "1"? optlim : 0);
 	auto res(vdb.query(terms,limit,descending));
-	if(!res.empty())
+	if(!res.empty() && limit > 0)
 	{
 		if(options.at("oneline") != "0")
 			vote_list_oneline(chan,user,out,res);
@@ -988,7 +994,10 @@ try
 			for(const auto &id : res)
 				handle_vote_list(msg,user,out,{},id);
 	}
-	else out << "No matching results." << out.flush;
+	else if(!res.empty())
+		out << "Found " << res.size() << " results." << out.flush;
+	else
+		out << "No matching results." << out.flush;
 }
 catch(const boost::bad_lexical_cast &e)
 {
