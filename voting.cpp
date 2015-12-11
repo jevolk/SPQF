@@ -188,7 +188,7 @@ try
 				Vdb::Term { "reason", "==", ""           },
 			}),
 
-			eligible_last_vote(chan,nick,
+			eligible_last_vote(chan,acct,
 			{
 				Vdb::Term { "type",   "==", "civis"      },
 				Vdb::Term { "reason", "==", "plurality"  },
