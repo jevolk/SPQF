@@ -105,7 +105,8 @@ try
 	                                                       std::forward<Args>(args)...)));
 	if(iit.second) try
 	{
-		Vote &vote(dynamic_cast<Vote &>(*iit.first->second));
+		auto &ptr(iit.first->second);
+		auto &vote(dynamic_cast<Vote &>(*ptr));
 		chanidx.emplace(vote.get_chan_name(),id);
 		useridx.emplace(vote.get_user_acct(),id);
 		valid_motion(vote);
@@ -123,4 +124,8 @@ try
 catch(const Exception &e)
 {
 	throw Exception() << "New motion is not valid: " << e;
+}
+catch(const std::exception &e)
+{
+	throw Assertive(e.what());
 }
