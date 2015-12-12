@@ -272,10 +272,12 @@ void ResPublica::handle_cmode(const Msg &msg,
 	if(msg.from("chanserv") || msg.from(sess.get_nick()))
 		return;
 
-	const auto &serv(sess.get_server());
-	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
+	if(chan.get_val<bool>("config.vote.appeal.disable"))
+		return;
 
 	User &user(users.get(msg.get_nick()));
+	const auto &serv(sess.get_server());
+	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
 	for(const auto &delta : deltas)
 		if(bool(delta) && (delta == 'q' || delta == 'b'))
 			voting.motion<vote::Appeal>(chan,user,std::string(~delta));
