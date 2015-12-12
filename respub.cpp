@@ -275,17 +275,10 @@ void ResPublica::handle_cmode(const Msg &msg,
 	const auto &serv(sess.get_server());
 	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
 
-	size_t appeals(0);
 	User &user(users.get(msg.get_nick()));
 	for(const auto &delta : deltas)
 		if(bool(delta) && (delta == 'q' || delta == 'b'))
-		{
 			voting.motion<vote::Appeal>(chan,user,std::string(~delta));
-			++appeals;
-		}
-
-	if(appeals)
-		chan << user.get_nick() << "'s unilateral executive decision invoked this automatic appeal process." << flush;
 }
 
 
