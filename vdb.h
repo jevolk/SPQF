@@ -166,6 +166,10 @@ try
 		case hash("topic"):     return std::make_unique<vote::Topic>(id,*this,std::forward<Args>(args)...);
 		case hash("opine"):     return std::make_unique<vote::Opine>(id,*this,std::forward<Args>(args)...);
 		case hash("quote"):     return std::make_unique<vote::Quote>(id,*this,std::forward<Args>(args)...);
+		case hash("exempt"):    return std::make_unique<vote::Exempt>(id,*this,std::forward<Args>(args)...);
+		case hash("unexempt"):  return std::make_unique<vote::UnExempt>(id,*this,std::forward<Args>(args)...);
+		case hash("op"):        return std::make_unique<vote::Op>(id,*this,std::forward<Args>(args)...);
+		case hash("deop"):      return std::make_unique<vote::DeOp>(id,*this,std::forward<Args>(args)...);
 		case hash("ban"):       return std::make_unique<vote::Ban>(id,*this,std::forward<Args>(args)...);
 		case hash("unban"):     return std::make_unique<vote::UnBan>(id,*this,std::forward<Args>(args)...);
 		case hash("quiet"):     return std::make_unique<vote::Quiet>(id,*this,std::forward<Args>(args)...);

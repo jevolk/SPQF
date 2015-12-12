@@ -26,7 +26,7 @@ using irc::log::Logs;
 
 void vote::Import::starting()
 {
-	static const auto usage = "!vote import <#chan> <nickname of bot>";
+	static const auto usage("!vote import <#chan> <nickname of bot>");
 
 	if(get_target_bot().empty())
 		throw Exception("You must hint the nickname of the bot: ") << usage;
@@ -37,16 +37,16 @@ void vote::Import::starting()
 	if(tolower(get_target_chan()) == tolower(get_chan_name()))
 		throw Exception("The source of the config must be a different channel.");
 
-	const auto &sess = get_sess();
-	const auto &isup = sess.get_isupport();
-	const auto type = get_target_chan().substr(0,1);
+	const auto &sess(get_sess());
+	const auto &isup(sess.get_isupport());
+	const auto type(get_target_chan().substr(0,1));
 	if(!isup.find_in("CHANTYPES",type))
 		throw Exception("You must specify a valid channel type for this server.");
 
 	if(tolower(get_target_bot()) == tolower(sess.get_nick()))
 	{
-		Chans &chans = get_chans();
-		Chan &chan = chans.get(get_target_chan());
+		auto &chans(get_chans());
+		auto &chan(chans.get(get_target_chan()));
 		received << chan.get("config.vote");
 		return;
 	}
@@ -71,7 +71,7 @@ void vote::Import::passed()
 	if(received.str().empty())
 		throw Exception("Failed to fetch any config from the source. No change.");
 
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	chan.set("config.vote",received.str());
 
 	chan << "Applied new configuration"
@@ -89,7 +89,7 @@ void vote::Import::passed()
 
 void vote::UnQuiet::passed()
 {
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	set_effect(chan.unquiet(user));
 }
 
@@ -103,7 +103,7 @@ void vote::UnQuiet::passed()
 
 void vote::Quiet::passed()
 {
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	set_effect(chan.quiet(user));
 }
 
@@ -115,9 +115,17 @@ void vote::Quiet::passed()
 //
 
 
+void vote::DeVoice::starting()
+{
+	auto &chan(get_chan());
+	if(!chan.users.mode(user).has('v'))
+		throw Exception("User at issue is not voiced");
+}
+
+
 void vote::DeVoice::passed()
 {
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	set_effect(chan.devoice(user));
 }
 
@@ -129,9 +137,17 @@ void vote::DeVoice::passed()
 //
 
 
+void vote::Voice::starting()
+{
+	auto &chan(get_chan());
+	if(chan.users.mode(user).has('v'))
+		throw Exception("User at issue already has voice");
+}
+
+
 void vote::Voice::passed()
 {
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	set_effect(chan.voice(user));
 }
 
@@ -145,7 +161,7 @@ void vote::Voice::passed()
 
 void vote::Ban::passed()
 {
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	set_effect(chan.ban(user));
 	chan.remove(user,"And I ain't even mad");
 }
@@ -160,8 +176,8 @@ void vote::Ban::passed()
 
 void vote::UnBan::starting()
 {
-	const Users &users(get_users());
-	const Chan &chan(get_chan());
+	const auto &users(get_users());
+	const auto &chan(get_chan());
 	const Mask mask(get_issue());
 
 	if(mask.get_form() != mask.INVALID)
@@ -172,7 +188,7 @@ void vote::UnBan::starting()
 		return;
 	}
 
-	const User &user(users.get(mask));
+	const auto &user(users.get(mask));
 	const auto &bans(chan.lists.bans);
 	if(!bans.count(user.mask(mask.NICK)) &&
 	   !bans.count(user.mask(mask.HOST)) &&
@@ -184,13 +200,13 @@ void vote::UnBan::starting()
 void vote::UnBan::passed()
 try
 {
-	Chan &chan(get_chan());
+	auto &chan(get_chan());
 	const Mask mask(get_issue());
 
 	if(mask.get_form() == mask.INVALID)
 	{
-		const Users &users(get_users());
-		const User &user(users.get(mask));
+		const auto &users(get_users());
+		const auto &user(users.get(mask));
 		set_effect(chan.unban(user));
 		return;
 	}
@@ -201,8 +217,130 @@ try
 }
 catch(const Exception &e)
 {
-	Chan &chan(get_chan());
+	auto &chan(get_chan());
 	chan << "Error attempting to unban: " << e << chan.flush;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Op
+//
+
+
+void vote::Op::starting()
+{
+	auto &chan(get_chan());
+	if(chan.users.mode(user).has('o'))
+		throw Exception("User at issue is already op");
+}
+
+
+void vote::Op::passed()
+{
+	auto &chan(get_chan());
+	set_effect(chan.op(user));
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// DeOp
+//
+
+
+void vote::DeOp::starting()
+{
+	auto &chan(get_chan());
+	if(!chan.users.mode(user).has('o'))
+		throw Exception("User at issue is not an op");
+}
+
+
+void vote::DeOp::passed()
+{
+	auto &chan(get_chan());
+	set_effect(chan.deop(user));
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Exempt
+//
+
+
+void vote::Exempt::starting()
+{
+	const auto &chan(get_chan());
+	const auto &excepts(chan.lists.excepts);
+	if(excepts.count(user.mask(Mask::HOST)) && excepts.count(user.mask(Mask::ACCT)))
+		throw Exception("User already has entries in the except list");
+}
+
+
+void vote::Exempt::passed()
+{
+	auto &chan(get_chan());
+	set_effect(chan.except(user));
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// UnExempt
+//
+
+
+void vote::UnExempt::starting()
+{
+	const auto &users(get_users());
+	const auto &chan(get_chan());
+	const Mask mask(get_issue());
+
+	if(mask.get_form() != mask.INVALID)
+	{
+		if(!chan.lists.excepts.count(mask))
+			throw Exception("Can't find this mask in the except list");
+
+		return;
+	}
+
+	const auto &user(users.get(mask));
+	const auto &excepts(chan.lists.excepts);
+	if(!excepts.count(user.mask(mask.NICK)) &&
+	   !excepts.count(user.mask(mask.HOST)) &&
+	   !excepts.count(user.mask(mask.ACCT)))
+		throw Exception("Can't find any trivial match to this user in the except list. Try the exact mask.");
+}
+
+
+void vote::UnExempt::passed()
+try
+{
+	auto &chan(get_chan());
+	const Mask mask(get_issue());
+
+	if(mask.get_form() == mask.INVALID)
+	{
+		const auto &users(get_users());
+		const auto &user(users.get(mask));
+		set_effect(chan.unexcept(user));
+		return;
+	}
+
+	const Delta delta("-e",mask);
+	chan(delta);
+	set_effect(delta);
+}
+catch(const Exception &e)
+{
+	auto &chan(get_chan());
+	chan << "Error attempting to unexempt: " << e << chan.flush;
 }
 
 
@@ -216,14 +354,14 @@ catch(const Exception &e)
 void vote::Flags::passed()
 {
 	const auto toks(tokens(get_issue()));
-	const Users &users(get_users());
-	const User &user(users.get(toks.at(0)));
+	const auto &users(get_users());
+	const auto &user(users.get(toks.at(0)));
 	const Deltas deltas(toks.at(1));
 
 	std::stringstream effect;
 	effect << user.get_acct() << " " << deltas;
 
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	chan.flags(user,deltas);
 	set_effect(effect.str());
 }
@@ -240,7 +378,7 @@ void vote::Flags::expired()
 	const User user(&get_adb(),&get_sess(),nullptr,acct,"",acct);
 
 	const Deltas deltas(toks.at(1));
-	Chan &chan(get_chan());
+	auto &chan(get_chan());
 	chan.flags(user,~deltas);
 }
 
@@ -250,12 +388,12 @@ void vote::Flags::starting()
 //	const Sess &sess = get_sess();
 //	const Server &serv = sess.get_server();
 
-	const Users &users(get_users());
-	const Chan &chan(get_chan());
-	const Adoc &cfg(get_cfg());
+	const auto &users(get_users());
+	const auto &chan(get_chan());
+	const auto &cfg(get_cfg());
 
 	const auto toks(tokens(get_issue()));
-	const User &user(users.get(toks.at(0)));
+	const auto &user(users.get(toks.at(0)));
 	const Deltas deltas(toks.at(1));
 
 	const irc::bot::Mode allowed(cfg["flags.access"]);
@@ -286,9 +424,9 @@ void vote::Flags::starting()
 void vote::Civis::starting()
 try
 {
-	const Logs &logs(get_logs());
-	const Chan &chan(get_chan());
-	const Adoc &cfg(get_cfg());
+	const auto &logs(get_logs());
+	const auto &chan(get_chan());
+	const auto &cfg(get_cfg());
 
 	const Adoc excludes(cfg.get_child("civis.eligible.exclude",Adoc()));
 	const auto exclude(excludes.into<std::set<std::string>>());
@@ -344,7 +482,7 @@ void vote::Civis::passed()
 	std::stringstream effect;
 	effect << user.get_acct() << " " << delta;
 
-	Chan &chan(get_chan());
+	auto &chan(get_chan());
 	chan.flags(user,delta);
 	set_effect(effect.str());
 }
@@ -353,7 +491,7 @@ void vote::Civis::passed()
 void vote::Civis::expired()
 {
 	const Delta delta("-V");
-	Chan &chan(get_chan());
+	auto &chan(get_chan());
 	chan.flags(user,delta);
 }
 
@@ -397,6 +535,86 @@ void vote::Censure::expired()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// Staff
+//
+
+
+void vote::Staff::starting()
+{
+	const auto &cfg(get_cfg());
+	const auto &chan(get_chan());
+	const auto &flags(cfg["staff.access"]);
+
+	if(flags.empty())
+		throw Exception("Access flags for staff are empty and must be configured");
+
+	if(!chan.lists.has_flag(user))
+		return;
+
+	const auto &existing(chan.lists.get_flag(user));
+	const bool has_all(std::all_of(flags.begin(),flags.end(),[&existing]
+	(const char &flag)
+	{
+		return existing.has(flag);
+	}));
+
+	if(has_all)
+		throw Exception("User at issue already has all of the staff flags");
+}
+
+
+void vote::Staff::passed()
+{
+	auto &chan(get_chan());
+	const auto &cfg(get_cfg());
+	const Delta delta(std::string("+") + cfg["staff.access"]);
+	chan.flags(user,delta);
+	set_effect(delta);
+}
+
+
+void vote::Staff::expired()
+{
+	auto &chan(get_chan());
+	const Delta delta(get_effect());
+	chan.flags(user,~delta);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// DeStaff
+//
+
+
+void vote::DeStaff::starting()
+{
+	const auto &cfg(get_cfg());
+	const auto &chan(get_chan());
+	const auto &flags(cfg["staff.access"]);
+
+	if(flags.empty())
+		throw Exception("Access flags for staff are empty and must be configured");
+
+	if(!chan.lists.has_flag(user))
+		throw Exception("User at issue doesn't even have any flags to remove!");
+}
+
+
+void vote::DeStaff::passed()
+{
+	auto &chan(get_chan());
+	const auto &cfg(get_cfg());
+	const Delta delta(std::string("-") + cfg["staff.access"]);
+	chan.flags(user,delta);
+	set_effect(delta);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // Opine
 //
 
@@ -405,7 +623,7 @@ void vote::Opine::passed()
 {
 	using namespace colors;
 
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	chan << "The People of " << chan.get_name() << " decided "
 	     << BOLD << get_issue() << OFF
 	     << flush;
@@ -421,7 +639,7 @@ void vote::Opine::passed()
 
 void vote::Quote::starting()
 {
-	Chan &chan(get_chan());
+	auto &chan(get_chan());
 	if(!chan.users.has(user))
 		throw Exception("You can only quote people currently online in this channel. Remember to surround nickname with < and >.");
 }
@@ -431,7 +649,7 @@ void vote::Quote::passed()
 {
 	using namespace colors;
 
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	chan << "The People of " << chan.get_name() << " quoted "
 	     << BOLD << get_issue() << OFF
 	     << flush;
@@ -447,12 +665,12 @@ void vote::Quote::passed()
 
 void vote::Kick::passed()
 {
-	const Adoc &cfg = get_cfg();
-	Chan &chan = get_chan();
+	const auto &cfg(get_cfg());
+	auto &chan(get_chan());
 
 	{
-		const Users &users = get_users();
-		const User &user = users.get(this->user.get_nick());
+		const auto &users(get_users());
+		const auto &user(users.get(this->user.get_nick()));
 		if(cfg["shield.when_away"] == "1" && user.is_away())
 			throw Exception("The user is currently away and shield.when_away == 1");
 	}
@@ -470,7 +688,7 @@ void vote::Kick::passed()
 
 void vote::Invite::passed()
 {
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	chan << "An invite to " << get_issue() << " is being sent..." << flush;
 	chan.invite(get_issue());
 }
@@ -485,11 +703,11 @@ void vote::Invite::passed()
 
 void vote::Mode::passed()
 {
-	const Sess &sess = get_sess();
-	const Server &serv = sess.get_server();
-
+	const auto &sess(get_sess());
+	const auto &serv(sess.get_server());
 	const Deltas deltas(get_issue(),serv);
-	Chan &chan(get_chan());
+
+	auto &chan(get_chan());
 	chan(deltas);
 	set_effect(deltas);
 }
@@ -497,15 +715,15 @@ void vote::Mode::passed()
 
 void vote::Mode::starting()
 {
-	const Sess &sess = get_sess();
-	const Users &users = get_users();
-	const Server &serv = sess.get_server();
-	const User &myself = users.get(sess.get_nick());
+	const auto &sess(get_sess());
+	const auto &users(get_users());
+	const auto &serv(sess.get_server());
+	const auto &myself(users.get(sess.get_nick()));
 
 	const Deltas deltas(get_issue(),serv);
 	deltas.validate_chan(serv);
 
-	for(const Delta delta : deltas)
+	for(const auto &delta : deltas)
 		if(myself.is_myself(std::get<Delta::MASK>(delta)))
 			throw Exception("One of the mode deltas matches myself.");
 }
@@ -520,11 +738,11 @@ void vote::Mode::starting()
 
 void vote::Appeal::passed()
 {
-	const Sess &sess(get_sess());
-	const Server &serv(sess.get_server());
+	const auto &sess(get_sess());
+	const auto &serv(sess.get_server());
 	const Deltas deltas(get_issue(),serv);
 
-	Chan &chan(get_chan());
+	auto &chan(get_chan());
 	chan(deltas);
 	set_effect(deltas);
 }
@@ -532,12 +750,12 @@ void vote::Appeal::passed()
 
 void vote::Appeal::starting()
 {
-	const Sess &sess(get_sess());
-	const Server &serv(sess.get_server());
+	const auto &sess(get_sess());
+	const auto &serv(sess.get_server());
 	const Deltas deltas(get_issue(),serv);
 	deltas.validate_chan(serv);
 
-	const User &user(get_user());
+	const auto &user(get_user());
 	cast(Ballot::NAY,user);
 }
 
@@ -551,14 +769,14 @@ void vote::Appeal::starting()
 
 void vote::Topic::passed()
 {
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	chan.topic(get_issue());
 }
 
 
 void vote::Topic::starting()
 {
-	const Sess &sess = get_sess();
+	const auto &sess(get_sess());
 	if(get_issue().size() > sess.get_isupport().get("TOPICLEN",256U))
 		throw Exception("Topic length exceeds maximum for this server.");
 }
@@ -667,7 +885,7 @@ void NickIssue::starting()
 	if(user.is_myself())
 		throw Exception("http://en.wikipedia.org/wiki/Leviathan_(book)");
 
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	if(!chan.users.has(user))
 		throw Exception("You cannot make a vote about someone in another channel.");
 
@@ -716,12 +934,12 @@ void AcctIssue::event_nick(User &user,
 
 void ModeEffect::expired()
 {
-	const Sess &sess(get_sess());
-	const Server &serv(sess.get_server());
+	const auto &sess(get_sess());
+	const auto &serv(sess.get_server());
 	if(get_effect().empty())
 		return;
 
 	const Deltas deltas(get_effect(),serv);
-	Chan &chan(get_chan());
+	auto &chan(get_chan());
 	chan(~deltas);
 }

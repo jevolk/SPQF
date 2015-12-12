@@ -153,8 +153,8 @@ namespace vote
 	{
 		User user;
 
-		void starting() override;
 		void passed() override;
+		void starting() override;
 
 	  public:
 		template<class... Args> Quote(Args&&... args);
@@ -177,8 +177,8 @@ namespace vote
 	              public virtual ModeEffect,
 	              public virtual ForNow
 	{
-		void starting() override;
 		void passed() override;
+		void starting() override;
 
 	  public:
 		template<class... Args> UnBan(Args&&... args):
@@ -220,6 +220,7 @@ namespace vote
 	              public virtual ModeEffect
 	{
 		void passed() override;
+		void starting() override;
 
 	  public:
 		template<class... Args> Voice(Args&&... args):
@@ -234,6 +235,7 @@ namespace vote
 	                public virtual ForNow
 	{
 		void passed() override;
+		void starting() override;
 
 	  public:
 		template<class... Args> DeVoice(Args&&... args):
@@ -241,6 +243,62 @@ namespace vote
 		                                NickIssue("devoice",std::forward<Args>(args)...),
 		                                ModeEffect("devoice",std::forward<Args>(args)...),
 		                                ForNow("devoice",std::forward<Args>(args)...) {}
+	};
+
+	class Op : public virtual Vote,
+	           public virtual NickIssue,
+	           public virtual ModeEffect
+	{
+		void passed() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> Op(Args&&... args):
+		                           Vote("op",std::forward<Args>(args)...),
+		                           NickIssue("op",std::forward<Args>(args)...),
+		                           ModeEffect("op",std::forward<Args>(args)...) {}
+	};
+
+	class DeOp : public virtual Vote,
+	             public virtual NickIssue,
+	             public virtual ForNow
+	{
+		void passed() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> DeOp(Args&&... args):
+		                             Vote("deop",std::forward<Args>(args)...),
+		                             NickIssue("deop",std::forward<Args>(args)...),
+		                             ForNow("deop",std::forward<Args>(args)...) {}
+	};
+
+	class Exempt : public virtual Vote,
+	               public virtual NickIssue,
+	               public virtual ModeEffect
+	{
+		void passed() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> Exempt(Args&&... args):
+		                               Vote("exempt",std::forward<Args>(args)...),
+		                               NickIssue("exempt",std::forward<Args>(args)...),
+		                               ModeEffect("exempt",std::forward<Args>(args)...) {}
+	};
+
+	class UnExempt : public virtual Vote,
+	                 public virtual NickIssue,
+	                 public virtual ForNow
+	{
+		void passed() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> UnExempt(Args&&... args):
+		                                 Vote("unexempt",std::forward<Args>(args)...),
+		                                 NickIssue("unexempt",std::forward<Args>(args)...),
+		                                 ForNow("unexempt",std::forward<Args>(args)...) {}
 	};
 
 	class Flags : public Vote
@@ -298,6 +356,32 @@ namespace vote
 		                                AcctIssue("censure",std::forward<Args>(args)...) {}
 	};
 
+	class Staff : public virtual Vote,
+	              public virtual AcctIssue
+	{
+		void passed() override;
+		void expired() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> Staff(Args&&... args):
+		                              Vote("staff",std::forward<Args>(args)...),
+		                              AcctIssue("staff",std::forward<Args>(args)...) {}
+	};
+
+	class DeStaff : public virtual Vote,
+	                public virtual AcctIssue,
+	                public virtual ForNow
+	{
+		void passed() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> DeStaff(Args&&... args):
+		                                Vote("destaff",std::forward<Args>(args)...),
+		                                AcctIssue("destaff",std::forward<Args>(args)...),
+		                                ForNow("destaff",std::forward<Args>(args)...) {}
+	};
 }
 
 
@@ -328,7 +412,7 @@ NickIssue::NickIssue(Args&&... args):
 Vote(std::forward<Args>(args)...),
 user([&]
 {
-	Users &users(get_users());
+	auto &users(get_users());
 	const auto toks(tokens(get_issue()));
 	const auto &nick(toks.at(0));
 	return users.has(nick)? users.get(nick) : User(&get_adb(),&get_sess(),nullptr,nick);
@@ -353,11 +437,11 @@ user([&]
 	if(get_began())
 		return User(&get_adb(),&get_sess(),nullptr,"","",name);
 
-	Users &users(get_users());
+	auto &users(get_users());
 	if(!users.has(name))
 		throw Exception("Unable to find this nickname to resolve into an account name");
 
-	User &user(users.get(name));
+	auto &user(users.get(name));
 	if(!user.is_logged_in())
 		throw Exception("This nickname is not logged in, and I must resolve an account name");
 
@@ -389,11 +473,11 @@ vote::Quote::Quote(Args&&... args):
 Vote("quote",std::forward<Args>(args)...),
 user([this]
 {
-	Users &users(get_users());
 	const auto toks(tokens(get_issue()));
 	if(toks.size() < 2)
 		throw Exception("Usage: !vote quote <nickname> <message...>  | note that nickname must actually be surrounded by classic IRC < and > brackets.");
 
+	auto &users(get_users());
 	const auto &nick(between(toks.at(0),"<",">"));
 	return users.has(nick)? users.get(nick) : User(&get_adb(),&get_sess(),nullptr,nick);
 }())

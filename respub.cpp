@@ -422,12 +422,16 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("eligible"): handle_vote_eligible(msg,chan,user,subtok(toks));             break;
 
 		// Actual vote types
+		case hash("op"):       voting.motion<vote::Op>(chan,user,detok(subtok(toks)));       break;
+		case hash("deop"):     voting.motion<vote::DeOp>(chan,user,detok(subtok(toks)));     break;
 		case hash("ban"):      voting.motion<vote::Ban>(chan,user,detok(subtok(toks)));      break;
 		case hash("unban"):    voting.motion<vote::UnBan>(chan,user,detok(subtok(toks)));    break;
 		case hash("kick"):     voting.motion<vote::Kick>(chan,user,detok(subtok(toks)));     break;
 		case hash("mode"):     voting.motion<vote::Mode>(chan,user,detok(subtok(toks)));     break;
 		case hash("quiet"):    voting.motion<vote::Quiet>(chan,user,detok(subtok(toks)));    break;
 		case hash("unquiet"):  voting.motion<vote::UnQuiet>(chan,user,detok(subtok(toks)));  break;
+		case hash("exempt"):   voting.motion<vote::Exempt>(chan,user,detok(subtok(toks)));   break;
+		case hash("unexempt"): voting.motion<vote::UnExempt>(chan,user,detok(subtok(toks))); break;
 		case hash("voice"):    voting.motion<vote::Voice>(chan,user,detok(subtok(toks)));    break;
 		case hash("devoice"):  voting.motion<vote::DeVoice>(chan,user,detok(subtok(toks)));  break;
 		case hash("flags"):    voting.motion<vote::Flags>(chan,user,detok(subtok(toks)));    break;
