@@ -817,15 +817,20 @@ catch(const boost::bad_lexical_cast &e)
 void ResPublica::handle_vote_list(const Msg &msg,
                                   User &user,
                                   const Tokens &toks)
-try
 {
-	auto &chan(chans.get(*toks.at(0)));
 	const auto *const cmsg_chan(chans.find_cnotice(user));
-	handle_vote_list(msg,chan,user,user<<cmsg_chan,subtok(toks));
-}
-catch(const std::out_of_range &e)
-{
-	throw Exception("Need a channel name because this is PM. Usage: !vote list <#channel>");
+
+	if(!toks.empty() && chans.has(*toks.at(0)))
+	{
+		auto &chan(chans.get(*toks.at(0)));
+		handle_vote_list(msg,chan,user,user<<cmsg_chan,subtok(toks));
+	}
+	else chans.for_each([&]
+	(const Chan &chan)
+	{
+		if((!toks.empty() || voting.exists(chan)) && chan.users.has(user))
+			handle_vote_list(msg,chan,user,user<<cmsg_chan,toks);
+	});
 }
 
 
@@ -885,7 +890,7 @@ try
 	{
 		if(!voting.exists(chan))
 		{
-			out << "No active votes for this channel." << user.flush;
+			out << "No results for " << chan.get_name() << user.flush;
 			return;
 		}
 
@@ -1047,7 +1052,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	else
 		out << BOLD << UNDER2 << FG::WHITE << BG::RED << "FAILED" << OFF << " ";
 
-	out << "| " << BOLD << vote.get_type() << OFF << ": " << UNDER2 << vote.get_issue() << OFF << " - ";
+	out << vote.get_chan_name() << " " << BOLD << vote.get_type() << OFF << ": " << UNDER2 << vote.get_issue() << OFF << " - ";
 
 	if(!vote.get_ended())
 	{
@@ -1058,7 +1063,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		if(cfg.get<time_t>("for") > 0)
 			out << "For " << BOLD << secs_cast(cfg.get<time_t>("for")) << OFF << ". ";
 
-		out << "There are " << BOLD << secs_cast(vote.remaining()) << OFF << " left. ";
+		out << BOLD << secs_cast(vote.remaining()) << OFF << " left. ";
 
 		if(total < quorum)
 			out << BOLD << (quorum - total) << OFF << " more votes are required for a quorum.";
