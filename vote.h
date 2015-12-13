@@ -13,11 +13,6 @@ class Vote : protected Acct
 	static const std::set<std::string> ystr;
 	static const std::set<std::string> nstr;
 
-	Sess *sess;
-	Chans *chans;
-	Users *users;
-	Logs *logs;
-
 	std::string id;                             // Index ID of vote (stored as string for Acct db)
 	std::string type;                           // Type name of this vote
 	std::string chan;                           // Name of the channel
@@ -97,16 +92,6 @@ class Vote : protected Acct
   protected:
 	static constexpr auto flush = Locutor::flush;
 
-	auto &get_sess() const                      { return *sess;                                     }
-	auto &get_users() const                     { return *users;                                    }
-	auto &get_chans() const                     { return *chans;                                    }
-	auto &get_logs() const                      { return *logs;                                     }
-
-	auto &get_sess()                            { return *sess;                                     }
-	auto &get_users()                           { return *users;                                    }
-	auto &get_chans()                           { return *chans;                                    }
-	auto &get_logs()                            { return *logs;                                     }
-
 	void set_cfg(const Adoc &cfg)               { this->cfg = cfg;                                  }
 	void set_issue(const std::string &issue)    { this->issue = issue;                              }
 	void set_reason(const std::string &reason)  { this->reason = reason;                            }
@@ -157,20 +142,12 @@ class Vote : protected Acct
 	// Deserialization ctor
 	Vote(const std::string &type,               // Dummy argument to match main ctor for ...'s
 	     const id_t &id,
-	     Adb &adb,
-	     Sess *const &sess     = nullptr,
-	     Chans *const &chans   = nullptr,
-	     Users *const &users   = nullptr,
-	     Logs *const &logs     = nullptr);
+	     Adb &adb);
 
 	// Motion ctor (main ctor)
 	Vote(const std::string &type,
 	     const id_t &id,
 	     Adb &adb,
-	     Sess &sess,
-	     Chans &chans,
-	     Users &users,
-	     Logs &logs,
 	     Chan &chan,
 	     User &user,
 	     const std::string &issue,

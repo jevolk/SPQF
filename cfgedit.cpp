@@ -53,6 +53,7 @@ int main(int argc, char **argv) try
 
 	const auto db = opts.count("db")? opts["db"] : "ircbot";
 	Adb adb(opts["dbdir"] + "/" + db);
+	irc::bot::adb = &adb;
 
 	if(dockey == "*")
 	{
@@ -77,7 +78,7 @@ int main(int argc, char **argv) try
 		std::cin.get();
 	}
 
-	Acct acct(adb,&dockey);
+	Acct acct(&dockey);
 
 	if(key.empty() && eq.empty() && val.empty())
 	{

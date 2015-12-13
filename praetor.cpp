@@ -12,25 +12,16 @@ using namespace irc::bot;
 
 // SPQF
 #include "log.h"
-using irc::log::Logs;
 #include "vote.h"
 #include "votes.h"
 #include "vdb.h"
 #include "praetor.h"
 
 
-Praetor::Praetor(Sess &sess,
-                 Chans &chans,
-                 Users &users,
-                 Bot &bot,
-                 Vdb &vdb,
-                 Logs &logs):
-sess(sess),
-chans(chans),
-users(users),
+Praetor::Praetor(Bot &bot,
+                 Vdb &vdb):
 bot(bot),
 vdb(vdb),
-logs(logs),
 interrupted(false),
 thread(&Praetor::worker,this),
 init_thread(&Praetor::init,this)
@@ -51,6 +42,7 @@ noexcept
 void Praetor::init()
 {
 	const std::lock_guard<Bot> l(bot);
+	bot.set_tls_context();
 	std::cout << "[Praetor]: Initiating the schedule."
 	          << " Reading " << vdb.count() << " votes..."
 	          << std::endl;
@@ -71,6 +63,11 @@ void Praetor::init()
 
 void Praetor::worker()
 {
+	{
+		const std::lock_guard<Bot> l(bot);
+		bot.set_tls_context();
+	}
+
 	while(!interrupted.load(std::memory_order_consume)) try
 	{
 		process();
@@ -107,7 +104,7 @@ void Praetor::process()
 bool Praetor::process(const id_t &id)
 {
 	const std::unique_lock<Bot> lock(bot);
-	const std::unique_ptr<Vote> vote(vdb.get(id,&sess,&chans,&users,&logs));
+	const std::unique_ptr<Vote> vote(vdb.get(id));
 	return process(*vote);
 }
 
@@ -115,6 +112,7 @@ bool Praetor::process(const id_t &id)
 bool Praetor::process(Vote &vote)
 noexcept try
 {
+	const auto &chans(get_chans());
 	if(!chans.has(vote.get_chan_name()))
 		return false;
 
@@ -143,7 +141,7 @@ void Praetor::add(const Adoc &doc)
 	if(expiry || (cfgfor <= 0) || !ended || doc.has("reason"))
 		return;
 
-	const time_t absolute = ended + cfgfor;
+	const time_t absolute(ended + cfgfor);
 	printf("%lu [Praetor]: Scheduling #%u [type: %s chan: %s cfgfor: %ld ended: %ld] absolute: %ld relative: %ld\n",
 	       time(NULL),
 	       id,

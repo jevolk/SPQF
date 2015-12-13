@@ -82,29 +82,19 @@ class Log
 };
 
 
-class Logs
-{
-	Sess &sess;
-	Chans &chans;
-	Users &users;
-	const Opts &opts;
+std::string get_path(const std::string &name);
 
-	std::string get_path(const std::string &name) const;
+// Reading
+// returns false if break early - "remain true to the end"
+bool for_each(const std::string &name, const Closure &closure);
+bool for_each(const std::string &name, const Filter &filter, const Closure &closure);
+size_t count(const std::string &name, const Filter &filter);
+bool atleast(const std::string &name, const Filter &filter, const size_t &count);
+bool exists(const std::string &name, const Filter &filter);
 
-  public:
-	// Reading 
-	// returns false if break early - "remain true to the end"
-	bool for_each(const std::string &name, const Closure &closure) const;
-	bool for_each(const std::string &name, const Filter &filter, const Closure &closure) const;
-	size_t count(const std::string &name, const Filter &filter) const;
-	bool atleast(const std::string &name, const Filter &filter, const size_t &count) const;
-	bool exists(const std::string &name, const Filter &filter) const;
-
-	// Writing
-	bool log(const Msg &msg, const Chan &chan, const User &user);
-
-	Logs(Sess &sess, Chans &chans, Users &users);
-};
+// Writing
+bool log(const Msg &msg, const Chan &chan, const User &user);
+void init();
 
 
 } // namespace log

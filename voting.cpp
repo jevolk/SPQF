@@ -12,7 +12,6 @@ using namespace irc::bot;
 
 // SPQF
 #include "log.h"
-using irc::log::Logs;
 #include "vote.h"
 #include "votes.h"
 #include "vdb.h"
@@ -20,17 +19,9 @@ using irc::log::Logs;
 #include "voting.h"
 
 
-Voting::Voting(Sess &sess,
-               Chans &chans,
-               Users &users,
-               Logs &logs,
-               Bot &bot,
+Voting::Voting(Bot &bot,
                Vdb &vdb,
                Praetor &praetor):
-sess(sess),
-chans(chans),
-users(users),
-logs(logs),
 bot(bot),
 vdb(vdb),
 praetor(praetor),
@@ -57,7 +48,7 @@ void Voting::cancel(const id_t &id,
                     const Chan &chan,
                     const User &user)
 {
-	Vote &vote = get(id);
+	Vote &vote(get(id));
 	cancel(vote,chan,user);
 }
 
@@ -95,6 +86,7 @@ void Voting::eligible_worker()
 void Voting::eligible_add()
 {
 	const std::lock_guard<Bot> lock(bot);
+	auto &chans(get_chans());
 	chans.for_each([this](Chan &chan)
 	{
 		eligible_add(chan);
@@ -119,7 +111,7 @@ try
 	std::map<std::string,uint> count;
 	std::map<std::string,std::string> accts;
 	const auto endtime(time(NULL) - age);
-	logs.for_each(chan.get_name(),[&count,&accts,&endtime]
+	irc::log::for_each(chan.get_name(),[&count,&accts,&endtime]
 	(const irc::log::ClosureArgs &a)
 	{
 		if(a.time > endtime)
@@ -153,6 +145,7 @@ try
 		if(linecnt < lines)
 			continue;
 
+		auto &users(get_users());
 		const auto &nick(accts.at(acct));
 		if(!users.has(nick))
 			continue;
@@ -211,11 +204,12 @@ try
 				return strncmp(a.acct,acct.c_str(),16) == 0;
 			});
 
-			if(logs.count(chan.get_name(),filt) < lines)
+			if(irc::log::count(chan.get_name(),filt) < lines)
 				continue;
 		}
 
-		User &myself(users.get(sess.get_nick()));
+		const auto &sess(get_sess());
+		auto &myself(users.get(sess.get_nick()));
 		const auto &vote(motion<vote::Civis>(chan,myself,nick));
 		user << "You are now eligible to be a citizen of " << chan.get_name() << "! ";
 		user << " Remind people to vote for issue #" << vote.get_id() << "!";
@@ -269,9 +263,10 @@ void Voting::remind_votes()
 	static const milliseconds delay(750);
 	//const FloodGuard guard(bot.sess,delay);
 
+	const auto &chans(get_chans());
 	for(auto it(votes.cbegin()); it != votes.cend(); ++it)
 	{
-		const Vote &vote(*it->second);
+		const auto &vote(*it->second);
 		if(!chans.has(vote.get_chan_name()))
 			continue;
 
@@ -279,7 +274,7 @@ void Voting::remind_votes()
 		if(!cfg.get<bool>("remind.enable",false))
 			continue;
 
-		Chan &chan(vote.get_chan());
+		auto &chan(vote.get_chan());
 		chan.users.for_each([&](User &user)
 		{
 			if(vote.voted(user))
@@ -323,6 +318,7 @@ void Voting::poll_worker()
 void Voting::poll_init()
 {
 	const std::lock_guard<Bot> lock(bot);
+	bot.set_tls_context();
 	std::cout << "[Voting]: Adding previously open votes."
 	          << " Reading " << vdb.count() << " votes..."
 	          << std::endl;
@@ -337,7 +333,7 @@ void Voting::poll_init()
 		if(!ended)
 		{
 			std::cout << "Adding open vote #" << id << std::endl;
-			auto vote(vdb.get(id,&sess,&chans,&users,&logs));
+			auto vote(vdb.get(id));
 			const auto iit(votes.emplace(id,std::move(vote)));
 			{
 				const auto &vote(*iit.first->second);
@@ -357,6 +353,7 @@ void Voting::poll_init()
 void Voting::poll_votes()
 {
 	const std::unique_lock<Bot> lock(bot);
+	const auto &chans(get_chans());
 	for(auto it(votes.begin()); it != votes.end();)
 	{
 		auto &vote(*it->second);
@@ -389,6 +386,7 @@ catch(const std::exception &e)
 
 	std::cerr << "[Voting]: \033[1;31m" << err.str() << "\033[0m" << std::endl;
 
+	const auto &chans(get_chans());
 	if(chans.has(vote.get_chan_name()))
 	{
 		Chan &chan(vote.get_chan());
@@ -401,9 +399,10 @@ void Voting::valid_motion(Vote &vote)
 {
 	using limits = std::numeric_limits<size_t>;
 
-	const Adoc &cfg(vote.get_cfg());
-	const User &user(vote.get_user());
-	const Chan &chan(vote.get_chan());
+	const auto &sess(get_sess());
+	const auto &cfg(vote.get_cfg());
+	const auto &user(vote.get_user());
+	const auto &chan(vote.get_chan());
 
 	vote.valid(cfg);
 
@@ -536,12 +535,19 @@ void Voting::worker_sleep(Duration&& duration)
 
 void Voting::worker_wait_init()
 {
-	std::unique_lock<decltype(mutex)> lock(mutex);
-	sem.wait(lock,[this]
 	{
-		return initialized.load(std::memory_order_consume) ||
-		       interrupted.load(std::memory_order_consume);
-	});
+		std::unique_lock<decltype(mutex)> lock(mutex);
+		sem.wait(lock,[this]
+		{
+			return initialized.load(std::memory_order_consume) ||
+			       interrupted.load(std::memory_order_consume);
+		});
+	}
+
+	{
+		const std::unique_lock<Bot> lock(bot);
+		bot.set_tls_context();
+	}
 }
 
 

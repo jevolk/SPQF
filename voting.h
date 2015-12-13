@@ -10,10 +10,6 @@ class Voting
 {
 	using id_t = Vote::id_t;
 
-	Sess &sess;
-	Chans &chans;
-	Users &users;
-	Logs &logs;
 	Bot &bot;
 	Vdb &vdb;
 	Praetor &praetor;
@@ -80,7 +76,7 @@ class Voting
 	void cancel(const id_t &id, const Chan &chan, const User &user);
 	template<class Vote, class... Args> Vote &motion(Args&&... args);
 
-	Voting(Sess &sess, Chans &chans, Users &users, Logs &logs, Bot &bot, Vdb &vdb, Praetor &praetor);
+	Voting(Bot &bot, Vdb &vdb, Praetor &praetor);
 	Voting(const Voting &) = delete;
 	Voting &operator=(const Voting &) = delete;
 	~Voting() noexcept;
@@ -96,13 +92,7 @@ try
 		throw Exception("Voting not yet initialized: try again in a few minutes");
 
 	const id_t id(get_next_id());
-	const auto iit(votes.emplace(id,std::make_unique<Vote>(id,
-	                                                       vdb,
-	                                                       sess,
-	                                                       chans,
-	                                                       users,
-	                                                       logs,
-	                                                       std::forward<Args>(args)...)));
+	const auto iit(votes.emplace(id,std::make_unique<Vote>(id,vdb,std::forward<Args>(args)...)));
 	if(iit.second) try
 	{
 		auto &ptr(iit.first->second);

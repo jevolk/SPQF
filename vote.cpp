@@ -12,7 +12,6 @@ using namespace irc::bot;
 
 // SPQF
 #include "log.h"
-using irc::log::Logs;
 #include "vote.h"
 
 
@@ -25,19 +24,11 @@ decltype(Vote::ARG_VALUED) Vote::ARG_VALUED      { "="                          
 Vote::Vote(const std::string &type,
            const id_t &id,
            Adb &adb,
-           Sess &sess,
-           Chans &chans,
-           Users &users,
-           Logs &logs,
            Chan &chan,
            User &user,
            const std::string &issue,
            const Adoc &cfg):
-Acct(adb,&this->id),
-sess(&sess),
-chans(&chans),
-users(&users),
-logs(&logs),
+Acct(&this->id,&adb),
 id(lex_cast(id)),
 type(type),
 chan(chan.get_name()),
@@ -125,22 +116,14 @@ quorum(0)
 
 Vote::Vote(const std::string &type,
            const id_t &id,
-           Adb &adb,
-           Sess *const &sess,
-           Chans *const &chans,
-           Users *const &users,
-           Logs *const &logs)
+           Adb &adb)
 try:
-Acct(adb,&this->id),
-sess(sess),
-chans(chans),
-users(users),
-logs(logs),
+Acct(&this->id,&adb),
 id(lex_cast(id)),
 type(get_val("type")),
 chan(get_val("chan")),
 nick(get_val("nick")),
-acct(get_val("acct")),
+acct(tolower(get_val("acct"))),
 issue(get_val("issue")),
 cfg(get("cfg")),
 began(secs_cast(get_val("began"))),
@@ -372,7 +355,7 @@ try
 {
 	using namespace colors;
 
-	Chan &chan = get_chan();
+	auto &chan(get_chan());
 	switch(cast(ballot,user))
 	{
 		case ADDED:
@@ -414,7 +397,7 @@ catch(const Exception &e)
 
 	if(cfg.get<bool>("ballot.rej.chan"))
 	{
-		Chan &chan = get_chan();
+		auto &chan(get_chan());
 		chan << user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
 	}
 
@@ -563,7 +546,7 @@ const
 bool Vote::speaker(const User &user)
 const
 {
-	const Adoc &cfg = get_cfg();
+	const auto &cfg(get_cfg());
 	return (!cfg.has("speaker.access") || has_access(user,cfg["speaker.access"])) &&
 	       (!cfg.has("speaker.mode") || has_mode(user,cfg["speaker.mode"]));
 }
@@ -575,7 +558,7 @@ const
 	if(!user.is_logged_in())
 		return false;
 
-	const Adoc &cfg(get_cfg());
+	const auto &cfg(get_cfg());
 	if(has_access(user,cfg["qualify.access"]))
 		return true;
 
@@ -593,8 +576,7 @@ const
 		return strncmp(a.acct,acct.c_str(),16) == 0;
 	});
 
-	const Logs &logs(get_logs());
-	return logs.atleast(get_chan_name(),filt,cfg.get<uint>("qualify.lines"));
+	return irc::log::atleast(get_chan_name(),filt,cfg.get<uint>("qualify.lines"));
 }
 
 
@@ -604,7 +586,7 @@ const
 	if(!user.is_logged_in())
 		return false;
 
-	const Adoc &cfg(get_cfg());
+	const auto &cfg(get_cfg());
 	if(cfg.has("enfranchise.access") || cfg.has("enfranchise.mode"))
 		return has_mode(user,cfg["enfranchise.mode"]) ||
 		       has_access(user,cfg["enfranchise.access"]);
@@ -623,15 +605,14 @@ const
 		return strncmp(a.acct,acct.c_str(),16) == 0;
 	});
 
-	const Logs &logs(get_logs());
-	return logs.atleast(get_chan_name(),filt,cfg.get<uint>("enfranchise.lines"));
+	return irc::log::atleast(get_chan_name(),filt,cfg.get<uint>("enfranchise.lines"));
 }
 
 
 bool Vote::intercession(const User &user)
 const
 {
-	const Adoc &cfg = get_cfg();
+	const Adoc &cfg(get_cfg());
 	if(cfg.has("veto.mode") && !has_mode(user,cfg["veto.mode"]))
 		return false;
 
@@ -646,7 +627,7 @@ bool Vote::has_mode(const User &user,
                     const Mode &mode)
 const
 {
-	const Chan &chan = get_chan();
+	const auto &chan(get_chan());
 	return chan.users.mode(user).any(mode);
 }
 
@@ -655,11 +636,11 @@ bool Vote::has_access(const User &user,
                       const Mode &flags)
 const
 {
-	const Chan &chan = get_chan();
+	const auto &chan(get_chan());
 	if(!chan.lists.has_flag(user))
 		return false;
 
-	const auto &f = chan.lists.get_flag(user);
+	const auto &f(chan.lists.get_flag(user));
 	return f.get_flags().any(flags);
 }
 
@@ -730,11 +711,11 @@ const
 bool Vote::interceded()
 const
 {
-	const auto vmin = std::max(cfg.get<uint>("veto.quorum"),1U);
+	const auto vmin(std::max(cfg.get<uint>("veto.quorum"),1U));
 	if(num_vetoes() < vmin)
 		return false;
 
-	const auto quick = cfg.get<bool>("veto.quick");
+	const auto quick(cfg.get<bool>("veto.quick"));
 	return quick? true : !remaining();
 }
 
@@ -742,7 +723,7 @@ const
 uint Vote::calc_quorum()
 const
 {
-	const Adoc &cfg(get_cfg());
+	const auto &cfg(get_cfg());
 	std::vector<uint> sel
 	{{
 		cfg.get<uint>("quorum.yea"),
@@ -754,7 +735,7 @@ const
 	if(turnout <= 0.0)
 		return *std::max_element(sel.begin(),sel.end());
 
-	const Chan &chan(get_chan());
+	const auto &chan(get_chan());
 	std::map<std::string,uint> count;
 	chan.users.for_each([this,&count]
 	(const User &user)
@@ -763,11 +744,10 @@ const
 			count.emplace(user.get_acct(),0);
 	});
 
-	const Logs &logs(get_logs());
 	const auto curtime(time(nullptr));
 	const auto min_age(secs_cast(cfg["quorum.age"]));
 	const auto start_time(curtime - min_age);
-	logs.for_each(get_chan_name(),[&count,&start_time]
+	irc::log::for_each(get_chan_name(),[&count,&start_time]
 	(const irc::log::ClosureArgs &a)
 	{
 		if(a.time < start_time)

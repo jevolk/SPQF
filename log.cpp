@@ -11,37 +11,32 @@ using namespace irc::bot;
 
 // SPQF
 #include "log.h"
-using namespace irc::log;
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// log::Logs
+// log::
 //
 
-Logs::Logs(Sess &sess,
-           Chans &chans,
-           Users &users):
-sess(sess),
-chans(chans),
-users(users),
-opts(sess.get_opts())
+
+void irc::log::init()
 {
+	const auto &opts(get_opts());
 	if(!opts.get<bool>("logging"))
 		return;
 
-	const int ret = mkdir(opts["logdir"].c_str(),0777);
+	const int ret(mkdir(opts["logdir"].c_str(),0777));
 	if(ret && errno != EEXIST)
 		throw Internal("Failed to create specified logfile directory [") << opts["logdir"] << "]";
 }
 
 
-bool Logs::log(const Msg &msg,
-               const Chan &chan,
-               const User &user)
+bool irc::log::log(const Msg &msg,
+                   const Chan &chan,
+                   const User &user)
 try
 {
+	const auto &opts(get_opts());
 	if(!opts.get<bool>("logging"))
 		return false;
 
@@ -56,9 +51,8 @@ catch(const Internal &e)
 }
 
 
-bool Logs::exists(const std::string &name,
-                  const Filter &filter)
-const
+bool irc::log::exists(const std::string &name,
+                      const Filter &filter)
 {
 	return !for_each(name,[&filter]
 	(const ClosureArgs &a)
@@ -68,10 +62,9 @@ const
 }
 
 
-bool Logs::atleast(const std::string &name,
-                   const Filter &filter,
-                   const size_t &count)
-const
+bool irc::log::atleast(const std::string &name,
+                       const Filter &filter,
+                       const size_t &count)
 {
 	size_t ret(0);
 	return !count || !for_each(name,[&filter,&ret,&count]
@@ -83,9 +76,8 @@ const
 }
 
 
-size_t Logs::count(const std::string &name,
-                   const Filter &filter)
-const
+size_t irc::log::count(const std::string &name,
+                       const Filter &filter)
 {
 	size_t ret(0);
 	for_each(name,[&filter,&ret]
@@ -99,10 +91,9 @@ const
 }
 
 
-bool Logs::for_each(const std::string &name,
-                    const Filter &filter,
-                    const Closure &closure)
-const
+bool irc::log::for_each(const std::string &name,
+                        const Filter &filter,
+                        const Closure &closure)
 {
 	return for_each(name,[&filter,&closure]
 	(const ClosureArgs &a)
@@ -115,9 +106,9 @@ const
 }
 
 
-bool Logs::for_each(const std::string &name,
-                    const Closure &closure)
-const try
+bool irc::log::for_each(const std::string &name,
+                        const Closure &closure)
+try
 {
 	std::ifstream file;
 	file.exceptions(std::ios_base::badbit);
@@ -165,9 +156,9 @@ catch(const std::ios_base::failure &e)
 }
 
 
-std::string Logs::get_path(const std::string &name)
-const
+std::string irc::log::get_path(const std::string &name)
 {
+	const auto &opts(get_opts());
 	return opts["logdir"] + "/" + name;
 }
 
@@ -178,7 +169,7 @@ const
 // log::Log
 //
 
-Log::Log(const std::string &path)
+irc::log::Log::Log(const std::string &path)
 try:
 path(path)
 {
@@ -191,7 +182,7 @@ catch(const std::exception &e)
 }
 
 
-Log::~Log()
+irc::log::Log::~Log()
 noexcept try
 {
 	flush();
@@ -204,7 +195,7 @@ catch(const std::exception &e)
 }
 
 
-void Log::flush()
+void irc::log::Log::flush()
 try
 {
 	file.flush();
@@ -215,9 +206,9 @@ catch(const std::ios_base::failure &f)
 }
 
 
-void Log::operator()(const Msg &msg,
-                     const Chan &chan,
-                     const User &user)
+void irc::log::Log::operator()(const Msg &msg,
+                               const Chan &chan,
+                               const User &user)
 try
 {
 	static const uint VERSION(0);
@@ -248,7 +239,7 @@ catch(const std::ios_base::failure &f)
 // log:: misc
 //
 
-bool FilterAny::operator()(const ClosureArgs &args)
+bool irc::log::FilterAny::operator()(const ClosureArgs &args)
 const
 {
     return std::any_of(this->begin(),this->end(),[&args]
@@ -259,7 +250,7 @@ const
 }
 
 
-bool FilterAll::operator()(const ClosureArgs &args)
+bool irc::log::FilterAll::operator()(const ClosureArgs &args)
 const
 {
     return std::all_of(this->begin(),this->end(),[&args]
@@ -270,7 +261,7 @@ const
 }
 
 
-bool FilterNone::operator()(const ClosureArgs &args)
+bool irc::log::FilterNone::operator()(const ClosureArgs &args)
 const
 {
     return std::none_of(this->begin(),this->end(),[&args]

@@ -32,12 +32,8 @@ class Praetor
 {
 	using id_t = Vote::id_t;
 
-	Sess &sess;
-	Chans &chans;
-	Users &users;
 	Bot &bot;
 	Vdb &vdb;
-	Logs &logs;
 
 	std::mutex mutex;
 	std::atomic<bool> interrupted;
@@ -60,6 +56,6 @@ class Praetor
 	std::thread init_thread;
 
   public:
-	Praetor(Sess &sess, Chans &chans, Users &users, Bot &bot, Vdb &vdb, Logs &logs);
+	Praetor(Bot &bot, Vdb &vdb);
 	~Praetor() noexcept;
 };

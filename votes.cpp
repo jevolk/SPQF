@@ -12,7 +12,6 @@ using namespace irc::bot;
 
 // SPQF
 #include "log.h"
-using irc::log::Logs;
 #include "vote.h"
 #include "votes.h"
 
@@ -51,7 +50,7 @@ void vote::Import::starting()
 		return;
 	}
 
-	Locutor bot(get_sess(),get_target_bot());
+	Locutor bot(get_target_bot());
 	bot << bot.PRIVMSG << "config " << get_target_chan() << " config.vote" << bot.flush;
 }
 
@@ -375,7 +374,7 @@ void vote::Flags::expired()
 	const auto toks(tokens(get_issue()));
 
 	const auto &acct(toks.at(0));
-	const User user(&get_adb(),&get_sess(),nullptr,acct,"",acct);
+	const User user(acct,"",acct);
 
 	const Deltas deltas(toks.at(1));
 	auto &chan(get_chan());
@@ -424,7 +423,6 @@ void vote::Flags::starting()
 void vote::Civis::starting()
 try
 {
-	const auto &logs(get_logs());
 	const auto &chan(get_chan());
 	const auto &cfg(get_cfg());
 
@@ -459,11 +457,11 @@ try
 		return strncmp(a.acct,acct.c_str(),16) == 0;
 	});
 
-	if(!logs.atleast(get_chan_name(),filt_age,1))
+	if(!irc::log::atleast(get_chan_name(),filt_age,1))
 		throw Exception("User at issue has not been present long enough for consideration.");
 
 	const auto min_lines(cfg.get<uint>("eligible.lines"));
-	const auto has_lines(logs.count(get_chan_name(),filt_lines));
+	const auto has_lines(irc::log::count(get_chan_name(),filt_lines));
 	if(has_lines < min_lines)
 		throw Exception("User at issue has ") << has_lines << " of " << min_lines << " required lines";
 }

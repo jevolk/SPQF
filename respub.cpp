@@ -12,7 +12,6 @@ using namespace irc::bot;
 
 // SPQF
 #include "log.h"
-using irc::log::Logs;
 #include "vote.h"
 #include "votes.h"
 #include "vdb.h"
@@ -46,6 +45,8 @@ noexcept
 {
 	const std::lock_guard<Bot> lock(*bot);
 	printf("Construct RexPublica...\n");
+	bot->set_tls_context();
+	irc::log::init();
 	respub = new ResPublica(*bot);
 }
 
@@ -67,13 +68,12 @@ sess(bot.sess),
 users(bot.users),
 chans(bot.chans),
 events(bot.events),
-logs(sess,chans,users),
 vdb({opts["dbdir"] + "/vote"}),
-praetor(sess,chans,users,bot,vdb,logs),
-voting(sess,chans,users,logs,bot,vdb,praetor)
+praetor(bot,vdb),
+voting(bot,vdb,praetor)
 {
 	// Channel->User catch-all for logging
-	events.chan_user.add(handler::ALL,boost::bind(&irc::log::Logs::log,&logs,_1,_2,_3),handler::RECURRING);
+	events.chan_user.add(handler::ALL,boost::bind(&irc::log::log,_1,_2,_3),handler::RECURRING);
 
 	// Channel command handlers
 	events.chan_user.add("PRIVMSG",boost::bind(&ResPublica::handle_privmsg,this,_1,_2,_3),handler::RECURRING);

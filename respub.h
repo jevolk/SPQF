@@ -26,7 +26,6 @@ class ResPublica
 	Users &users;
 	Chans &chans;
 	Events &events;
-	Logs logs;
 	Vdb vdb;
 	Praetor praetor;
 	Voting voting;

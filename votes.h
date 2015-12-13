@@ -415,7 +415,7 @@ user([&]
 	auto &users(get_users());
 	const auto toks(tokens(get_issue()));
 	const auto &nick(toks.at(0));
-	return users.has(nick)? users.get(nick) : User(&get_adb(),&get_sess(),nullptr,nick);
+	return users.has(nick)? users.get(nick) : User(nick);
 }())
 {
 }
@@ -435,7 +435,7 @@ user([&]
 
 	// If the vote has started we populate the account name only
 	if(get_began())
-		return User(&get_adb(),&get_sess(),nullptr,"","",name);
+		return User("","",name);
 
 	auto &users(get_users());
 	if(!users.has(name))
@@ -479,7 +479,7 @@ user([this]
 
 	auto &users(get_users());
 	const auto &nick(between(toks.at(0),"<",">"));
-	return users.has(nick)? users.get(nick) : User(&get_adb(),&get_sess(),nullptr,nick);
+	return users.has(nick)? users.get(nick) : User(nick);
 }())
 {
 }
