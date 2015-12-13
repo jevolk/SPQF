@@ -20,38 +20,50 @@ or conduct takeovers.
 ----
 
 
-### Vote Modules
+### Vote Types
 * **Kick** - Kick users from the channel.
-* **Ban** - Ban users from the channel.
-* **Quiet** - Quiet users in the channel.
-* **Voice** - Voice users in the channel.
-* **Invite** - Invite users to the channel.
-* **Topic** - Change the topic of the channel.
+* **Ban** - Ban/Unban users from the channel.
+* **Quiet** - Quiet/Unquiet users in the channel.
+* **Voice** - Voice/Devoice users in the channel.
+* **Op** - Op/Deop users in the channel.
 * **Mode** - Direct mode interface to the channel.
+* **Invite** - Invite users to the channel.
+* **Exempt** - Add/Remove users from the channel +e list.
+* **Topic** - Change the topic of the channel.
 * **Flags** - Direct flags interface to ChanServ.
 * **Opine** - Opinion polls that have no effects.
+
+#### Additional types
 * **Config** - Vote to change the voting configuration itself.
 * **Import** - Vote to copy the voting configuration of another channel.
+* **Civis** - Configurable vote to enfranchise new users.
+* **Censure** - Configurable vote to disenfranchise users.
+* **Staff** - Configurable vote to add/remove flags for operators.
+* **Appeal** - Appeal an op's extrademocratic ban/quiet/mode, etc.
 
 
-*(Any module can be disabled in the configuration)*
+*(Any type can be disabled in the configuration)*
 
 
 ----
 
 
 ### Ruleset Features
-* ** General **
-    * The duration of a voting motion.
-    * The duration of effects passed by a vote.
-    * The duration each yea or nay vote adds or subtracts from the effects, respectively.
-    * Effects are reserved asynchronously when they expire.
+
+
+* **General**
+	* The duration of a voting motion.
+	* The duration of effects passed by a vote.
+	* The duration each yea or nay vote adds or subtracts from the effects, respectively.
+	* Effects are reserved asynchronously when they expire.
+	* All outputs to public channel and/or users in private configurable.
 
 
 * **Limits**
     * Maximum number of votes at any given time.
     * Maximum number of votes per account.
-    * The time limit for votes.
+    * Minimum time an issue can be raised again after being voted down.
+    * Minimum time an issue can be raised again after failing without a quorum.
 
 
 * **Quorum**
@@ -59,6 +71,7 @@ or conduct takeovers.
     * Minimum yes ballot submissions for a valid vote.
     * The percentage that constitutes a passing majority.
     * Turnout percentage of your channel that must submit a ballot for a valid vote.
+    * Ability for a vote to end early if quorum requirements met.
 
 
 * **Enfranchisement**
@@ -99,16 +112,21 @@ or conduct takeovers.
 * Offline configuration/database editing tool.
 * Automatic NickServ ghost and regain on (re)connect.
 * Vote modules can have independent configurations.
-* Database-records of votes, ballots and outcomes.
+* Active vote listing detailing open issues for a channel.
+* Searchable database-records of all votes, ballots and outcomes.
 * Expiration management to undo effects of votes after some time.
 * Increment/Decrement effects-time based on number of yea and nay votes.
 * Vote-time options to set any config variable for a single vote.
+* Automatic appeals to unilateral operator actions.
+* Background jobs to nominate new eligible voters.
+* Prevention of other operators kick/banning or removing the bot.
+* Manual configuration override for channel +F or bot --owner.
 
 
 #### Upcoming Features
 
 * SSL support.
-* Internationalization / Localization / Multi-Language support. 
+* Internationalization / Localization / Multi-Language support.
 * Additional statistical analyses for channels.
 
 ----
@@ -119,16 +137,17 @@ or conduct takeovers.
 
 #### Requirements
 
-* GNU C++ Compiler **4.9** &nbsp; *(tested: 4.9.1)*
-	* GNU libstdc++ **4.9**
-	* GCC Locales **4.9**
-* Boost &nbsp; *(tested: 1.54)*
+* GNU C++ Compiler **4.9**+ &nbsp; *(last tested: 5.2.1-16)*
+	* GNU libstdc++ **4.9**+
+	* GCC Locales **4.9**+
+* Boost &nbsp; *(last tested: 1.58)*
 	* ASIO
     * Tokenizer
     * Lexical Cast
     * Property Tree, JSON Parser
 * LevelDB &nbsp; *(tested: 1.17)*
 * STLdb adapter (submodule)
+	* Note: You must use the version pinned by the submodule. **Do not git-pull latest**.
 
 
 #### Compilation
@@ -160,7 +179,7 @@ channels.
 * **--join** &nbsp; Channels to join on connect *(multiple --join allowed)*.
 * **--ns-acct** &nbsp; NickServ account name to identify with.
 * **--ns-pass** &nbsp; NickServ account password to identify with.
-* **--owner** &nbsp; NickServ account of the user who can type */me proves* in #freenode for bot cloaks. 
+* **--owner** &nbsp; NickServ account of the user who can type */me proves* in #freenode for bot cloaks. Also has configuration maintenance access the same as founder-override.
 * **--prefix** &nbsp; Prefix for commands to not conflict with other bots.
 * **--invite** &nbsp; Allows the bot to be invited by request.
 * **--dbdir** &nbsp; The directory of the primary LevelDB database. *RESOURCE LOCK* error will result if two bots share this.
