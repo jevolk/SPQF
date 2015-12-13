@@ -563,7 +563,8 @@ const
 		return true;
 
 	const auto &acct(user.get_acct());
-	const auto endtime(get_began() - secs_cast(cfg["qualify.age"]));
+	const auto began(get_began()? get_began() : time(nullptr));
+	const auto endtime(began - secs_cast(cfg["qualify.age"]));
 	const irc::log::FilterAll filt([&acct,&endtime]
 	(const irc::log::ClosureArgs &a)
 	{
@@ -576,7 +577,8 @@ const
 		return strncmp(a.acct,acct.c_str(),16) == 0;
 	});
 
-	return irc::log::atleast(get_chan_name(),filt,cfg.get<uint>("qualify.lines"));
+	const auto lines(cfg.get<uint>("qualify.lines",0));
+	return irc::log::atleast(get_chan_name(),filt,lines);
 }
 
 
@@ -592,7 +594,8 @@ const
 		       has_access(user,cfg["enfranchise.access"]);
 
 	const auto &acct(user.get_acct());
-	const auto endtime(get_began() - secs_cast(cfg["enfranchise.age"]));
+	const auto began(get_began()? get_began() : time(nullptr));
+	const auto endtime(began - secs_cast(cfg["enfranchise.age"]));
 	const irc::log::FilterAll filt([&acct,&endtime]
 	(const irc::log::ClosureArgs &a)
 	{
@@ -605,7 +608,8 @@ const
 		return strncmp(a.acct,acct.c_str(),16) == 0;
 	});
 
-	return irc::log::atleast(get_chan_name(),filt,cfg.get<uint>("enfranchise.lines"));
+	const auto lines(cfg.get<uint>("enfranchise.lines",0));
+	return irc::log::atleast(get_chan_name(),filt,lines);
 }
 
 
