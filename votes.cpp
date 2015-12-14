@@ -86,7 +86,7 @@ void vote::Import::passed()
 //
 
 
-void vote::UnQuiet::passed()
+void vote::UnQuiet::effective()
 {
 	auto &chan(get_chan());
 	set_effect(chan.unquiet(user));
@@ -100,7 +100,7 @@ void vote::UnQuiet::passed()
 //
 
 
-void vote::Quiet::passed()
+void vote::Quiet::effective()
 {
 	auto &chan(get_chan());
 	set_effect(chan.quiet(user));
@@ -122,7 +122,7 @@ void vote::DeVoice::starting()
 }
 
 
-void vote::DeVoice::passed()
+void vote::DeVoice::effective()
 {
 	auto &chan(get_chan());
 	set_effect(chan.devoice(user));
@@ -144,7 +144,7 @@ void vote::Voice::starting()
 }
 
 
-void vote::Voice::passed()
+void vote::Voice::effective()
 {
 	auto &chan(get_chan());
 	set_effect(chan.voice(user));
@@ -208,7 +208,7 @@ void vote::UnBan::starting()
 }
 
 
-void vote::UnBan::passed()
+void vote::UnBan::effective()
 try
 {
 	auto &chan(get_chan());
@@ -248,7 +248,7 @@ void vote::Op::starting()
 }
 
 
-void vote::Op::passed()
+void vote::Op::effective()
 {
 	auto &chan(get_chan());
 	set_effect(chan.op(user));
@@ -270,7 +270,7 @@ void vote::DeOp::starting()
 }
 
 
-void vote::DeOp::passed()
+void vote::DeOp::effective()
 {
 	auto &chan(get_chan());
 	set_effect(chan.deop(user));
@@ -293,7 +293,7 @@ void vote::Exempt::starting()
 }
 
 
-void vote::Exempt::passed()
+void vote::Exempt::effective()
 {
 	auto &chan(get_chan());
 	set_effect(chan.except(user));
@@ -330,7 +330,7 @@ void vote::UnExempt::starting()
 }
 
 
-void vote::UnExempt::passed()
+void vote::UnExempt::effective()
 try
 {
 	auto &chan(get_chan());

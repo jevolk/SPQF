@@ -178,7 +178,7 @@ namespace vote
 	              public virtual ModeEffect,
 	              public virtual ForNow
 	{
-		void passed() override;
+		void effective() override;
 		void starting() override;
 
 	  public:
@@ -192,7 +192,7 @@ namespace vote
 	              public virtual NickIssue,
 	              public virtual ModeEffect
 	{
-		void passed() override;
+		void effective() override;
 
 	  public:
 		template<class... Args> Quiet(Args&&... args):
@@ -206,7 +206,7 @@ namespace vote
 	                public virtual ModeEffect,
 	                public virtual ForNow
 	{
-		void passed() override;
+		void effective() override;
 
 	  public:
 		template<class... Args> UnQuiet(Args&&... args):
@@ -220,7 +220,7 @@ namespace vote
 	              public virtual NickIssue,
 	              public virtual ModeEffect
 	{
-		void passed() override;
+		void effective() override;
 		void starting() override;
 
 	  public:
@@ -235,7 +235,7 @@ namespace vote
 	                public virtual ModeEffect,
 	                public virtual ForNow
 	{
-		void passed() override;
+		void effective() override;
 		void starting() override;
 
 	  public:
@@ -250,7 +250,7 @@ namespace vote
 	           public virtual NickIssue,
 	           public virtual ModeEffect
 	{
-		void passed() override;
+		void effective() override;
 		void starting() override;
 
 	  public:
@@ -264,7 +264,7 @@ namespace vote
 	             public virtual NickIssue,
 	             public virtual ForNow
 	{
-		void passed() override;
+		void effective() override;
 		void starting() override;
 
 	  public:
@@ -278,7 +278,7 @@ namespace vote
 	               public virtual NickIssue,
 	               public virtual ModeEffect
 	{
-		void passed() override;
+		void effective() override;
 		void starting() override;
 
 	  public:
@@ -292,7 +292,7 @@ namespace vote
 	                 public virtual NickIssue,
 	                 public virtual ForNow
 	{
-		void passed() override;
+		void effective() override;
 		void starting() override;
 
 	  public:
