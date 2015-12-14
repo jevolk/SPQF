@@ -352,9 +352,10 @@ void ResPublica::handle_cmd(const Msg &msg,
 	switch(hash(tok.at(0).substr(opts["prefix"].size())))
 	{
 		case hash("v"):
-		case hash("vote"):     handle_vote(msg,chan,user,subtok(tok));    break;
-		case hash("version"):  handle_version(msg,chan,user,subtok(tok)); break;
-		default:                                                          break;
+		case hash("vote"):       handle_vote(msg,chan,user,subtok(tok));       break;
+		case hash("version"):    handle_version(msg,chan,user,subtok(tok));    break;
+		case hash("opinion"):    handle_opinion(msg,chan,user,subtok(tok));    break;
+		default:                                                               break;
 	}
 }
 
@@ -368,6 +369,14 @@ void ResPublica::handle_version(const Msg &msg,
 	user << SPQF_VERSION << flush;
 }
 
+
+void ResPublica::handle_opinion(const Msg &msg,
+                                Chan &chan,
+                                User &user,
+                                const Tokens &toks)
+{
+	opinion(chan,user,chan,toks);
+}
 
 
 void ResPublica::handle_vote(const Msg &msg,
@@ -644,6 +653,7 @@ void ResPublica::handle_cmd(const Msg &msg,
 		case hash("whoami"):   handle_whoami(msg,user,subtok(toks));   break;
 		case hash("regroup"):  handle_regroup(msg,user,subtok(toks));  break;
 		case hash("praetor"):  handle_praetor(msg,user,subtok(toks));  break;
+		case hash("opinion"):  handle_opinion(msg,user,subtok(toks));  break;
 		case hash("debug"):    handle_debug(msg,user,subtok(toks));    break;
 		default:                                                       break;
 	}
@@ -736,6 +746,25 @@ void ResPublica::handle_version(const Msg &msg,
                                 const Tokens &toks)
 {
 	user << SPQF_VERSION << flush;
+}
+
+
+void ResPublica::handle_opinion(const Msg &msg,
+                                User &user,
+                                const Tokens &toks)
+{
+	if(!toks.empty() && chans.has(*toks.at(0)))
+	{
+		const auto &chan(chans.get(*toks.at(0)));
+		opinion(chan,user,user,subtok(toks));
+		return;
+	}
+
+	chans.for_each(user,[this,&user,&toks]
+	(const Chan &chan)
+	{
+		opinion(chan,user,user,toks);
+	});
 }
 
 
@@ -998,9 +1027,9 @@ try
 				handle_vote_list(msg,user,out,{},id);
 	}
 	else if(!res.empty())
-		out << "Found " << res.size() << " results." << out.flush;
+		out << "Found " << res.size() << " results for " << chan.get_name() << out.flush;
 	else
-		out << "No matching results." << out.flush;
+		out << "No matching results for " << chan.get_name() << out.flush;
 }
 catch(const boost::bad_lexical_cast &e)
 {
@@ -1273,6 +1302,61 @@ void ResPublica::vote_list_oneline(const Chan &c,
 
 	out << flush;
 }
+
+
+void ResPublica::opinion(const Chan &chan,
+                         const User &user,
+                         Locutor &out,
+                         const Tokens &toks)
+{
+	using namespace colors;
+
+	const Adoc cfg(chan.get("config.vote.opine"));
+	const auto cfgfor(secs_cast(cfg["for"]));
+	const auto curtime(time(nullptr));
+	const auto maxeff(curtime - (cfgfor? cfgfor : curtime));
+	std::forward_list<Vdb::Term> terms
+	{
+		std::make_tuple("chan",   "=",  chan.get_name()),
+		std::make_tuple("type",   "=",  "opine"),
+		std::make_tuple("reason", "=",  std::string{}),
+		std::make_tuple("ended",  ">",  lex_cast(maxeff))
+	};
+
+	size_t effective(0);
+	auto res(vdb.query(terms,3,true));
+	if(!res.empty())
+	{
+		for(const auto &id : res)
+		{
+			const auto &vote(vdb.get<vote::Opine>(id));
+			if(cfgfor <= 0 && (vote.expires() < time(nullptr)))
+				continue;
+
+			out << "#" << BOLD << id << OFF << ": ";
+			out << UNDER2 << vote.get_issue() << OFF << ". ";
+			out << BOLD << FG::GREEN << vote.tally().first << OFF << "v";
+			out << BOLD << FG::RED << vote.tally().second << OFF << ". ";
+			out << secs_cast(time(nullptr) - vote.get_ended()) << " ago.";
+
+			// without cfgfor the message count indicator won't be known accurately.
+			if(cfgfor > 0)
+				out << " (" << (effective + 1) << "/" << res.size() << ")" << out.flush;
+
+			++effective;
+		}
+	}
+
+	if(!effective)
+	{
+		out << "The people of " << chan.get_name() << " haven't agreed on anything";
+		if(cfgfor > 0)
+			out << " in the last " << secs_cast(cfgfor);
+
+		out << "." << out.flush;
+	}
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////
