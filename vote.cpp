@@ -75,6 +75,7 @@ cfg([&]
 	ret.put("ballot.rej.priv",1);
 	ret.put("result.ack.chan",1);
 	ret.put("visible.ballots",0);
+	ret.put("visible.active",1);
 	ret.put("visible.veto",1);
 	ret.put("weight.yea",0);
 	ret.put("weight.nay",0);

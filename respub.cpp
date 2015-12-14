@@ -1031,11 +1031,17 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	});
 
 	out << vote << ": ";
-	out << BOLD << "YEA" << OFF << ": "
-	    << BOLD << FG::GREEN << setw(2) << setfill(' ') << left << tally.first << OFF << " ";
+	out << BOLD << "YEA" << OFF << ": ";
+	if(!vote.get_ended() && !cfg.get<bool>("visible.active",1))
+		out << BOLD << FG::GREEN << "- " << OFF << " ";
+	else
+		out << BOLD << FG::GREEN << setw(2) << setfill(' ') << left << tally.first << OFF << " ";
 
-	out << BOLD << "NAY" << OFF << ": "
-	    << BOLD << FG::RED << setw(2) << setfill(' ') << left << tally.second << OFF << " ";
+	out << BOLD << "NAY" << OFF << ": ";
+	if(!vote.get_ended() && !cfg.get<bool>("visible.active",1))
+		out << BOLD << FG::GREEN << "- " << OFF << " ";
+	else
+		out << BOLD << FG::RED << setw(2) << setfill(' ') << left << tally.second << OFF << " ";
 
 	out << BOLD << "YOU" << OFF << ": ";
 	if(!vote.voted(user) && vote.remaining() >= 0 && vote.get_reason().empty())
@@ -1058,14 +1064,17 @@ void ResPublica::handle_vote_list(const Msg &msg,
 
 	if(!vote.get_ended())
 	{
-		const auto total(vote.total());
-		const auto required(vote.required());
-		const auto quorum(vote.get_quorum());
-
 		if(cfg.get<time_t>("for") > 0)
 			out << "For " << BOLD << secs_cast(cfg.get<time_t>("for")) << OFF << ". ";
 
 		out << BOLD << secs_cast(vote.remaining()) << OFF << " left. ";
+	}
+
+	if(!vote.get_ended() && cfg.get<bool>("visible.active",1))
+	{
+		const auto total(vote.total());
+		const auto required(vote.required());
+		const auto quorum(vote.get_quorum());
 
 		if(total < quorum)
 			out << BOLD << (quorum - total) << OFF << " more votes are required for a quorum.";
@@ -1073,7 +1082,8 @@ void ResPublica::handle_vote_list(const Msg &msg,
 			out << BOLD << (required - tally.first) << OFF << " more yeas are required to pass.";
 		else
 			out << "As it stands, the motion will pass.";
-	} else
+	}
+	else if(vote.get_ended())
 	{
 		const auto ago(time(nullptr) - vote.get_ended());
 		const auto eff(vote.expires() - time(nullptr));
@@ -1149,28 +1159,28 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	}
 
 	// Yea votes line
-	if(tally.first)
+	if(tally.first && (vote.get_ended() || cfg.get<bool>("visible.active",true)))
 	{
-		out << pfx << BOLD << "YEA" << OFF << "      : " << BOLD << FG::GREEN << tally.first << OFF;
-		if(cfg["visible.ballots"] == "1")
-		{
-			out << " - ";
+		out << pfx << BOLD << "YEA" << OFF << "      : ";
+		out << BOLD << FG::GREEN << tally.first << OFF << " - ";
+
+		if(cfg.get<bool>("visible.ballots",true))
 			for(const auto &acct : vote.get_yea())
 				out << acct << ", ";
-		}
+
 		out << "\n";
 	}
 
 	// Nay votes line
-	if(tally.second)
+	if(tally.second && (vote.get_ended() || cfg.get<bool>("visible.active",true)))
 	{
-		out << pfx << BOLD << "NAY" << OFF << "      : " << BOLD << FG::RED << tally.second << OFF;
-		if(cfg["visible.ballots"] == "1")
-		{
-			out << " - ";
+		out << pfx << BOLD << "NAY" << OFF << "      : ";
+		out << BOLD << FG::RED << tally.second << OFF << " - ";
+
+		if(cfg.get<bool>("visible.ballots",true))
 			for(const auto &acct : vote.get_nay())
 				out << acct << ", ";
-		}
+
 		out << "\n";
 	}
 
@@ -1219,7 +1229,9 @@ void ResPublica::handle_vote_info(const Msg &msg,
 		const auto required(vote.required());
 
 		out << pfx << BOLD << "STATUS" << OFF << "   : ";
-		if(total < quorum)
+		if(!cfg.get<bool>("visible.active",true))
+			out << BOLD << FG::GRAY << "Unavailable until polling has closed.\n";
+		else if(total < quorum)
 			out << BOLD << FG::BLUE << (quorum - total) << " more votes are required for a quorum."  << "\n";
 		else if(tally.first < required)
 			out << BOLD << FG::ORANGE << (required - tally.first) << " more yeas are required to pass."  << "\n";
