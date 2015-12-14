@@ -54,7 +54,6 @@ cfg([&]
 	ret.put("quorum.turnout",0.00);
 	ret.put("quorum.plurality",0.51);
 	ret.put("quorum.quick",0);
-	ret.put("motion.quorum",1);
 	ret.put("duration",30);
 	ret.put("speaker.access","");
 	ret.put("speaker.mode","");
@@ -74,6 +73,7 @@ cfg([&]
 	ret.put("ballot.rej.chan",0);
 	ret.put("ballot.rej.priv",1);
 	ret.put("result.ack.chan",1);
+	ret.put("visible.motion",1);
 	ret.put("visible.ballots",0);
 	ret.put("visible.active",1);
 	ret.put("visible.veto",1);
@@ -192,7 +192,7 @@ void Vote::cancel()
 	set_ended();
 	set_reason("canceled");
 	const scope s([&]{ save(); });
-	if(total() >= cfg.get<uint>("motion.quorum"))
+	if(total() >= cfg.get<uint>("visible.motion",1))
 		announce_canceled();
 
 	canceled();
@@ -210,7 +210,7 @@ void Vote::start()
 	set_began();
 	save();
 
-	if(cfg.get<uint>("motion.quorum") == 1)
+	if(cfg.get<uint>("visible.motion",1) == 1)
 		announce_starting();
 }
 
@@ -238,7 +238,7 @@ try
 	if(total() < get_quorum())
 	{
 		set_reason("quorum");
-		if(total() >= cfg.get<uint>("motion.quorum"))
+		if(total() >= cfg.get<uint>("visible.motion",1))
 			announce_failed_quorum();
 
 		failed();
@@ -248,7 +248,7 @@ try
 	if(yea.size() < required())
 	{
 		set_reason("plurality");
-		if(total() >= cfg.get<uint>("motion.quorum"))
+		if(total() >= cfg.get<uint>("visible.motion",1))
 			announce_failed_required();
 
 		failed();
@@ -369,7 +369,7 @@ try
 			if(cfg.get<bool>("ballot.ack.priv"))
 				user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
-			if(total() > 1 && cfg.get<uint>("motion.quorum") == total())
+			if(total() > 1 && cfg.get<uint>("visible.motion",1) == total())
 				announce_starting();
 
 			break;
