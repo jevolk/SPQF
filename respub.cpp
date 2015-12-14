@@ -825,10 +825,10 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		auto &chan(chans.get(*toks.at(0)));
 		handle_vote_list(msg,chan,user,user<<cmsg_chan,subtok(toks));
 	}
-	else chans.for_each([&]
+	else chans.for_each(user,[&]
 	(const Chan &chan)
 	{
-		if((!toks.empty() || voting.exists(chan)) && chan.users.has(user))
+		if(!toks.empty() || voting.exists(chan))
 			handle_vote_list(msg,chan,user,user<<cmsg_chan,toks);
 	});
 }
