@@ -1070,20 +1070,21 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		out << BOLD << secs_cast(vote.remaining()) << OFF << " left. ";
 	}
 
-	if(!vote.get_ended() && cfg.get<bool>("visible.active",1))
+	if(!vote.get_ended())
 	{
 		const auto total(vote.total());
 		const auto required(vote.required());
 		const auto quorum(vote.get_quorum());
 
-		if(total < quorum)
+		if(!cfg.get<bool>("visible.active",1))
+			out << FG::GRAY << "Secret ballot until closure." << OFF;
+		else if(total < quorum)
 			out << BOLD << (quorum - total) << OFF << " more votes are required for a quorum.";
 		else if(tally.first < required)
 			out << BOLD << (required - tally.first) << OFF << " more yeas are required to pass.";
 		else
 			out << "As it stands, the motion will pass.";
-	}
-	else if(vote.get_ended())
+	} else
 	{
 		const auto ago(time(nullptr) - vote.get_ended());
 		const auto eff(vote.expires() - time(nullptr));
