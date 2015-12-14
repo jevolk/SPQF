@@ -1038,19 +1038,21 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	    << BOLD << FG::RED << setw(2) << setfill(' ') << left << tally.second << OFF << " ";
 
 	out << BOLD << "YOU" << OFF << ": ";
-	if(!vote.voted(user))
-		out << BOLD << FG::BLACK << "---" << OFF << " ";
+	if(!vote.voted(user) && vote.remaining() >= 0 && vote.get_reason().empty())
+		out << BOLD << FG::BLACK << BG::LGRAY_BLINK << "---" << OFF << " ";
+	else if(!vote.voted(user))
+		out << BOLD << FG::BLACK << BG::LGRAY << "---" << OFF << " ";
 	else if(vote.position(user) == Vote::YEA)
 		out << BOLD << FG::WHITE << BG::GREEN << "YEA" << OFF << " ";
 	else if(vote.position(user) == Vote::NAY)
 		out << BOLD << FG::WHITE << BG::RED << "NAY" << OFF << " ";
 
 	if(vote.get_ended() && vote.get_reason().empty())
-		out << BOLD << UNDER2 << FG::WHITE << BG::GREEN << "PASSED" << OFF << " ";
+		out << BOLD << FG::WHITE << BG::GREEN << "PASSED" << OFF << " ";
 	else if(vote.remaining() >= 0 && vote.get_reason().empty())
-		out << BOLD << FG::WHITE << BG::ORANGE << "ACTIVE" << OFF << " ";
+		out << BOLD << FG::BLACK << BG::ORANGE << "ACTIVE" << OFF << " ";
 	else
-		out << BOLD << UNDER2 << FG::WHITE << BG::RED << "FAILED" << OFF << " ";
+		out << BOLD << FG::WHITE << BG::RED << "FAILED" << OFF << " ";
 
 	out << vote.get_chan_name() << " " << BOLD << vote.get_type() << OFF << ": " << UNDER2 << vote.get_issue() << OFF << " - ";
 
