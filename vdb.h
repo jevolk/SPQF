@@ -195,7 +195,22 @@ template<class T>
 T Vdb::get(const id_t &id)
 try
 {
-	return T { "", id, *this };
+	return { id,*this };
+}
+catch(const Exception &e)
+{
+	if(exists(id))
+		throw;
+
+	throw Exception("Could not find a vote by that ID.");
+}
+
+
+template<> inline
+Vote Vdb::get<Vote>(const id_t &id)
+try
+{
+	return { "", id, *this };
 }
 catch(const Exception &e)
 {
