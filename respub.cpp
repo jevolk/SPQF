@@ -952,29 +952,28 @@ try
 			key = aliases.at(key);
 
 		// These are key-only, no-value no-operator shortcut recipes i.e "--foobar"
-		if(val.empty())
+		if(val.empty()) switch(hash(key))
 		{
-			if(key == "passed")
-			{
+			case hash("passed"):
 				terms.emplace_front(std::make_tuple("reason","=",std::string{}));      // empty reason is a pass
 				terms.emplace_front(std::make_tuple("ended","!=","0"));                // non-zero ended isn't active
-			}
-			else if(key == "failed")
-			{
+				break;
+
+			case hash("failed"):
 				terms.emplace_front(std::make_tuple("reason","!=",std::string{}));     // non-empty reason is a fail
-			}
-			else if(key == "active")
-			{
+				break;
+
+			case hash("active"):
 				terms.emplace_front(std::make_tuple("ended","=","0"));                 // zero ended is still active
-			}
-			else if(key == "oneline")
-			{
+				break;
+
+			case hash("oneline"):
 				options["oneline"] = "1";
-			}
-			else if(key == "count")
-			{
+				break;
+
+			case hash("count"):
 				options["count"] = "1";
-			}
+				break;
 		}
 		else if(op == "=" && options.count(key))
 			options.at(key) = val;
