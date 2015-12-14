@@ -54,6 +54,7 @@ cfg([&]
 	ret.put("quorum.turnout",0.00);
 	ret.put("quorum.plurality",0.51);
 	ret.put("quorum.quick",0);
+	ret.put("quorum.prejudice",0);
 	ret.put("duration",30);
 	ret.put("speaker.access","");
 	ret.put("speaker.mode","");
@@ -231,6 +232,10 @@ try
 	{
 		set_reason("vetoed");
 		announce_vetoed();
+
+		if(!get_effect().empty())
+			expired();
+
 		vetoed();
 		return;
 	}
@@ -240,6 +245,9 @@ try
 		set_reason("quorum");
 		if(total() >= cfg.get<uint>("visible.motion",1))
 			announce_failed_quorum();
+
+		if(!get_effect().empty())
+			expired();
 
 		failed();
 		return;
@@ -251,11 +259,14 @@ try
 		if(total() >= cfg.get<uint>("visible.motion",1))
 			announce_failed_required();
 
+		if(!get_effect().empty())
+			expired();
+
 		failed();
 		return;
 	}
 
-	if(cfg.get<time_t>("for") > 0)
+	if(secs_cast(cfg["for"]) > 0)
 	{
 		// Adjust the final "for" time value using the weighting system
 		const time_t min(secs_cast(cfg["for"]));
@@ -267,6 +278,10 @@ try
 
 	set_reason("");
 	announce_passed();
+
+	if(get_effect().empty())
+		effective();
+
 	passed();
 }
 catch(const std::exception &e)
@@ -387,6 +402,9 @@ try
 		}
 	}
 
+	if(prejudiced() && get_effect().empty())
+		effective();
+
 	if(cfg.get<bool>("quorum.quick",0) && total() >= get_quorum() && yea.size() >= required())
 		set_ended();
 
@@ -452,8 +470,13 @@ void Vote::announce_starting()
 	chan << "Vote " << (*this) << ": "
 	     << BOLD << get_type() << OFF << ": " << UNDER2 << get_issue() << OFF << ". "
 	     << "You have " << BOLD << secs_cast(secs_cast(cfg["duration"])) << OFF << " to vote; "
-	     << BOLD << get_quorum() << OFF << " votes are required for a quorum! "
-	     << "Type or PM: "
+	     << BOLD << get_quorum() << OFF << " votes are required for a quorum! ";
+
+	const auto &cfg(get_cfg());
+	if(cfg.get<bool>("quorum.prejudice",false))
+		chan << "Effects applied with prejudice. ";
+
+	chan << "Type or PM: "
 	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
 	     << " or "
 	     << BOLD << FG::RED << "!vote n" << OFF << " " << BOLD << get_id() << OFF
@@ -688,6 +711,17 @@ Vote::Ballot Vote::ballot(const std::string &str)
 bool Vote::is_ballot(const std::string &str)
 {
 	return ystr.count(str) || nstr.count(str);
+}
+
+
+bool Vote::prejudiced()
+const
+{
+	const Adoc &cfg(get_cfg());
+	if(!cfg.get<bool>("quorum.prejudice",false))
+		return false;
+
+	return yea.size() >= required();
 }
 
 

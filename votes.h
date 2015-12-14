@@ -165,6 +165,7 @@ namespace vote
 	            public virtual ModeEffect
 	{
 		void passed() override;
+		void effective() override;
 
 	  public:
 		template<class... Args> Ban(Args&&... args):

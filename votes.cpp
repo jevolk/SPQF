@@ -158,13 +158,25 @@ void vote::Voice::passed()
 //
 
 
-void vote::Ban::passed()
+void vote::Ban::effective()
 {
 	auto &chan(get_chan());
 	set_effect(chan.ban(user));
-	chan.remove(user,"And I ain't even mad");
 }
 
+
+void vote::Ban::passed()
+{
+	static const std::vector<std::string> msgs
+	{
+		{ "Terminated with prejudice" },
+		{ "And I ain't even mad"      },
+	};
+
+	const auto &msg(prejudiced()? msgs.at(0) : msgs.at(1));
+	auto &chan(get_chan());
+	chan.remove(user,msg);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -24,8 +24,8 @@ class Vote : protected Acct
 	time_t ended;                               // Time vote was closed or 0
 	time_t expiry;                              // Time vote effects successfully expired.
 	size_t quorum;                              // Quorum required
-	std::string reason;                         // Reason for outcome
-	std::string effect;                         // Effects of outcome
+	std::string reason;                         // Reason for failure; no reason is passed vote
+	std::string effect;                         // Effects of outcome; only filled once effective
 	std::set<std::string> yea;                  // Accounts voting Yes
 	std::set<std::string> nay;                  // Accounts voting No
 	std::set<std::string> veto;                 // Accounts voting No with intent to veto
@@ -65,6 +65,7 @@ class Vote : protected Acct
 	bool interceded() const;
 	uint plurality() const;
 	uint required() const;
+	bool prejudiced() const;
 	uint calc_quorum() const;
 
 	operator Adoc() const;                                  // Serialize to Adoc/JSON
@@ -108,16 +109,20 @@ class Vote : protected Acct
 	void announce_passed();
 	void announce_starting();
 
-	// One-time internal events                 // Subclass throws from these for abortions at any time.
-	virtual void passed() {}                    // Performs effects after successful vote
-	virtual void failed() {}                    // Performs effects after failed vote
-	virtual void vetoed() {}                    // Performs effects after vetoed vote
-	virtual void canceled() {}                  // Performs effects after canceled vote
+	// Type specific overrides                  // Subclass throws from these for abortions at any time.
+	virtual void passed() {}                    // After successful vote
+	virtual void failed() {}                    // After failed vote
+	virtual void vetoed() {}                    // After vetoed vote
+	virtual void canceled() {}                  // After canceled vote
+	virtual void effective() {}                 // After successful vote (before passed), or with prejudice
 	virtual void starting() {}                  // Called after ctor, before broadcast to chan
+
+  public:
+	virtual void expired() {}                   // After cfg.for time expires
+	virtual void valid(const Adoc &cfg) const;  // Checks validity of the cfg document
 
 	Stat cast(const Ballot &b, const User &u);
 
-  public:
 	// Various events while this vote is active.
 	virtual void event_vote(User &u, const Ballot &b);
 	virtual void event_nick(User &u, const std::string &old) {}
@@ -127,10 +132,6 @@ class Vote : protected Acct
 	virtual void event_chanmsg(User &u, Chan &c, const std::string &text) {}
 	virtual void event_cnotice(User &u, const std::string &text) {}
 	virtual void event_cnotice(User &u, Chan &c, const std::string &text) {}
-
-	// Various/events                           // (possibly while vote is not active)
-	virtual void valid(const Adoc &cfg) const;  // Checks validity of the cfg document
-	virtual void expired() {}                   // Reverts the effects after "cfg.for" time
 
 	// Main controls used by Voting / Praetor
 	void save()                                 { Acct::set(*this);                                 }
