@@ -956,12 +956,12 @@ try
 		{
 			if(key == "passed")
 			{
-				terms.emplace_front(std::make_tuple("reason","=",std::string()));      // empty reason is a pass
+				terms.emplace_front(std::make_tuple("reason","=",std::string{}));      // empty reason is a pass
 				terms.emplace_front(std::make_tuple("ended","!=","0"));                // non-zero ended isn't active
 			}
 			else if(key == "failed")
 			{
-				terms.emplace_front(std::make_tuple("reason","!=",std::string()));     // non-empty reason is a fail
+				terms.emplace_front(std::make_tuple("reason","!=",std::string{}));     // non-empty reason is a fail
 			}
 			else if(key == "active")
 			{

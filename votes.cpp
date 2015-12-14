@@ -858,7 +858,7 @@ void vote::Config::passed()
 		const Adoc src(cfg.get_child(key,Adoc()));
 		for(const auto &pair : src)
 		{
-			const auto &val(pair.second.get("",std::string()));
+			const auto &val(pair.second.get("",std::string{}));
 			if(std::find(toks.begin(),toks.end(),val) == toks.end())
 				dst.push(val);
 		}

@@ -396,7 +396,7 @@ oper(tokens(get_issue()).at(1)),
 val([this]
 {
 	const auto toks(tokens(get_issue()));
-	return toks.size() >= 3? detok(toks.begin()+2,toks.end()) : std::string();
+	return toks.size() >= 3? detok(toks.begin()+2,toks.end()) : std::string{};
 }())
 {
 }
