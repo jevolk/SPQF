@@ -773,12 +773,34 @@ void ResPublica::handle_debug(const Msg &msg,
                               const Tokens &toks)
 try
 {
+	std::cout << "--- debug by " << user.get_nick() << " ---" << std::endl;
+
+	if(!toks.empty() && *toks.at(0) == "colors")
+	{
+		using namespace colors;
+		user << BG::LGRAY_BLINK << "LGRAY_BLINK" << OFF << " ";
+		user << BG::RED_BLINK << "RED_BLINK" << OFF << " ";
+		user << BG::ORANGE_BLINK << "ORANGE_BLINK" << OFF << " ";
+		user << BG::BLUE_BLINK << "BLUE_BLINK" << OFF << " ";
+		user << BG::BLACK << "BLACK" << OFF << " ";
+		user << BG::RED << "RED" << OFF << " ";
+		user << BG::GREEN_BLINK << "GREEN_BLINK" << OFF << " ";
+		user << BG::MAGENTA_BLINK << "MAGENTA_BLINK" << OFF << " ";
+		user << BG::BLUE << "BLUE" << OFF << " ";
+		user << BG::MAGENTA << "MAGENTA" << OFF << " ";
+		user << BG::CYAN << "CYAN" << OFF << " ";
+		user << BG::BLACK_BLINK << "BLACK_BLINK" << OFF << " ";
+		user << BG::GREEN << "GREEN" << OFF << " ";
+		user << BG::ORANGE << "ORANGE" << OFF << " ";
+		user << BG::CYAN_BLINK << "CYAN_BLINK" << OFF << " ";
+		user << BG::LGRAY << "LGRAY" << OFF << " ";
+		user << user.flush;
+		return;
+	}
+
 	if(!user.is_owner())
 		return;
 
-	std::cout << "--- debug by " << user.get_nick() << " ---" << std::endl;
-	auto &chan(chans.get(*toks.at(0)));
-	std::cout << chan << std::endl;
 }
 catch(const std::out_of_range &e)
 {
