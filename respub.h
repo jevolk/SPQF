@@ -31,6 +31,9 @@ class ResPublica
 	Voting voting;
 
 	// !vote abstract stack
+	void vote_stats_chan_user(Locutor &out, const std::string &chan, const std::string &user, const Tokens &t);
+	void vote_stats_user(Locutor &out, const std::string &user, const Tokens &t);
+	void vote_stats_chan(Locutor &out, const std::string &chan, const Tokens &t);
 	void opinion(const Chan &c, const User &u, Locutor &out, const Tokens &t);
 	void vote_list_oneline(const Chan &c, const User &u, Locutor &out, const std::list<id_t> &result);
 	void handle_vote_info(const Msg &m, const User &u, Locutor &out, const Tokens &t, const Vote &vote);
@@ -39,6 +42,7 @@ class ResPublica
 	void handle_help(const Msg &m, Locutor &out, const Tokens &t);
 
 	// Privmsg stack
+	void handle_vote_stats(const Msg &m, User &u, const Tokens &t);
 	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Vote::Ballot &b);
 	void handle_vote_list(const Msg &m, User &u, const Tokens &t);
 	void handle_vote_id(const Msg &m, User &u, const Tokens &t);
@@ -53,6 +57,7 @@ class ResPublica
 	void handle_cmd(const Msg &m, User &u);
 
 	// !vote channel stack
+	void handle_vote_stats(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_eligible(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_config(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t, const id_t &id);

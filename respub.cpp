@@ -428,6 +428,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("list"):     handle_vote_list(msg,chan,user,subtok(toks));                 break;
 		case hash("info"):     handle_vote_id(msg,chan,user,subtok(toks));                   break;
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtok(toks));               break;
+		case hash("stats"):    handle_vote_stats(msg,chan,user,subtok(toks));                break;
 		case hash("eligible"): handle_vote_eligible(msg,chan,user,subtok(toks));             break;
 
 		// Actual vote types
@@ -626,6 +627,27 @@ catch(const std::out_of_range &e)
 {
 	throw Exception("Need a channel name because this is PM.");
 }
+
+
+void ResPublica::handle_vote_stats(const Msg &msg,
+                                   Chan &chan,
+                                   User &user,
+                                   const Tokens &toks)
+{
+	if(toks.empty())
+	{
+		vote_stats_chan(user,chan.get_name(),subtok(toks));
+		return;
+	}
+
+	const auto &name(*toks.at(0));
+	const auto target(users.has(name)? users.get(name).get_acct() : name);
+	if(target.empty())
+		throw Exception("This user is present but not logged in. I need an account name.");
+
+	vote_stats_chan_user(user,chan.get_name(),target,subtok(toks));
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -845,6 +867,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("count"):
 		case hash("list"):     handle_vote_list(msg,user,subtok(toks));                break;
 		case hash("info"):     handle_vote_id(msg,user,subtok(toks));                  break;
+		case hash("stats"):    handle_vote_stats(msg,user,subtok(toks));               break;
 		default:
 		case hash("help"):     handle_help(msg,user,subtok(toks));                     break;
 	}
@@ -913,6 +936,32 @@ catch(const std::out_of_range &e)
 {
 	throw Exception("You must supply the vote ID given in the channel.");
 }
+
+
+void ResPublica::handle_vote_stats(const Msg &msg,
+                                   User &user,
+                                   const Tokens &toks)
+{
+	if(toks.empty())
+	{
+		vote_stats_user(user,user.get_acct(),subtok(toks));
+		return;
+	}
+
+	if(!toks.empty() && toks.at(0)->size() > 0 && toks.at(0)->front() == '#')
+	{
+		vote_stats_chan(user,*toks.at(0),subtok(toks));
+		return;
+	}
+	else if(toks.size() >= 2 && toks.at(1)->size() > 0 && toks.at(1)->front() == '#')
+	{
+		vote_stats_chan_user(user,*toks.at(1),*toks.at(0),subtok(toks));
+		return;
+	}
+
+	vote_stats_user(user,*toks.at(0),subtok(toks));
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -1310,6 +1359,7 @@ void ResPublica::vote_list_oneline(const Chan &c,
 	for(const auto &id : result)
 	{
 		const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
+		const auto &cfg(vote.get_cfg());
 
 		static const size_t truncmax(16);
 		const auto &issue(vote.get_issue());
@@ -1390,6 +1440,146 @@ void ResPublica::opinion(const Chan &chan,
 	}
 }
 
+
+void ResPublica::vote_stats_chan(Locutor &out,
+                                 const std::string &chan,
+                                 const Tokens &toks)
+{
+	using namespace colors;
+	using id_t = Vote::id_t;
+
+	std::vector<std::string> keys
+	{{
+		"MOTIONS",
+		"PASSED",
+		"FAILED",
+		"SPEAKERS",
+		"VOTERS",
+		"BALLOTS",
+		"YEA BALLOTS",
+		"NAY BALLOTS",
+	}};
+
+	std::map<std::string, size_t> stats;
+	std::set<std::string> speakers;
+	std::set<std::string> voters;
+	for(auto it(vdb.cbegin()); it != vdb.end(); ++it)
+	{
+		const auto &id(lex_cast<id_t>(it->first));
+		const Adoc doc(it->second);
+		if(doc["chan"] != chan)
+			continue;
+
+		const Adoc &yeas(doc.get_child("yea",Adoc()));
+		const Adoc &nays(doc.get_child("nay",Adoc()));
+		yeas.into(voters,voters.end());
+		nays.into(voters,voters.end());
+		speakers.insert(doc["acct"]);
+		stats["YEA BALLOTS"] += yeas.size();
+		stats["NAY BALLOTS"] += nays.size();
+		stats["BALLOTS"] += yeas.size() + nays.size();
+		++stats["MOTIONS"];
+
+		const auto &reason(doc["reason"]);
+		if(reason.empty())
+			++stats["PASSED"];
+		else
+			++stats["FAILED"];
+	}
+
+	stats["SPEAKERS"] = speakers.size();
+	stats["VOTERS"] = voters.size();
+
+	uint line(0);
+	const auto pfx([&chan,&stats,&line]
+	(Locutor &out) -> Locutor &
+	{
+		out << chan << " (" << (line++) << "/" << stats.size() << ")  ";
+		return out;
+	});
+
+	pfx(out) << "Statistics for channel\n";
+	for(const auto &key : keys)
+		pfx(out) << BOLD << std::setw(12) << std::left << std::setfill(' ') << key << OFF << ": " << stats.at(key) << "\n";
+
+	out << flush;
+}
+
+
+void ResPublica::vote_stats_user(Locutor &out,
+                                 const std::string &user,
+                                 const Tokens &toks)
+{
+
+
+}
+
+
+
+void ResPublica::vote_stats_chan_user(Locutor &out,
+                                      const std::string &chan,
+                                      const std::string &user,
+                                      const Tokens &toks)
+{
+	using namespace colors;
+	using id_t = Vote::id_t;
+
+	std::vector<std::string> keys
+	{{
+		"SPEAKER",
+		"BALLOTS",
+		"YEA BALLOTS",
+		"NAY BALLOTS",
+		"WINNING",
+		"LOSING",
+		"ABSTAIN",
+	}};
+
+	std::map<std::string, size_t> stats;
+	for(auto it(vdb.cbegin()); it != vdb.end(); ++it)
+	{
+		const auto &id(lex_cast<id_t>(it->first));
+		const Adoc doc(it->second);
+		if(doc["chan"] != chan)
+			continue;
+
+		const Adoc yd(doc.get_child("yea",Adoc()));
+		const Adoc nd(doc.get_child("nay",Adoc()));
+		const auto yeas(yd.into<std::set<std::string>>());
+		const auto nays(nd.into<std::set<std::string>>());
+		const auto &yc(yeas.count(user));
+		const auto &nc(nays.count(user));
+		assert(yc + nc < 2);
+		stats["YEA BALLOTS"] += yc;
+		stats["NAY BALLOTS"] += nc;
+		stats["BALLOTS"] += yc + nc;
+
+		if(doc["acct"] == user)
+			++stats["SPEAKER"];
+
+		const auto &reason(doc["reason"]);
+		if(reason.empty() && yc)
+			++stats["WINNING"];
+		else if(nc)
+			++stats["LOSING"];
+		else
+			++stats["ABSTAIN"];
+	}
+
+	uint line(0);
+	const auto pfx([&chan,&stats,&line]
+	(Locutor &out) -> Locutor &
+	{
+		out << chan << " (" << (line++) << "/" << stats.size() << ")  ";
+		return out;
+	});
+
+	pfx(out) << "Statistics for user in channel\n";
+	for(const auto &key : keys)
+		pfx(out) << BOLD << std::setw(12) << std::left << std::setfill(' ') << key << OFF << ": " << stats[key] << "\n";
+
+	out << flush;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////
