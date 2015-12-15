@@ -668,7 +668,10 @@ try
 	auto &chan(chans.get(*toks.at(0)));
 
 	// Founder config override to fix a broken config
-	if(toks.size() >= 3 && *toks.at(2) == "=" && (chan.lists.has_flag(user,'F') || user.is_owner()))
+	const Mode authority("Ff");
+	const auto has_flag(chan.lists.has_flag(user));
+	const auto has_auth(has_flag && chan.lists.get_flag(user).get_flags().any(authority));
+	if(toks.size() >= 3 && *toks.at(2) == "=" && (user.is_owner() || has_auth)) try
 	{
 		auto cfg(chan.get());
 		const auto &key(*toks.at(1));
@@ -693,6 +696,11 @@ try
 
 		chan.set(cfg);
 		user << "[FOUNDER OVERRIDE] Success." << user.flush;
+		return;
+	}
+	catch(const std::exception &e)
+	{
+		user << "Error: " << e.what() << user.flush;
 		return;
 	}
 
