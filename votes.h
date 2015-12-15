@@ -446,6 +446,10 @@ user([&]
 	if(!user.is_logged_in())
 		throw Exception("This nickname is not logged in, and I must resolve an account name");
 
+	const Adoc info(user.get("info"));
+	if(info.empty())
+		user.info();
+
 	set_issue(user.get_acct());
 	return user;
 }())
