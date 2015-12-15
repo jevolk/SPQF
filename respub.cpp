@@ -1325,9 +1325,12 @@ void ResPublica::vote_list_oneline(const Chan &c,
 		out << BOLD << "#" << vote.get_id() << OFF << " "
 		    << (active? FG::ORANGE : quorum && majority? FG::GREEN : quorum? FG::RED : FG::GRAY)
 		    << vote.get_type() << OFF << " "
-		    << UNDER2 << isout << OFF << " "
-		    << BOLD << FG::GREEN << tally.first << OFF << "v"
-		    << BOLD << FG::RED << tally.second << OFF << ". ";
+		    << UNDER2 << isout << OFF;
+
+		if(vote.get_ended() || cfg.get<bool>("visible.active",true))
+			out << " " << BOLD << FG::GREEN << tally.first << OFF << "v" << BOLD << FG::RED << tally.second << OFF;
+
+		out << ". ";
 	}
 
 	out << flush;
