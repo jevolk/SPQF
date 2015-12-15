@@ -22,28 +22,37 @@ class Voting
 	std::multimap<std::string, id_t> useridx;        // Index of votes  : acct => id
 
   public:
-	auto exists(const Chan &chan) const -> bool      { return chanidx.count(chan.get_name());   }
-	auto exists(const User &user) const -> bool      { return useridx.count(user.get_acct());   }
-	auto exists(const id_t &id) const -> bool        { return votes.count(id);                  }
-	auto count(const Chan &chan) const               { return chanidx.count(chan.get_name());   }
-	auto count(const User &user) const               { return useridx.count(user.get_acct());   }
-	auto count() const                               { return votes.size();                     }
+	std::vector<id_t> get_ids(const Chan &chan, const User &user) const;
 
 	const id_t &get_id(const Chan &chan) const;      // Throws if more than one vote in channel
 	const id_t &get_id(const User &chan) const;      // Throws if more than one vote for user
+
 	const Vote &get(const id_t &id) const;
 	const Vote &get(const Chan &chan) const          { return get(get_id(chan));                }
 	const Vote &get(const User &user) const          { return get(get_id(user));                }
+
 	Vote &get(const id_t &id);
 	Vote &get(const Chan &chan)                      { return get(get_id(chan));                }
 	Vote &get(const User &user)                      { return get(get_id(user));                }
 
-	void for_each(const Chan &chan, const std::function<void (const Vote &vote)> &closure) const;
-	void for_each(const User &user, const std::function<void (const Vote &vote)> &closure) const;
-	void for_each(const std::function<void (const Vote &vote)> &closure) const;
-	void for_each(const Chan &chan, const std::function<void (Vote &vote)> &closure);
-	void for_each(const User &user, const std::function<void (Vote &vote)> &closure);
-	void for_each(const std::function<void (Vote &vote)> &closure);
+	void for_each(const Chan &chan, const User &user, const std::function<void (const Vote &)> &closure) const;
+	void for_each(const Chan &chan, const std::function<void (const Vote &)> &closure) const;
+	void for_each(const User &user, const std::function<void (const Vote &)> &closure) const;
+	void for_each(const std::function<void (const Vote &)> &closure) const;
+
+	void for_each(const Chan &chan, const User &user, const std::function<void (Vote &)> &closure);
+	void for_each(const Chan &chan, const std::function<void (Vote &)> &closure);
+	void for_each(const User &user, const std::function<void (Vote &)> &closure);
+	void for_each(const std::function<void (Vote &)> &closure);
+
+	auto exists(const Chan &chan) const -> bool      { return chanidx.count(chan.get_name());   }
+	auto exists(const User &user) const -> bool      { return useridx.count(user.get_acct());   }
+	auto exists(const id_t &id) const -> bool        { return votes.count(id);                  }
+
+	uint count(const Chan &c, const User &u) const   { return get_ids(c,u).size();              }
+	auto count(const Chan &chan) const               { return chanidx.count(chan.get_name());   }
+	auto count(const User &user) const               { return useridx.count(user.get_acct());   }
+	auto count() const                               { return votes.size();                     }
 
   private:
 	id_t get_next_id() const;
@@ -51,7 +60,6 @@ class Voting
 	template<class Duration> void worker_sleep(Duration&& duration);
 	std::unique_ptr<Vote> del(const decltype(votes.begin()) &it);
 	std::unique_ptr<Vote> del(const id_t &id);
-	void valid_motion(Vote &vote);  // throws out
 
 	void call_finish(Vote &vote) noexcept;
 	void poll_votes();
@@ -70,6 +78,9 @@ class Voting
 	void eligible_add();
 	void eligible_worker();
 	std::thread eligible_thread;
+
+	void valid_limits(Vote &vote, const Chan &chan, const User &user);
+	void valid_motion(Vote &vote);
 
   public:
 	void cancel(Vote &vote, const Chan &chan, const User &user);

@@ -68,6 +68,113 @@ void Voting::cancel(Vote &vote,
 }
 
 
+void Voting::valid_motion(Vote &vote)
+{
+	const auto &cfg(vote.get_cfg());
+	vote.valid(cfg);
+
+	const auto &user(vote.get_user());
+	const auto &chan(vote.get_chan());
+	valid_limits(vote,chan,user);
+
+	if(!vote.speaker(user))
+		throw Exception("You are not able to create votes on this channel.");
+
+	if(!vote.enfranchised(user))
+		throw Exception("You are not yet enfranchised in this channel.");
+
+	if(!vote.qualified(user))
+		throw Exception("You have not been participating enough to start a vote.");
+
+	for_each(chan,[&vote](Vote &existing)
+	{
+		if(vote.get_id() == existing.get_id())
+			return;
+
+		if(vote.get_type() != existing.get_type())
+			return;
+
+		if(!boost::iequals(vote.get_issue(),existing.get_issue()))
+			return;
+
+		auto &user(vote.get_user());
+		existing.event_vote(user,Vote::YEA);
+		throw Exception("Instead an attempt was made to cast a ballot for #") << existing.get_id() << ".";
+	});
+
+	const auto now(time(nullptr));
+	const auto limit_age(cfg.get<time_t>("limit.age",0));
+	const auto limit_quorum(cfg.get<time_t>("limit.quorum.age",0));
+	const auto limit_plurality(cfg.get<time_t>("limit.plurality.age",0));
+
+	const Vdb::Terms age_query
+	{
+		Vdb::Term { "ended",  ">=", lex_cast(now - limit_age)        },
+		Vdb::Term { "issue",  "==", vote.get_issue()                 },
+		Vdb::Term { "type",   "==", vote.get_type()                  },
+		Vdb::Term { "chan",   "==", chan.get_name()                  },
+	};
+
+	const Vdb::Terms quorum_query
+	{
+		Vdb::Term { "reason", "==", "quorum"                         },
+		Vdb::Term { "ended",  ">=", lex_cast(now - limit_quorum)     },
+		Vdb::Term { "issue",  "==", vote.get_issue()                 },
+		Vdb::Term { "type",   "==", vote.get_type()                  },
+		Vdb::Term { "chan",   "==", chan.get_name()                  },
+	};
+
+	const Vdb::Terms plurality_query
+	{
+		Vdb::Term { "reason", "==", "plurality"                      },
+		Vdb::Term { "ended",  ">=", lex_cast(now - limit_plurality)  },
+		Vdb::Term { "issue",  "==", vote.get_issue()                 },
+		Vdb::Term { "type",   "==", vote.get_type()                  },
+		Vdb::Term { "chan",   "==", chan.get_name()                  },
+	};
+
+	if(limit_age && !vdb.query(age_query,1).empty())
+		throw Exception("This vote was made too recently. Try again later.");
+
+	if(limit_quorum && !vdb.query(quorum_query,1).empty())
+		throw Exception("This vote failed without a quorum too recently. Try again later.");
+
+	if(limit_plurality && !vdb.query(plurality_query,1).empty())
+		throw Exception("This vote failed with plurality too recently. Try again later.");
+}
+
+
+void Voting::valid_limits(Vote &vote,
+                          const Chan &chan,
+                          const User &user)
+{
+	using limits = std::numeric_limits<uint>;
+
+	if(user.is_myself() || chan.users.mode(user).has('o'))
+		return;
+
+	const auto &cfg(vote.get_cfg());
+	if(count(chan) > cfg.get("limit.active",limits::max()))
+		throw Exception("Too many active votes for this channel.");
+
+	if(count(chan,user) > cfg.get("limit.user",limits::max()))
+		throw Exception("Too many active votes started by you on this channel.");
+
+	auto typcnt(0);
+	for_each(chan,user,[&typcnt,&vote]
+	(const Vote &active)
+	{
+		if(vote.get_type() == "appeal")
+			return;
+
+		typcnt += active.get_type() == vote.get_type();
+	});
+
+	if(typcnt > cfg.get("limit.type",1))
+		throw Exception("Too many active votes of this type started by you on this channel.");
+}
+
+
 void Voting::eligible_worker()
 {
 	worker_wait_init();
@@ -395,93 +502,6 @@ catch(const std::exception &e)
 }
 
 
-void Voting::valid_motion(Vote &vote)
-{
-	using limits = std::numeric_limits<size_t>;
-
-	const auto &sess(get_sess());
-	const auto &cfg(vote.get_cfg());
-	const auto &user(vote.get_user());
-	const auto &chan(vote.get_chan());
-
-	vote.valid(cfg);
-
-	if(!chan.users.mode(user).has('o') && user.get_nick() != sess.get_nick())
-	{
-		if(chanidx.count(chan.get_name()) > cfg.get("limit.active",limits::max()))
-			throw Exception("Too many active votes for this channel.");
-
-		if(useridx.count(user.get_acct()) > cfg.get("limit.user",limits::max()))
-			throw Exception("Too many active votes started by you on this channel.");
-	}
-
-	if(!vote.speaker(user))
-		throw Exception("You are not able to create votes on this channel.");
-
-	if(!vote.enfranchised(user))
-		throw Exception("You are not yet enfranchised in this channel.");
-
-	if(!vote.qualified(user))
-		throw Exception("You have not been participating enough to start a vote.");
-
-	for_each(chan,[&vote](Vote &existing)
-	{
-		if(vote.get_id() == existing.get_id())
-			return;
-
-		if(vote.get_type() != existing.get_type())
-			return;
-
-		if(!boost::iequals(vote.get_issue(),existing.get_issue()))
-			return;
-
-		auto &user(vote.get_user());
-		existing.event_vote(user,Vote::YEA);
-		throw Exception("Instead an attempt was made to cast a ballot for #") << existing.get_id() << ".";
-	});
-
-	const auto now(time(nullptr));
-	const auto limit_age(cfg.get<time_t>("limit.age",0));
-	const auto limit_quorum(cfg.get<time_t>("limit.quorum.age",0));
-	const auto limit_plurality(cfg.get<time_t>("limit.plurality.age",0));
-
-	const Vdb::Terms age_query
-	{
-		Vdb::Term { "ended",  ">=", lex_cast(now - limit_age)        },
-		Vdb::Term { "issue",  "==", vote.get_issue()                 },
-		Vdb::Term { "type",   "==", vote.get_type()                  },
-		Vdb::Term { "chan",   "==", chan.get_name()                  },
-	};
-
-	const Vdb::Terms quorum_query
-	{
-		Vdb::Term { "reason", "==", "quorum"                         },
-		Vdb::Term { "ended",  ">=", lex_cast(now - limit_quorum)     },
-		Vdb::Term { "issue",  "==", vote.get_issue()                 },
-		Vdb::Term { "type",   "==", vote.get_type()                  },
-		Vdb::Term { "chan",   "==", chan.get_name()                  },
-	};
-
-	const Vdb::Terms plurality_query
-	{
-		Vdb::Term { "reason", "==", "plurality"                      },
-		Vdb::Term { "ended",  ">=", lex_cast(now - limit_plurality)  },
-		Vdb::Term { "issue",  "==", vote.get_issue()                 },
-		Vdb::Term { "type",   "==", vote.get_type()                  },
-		Vdb::Term { "chan",   "==", chan.get_name()                  },
-	};
-
-	if(limit_age && !vdb.query(age_query,1).empty())
-		throw Exception("This vote was made too recently. Try again later.");
-
-	if(limit_quorum && !vdb.query(quorum_query,1).empty())
-		throw Exception("This vote failed without a quorum too recently. Try again later.");
-
-	if(limit_plurality && !vdb.query(plurality_query,1).empty())
-		throw Exception("This vote failed with plurality too recently. Try again later.");
-}
-
-
 std::unique_ptr<Vote> Voting::del(const id_t &id)
 {
 	const auto vit = votes.find(id);
@@ -554,7 +574,7 @@ void Voting::worker_wait_init()
 Vote::id_t Voting::get_next_id()
 const
 {
-	id_t i = 0;
+	id_t i(0);
 	while(vdb.exists(i) || exists(i))
 		i++;
 
@@ -572,10 +592,10 @@ void Voting::for_each(const std::function<void (Vote &vote)> &closure)
 void Voting::for_each(const User &user,
                       const std::function<void (Vote &vote)> &closure)
 {
-	auto pit = useridx.equal_range(user.get_acct());
+	auto pit(useridx.equal_range(user.get_acct()));
 	for(; pit.first != pit.second; ++pit.first)
 	{
-		const auto &id = pit.first->second;
+		const auto &id(pit.first->second);
 		closure(get(id));
 	}
 }
@@ -584,12 +604,22 @@ void Voting::for_each(const User &user,
 void Voting::for_each(const Chan &chan,
                       const std::function<void (Vote &vote)> &closure)
 {
-	auto pit = chanidx.equal_range(chan.get_name());
+	auto pit(chanidx.equal_range(chan.get_name()));
 	for(; pit.first != pit.second; ++pit.first)
 	{
-		const auto &id = pit.first->second;
+		const auto &id(pit.first->second);
 		closure(get(id));
 	}
+}
+
+
+void Voting::for_each(const Chan &chan,
+                      const User &user,
+                      const std::function<void (Vote &vote)> &closure)
+{
+	const auto ids(get_ids(chan,user));
+	for(const auto &id : ids)
+		closure(get(id));
 }
 
 
@@ -605,10 +635,10 @@ void Voting::for_each(const User &user,
                       const std::function<void (const Vote &vote)> &closure)
 const
 {
-	auto pit = useridx.equal_range(user.get_acct());
+	auto pit(useridx.equal_range(user.get_acct()));
 	for(; pit.first != pit.second; ++pit.first)
 	{
-		const auto &id = pit.first->second;
+		const auto &id(pit.first->second);
 		closure(get(id));
 	}
 }
@@ -618,12 +648,23 @@ void Voting::for_each(const Chan &chan,
                       const std::function<void (const Vote &vote)> &closure)
 const
 {
-	auto pit = chanidx.equal_range(chan.get_name());
+	auto pit(chanidx.equal_range(chan.get_name()));
 	for(; pit.first != pit.second; ++pit.first)
 	{
-		const auto &id = pit.first->second;
+		const auto &id(pit.first->second);
 		closure(get(id));
 	}
+}
+
+
+void Voting::for_each(const Chan &chan,
+                      const User &user,
+                      const std::function<void (const Vote &vote)> &closure)
+const
+{
+	const auto ids(get_ids(chan,user));
+	for(const auto &id : ids)
+		closure(get(id));
 }
 
 
@@ -655,7 +696,7 @@ const
 	if(count(user) > 1)
 		throw Exception("There are multiple votes initiated by this user. Specify an ID#.");
 
-	const auto it = useridx.find(user.get_acct());
+	const auto it(useridx.find(user.get_acct()));
 	if(it == useridx.end())
 		throw Exception("There are no active votes initiated by this user.");
 
@@ -669,9 +710,35 @@ const
 	if(count(chan) > 1)
 		throw Exception("There are multiple votes active in this channel. Specify an ID#.");
 
-	const auto it = chanidx.find(chan.get_name());
+	const auto it(chanidx.find(chan.get_name()));
 	if(it == chanidx.end())
 		throw Exception("There are no active votes in this channel.");
 
 	return it->second;
+}
+
+
+std::vector<Voting::id_t> Voting::get_ids(const Chan &chan,
+                                          const User &user)
+const
+{
+	const auto cpit(chanidx.equal_range(chan.get_name()));
+	if(cpit.first == cpit.second)
+		return {};
+
+	const auto upit(useridx.equal_range(user.get_acct()));
+	if(upit.first == upit.second)
+		return {};
+
+	static const auto second([](const auto &p) { return p.second; });
+	std::vector<id_t> cids(std::distance(cpit.first,cpit.second));
+	std::vector<id_t> uids(std::distance(upit.first,upit.second));
+	std::transform(cpit.first,cpit.second,cids.begin(),second);
+	std::transform(upit.first,upit.second,uids.begin(),second);
+	std::sort(cids.begin(),cids.end());
+	std::sort(uids.begin(),uids.end());
+
+	std::vector<id_t> ret(std::min(cids.size(),uids.size()));
+	std::set_intersection(cids.begin(),cids.end(),uids.begin(),uids.end(),ret.begin());
+	return ret;
 }
