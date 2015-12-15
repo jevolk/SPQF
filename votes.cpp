@@ -577,17 +577,17 @@ void vote::Staff::passed()
 {
 	auto &chan(get_chan());
 	const auto &cfg(get_cfg());
-	const Delta delta(std::string("+") + cfg["staff.access"]);
-	chan.flags(user,delta);
-	set_effect(delta);
+	const Deltas deltas(std::string("+") + cfg["staff.access"]);
+	chan.flags(user,deltas);
+	set_effect(deltas);
 }
 
 
 void vote::Staff::expired()
 {
 	auto &chan(get_chan());
-	const Delta delta(get_effect());
-	chan.flags(user,~delta);
+	const Deltas deltas(get_effect());
+	chan.flags(user,~deltas);
 }
 
 
@@ -616,9 +616,9 @@ void vote::DeStaff::passed()
 {
 	auto &chan(get_chan());
 	const auto &cfg(get_cfg());
-	const Delta delta(std::string("-") + cfg["staff.access"]);
-	chan.flags(user,delta);
-	set_effect(delta);
+	const Delta deltas(std::string("-") + cfg["staff.access"]);
+	chan.flags(user,deltas);
+	set_effect(deltas);
 }
 
 
