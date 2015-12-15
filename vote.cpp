@@ -193,7 +193,7 @@ void Vote::cancel()
 	set_ended();
 	set_reason("canceled");
 	const scope s([&]{ save(); });
-	if(total() >= cfg.get<uint>("visible.motion",1))
+	if(total() >= cfg.get("visible.motion",1U))
 		announce_canceled();
 
 	canceled();
@@ -211,7 +211,7 @@ void Vote::start()
 	set_began();
 	save();
 
-	if(cfg.get<uint>("visible.motion",1) == 1)
+	if(cfg.get("visible.motion",1U) == 1U)
 		announce_starting();
 }
 
@@ -243,7 +243,7 @@ try
 	if(total() < get_quorum())
 	{
 		set_reason("quorum");
-		if(total() >= cfg.get<uint>("visible.motion",1))
+		if(total() >= cfg.get("visible.motion",1U))
 			announce_failed_quorum();
 
 		if(!get_effect().empty())
@@ -256,7 +256,7 @@ try
 	if(yea.size() < required())
 	{
 		set_reason("plurality");
-		if(total() >= cfg.get<uint>("visible.motion",1))
+		if(total() >= cfg.get("visible.motion",1U))
 			announce_failed_required();
 
 		if(!get_effect().empty())
@@ -289,9 +289,9 @@ catch(const std::exception &e)
 	set_reason(e.what());
 	save();
 
-	if(cfg.get<bool>("result.ack.chan"))
+	if(cfg.get("result.ack.chan",true))
 	{
-		auto &chan = get_chan();
+		auto &chan(get_chan());
 		chan << "The vote " << (*this) << " was rejected: " << e.what() << flush;
 	}
 }
@@ -378,13 +378,13 @@ try
 		{
 			hosts.emplace(user.get_host());
 
-			if(cfg.get<bool>("ballot.ack.chan"))
+			if(cfg.get("ballot.ack.chan",false))
 				chan << user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
-			if(cfg.get<bool>("ballot.ack.priv"))
+			if(cfg.get("ballot.ack.priv",true))
 				user << "Thanks for casting your vote on " << (*this) << "!" << flush;
 
-			if(total() > 1 && cfg.get<uint>("visible.motion",1) == total())
+			if(total() > 1 && cfg.get("visible.motion",1U) == total())
 				announce_starting();
 
 			break;
@@ -392,10 +392,10 @@ try
 
 		case CHANGED:
 		{
-			if(cfg.get<bool>("ballot.ack.chan"))
+			if(cfg.get("ballot.ack.chan",false))
 				chan << user << "You have changed your vote on " << (*this) << "!" << flush;
 
-			if(cfg.get<bool>("ballot.ack.priv"))
+			if(cfg.get("ballot.ack.priv",true))
 				user << "You have changed your vote on " << (*this) << "!" << flush;
 
 			break;
@@ -405,7 +405,7 @@ try
 	if(prejudiced() && get_effect().empty())
 		effective();
 
-	if(cfg.get<bool>("quorum.quick",0) && total() >= get_quorum() && yea.size() >= required())
+	if(cfg.get("quorum.quick",false) && total() >= get_quorum() && yea.size() >= required())
 		set_ended();
 
 	save();
@@ -414,13 +414,13 @@ catch(const Exception &e)
 {
 	using namespace colors;
 
-	if(cfg.get<bool>("ballot.rej.chan"))
+	if(cfg.get("ballot.rej.chan",false))
 	{
 		auto &chan(get_chan());
 		chan << user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
 	}
 
-	if(cfg.get<bool>("ballot.rej.priv"))
+	if(cfg.get("ballot.rej.priv",true))
 		user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
 }
 
@@ -473,7 +473,7 @@ void Vote::announce_starting()
 	     << BOLD << get_quorum() << OFF << " votes are required for a quorum! ";
 
 	const auto &cfg(get_cfg());
-	if(cfg.get<bool>("quorum.prejudice",false))
+	if(cfg.get("quorum.prejudice",false))
 		chan << "Effects applied with prejudice. ";
 
 	chan << "Type or PM: "
@@ -489,7 +489,7 @@ void Vote::announce_passed()
 	using namespace colors;
 
 	auto &chan(get_chan());
-	if(cfg.get<bool>("result.ack.chan"))
+	if(cfg.get("result.ack.chan",true))
 	{
 		chan << (*this) << ": "
 		     << BOLD << get_type() << OFF << ": "
@@ -498,8 +498,8 @@ void Vote::announce_passed()
 		     << " Yeas: " << FG::GREEN << BOLD << yea.size() << OFF << "."
 		     << " Nays: " << FG::RED << nay.size() << OFF << ".";
 
-		if(cfg.get<time_t>("for") > 0)
-			chan << " Effective for " << BOLD << secs_cast(cfg.get<time_t>("for")) << OFF << ".";
+		if(secs_cast(cfg["for"]) > 0)
+			chan << " Effective for " << BOLD << secs_cast(secs_cast(cfg["for"])) << OFF << ".";
 
 		chan << flush;
 	}
@@ -511,7 +511,7 @@ void Vote::announce_vetoed()
 	using namespace colors;
 
 	auto &chan(get_chan());
-	if(cfg.get<bool>("result.ack.chan"))
+	if(cfg.get("result.ack.chan",true))
 		chan << "The vote " << (*this) << " has been vetoed." << flush;
 }
 
@@ -521,7 +521,7 @@ void Vote::announce_canceled()
 	using namespace colors;
 
 	auto &chan(get_chan());
-	if(cfg.get<bool>("result.ack.chan"))
+	if(cfg.get("result.ack.chan",true))
 		chan << "The vote " << (*this) << " has been canceled." << flush;
 }
 
@@ -531,7 +531,7 @@ void Vote::announce_failed_required()
 	using namespace colors;
 
 	auto &chan(get_chan());
-	if(cfg.get<bool>("result.ack.chan"))
+	if(cfg.get("result.ack.chan",true))
 		chan << (*this) << ": "
 		     << BOLD << get_type() << OFF << ": "
 		     << UNDER2 << get_issue() << OFF << ". "
@@ -548,7 +548,7 @@ void Vote::announce_failed_quorum()
 	using namespace colors;
 
 	auto &chan(get_chan());
-	if(cfg.get<bool>("result.ack.chan"))
+	if(cfg.get("result.ack.chan",true))
 		chan << (*this) << ": "
 		     << "Failed to reach a quorum: "
 		     << BOLD << total() << OFF
@@ -601,7 +601,7 @@ const
 		return strncmp(a.acct,acct.c_str(),16) == 0;
 	});
 
-	const auto lines(cfg.get<uint>("qualify.lines",0));
+	const auto lines(cfg.get("qualify.lines",0U));
 	return irc::log::atleast(get_chan_name(),filt,lines);
 }
 
@@ -632,7 +632,7 @@ const
 		return strncmp(a.acct,acct.c_str(),16) == 0;
 	});
 
-	const auto lines(cfg.get<uint>("enfranchise.lines",0));
+	const auto lines(cfg.get("enfranchise.lines",0U));
 	return irc::log::atleast(get_chan_name(),filt,lines);
 }
 
@@ -718,7 +718,7 @@ bool Vote::prejudiced()
 const
 {
 	const Adoc &cfg(get_cfg());
-	if(!cfg.get<bool>("quorum.prejudice",false))
+	if(!cfg.get("quorum.prejudice",false))
 		return false;
 
 	return yea.size() >= required();
@@ -731,7 +731,7 @@ const
 	const std::vector<uint> sel
 	{{
 		plurality(),
-		cfg.get<uint>("quorum.yea",0)
+		cfg.get("quorum.yea",0U)
 	}};
 
 	return *std::max_element(sel.begin(),sel.end());
@@ -743,18 +743,18 @@ const
 {
 	const float &total(this->total());
 	const float count((total - yea.size()) + nay.size());
-	return ceil(count * cfg.get<float>("quorum.plurality"));
+	return ceil(count * cfg.get("quorum.plurality",0.51));
 }
 
 
 bool Vote::interceded()
 const
 {
-	const auto vmin(std::max(cfg.get<uint>("veto.quorum"),1U));
+	const auto vmin(std::max(cfg.get("veto.quorum",1U),1U));
 	if(num_vetoes() < vmin)
 		return false;
 
-	const auto quick(cfg.get<bool>("veto.quick"));
+	const auto quick(cfg.get("veto.quick",true));
 	return quick? true : !remaining();
 }
 
@@ -765,12 +765,12 @@ const
 	const auto &cfg(get_cfg());
 	std::vector<uint> sel
 	{{
-		cfg.get<uint>("quorum.yea"),
-		cfg.get<uint>("quorum.ballots"),
+		cfg.get("quorum.yea",1U),
+		cfg.get("quorum.ballots",1U),
 		0
 	}};
 
-	const auto turnout(cfg.get<float>("quorum.turnout"));
+	const auto turnout(cfg.get("quorum.turnout",0.0));
 	if(turnout <= 0.0)
 		return *std::max_element(sel.begin(),sel.end());
 
@@ -808,7 +808,7 @@ const
 		return true;
 	});
 
-	const auto min_lines(cfg.get<uint>("quorum.lines",0U));
+	const auto min_lines(cfg.get("quorum.lines",0U));
 	const auto has_lines(std::count_if(count.begin(),count.end(),[&min_lines]
 	(const auto &p)
 	{

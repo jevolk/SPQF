@@ -103,9 +103,9 @@ void Voting::valid_motion(Vote &vote)
 	});
 
 	const auto now(time(nullptr));
-	const auto limit_age(cfg.get<time_t>("limit.age",0));
-	const auto limit_quorum(cfg.get<time_t>("limit.quorum.age",0));
-	const auto limit_plurality(cfg.get<time_t>("limit.plurality.age",0));
+	const auto limit_age(secs_cast(cfg["limit.age"]));
+	const auto limit_quorum(secs_cast(cfg["limit.quorum.age"]));
+	const auto limit_plurality(secs_cast(cfg["limit.plurality.age"]));
 
 	const Vdb::Terms age_query
 	{
@@ -378,7 +378,7 @@ void Voting::remind_votes()
 			continue;
 
 		const auto &cfg(vote.get_cfg());
-		if(!cfg.get<bool>("remind.enable",false))
+		if(!cfg.get("remind.enable",false))
 			continue;
 
 		auto &chan(vote.get_chan());

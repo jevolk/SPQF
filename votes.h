@@ -459,7 +459,7 @@ ForNow::ForNow(Args&&... args):
 Vote(std::forward<Args>(args)...)
 {
 	const auto &cfg(get_cfg());
-	if(cfg.get<time_t>("for",0) != 0)
+	if(secs_cast(cfg["for"]) != 0)
 	{
 		auto cpy(cfg);
 		cpy.put("for",0);

@@ -447,7 +447,7 @@ try
 		throw Exception("User at issue is already enfranchised");
 
 	const auto &acct(user.get_acct());
-	const auto endtime(time(NULL) - cfg.get<uint>("eligible.age"));
+	const auto endtime(time(NULL) - secs_cast(cfg["eligible.age"]));
 	const irc::log::FilterAny filt_age([&acct,&endtime]
 	(const irc::log::ClosureArgs &a)
 	{
@@ -472,7 +472,7 @@ try
 	if(!irc::log::atleast(get_chan_name(),filt_age,1))
 		throw Exception("User at issue has not been present long enough for consideration.");
 
-	const auto min_lines(cfg.get<uint>("eligible.lines"));
+	const auto min_lines(cfg.get("eligible.lines",0U));
 	const auto has_lines(irc::log::count(get_chan_name(),filt_lines));
 	if(has_lines < min_lines)
 		throw Exception("User at issue has ") << has_lines << " of " << min_lines << " required lines";

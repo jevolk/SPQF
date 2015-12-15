@@ -562,23 +562,23 @@ void ResPublica::handle_vote_config(const Msg &msg,
                                     User &user,
                                     const Tokens &toks)
 {
-	const std::string issue = detok(toks);
+	const std::string issue(detok(toks));
 	if(issue.find("=") != std::string::npos)
 	{
 		voting.motion<vote::Config>(chan,user,issue);
 		return;
 	}
 
-	const Adoc &cfg = chan.get();
-	const std::string &key = *toks.at(0);
-	const std::string &val = cfg[key];
+	const Adoc &cfg(chan.get());
+	const auto &key(*toks.at(0));
+	const auto &val(cfg[key]);
 
-	const bool ack_chan = cfg["config.config.ack.chan"] == "1";
-	Locutor &out = ack_chan? static_cast<Locutor &>(chan):
-	                         static_cast<Locutor &>(user << chan);   // CMSG
+	const bool ack_chan(cfg["config.config.ack.chan"] == "1");
+	Locutor &out(ack_chan? static_cast<Locutor &>(chan):
+	                       static_cast<Locutor &>(user << chan));   // CMSG
 	if(val.empty())
 	{
-		const Adoc &doc = cfg.get_child(key,Adoc());
+		const Adoc &doc(cfg.get_child(key,Adoc()));
 		out << doc << flush;
 	}
 	else out << key << " = " << val << flush;
@@ -1114,8 +1114,8 @@ void ResPublica::handle_vote_list(const Msg &msg,
 
 	if(!vote.get_ended())
 	{
-		if(cfg.get<time_t>("for") > 0)
-			out << "For " << BOLD << secs_cast(cfg.get<time_t>("for")) << OFF << ". ";
+		if(secs_cast(cfg["for"]) > 0)
+			out << "For " << BOLD << secs_cast(secs_cast(cfg["for"])) << OFF << ". ";
 
 		out << BOLD << secs_cast(vote.remaining()) << OFF << " left. ";
 	}
@@ -1141,7 +1141,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 
 		if(!vote.get_reason().empty())
 			out << BOLD << FG::RED << vote.get_reason() << OFF << ". ";
-		else if(cfg.get<time_t>("for") > 0 && eff > 0)
+		else if(secs_cast(cfg["for"]) > 0 && eff > 0)
 			out << BOLD << FG::GREEN << "effective " << OFF << secs_cast(eff) << " more. ";
 
 		out << secs_cast(ago) << " ago.";
@@ -1263,8 +1263,8 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	if(!vote.get_effect().empty())
 		out << pfx << BOLD << "EFFECT" << OFF << "   : " << vote.get_effect() << "\n";
 
-	if(cfg.get<time_t>("for") > 0)
-		out << pfx << BOLD << "FOR" << OFF << "      : " << cfg["for"] << " seconds (" << secs_cast(cfg.get<time_t>("for",0)) << ")\n";
+	if(secs_cast(cfg["for"]) > 0)
+		out << pfx << BOLD << "FOR" << OFF << "      : " << cfg["for"] << " seconds (" << secs_cast(cfg["for"]) << ")\n";
 
 	// Result/Status line
 	if(vote.get_ended())
