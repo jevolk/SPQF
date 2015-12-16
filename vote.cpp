@@ -437,7 +437,7 @@ Vote::Stat Vote::cast(const Ballot &ballot,
 			throw Exception("You can not cast another vote from this hostname.");
 
 		if(!enfranchised(user))
-			throw Exception("You are not yet enfranchised in this channel.");
+			throw Exception("You are not enfranchised for this vote.");
 
 		if(!qualified(user))
 			throw Exception("You have not been active enough qualify for this vote.");
