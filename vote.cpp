@@ -185,9 +185,16 @@ void Vote::cancel()
 {
 	set_ended();
 	set_reason("canceled");
-	const scope s([&]{ save(); });
+	const scope s([this]
+	{
+		save();
+	});
+
 	if(total() >= cfg.get("visible.motion",1U))
 		announce_canceled();
+
+	if(!get_effect().empty())
+		expired();
 
 	canceled();
 }
