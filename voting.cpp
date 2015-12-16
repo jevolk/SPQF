@@ -63,6 +63,10 @@ void Voting::cancel(Vote &vote,
 	if(vote.total() > 1)
 		throw Exception("You can't cancel after someone else has voted.");
 
+	const auto &cfg(vote.get_cfg());
+	if(!cfg.get("cancel",true))
+		throw Exception("You can't cancel votes of this type.");
+
 	vote.cancel();
 	del(vote.get_id());
 }
