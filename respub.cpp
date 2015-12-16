@@ -269,7 +269,7 @@ void ResPublica::handle_cmode(const Msg &msg,
 {
 	using namespace fmt::MODE;
 
-	if(msg.from("chanserv") || msg.from(sess.get_nick()))
+	if(msg.from("chanserv") || msg.from(sess.get_nick()) || msg.from_server())
 		return;
 
 	User &user(users.get(msg.get_nick()));
