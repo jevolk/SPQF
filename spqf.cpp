@@ -56,6 +56,15 @@ void handle_sig(const int sig)
 }
 
 
+static
+void wait_reload()
+{
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	cond.wait(lock,[]{ return hangup || interrupt; });
+	hangup = false;
+}
+
+
 int main(int argc, char **argv) try
 {
 	srand(getpid());
@@ -91,38 +100,49 @@ int main(int argc, char **argv) try
 	signal(SIGTERM,&handle_sig);          // Register handler for term
 	(*bot)(Bot::BACKGROUND);
 
-	while(!interrupt)
+	while(!interrupt) try
 	{
+		static const auto opener([]
+		{
+			const auto module(dlopen("./respub.so",RTLD_NOW|RTLD_LOCAL));
+
+			if(!module)
+				throw Assertive("dlopen() error: ") << dlerror();
+
+			return module;
+		});
+
+		const std::unique_ptr<void, void (*)(void *)> module(opener(),[]
+		(void *const module)
+		{
+			if(dlclose(module) != 0)
+				throw Assertive("dlclose() error: ") << dlerror();
+		});
+
 		using mod_call_t = void (*)(Bot *);
-
-		const auto module(dlopen("./respub.so",RTLD_NOW|RTLD_LOCAL));
-		if(!module)
-			throw Assertive("Fatal dlopen() error: ") << dlerror();
-
-		const auto module_init(reinterpret_cast<mod_call_t>(dlsym(module,"module_init")));
+		const auto module_init(reinterpret_cast<mod_call_t>(dlsym(module.get(),"module_init")));
 		{
 			const auto err(dlerror());
 			if(!module_init || err)
-				throw Assertive("Fatal dlsym() error: ") << err;
+				throw Assertive("dlsym() error: ") << err;
 		}
 
-		const auto module_fini(reinterpret_cast<mod_call_t>(dlsym(module,"module_fini")));
+		const auto module_fini(reinterpret_cast<mod_call_t>(dlsym(module.get(),"module_fini")));
 		{
 			const auto err(dlerror());
 			if(!module_fini || err)
-				throw Assertive("Fatal dlsym() error: ") << err;
+				throw Assertive("dlsym() error: ") << err;
 		}
 
 		module_init(bot.get());
-		{
-			std::unique_lock<decltype(mutex)> lock(mutex);
-			cond.wait(lock,[]{ return hangup || interrupt; });
-			hangup = false;
-		}
+		wait_reload();
 		module_fini(bot.get());
-
-		if(dlclose(module) != 0)
-			throw Assertive("Fatal dlclose() error: ") << dlerror();
+	}
+	catch(const Assertive &e)
+	{
+		std::cerr << "Module error: " << e.what() << std::endl;
+		std::cerr << "Waiting to try again..." << std::endl;
+		wait_reload();
 	}
 
 	bot->quit();
