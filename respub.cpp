@@ -272,15 +272,11 @@ void ResPublica::handle_cmode(const Msg &msg,
 	if(msg.from("chanserv") || msg.from(sess.get_nick()))
 		return;
 
-	if(chan.get_val<bool>("config.vote.appeal.disable"))
-		return;
-
 	User &user(users.get(msg.get_nick()));
 	const auto &serv(sess.get_server());
 	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
 	for(const auto &delta : deltas)
-		if(bool(delta) && (delta == 'q' || delta == 'b'))
-			voting.motion<vote::Appeal>(chan,user,std::string(~delta));
+		handle_unilateral_delta(msg,chan,user,delta);
 }
 
 
@@ -1580,6 +1576,45 @@ void ResPublica::vote_stats_chan_user(Locutor &out,
 
 	out << flush;
 }
+
+
+void ResPublica::handle_unilateral_delta(const Msg &msg,
+                                         Chan &chan,
+                                         User &user,
+                                         const Delta &delta)
+{
+	const auto cfg(chan.get("config.vote"));
+	if(!cfg.get("trial.disable",true))
+	{
+		const Deltas cfgdelts(cfg.get("trial.deltas",std::string{}));
+		const auto match(std::any_of(cfgdelts.begin(),cfgdelts.end(),[&delta]
+		(const auto &cfgd)
+		{
+			return bool(cfgd) == bool(delta) && char(cfgd) == char(delta);
+		}));
+
+		if(match)
+			voting.motion<vote::Trial>(chan,user,std::string(delta));
+
+		return;
+	}
+
+	if(!cfg.get("appeal.disable",true))
+	{
+		const Deltas cfgdelts(cfg.get("appeal.deltas",std::string{}));
+		const auto match(std::any_of(cfgdelts.begin(),cfgdelts.end(),[&delta]
+		(const auto &cfgd)
+		{
+			return bool(cfgd) == bool(delta) && char(cfgd) == char(delta);
+		}));
+
+		if(match)
+			voting.motion<vote::Appeal>(chan,user,std::string(~delta));
+
+		return;
+	}
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////

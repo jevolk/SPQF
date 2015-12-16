@@ -773,6 +773,27 @@ void vote::Appeal::starting()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// Trial
+//
+
+
+void vote::Trial::starting()
+{
+	const auto &sess(get_sess());
+	const auto &serv(sess.get_server());
+	const Deltas deltas(get_issue(),serv);
+	set_effect(deltas);
+
+	auto &chan(get_chan());
+	chan << "An arrest has been made by " << get_user_nick() << ". ";
+	chan << "The accused now stands trial by a jury of their peers in due process.";
+	chan << chan.flush;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // Topic
 //
 

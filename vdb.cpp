@@ -116,6 +116,7 @@ try
 		case hash("config"):    return std::make_unique<vote::Config>(id,*this);
 		case hash("mode"):      return std::make_unique<vote::Mode>(id,*this);
 		case hash("appeal"):    return std::make_unique<vote::Appeal>(id,*this);
+		case hash("trial"):     return std::make_unique<vote::Trial>(id,*this);
 		case hash("kick"):      return std::make_unique<vote::Kick>(id,*this);
 		case hash("invite"):    return std::make_unique<vote::Invite>(id,*this);
 		case hash("topic"):     return std::make_unique<vote::Topic>(id,*this);

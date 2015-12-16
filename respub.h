@@ -30,7 +30,7 @@ class ResPublica
 	Praetor praetor;
 	Voting voting;
 
-	// !vote abstract stack
+	void handle_unilateral_delta(const Msg &m, Chan &c, User &u, const Delta &d);
 	void vote_stats_chan_user(Locutor &out, const std::string &chan, const std::string &user, const Tokens &t);
 	void vote_stats_user(Locutor &out, const std::string &user, const Tokens &t);
 	void vote_stats_chan(Locutor &out, const std::string &chan, const Tokens &t);
