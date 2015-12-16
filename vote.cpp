@@ -106,13 +106,6 @@ quorum(0)
 {
 	if(disabled())
 		throw Exception("Votes of this type are disabled by the configuration.");
-
-	// Initiation implies yes vote, except if initiated by the bot
-	if(!user.is_myself())
-	{
-		yea.emplace(get_user_acct());
-		hosts.emplace(user.get_host());
-	}
 }
 
 
@@ -206,6 +199,11 @@ void Vote::start()
 
 	if(!get_quorum())
 		set_quorum(calc_quorum());
+
+	const auto &cfg(get_cfg());
+	const auto speaker_ballot(cfg.get("speaker.ballot","y"));
+	if(is_ballot(speaker_ballot))
+		cast(ballot(speaker_ballot),get_user());
 
 	starting();
 	set_began();
