@@ -419,9 +419,11 @@ void Voting::poll_worker()
 		poll_votes();
 		worker_sleep(std::chrono::seconds(2));
 	}
-	catch(const Internal &e)
+	catch(const std::exception &e)
 	{
-		std::cerr << "[Voting (poll worker)]: \033[1;41m" << e << "\033[0m" << std::endl;
+		std::cerr << "[Voting (poll worker)]: \033[1;41m"
+		          << e.what() << "\033[0m"
+		          << std::endl;
 	}
 }
 
@@ -453,10 +455,12 @@ void Voting::poll_init()
 			}
 		}
 	}
-	catch(const Exception &e)
+	catch(const std::exception &e)
 	{
 		const auto id(lex_cast<id_t>(it->first));
-		std::cerr << "[Voting]: Failed reading #" << id << ": \033[1;31m" << e << "\033[0m" << std::endl;
+		std::cerr << "[Voting]: Failed reading #" << id
+		          << ": \033[1;31m" << e.what()
+		          << "\033[0m" << std::endl;
 	}
 }
 

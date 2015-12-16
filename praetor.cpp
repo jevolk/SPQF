@@ -55,8 +55,10 @@ void Praetor::init()
 	}
 	catch(const Exception &e)
 	{
-		const auto id(lex_cast<id_t>(it->first));
-		std::cerr << "[Praetor]: Init reading #" << id << ": \033[1;31m" << e << "\033[0m" << std::endl;
+		const auto &id(it->first);
+		std::cerr << "[Praetor]: Init reading #" << id
+		          << ": \033[1;31m" << e << "\033[0m"
+		          << std::endl;
 	}
 }
 
@@ -74,7 +76,8 @@ void Praetor::worker()
 	}
 	catch(const Internal &e)
 	{
-		std::cerr << "[Praetor]: \033[1;41m" << e << "\033[0m" << std::endl;
+		std::cerr << "[Praetor]: \033[1;41m" << e << "\033[0m"
+		          << std::endl;
 	}
 }
 
@@ -133,6 +136,7 @@ catch(const std::exception &e)
 
 
 void Praetor::add(const Adoc &doc)
+try
 {
 	const auto id(lex_cast<id_t>(doc["id"]));
 	const auto ended(secs_cast(doc["ended"]));
@@ -154,9 +158,19 @@ void Praetor::add(const Adoc &doc)
 
 	add(id,absolute);
 }
+catch(const std::exception &e)
+{
+	std::cerr << "\033[1;31m"
+	          << "[Praetor]: add(doc): "
+	          << " Vote #" << doc["id"]
+	          << " error: " << e.what()
+	          << "\033[0m"
+	          << std::endl;
+}
 
 
 void Praetor::add(std::unique_ptr<Vote> &&vote)
+try
 {
 	const id_t &id(vote->get_id());
 	const auto &cfg(vote->get_cfg());
@@ -166,6 +180,15 @@ void Praetor::add(std::unique_ptr<Vote> &&vote)
 
 	const time_t absolute(time(NULL) + cfgfor);
 	add(id,absolute);
+}
+catch(const std::exception &e)
+{
+	std::cerr << "\033[1;31m"
+	          << "[Praetor]: add(vote): "
+	          << " Vote #" << vote->get_id()
+	          << " error: " << e.what()
+	          << "\033[0m"
+	          << std::endl;
 }
 
 
