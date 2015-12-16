@@ -75,8 +75,6 @@ void Voting::cancel(Vote &vote,
 void Voting::valid_motion(Vote &vote)
 {
 	const auto &cfg(vote.get_cfg());
-	vote.valid(cfg);
-
 	const auto &user(vote.get_user());
 	const auto &chan(vote.get_chan());
 	valid_limits(vote,chan,user);

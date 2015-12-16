@@ -840,13 +840,6 @@ void vote::Config::starting()
 			throw Exception("Variable already set to that value.");
 	}
 
-	if(!val.empty())
-	{
-		Adoc tmp;
-		tmp.put(key,val);
-		valid(tmp);            // throws if
-	}
-
 	chan << "Note: "
 	     << UNDER2 << "Changing the configuration can be " << BOLD << "DANGEROUS" << OFF << ", "
 	     << "potentially breaking the ability for future votes to revert this change."

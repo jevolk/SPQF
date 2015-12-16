@@ -119,7 +119,6 @@ class Vote : protected Acct
 
   public:
 	virtual void expired() {}                   // After cfg.for time expires
-	virtual void valid(const Adoc &cfg) const;  // Checks validity of the cfg document
 
 	Stat cast(const Ballot &b, const User &u);
 
