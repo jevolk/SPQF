@@ -1439,7 +1439,7 @@ void ResPublica::opinion(const Chan &chan,
 
 	if(!effective)
 	{
-		out << "The people of " << chan.get_name() << " haven't agreed on anything";
+		out << "The people of " << chan.get_name() << " have not decided anything";
 		if(cfgfor > 0)
 			out << " in the last " << secs_cast(cfgfor);
 
