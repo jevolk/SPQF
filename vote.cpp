@@ -681,6 +681,9 @@ bool speaker(const Adoc &cfg,
              const Chan &chan,
              const User &user)
 {
+	if(cfg.get("disable",false))
+		return false;
+
 	if(!user.is_logged_in())
 		return false;
 
@@ -693,6 +696,9 @@ bool intercession(const Adoc &cfg,
                   const Chan &chan,
                   const User &user)
 {
+	if(cfg.get("disable",false))
+		return false;
+
 	if(!user.is_logged_in())
 		return false;
 
@@ -711,6 +717,9 @@ bool qualified(const Adoc &cfg,
                const User &user,
                time_t began)
 {
+	if(cfg.get("disable",false))
+		return false;
+
 	if(!user.is_logged_in())
 		return false;
 
@@ -745,6 +754,9 @@ bool enfranchised(const Adoc &cfg,
                   const User &user,
                   time_t began)
 {
+	if(cfg.get("disable",false))
+		return false;
+
 	if(!user.is_logged_in())
 		return false;
 
