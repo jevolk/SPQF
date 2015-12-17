@@ -26,6 +26,7 @@ extern const std::set<std::string> nstr;
 
 bool is_ballot(const std::string &str);
 Ballot ballot(const std::string &str);
+std::ostream &operator<<(std::ostream &s, const Ballot &ballot);
 
 bool has_access(const Chan &chan, const User &user, const Mode &mode);
 bool has_mode(const Chan &chan, const User &user, const Mode &mode);
@@ -110,6 +111,8 @@ class Vote : protected Acct
 	void set_expiry()                           { time(&expiry);                                    }
 	void set_quorum(const uint &quorum)         { this->quorum = quorum;                            }
 
+	void announce_ballot_reject(User &user, const std::string &reason);
+	void announce_ballot_accept(User &user, const Stat &stat);
 	void announce_failed_required();
 	void announce_failed_quorum();
 	void announce_canceled();

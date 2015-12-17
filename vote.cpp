@@ -310,37 +310,14 @@ void Vote::event_vote(User &user,
                       const Ballot &ballot)
 try
 {
-	using namespace colors;
+	const auto stat(cast(ballot,user));
+	announce_ballot_accept(user,stat);
 
-	auto &chan(get_chan());
-	switch(cast(ballot,user))
+	if(stat == Stat::ADDED)
 	{
-		case Stat::ADDED:
-		{
-			hosts.emplace(user.get_host());
-
-			if(cfg.get("ballot.ack.chan",false))
-				chan << user << "Thanks for casting your vote on " << (*this) << "!" << chan.flush;
-
-			if(cfg.get("ballot.ack.priv",true))
-				user << "Thanks for casting your vote on " << (*this) << "!" << chan.flush;
-
-			if(total() > 1 && cfg.get("visible.motion",1U) == total())
-				announce_starting();
-
-			break;
-		}
-
-		case Stat::CHANGED:
-		{
-			if(cfg.get("ballot.ack.chan",false))
-				chan << user << "You have changed your vote on " << (*this) << "!" << chan.flush;
-
-			if(cfg.get("ballot.ack.priv",true))
-				user << "You have changed your vote on " << (*this) << "!" << chan.flush;
-
-			break;
-		}
+		hosts.emplace(user.get_host());
+		if(total() > 1 && cfg.get("visible.motion",1U) == total())
+			announce_starting();
 	}
 
 	if(prejudiced() && get_effect().empty())
@@ -353,16 +330,7 @@ try
 }
 catch(const Exception &e)
 {
-	using namespace colors;
-
-	if(cfg.get("ballot.rej.chan",false))
-	{
-		auto &chan(get_chan());
-		chan << user << "Your vote was not accepted for " << (*this) << ": " << e << chan.flush;
-	}
-
-	if(cfg.get("ballot.rej.priv",true))
-		user << "Your vote was not accepted for " << (*this) << ": " << e << user.flush;
+	announce_ballot_reject(user,string(e));
 }
 
 
@@ -502,6 +470,58 @@ void Vote::announce_failed_quorum()
 		     << BOLD << get_quorum() << OFF
 		     << " required."
 		     << chan.flush;
+}
+
+
+void Vote::announce_ballot_accept(User &user,
+                                  const Stat &stat)
+{
+	const auto &cfg(get_cfg());
+	switch(stat)
+	{
+		case Stat::ADDED:
+		{
+			if(cfg.get("ballot.ack.chan",false))
+			{
+				auto &chan(get_chan());
+				chan << user << "Thanks for casting your vote on " << (*this) << "!" << chan.flush;
+			}
+
+			if(cfg.get("ballot.ack.priv",true))
+				user << "Thanks for casting your vote on " << (*this) << "!" << user.flush;
+
+			break;
+		}
+
+		case Stat::CHANGED:
+		{
+			if(cfg.get("ballot.ack.chan",false))
+			{
+				auto &chan(get_chan());
+				chan << user << "You have changed your vote on " << (*this) << "!" << chan.flush;
+			}
+
+			if(cfg.get("ballot.ack.priv",true))
+				user << "You have changed your vote on " << (*this) << "!" << user.flush;
+
+			break;
+		}
+	}
+}
+
+
+void Vote::announce_ballot_reject(User &user,
+                                  const std::string &reason)
+{
+	const auto &cfg(get_cfg());
+	if(cfg.get("ballot.rej.chan",false))
+	{
+		auto &chan(get_chan());
+		chan << user << "Your vote was not accepted for " << (*this) << ": " << reason << chan.flush;
+	}
+
+	if(cfg.get("ballot.rej.priv",true))
+		user << "Your vote was not accepted for " << (*this) << ": " << reason << user.flush;
 }
 
 
@@ -700,8 +720,9 @@ bool qualified(const Adoc &cfg,
 	if(!began)
 		time(&began);
 
+	const auto age(secs_cast(cfg.get("qualify.age","10m")));
+	const auto &endtime(began - age);
 	const auto &acct(user.get_acct());
-	const auto &endtime(began - secs_cast(cfg["qualify.age"]));
 	const irc::log::FilterAll filt([&acct,&endtime]
 	(const irc::log::ClosureArgs &a)
 	{
@@ -727,15 +748,17 @@ bool enfranchised(const Adoc &cfg,
 	if(!user.is_logged_in())
 		return false;
 
-	if(cfg.has("enfranchise.access") || cfg.has("enfranchise.mode"))
-		return has_mode(chan,user,cfg["enfranchise.mode"]) ||
-		       has_access(chan,user,cfg["enfranchise.access"]);
+	const auto mode(cfg["enfranchise.mode"]);
+	const auto access(cfg["enfranchise.access"]);
+	if(!mode.empty() || !access.empty())
+		return has_mode(chan,user,mode) || has_access(chan,user,access);
 
 	if(!began)
 		time(&began);
 
+	const auto age(secs_cast(cfg.get("enfranchise.age","30m")));
+	const auto endtime(began - age);
 	const auto &acct(user.get_acct());
-	const auto endtime(began - secs_cast(cfg["enfranchise.age"]));
 	const irc::log::FilterAll filt([&acct,&endtime]
 	(const irc::log::ClosureArgs &a)
 	{
@@ -775,6 +798,19 @@ bool has_access(const Chan &chan,
 
 	const auto &f(chan.lists.get_flag(user));
 	return f.get_flags().any(flags);
+}
+
+
+std::ostream &operator<<(std::ostream &s,
+                         const Ballot &ballot)
+{
+	switch(ballot)
+	{
+		case Ballot::YEA:    s << "YEA";     break;
+		case Ballot::NAY:    s << "NAY";     break;
+	}
+
+	return s;
 }
 
 
