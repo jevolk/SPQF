@@ -1123,7 +1123,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		out << BOLD << FG::RED << setw(2) << setfill(' ') << left << tally.second << OFF << " ";
 
 	out << BOLD << "YOU" << OFF << ": ";
-	if(!vote.voted(user) && vote.remaining() >= 0 && vote.get_reason().empty())
+	if(!vote.voted(user) && !vote.get_ended() && vote.get_reason().empty())
 		out << BOLD << FG::BLACK << BG::LGRAY_BLINK << "---" << OFF << " ";
 	else if(!vote.voted(user))
 		out << BOLD << FG::BLACK << BG::LGRAY << "---" << OFF << " ";
