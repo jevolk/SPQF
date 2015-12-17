@@ -810,10 +810,14 @@ void vote::Trial::starting()
 	const Deltas deltas(get_issue(),serv);
 	set_effect(deltas);
 
-	auto &chan(get_chan());
-	chan << "An arrest has been made by " << get_user_nick() << ". ";
-	chan << "The accused now stands trial by a jury of their peers in due process.";
-	chan << chan.flush;
+	const auto &cfg(get_cfg());
+	if(cfg.get("visible.flair",false))
+	{
+		auto &chan(get_chan());
+		chan << "An arrest has been made by " << get_user_nick() << ". ";
+		chan << "The accused now stands trial by a jury of their peers in due process.";
+		chan << chan.flush;
+	}
 }
 
 
