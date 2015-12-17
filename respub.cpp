@@ -402,6 +402,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("cancel"):   handle_vote_cancel(msg,chan,user,subtok(toks));               break;
 		case hash("stats"):    handle_vote_stats(msg,chan,user,subtok(toks));                break;
 		case hash("eligible"): handle_vote_eligible(msg,chan,user,subtok(toks));             break;
+		case hash("access"):   handle_vote_access(msg,chan,user,subtok(toks));               break;
 
 		// Actual vote types
 		case hash("op"):       voting.motion<vote::Op>(chan,user,detok(subtok(toks)));       break;
@@ -618,6 +619,15 @@ void ResPublica::handle_vote_stats(const Msg &msg,
 		throw Exception("This user is present but not logged in. I need an account name.");
 
 	vote_stats_chan_user(user,chan.get_name(),target,subtok(toks));
+}
+
+
+void ResPublica::handle_vote_access(const Msg &msg,
+                                    Chan &chan,
+                                    User &user,
+                                    const Tokens &toks)
+{
+	vote_access(chan,chan,user,toks);
 }
 
 
@@ -840,6 +850,7 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("list"):     handle_vote_list(msg,user,subtok(toks));                break;
 		case hash("info"):     handle_vote_id(msg,user,subtok(toks));                  break;
 		case hash("stats"):    handle_vote_stats(msg,user,subtok(toks));               break;
+		case hash("access"):   handle_vote_access(msg,user,subtok(toks));              break;
 		default:
 		case hash("help"):     handle_help(msg,user,subtok(toks));                     break;
 	}
@@ -932,6 +943,29 @@ void ResPublica::handle_vote_stats(const Msg &msg,
 	}
 
 	vote_stats_user(user,*toks.at(0),subtok(toks));
+}
+
+
+void ResPublica::handle_vote_access(const Msg &msg,
+                                    User &user,
+                                    const Tokens &toks)
+{
+	if(!toks.empty() && toks.at(0)->size() > 0 && toks.at(0)->front() == '#')
+	{
+		const auto &chan(chans.get(*toks.at(0)));
+		vote_access(user,chan,user,subtok(toks));
+	}
+	else if(toks.size() >= 2 && toks.at(1)->size() > 0 && toks.at(1)->front() == '#')
+	{
+		const auto &chan(chans.get(*toks.at(1)));
+		const auto &target(users.get(*toks.at(0)));
+		vote_access(user,chan,target,subtok(subtok(toks)));
+	}
+	else chans.for_each(user,[&]
+	(const Chan &chan)
+	{
+		vote_access(user,chan,user,toks);
+	});
 }
 
 
@@ -1588,6 +1622,39 @@ void ResPublica::handle_unilateral_delta(const Msg &msg,
 
 		return;
 	}
+}
+
+
+void ResPublica::vote_access(Locutor &out,
+                             const Chan &chan,
+                             const User &user,
+                             const Tokens &toks)
+{
+	using namespace colors;
+
+	const Adoc ccfg(chan.get("config.vote"));
+	for(const auto &type : vote::names)
+	{
+		Adoc cfg(ccfg);
+		cfg.merge(ccfg.get_child(type,Adoc()));
+		if(cfg.get("disable",false))
+			continue;
+
+		std::stringstream perm;
+		if(enfranchised(cfg,chan,user))
+			perm << "E";
+
+		if(speaker(cfg,chan,user))
+			perm << "S";
+
+		if(intercession(cfg,chan,user))
+			perm << "V";
+
+		if(!perm.str().empty())
+			out << BOLD << type << OFF << ":" << FG::GREEN << perm.str() << OFF << " ";
+	}
+
+	out << out.flush;
 }
 
 
