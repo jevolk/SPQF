@@ -123,15 +123,6 @@ try
 	if(!user.is_logged_in())
 		return;
 
-	// Notify active votes listening to channels
-	voting.for_each([&](Vote &vote)
-	{
-		vote.event_chanmsg(user,chan,msg[TEXT]);
-
-		if(chan == vote.get_chan_name())
-			vote.event_chanmsg(user,msg[TEXT]);
-	});
-
 	// Discard everything not starting with command prefix
 	if(msg[TEXT].find(opts["prefix"]) != 0)
 		return;
@@ -167,15 +158,6 @@ try
 	// Silently drop the background noise
 	if(!user.is_logged_in())
 		return;
-
-	// Notify active votes listening to channels
-	voting.for_each([&](Vote &vote)
-	{
-		vote.event_cnotice(user,chan,msg[TEXT]);
-
-		if(chan == vote.get_chan_name())
-			vote.event_cnotice(user,msg[TEXT]);
-	});
 }
 catch(const std::out_of_range &e)
 {
@@ -205,12 +187,6 @@ try
 	// Silently drop the background noise
 	if(!user.is_logged_in())
 		return;
-
-	// Notify active votes listening for private messages
-	voting.for_each([&](Vote &vote)
-	{
-		vote.event_privmsg(user,msg[TEXT]);
-	});
 
 	handle_cmd(msg,user);
 }
@@ -382,7 +358,7 @@ void ResPublica::handle_vote(const Msg &msg,
 {
 	// For UI ease-of-use, when a user ought to be typing !vote yes $id
 	// allow them to reverse the syntax
-	if(toks.size() == 2 && isnumeric(*toks.at(0)) && Vote::is_ballot(*toks.at(1)))
+	if(toks.size() == 2 && isnumeric(*toks.at(0)) && is_ballot(*toks.at(1)))
 		std::reverse(toks.begin(),toks.end());
 
 	const std::string &subcmd(!toks.empty()? *toks.at(0) : "help");
@@ -408,9 +384,9 @@ void ResPublica::handle_vote(const Msg &msg,
 		return;
 	}
 
-	if(Vote::is_ballot(subcmd))
+	if(is_ballot(subcmd))
 	{
-		handle_vote_ballot(msg,chan,user,subtok(toks),Vote::ballot(subcmd));
+		handle_vote_ballot(msg,chan,user,subtok(toks),ballot(subcmd));
 		return;
 	}
 
@@ -459,7 +435,7 @@ void ResPublica::handle_vote_id(const Msg &msg,
 try
 {
 	const Chan *const c(chan.is_op()? &chan : chans.find_cnotice(user));
-	const auto id(lex_cast<Vote::id_t>(*toks.at(0)));
+	const auto id(lex_cast<id_t>(*toks.at(0)));
 
 	if(c)
 	{
@@ -479,7 +455,7 @@ void ResPublica::handle_vote_cancel(const Msg &msg,
                                     User &user,
                                     const Tokens &toks)
 {
-	auto &vote = !toks.empty()? voting.get(lex_cast<Vote::id_t>(*toks.at(0))):
+	auto &vote = !toks.empty()? voting.get(lex_cast<id_t>(*toks.at(0))):
 	                            voting.get(chan);
 	voting.cancel(vote,chan,user);
 }
@@ -489,7 +465,7 @@ void ResPublica::handle_vote_ballot(const Msg &msg,
                                     Chan &chan,
                                     User &user,
                                     const Tokens &toks,
-                                    const Vote::Ballot &ballot)
+                                    const Ballot &ballot)
 try
 {
 	if(toks.empty())
@@ -501,7 +477,7 @@ try
 
 	for(const auto &tok : toks)
 	{
-		auto &vote(voting.get(lex_cast<Vote::id_t>(*tok)));
+		auto &vote(voting.get(lex_cast<id_t>(*tok)));
 		vote.event_vote(user,ballot);
 	}
 }
@@ -840,7 +816,7 @@ void ResPublica::handle_vote(const Msg &msg,
 {
 	// For UI ease-of-use, when a user ought to be typing !vote yes $id
 	// allow them to reverse the syntax
-	if(toks.size() == 2 && isnumeric(*toks.at(0)) && Vote::is_ballot(*toks.at(1)))
+	if(toks.size() == 2 && isnumeric(*toks.at(0)) && is_ballot(*toks.at(1)))
 		std::reverse(toks.begin(),toks.end());
 
 	const std::string subcmd = !toks.empty()? *toks.at(0) : "help";
@@ -852,9 +828,9 @@ void ResPublica::handle_vote(const Msg &msg,
 		return;
 	}
 
-	if(Vote::is_ballot(subcmd))
+	if(is_ballot(subcmd))
 	{
-		handle_vote_ballot(msg,user,subtok(toks),Vote::ballot(subcmd));
+		handle_vote_ballot(msg,user,subtok(toks),ballot(subcmd));
 		return;
 	}
 
@@ -876,7 +852,7 @@ void ResPublica::handle_vote_id(const Msg &msg,
 try
 {
 	Chan *const chan(chans.find_cnotice(user));
-	const auto id(lex_cast<Vote::id_t>(*toks.at(0)));
+	const auto id(lex_cast<id_t>(*toks.at(0)));
 	if(!chan)
 	{
 		handle_vote_list(msg,user,user,subtok(toks),id);
@@ -915,12 +891,12 @@ void ResPublica::handle_vote_list(const Msg &msg,
 void ResPublica::handle_vote_ballot(const Msg &msg,
                                     User &user,
                                     const Tokens &toks,
-                                    const Vote::Ballot &ballot)
+                                    const Ballot &ballot)
 try
 {
 	for(const auto &tok : toks)
 	{
-		auto &vote(voting.get(lex_cast<Vote::id_t>(*tok)));
+		auto &vote(voting.get(lex_cast<id_t>(*tok)));
 		vote.event_vote(user,ballot);
 	}
 }
@@ -1010,7 +986,7 @@ try
 
 	if(isnumeric(*toks.at(0)))
 	{
-		const auto &id(lex_cast<Vote::id_t>(*toks.at(0)));
+		const auto &id(lex_cast<id_t>(*toks.at(0)));
 		handle_vote_list(msg,user,out,toks,id);
 		return;
 	}
@@ -1151,9 +1127,9 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		out << BOLD << FG::BLACK << BG::LGRAY_BLINK << "---" << OFF << " ";
 	else if(!vote.voted(user))
 		out << BOLD << FG::BLACK << BG::LGRAY << "---" << OFF << " ";
-	else if(vote.position(user) == Vote::YEA)
+	else if(vote.position(user) == Ballot::YEA)
 		out << BOLD << FG::WHITE << BG::GREEN << "YEA" << OFF << " ";
-	else if(vote.position(user) == Vote::NAY)
+	else if(vote.position(user) == Ballot::NAY)
 		out << BOLD << FG::WHITE << BG::RED << "NAY" << OFF << " ";
 
 	if(vote.get_ended() && vote.get_reason().empty())
@@ -1176,8 +1152,8 @@ void ResPublica::handle_vote_list(const Msg &msg,
 	if(!vote.get_ended())
 	{
 		const auto total(vote.total());
-		const auto required(vote.required());
 		const auto quorum(vote.get_quorum());
+		const auto required(calc_required(cfg,tally));
 
 		if(!cfg.get<bool>("visible.active",1))
 			out << FG::GRAY << "Secret ballot until closure." << OFF;
@@ -1289,13 +1265,14 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	}
 
 	// Veto votes line
-	if(vote.num_vetoes())
+	if(!vote.get_veto().empty())
 	{
-		out << pfx << BOLD << "VETO" << OFF << "     : " << BOLD << FG::MAGENTA << vote.num_vetoes() << OFF;
+		const auto &vetoes(vote.get_veto());
+		out << pfx << BOLD << "VETO" << OFF << "     : " << BOLD << FG::MAGENTA << vetoes.size() << OFF;
 		if(cfg["visible.veto"] == "1")
 		{
 			out << " - ";
-			for(const auto &acct : vote.get_veto())
+			for(const auto &acct : vetoes)
 				out << acct << ", ";
 		}
 		out << "\n";
@@ -1305,9 +1282,9 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	out << pfx << BOLD << "YOU      : " << OFF;
 	if(!vote.voted(user))
 		out << FG::BLACK << BG::LGRAY << "---" << "\n";
-	else if(vote.position(user) == Vote::YEA)
+	else if(vote.position(user) == Ballot::YEA)
 		out << BOLD << FG::WHITE << BG::GREEN << "YEA" << "\n";
-	else if(vote.position(user) == Vote::NAY)
+	else if(vote.position(user) == Ballot::NAY)
 		out << BOLD << FG::WHITE << BG::RED << "NAY" << "\n";
 	else
 		out << FG::BLACK << BG::LGRAY << "???" << "\n";
@@ -1330,7 +1307,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	} else {
 		const auto total(vote.total());
 		const auto quorum(vote.get_quorum());
-		const auto required(vote.required());
+		const auto required(calc_required(cfg,tally));
 
 		out << pfx << BOLD << "STATUS" << OFF << "   : ";
 		if(!cfg.get<bool>("visible.active",true))
@@ -1442,7 +1419,6 @@ void ResPublica::vote_stats_chan(Locutor &out,
                                  const Tokens &toks)
 {
 	using namespace colors;
-	using id_t = Vote::id_t;
 
 	std::vector<std::string> keys
 	{{
@@ -1518,7 +1494,6 @@ void ResPublica::vote_stats_chan_user(Locutor &out,
                                       const Tokens &toks)
 {
 	using namespace colors;
-	using id_t = Vote::id_t;
 
 	std::vector<std::string> keys
 	{{

@@ -43,7 +43,7 @@ class ResPublica
 
 	// Privmsg stack
 	void handle_vote_stats(const Msg &m, User &u, const Tokens &t);
-	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Vote::Ballot &b);
+	void handle_vote_ballot(const Msg &m, User &u, const Tokens &t, const Ballot &b);
 	void handle_vote_list(const Msg &m, User &u, const Tokens &t);
 	void handle_vote_id(const Msg &m, User &u, const Tokens &t);
 	void handle_vote(const Msg &m, User &u, Tokens t);
@@ -62,7 +62,7 @@ class ResPublica
 	void handle_vote_config(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, Chan &c, User &u, const Tokens &t);
-	void handle_vote_ballot(const Msg &m, Chan &c, User &u, const Tokens &t, const Vote::Ballot &b);
+	void handle_vote_ballot(const Msg &m, Chan &c, User &u, const Tokens &t, const Ballot &b);
 	void handle_vote_cancel(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote_id(const Msg &m, Chan &c, User &u, const Tokens &t);
 	void handle_vote(const Msg &m, Chan &c, User &u, Tokens t);

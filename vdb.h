@@ -8,7 +8,6 @@
 
 struct Vdb : Adb
 {
-	using id_t = Vote::id_t;
 	using Term = std::tuple<std::string,std::string,std::string>;
 	using Terms = std::forward_list<Term>;
 	using Results = std::list<id_t>;

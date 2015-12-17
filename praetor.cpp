@@ -202,7 +202,7 @@ void Praetor::add(const id_t &id,
 
 
 
-Schedule::id_t Schedule::pop()
+id_t Schedule::pop()
 {
 	const auto ret = std::get<id_t>(sched.at(0));
 	sched.pop_front();

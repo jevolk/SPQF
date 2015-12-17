@@ -8,8 +8,6 @@
 
 class Voting
 {
-	using id_t = Vote::id_t;
-
 	Bot &bot;
 	Vdb &vdb;
 	Praetor &praetor;

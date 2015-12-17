@@ -15,8 +15,9 @@ using namespace irc::bot;
 #include "vote.h"
 
 
-decltype(Vote::ystr) Vote::ystr                  { "yea", "yes", "yea", "Y", "y"                   };
-decltype(Vote::nstr) Vote::nstr                  { "nay", "no", "N", "n"                           };
+decltype(ystr) ystr                              { "yea", "yes", "yea", "Y", "y"                   };
+decltype(nstr) nstr                              { "nay", "no", "N", "n"                           };
+
 decltype(Vote::ARG_KEYED) Vote::ARG_KEYED        { "--"                                            };
 decltype(Vote::ARG_VALUED) Vote::ARG_VALUED      { "="                                             };
 
@@ -204,13 +205,16 @@ void Vote::start()
 {
 	using namespace colors;
 
-	if(!get_quorum())
-		set_quorum(calc_quorum());
-
 	const auto &cfg(get_cfg());
+	const auto &chan(get_chan());
+	const auto &user(get_user());
 	const auto speaker_ballot(cfg.get("speaker.ballot","y"));
+
+	if(!get_quorum())
+		set_quorum(calc_quorum(cfg,chan));
+
 	if(is_ballot(speaker_ballot))
-		cast(ballot(speaker_ballot),get_user());
+		cast(ballot(speaker_ballot),user);
 
 	starting();
 	set_began();
@@ -258,7 +262,7 @@ try
 		return;
 	}
 
-	if(yea.size() < required())
+	if(yea.size() < calc_required(cfg,tally()))
 	{
 		set_reason("plurality");
 		if(total() >= cfg.get("visible.motion",1U))
@@ -297,7 +301,7 @@ catch(const std::exception &e)
 	if(cfg.get("result.ack.chan",true))
 	{
 		auto &chan(get_chan());
-		chan << "The vote " << (*this) << " was rejected: " << e.what() << flush;
+		chan << "The vote " << (*this) << " was rejected: " << e.what() << chan.flush;
 	}
 }
 
@@ -311,15 +315,15 @@ try
 	auto &chan(get_chan());
 	switch(cast(ballot,user))
 	{
-		case ADDED:
+		case Stat::ADDED:
 		{
 			hosts.emplace(user.get_host());
 
 			if(cfg.get("ballot.ack.chan",false))
-				chan << user << "Thanks for casting your vote on " << (*this) << "!" << flush;
+				chan << user << "Thanks for casting your vote on " << (*this) << "!" << chan.flush;
 
 			if(cfg.get("ballot.ack.priv",true))
-				user << "Thanks for casting your vote on " << (*this) << "!" << flush;
+				user << "Thanks for casting your vote on " << (*this) << "!" << chan.flush;
 
 			if(total() > 1 && cfg.get("visible.motion",1U) == total())
 				announce_starting();
@@ -327,13 +331,13 @@ try
 			break;
 		}
 
-		case CHANGED:
+		case Stat::CHANGED:
 		{
 			if(cfg.get("ballot.ack.chan",false))
-				chan << user << "You have changed your vote on " << (*this) << "!" << flush;
+				chan << user << "You have changed your vote on " << (*this) << "!" << chan.flush;
 
 			if(cfg.get("ballot.ack.priv",true))
-				user << "You have changed your vote on " << (*this) << "!" << flush;
+				user << "You have changed your vote on " << (*this) << "!" << chan.flush;
 
 			break;
 		}
@@ -342,7 +346,7 @@ try
 	if(prejudiced() && get_effect().empty())
 		effective();
 
-	if(cfg.get("quorum.quick",false) && total() >= get_quorum() && yea.size() >= required())
+	if(cfg.get("quorum.quick",false) && total() >= get_quorum() && yea.size() >= calc_required(cfg,tally()))
 		set_ended();
 
 	save();
@@ -354,45 +358,50 @@ catch(const Exception &e)
 	if(cfg.get("ballot.rej.chan",false))
 	{
 		auto &chan(get_chan());
-		chan << user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
+		chan << user << "Your vote was not accepted for " << (*this) << ": " << e << chan.flush;
 	}
 
 	if(cfg.get("ballot.rej.priv",true))
-		user << "Your vote was not accepted for " << (*this) << ": " << e << flush;
+		user << "Your vote was not accepted for " << (*this) << ": " << e << user.flush;
 }
 
 
-Vote::Stat Vote::cast(const Ballot &ballot,
-                      const User &user)
+Stat Vote::cast(const Ballot &ballot,
+                const User &user)
 {
 	if(get_ended())
 		throw Exception("Vote has already ended.");
+
+	const auto &cfg(get_cfg());
+	const auto &chan(get_chan());
+	const auto &began(get_began());
+	const auto &acct(user.get_acct());
 
 	if(!voted(user))
 	{
 		if(voted_host(user.get_host()) > 0)
 			throw Exception("You can not cast another vote from this hostname.");
 
-		if(!enfranchised(user))
+		if(!enfranchised(cfg,chan,user,began))
 			throw Exception("You are not enfranchised for this vote.");
 
-		if(!qualified(user))
+		if(!qualified(cfg,chan,user,began))
 			throw Exception("You have not been active enough qualify for this vote.");
 	}
 
-	if(ballot == NAY && intercession(user))
+	if(ballot == Ballot::NAY && intercession(cfg,chan,user))
 		veto.emplace(user.get_acct());
 
 	switch(ballot)
 	{
-		case YEA:
+		case Ballot::YEA:
 			return !yea.emplace(user.get_acct()).second?  throw Exception("You have already voted yea."):
-			       nay.erase(user.get_acct())?            CHANGED:
-			                                              ADDED;
-		case NAY:
+			       nay.erase(user.get_acct())?            Stat::CHANGED:
+			                                              Stat::ADDED;
+		case Ballot::NAY:
 			return !nay.emplace(user.get_acct()).second?  throw Exception("You have already voted nay."):
-			       yea.erase(user.get_acct())?            CHANGED:
-			                                              ADDED;
+			       yea.erase(user.get_acct())?            Stat::CHANGED:
+			                                              Stat::ADDED;
 		default:
 			throw Exception("Ballot type not accepted.");
 	}
@@ -417,7 +426,7 @@ void Vote::announce_starting()
 	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
 	     << " or "
 	     << BOLD << FG::RED << "!vote n" << OFF << " " << BOLD << get_id() << OFF
-	     << flush;
+	     << chan.flush;
 }
 
 
@@ -438,7 +447,7 @@ void Vote::announce_passed()
 		if(secs_cast(cfg["for"]) > 0)
 			chan << " Effective for " << BOLD << secs_cast(secs_cast(cfg["for"])) << OFF << ".";
 
-		chan << flush;
+		chan << chan.flush;
 	}
 }
 
@@ -449,7 +458,7 @@ void Vote::announce_vetoed()
 
 	auto &chan(get_chan());
 	if(cfg.get("result.ack.chan",true))
-		chan << "The vote " << (*this) << " has been vetoed." << flush;
+		chan << "The vote " << (*this) << " has been vetoed." << chan.flush;
 }
 
 
@@ -459,7 +468,7 @@ void Vote::announce_canceled()
 
 	auto &chan(get_chan());
 	if(cfg.get("result.ack.chan",true))
-		chan << "The vote " << (*this) << " has been canceled." << flush;
+		chan << "The vote " << (*this) << " has been canceled." << chan.flush;
 }
 
 
@@ -475,8 +484,8 @@ void Vote::announce_failed_required()
 		     << FG::WHITE << BG::RED << BOLD << "The nays have it." << OFF
 		     << " Yeas: " << FG::GREEN << yea.size() << OFF << "."
 		     << " Nays: " << FG::RED << BOLD << nay.size() << OFF << "."
-		     << " Required at least: " << BOLD << required() << OFF << " yeas."
-		     << flush;
+		     << " Required at least: " << BOLD << calc_required(cfg,tally()) << OFF << " yeas."
+		     << chan.flush;
 }
 
 
@@ -492,7 +501,7 @@ void Vote::announce_failed_quorum()
 		     << " of "
 		     << BOLD << get_quorum() << OFF
 		     << " required."
-		     << flush;
+		     << chan.flush;
 }
 
 
@@ -501,112 +510,6 @@ const
 {
 	return voted_acct(user.get_acct()) ||
 	       voted_host(user.get_host());
-}
-
-
-bool Vote::speaker(const User &user)
-const
-{
-	const auto &cfg(get_cfg());
-	return (!cfg.has("speaker.access") || has_access(user,cfg["speaker.access"])) &&
-	       (!cfg.has("speaker.mode") || has_mode(user,cfg["speaker.mode"]));
-}
-
-
-bool Vote::qualified(const User &user)
-const
-{
-	if(!user.is_logged_in())
-		return false;
-
-	const auto &cfg(get_cfg());
-	if(has_access(user,cfg["qualify.access"]))
-		return true;
-
-	const auto &acct(user.get_acct());
-	const auto began(get_began()? get_began() : time(nullptr));
-	const auto endtime(began - secs_cast(cfg["qualify.age"]));
-	const irc::log::FilterAll filt([&acct,&endtime]
-	(const irc::log::ClosureArgs &a)
-	{
-		if(a.time > endtime)
-			return false;
-
-		if(strncmp(a.type,"PRI",3) != 0)  // PRIVMSG
-			return false;
-
-		return strncmp(a.acct,acct.c_str(),16) == 0;
-	});
-
-	const auto lines(cfg.get("qualify.lines",0U));
-	return irc::log::atleast(get_chan_name(),filt,lines);
-}
-
-
-bool Vote::enfranchised(const User &user)
-const
-{
-	if(!user.is_logged_in())
-		return false;
-
-	const auto &cfg(get_cfg());
-	if(cfg.has("enfranchise.access") || cfg.has("enfranchise.mode"))
-		return has_mode(user,cfg["enfranchise.mode"]) ||
-		       has_access(user,cfg["enfranchise.access"]);
-
-	const auto &acct(user.get_acct());
-	const auto began(get_began()? get_began() : time(nullptr));
-	const auto endtime(began - secs_cast(cfg["enfranchise.age"]));
-	const irc::log::FilterAll filt([&acct,&endtime]
-	(const irc::log::ClosureArgs &a)
-	{
-		if(a.time > endtime)
-			return false;
-
-		if(strncmp(a.type,"PRI",3) != 0)  // PRIVMSG
-			return false;
-
-		return strncmp(a.acct,acct.c_str(),16) == 0;
-	});
-
-	const auto lines(cfg.get("enfranchise.lines",0U));
-	return irc::log::atleast(get_chan_name(),filt,lines);
-}
-
-
-bool Vote::intercession(const User &user)
-const
-{
-	const Adoc &cfg(get_cfg());
-	if(cfg.has("veto.mode") && !has_mode(user,cfg["veto.mode"]))
-		return false;
-
-	if(cfg.has("veto.access") && !has_access(user,cfg["veto.access"]))
-		return false;
-
-	return cfg.has("veto.access") || cfg.has("veto.mode");
-}
-
-
-bool Vote::has_mode(const User &user,
-                    const Mode &mode)
-const
-{
-	const auto &chan(get_chan());
-	return chan.users.mode(user).any(mode);
-}
-
-
-bool Vote::has_access(const User &user,
-                      const Mode &flags)
-const
-{
-	const auto &chan(get_chan());
-	if(!chan.lists.has_flag(user))
-		return false;
-
-	const auto &f(chan.lists.get_flag(user));
-	return f.get_flags().any(flags);
 }
 
 
@@ -624,30 +527,12 @@ const
 }
 
 
-Vote::Ballot Vote::position(const std::string &acct)
+Ballot Vote::position(const std::string &acct)
 const
 {
-	return yea.count(acct)? YEA:
-	       nay.count(acct)? NAY:
+	return yea.count(acct)? Ballot::YEA:
+	       nay.count(acct)? Ballot::NAY:
 	                        throw Exception("No position taken.");
-}
-
-
-Vote::Ballot Vote::ballot(const std::string &str)
-{
-	if(ystr.count(str))
-		return Ballot::YEA;
-
-	if(nstr.count(str))
-		return Ballot::NAY;
-
-	throw Exception("Supplied string is not a valid Ballot");
-}
-
-
-bool Vote::is_ballot(const std::string &str)
-{
-	return ystr.count(str) || nstr.count(str);
 }
 
 
@@ -658,29 +543,7 @@ const
 	if(!cfg.get("quorum.prejudice",false))
 		return false;
 
-	return yea.size() >= required();
-}
-
-
-uint Vote::required()
-const
-{
-	const std::vector<uint> sel
-	{{
-		plurality(),
-		cfg.get("quorum.yea",0U)
-	}};
-
-	return *std::max_element(sel.begin(),sel.end());
-}
-
-
-uint Vote::plurality()
-const
-{
-	const float &total(this->total());
-	const float count((total - yea.size()) + nay.size());
-	return ceil(count * cfg.get("quorum.plurality",0.51));
+	return yea.size() >= calc_required(cfg,tally());
 }
 
 
@@ -688,7 +551,8 @@ bool Vote::interceded()
 const
 {
 	const auto vmin(std::max(cfg.get("veto.quorum",1U),1U));
-	if(num_vetoes() < vmin)
+	const auto num_vetoes(get_veto().size());
+	if(num_vetoes < vmin)
 		return false;
 
 	const auto quick(cfg.get("veto.quick",true));
@@ -696,10 +560,43 @@ const
 }
 
 
-uint Vote::calc_quorum()
-const
+Locutor &operator<<(Locutor &locutor,
+                    const Vote &vote)
 {
-	const auto &cfg(get_cfg());
+	using namespace colors;
+
+	return locutor << "#" << BOLD << vote.get_id() << OFF;
+}
+
+
+uint calc_required(const Adoc &cfg,
+                   const Tally &tally)
+{
+	const std::vector<uint> sel
+	{{
+		calc_plurality(cfg,tally),
+		cfg.get("quorum.yea",0U)
+	}};
+
+	return *std::max_element(sel.begin(),sel.end());
+}
+
+
+uint calc_plurality(const Adoc &cfg,
+                    const Tally &tally)
+{
+	const auto &yea(tally.first);
+	const auto &nay(tally.second);
+	const auto total(yea + nay);
+	const float count((total - yea) + nay);
+	return ceil(count * cfg.get("quorum.plurality",0.51));
+}
+
+
+uint calc_quorum(const Adoc &cfg,
+                 const Chan &chan,
+                 time_t began)
+{
 	std::vector<uint> sel
 	{{
 		cfg.get("quorum.yea",1U),
@@ -711,19 +608,20 @@ const
 	if(turnout <= 0.0)
 		return *std::max_element(sel.begin(),sel.end());
 
-	const auto &chan(get_chan());
+	if(!began)
+		time(&began);
+
 	std::map<std::string,uint> count;
-	chan.users.for_each([this,&count]
+	chan.users.for_each([&cfg,&chan,&began,&count]
 	(const User &user)
 	{
-		if(enfranchised(user))
+		if(enfranchised(cfg,chan,user,began))
 			count.emplace(user.get_acct(),0);
 	});
 
-	const auto curtime(time(nullptr));
 	const auto min_age(secs_cast(cfg["quorum.age"]));
-	const auto start_time(curtime - min_age);
-	irc::log::for_each(get_chan_name(),[&count,&start_time]
+	const auto start_time(began - min_age);
+	irc::log::for_each(chan.get_name(),[&count,&start_time]
 	(const irc::log::ClosureArgs &a)
 	{
 		if(a.time < start_time)
@@ -759,10 +657,140 @@ const
 }
 
 
-Locutor &operator<<(Locutor &locutor,
-                    const Vote &vote)
+bool speaker(const Adoc &cfg,
+             const Chan &chan,
+             const User &user)
 {
-	using namespace colors;
+	if(!user.is_logged_in())
+		return false;
 
-	return locutor << "#" << BOLD << vote.get_id() << OFF;
+	return (!cfg.has("speaker.access") || has_access(chan,user,cfg["speaker.access"])) &&
+	       (!cfg.has("speaker.mode") || has_mode(chan,user,cfg["speaker.mode"]));
+}
+
+
+bool intercession(const Adoc &cfg,
+                  const Chan &chan,
+                  const User &user)
+{
+	if(!user.is_logged_in())
+		return false;
+
+	if(cfg.has("veto.mode") && !has_mode(chan,user,cfg["veto.mode"]))
+		return false;
+
+	if(cfg.has("veto.access") && !has_access(chan,user,cfg["veto.access"]))
+		return false;
+
+	return cfg.has("veto.access") || cfg.has("veto.mode");
+}
+
+
+bool qualified(const Adoc &cfg,
+               const Chan &chan,
+               const User &user,
+               time_t began)
+{
+	if(!user.is_logged_in())
+		return false;
+
+	if(has_access(chan,user,cfg["qualify.access"]))
+		return true;
+
+	if(!began)
+		time(&began);
+
+	const auto &acct(user.get_acct());
+	const auto &endtime(began - secs_cast(cfg["qualify.age"]));
+	const irc::log::FilterAll filt([&acct,&endtime]
+	(const irc::log::ClosureArgs &a)
+	{
+		if(a.time > endtime)
+			return false;
+
+		if(strncmp(a.type,"PRI",3) != 0)  // PRIVMSG
+			return false;
+
+		return strncmp(a.acct,acct.c_str(),16) == 0;
+	});
+
+	const auto lines(cfg.get("qualify.lines",0U));
+	return irc::log::atleast(chan.get_name(),filt,lines);
+}
+
+
+bool enfranchised(const Adoc &cfg,
+                  const Chan &chan,
+                  const User &user,
+                  time_t began)
+{
+	if(!user.is_logged_in())
+		return false;
+
+	if(cfg.has("enfranchise.access") || cfg.has("enfranchise.mode"))
+		return has_mode(chan,user,cfg["enfranchise.mode"]) ||
+		       has_access(chan,user,cfg["enfranchise.access"]);
+
+	if(!began)
+		time(&began);
+
+	const auto &acct(user.get_acct());
+	const auto endtime(began - secs_cast(cfg["enfranchise.age"]));
+	const irc::log::FilterAll filt([&acct,&endtime]
+	(const irc::log::ClosureArgs &a)
+	{
+		if(a.time > endtime)
+			return false;
+
+		if(strncmp(a.type,"PRI",3) != 0)  // PRIVMSG
+			return false;
+
+		return strncmp(a.acct,acct.c_str(),16) == 0;
+	});
+
+	const auto lines(cfg.get("enfranchise.lines",0U));
+	return irc::log::atleast(chan.get_name(),filt,lines);
+}
+
+
+bool has_mode(const Chan &chan,
+              const User &user,
+              const Mode &mode)
+try
+{
+	return chan.users.mode(user).any(mode);
+}
+catch(const std::out_of_range &e)
+{
+	return false;
+}
+
+
+bool has_access(const Chan &chan,
+                const User &user,
+                const Mode &flags)
+{
+	if(!chan.lists.has_flag(user))
+		return false;
+
+	const auto &f(chan.lists.get_flag(user));
+	return f.get_flags().any(flags);
+}
+
+
+Ballot ballot(const std::string &str)
+{
+	if(ystr.count(str))
+		return Ballot::YEA;
+
+	if(nstr.count(str))
+		return Ballot::NAY;
+
+	throw Exception("Supplied string is not a valid Ballot");
+}
+
+
+bool is_ballot(const std::string &str)
+{
+	return ystr.count(str) || nstr.count(str);
 }

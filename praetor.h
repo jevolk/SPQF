@@ -8,8 +8,6 @@
 
 class Schedule
 {
-	using id_t = Vote::id_t;
-
 	std::deque<std::tuple<id_t,time_t>> sched;
 
 	void sort();
@@ -30,8 +28,6 @@ class Schedule
 
 class Praetor
 {
-	using id_t = Vote::id_t;
-
 	Bot &bot;
 	Vdb &vdb;
 

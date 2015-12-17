@@ -480,7 +480,7 @@ try
 catch(const Exception &e)
 {
 	Chan &chan(get_chan());
-	chan << "Can't start civis vote: " << e << flush;
+	chan << "Can't start civis vote: " << e << chan.flush;
 	throw;
 }
 
@@ -636,7 +636,7 @@ void vote::Opine::passed()
 	auto &chan(get_chan());
 	chan << "The People of " << chan.get_name() << " decided "
 	     << BOLD << get_issue() << OFF
-	     << flush;
+	     << chan.flush;
 }
 
 
@@ -662,7 +662,7 @@ void vote::Quote::passed()
 	auto &chan(get_chan());
 	chan << "The People of " << chan.get_name() << " quoted "
 	     << BOLD << get_issue() << OFF
-	     << flush;
+	     << chan.flush;
 }
 
 
@@ -699,7 +699,7 @@ void vote::Kick::passed()
 void vote::Invite::passed()
 {
 	auto &chan(get_chan());
-	chan << "An invite to " << get_issue() << " is being sent..." << flush;
+	chan << "An invite to " << get_issue() << " is being sent..." << chan.flush;
 	chan.invite(get_issue());
 }
 
@@ -831,7 +831,7 @@ void vote::Config::starting()
 	{
 		chan << "Note: vote deletes variable [" << BOLD << key << OFF << "] "
 		     << BOLD << "and all child variables" << OFF << "."
-		     << flush;
+		     << chan.flush;
 	}
 
 	if(!val.empty() && oper == "=")
@@ -843,7 +843,7 @@ void vote::Config::starting()
 	chan << "Note: "
 	     << UNDER2 << "Changing the configuration can be " << BOLD << "DANGEROUS" << OFF << ", "
 	     << "potentially breaking the ability for future votes to revert this change."
-	     << flush;
+	     << chan.flush;
 }
 
 

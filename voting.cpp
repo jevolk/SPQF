@@ -79,13 +79,13 @@ void Voting::valid_motion(Vote &vote)
 	const auto &chan(vote.get_chan());
 	valid_limits(vote,chan,user);
 
-	if(!vote.speaker(user))
+	if(!speaker(cfg,chan,user))
 		throw Exception("You are not able to create votes on this channel.");
 
-	if(!vote.enfranchised(user))
+	if(!enfranchised(cfg,chan,user))
 		throw Exception("You are not yet enfranchised in this channel.");
 
-	if(!vote.qualified(user))
+	if(!qualified(cfg,chan,user))
 		throw Exception("You have not been participating enough to start a vote.");
 
 	for_each(chan,[&vote](Vote &existing)
@@ -100,7 +100,7 @@ void Voting::valid_motion(Vote &vote)
 			return;
 
 		auto &user(vote.get_user());
-		existing.event_vote(user,Vote::YEA);
+		existing.event_vote(user,Ballot::YEA);
 		throw Exception("Instead an attempt was made to cast a ballot for #") << existing.get_id() << ".";
 	});
 
@@ -337,9 +337,9 @@ catch(const std::exception &e)
 }
 
 
-Voting::id_t Voting::eligible_last_vote(const Chan &chan,
-                                        const std::string &nick,
-                                        Vdb::Terms terms)
+id_t Voting::eligible_last_vote(const Chan &chan,
+                                const std::string &nick,
+                                Vdb::Terms terms)
 {
 	terms.emplace_front(Vdb::Term{"issue","==",nick});
 	terms.emplace_front(Vdb::Term{"chan","==",chan.get_name()});
@@ -389,7 +389,7 @@ void Voting::remind_votes()
 			if(vote.voted(user))
 				return;
 
-			if(!vote.enfranchised(user))
+			if(!enfranchised(cfg,chan,user))
 				return;
 
 			user << user.PRIVMSG << chan << user.get_nick() << ", I see you have not yet voted on issue "
@@ -520,8 +520,8 @@ std::unique_ptr<Vote> Voting::del(const id_t &id)
 
 std::unique_ptr<Vote> Voting::del(const decltype(votes.begin()) &it)
 {
-	const Vote::id_t &id = it->first;
-	auto vote = std::move(it->second);
+	const id_t &id(it->first);
+	auto vote(std::move(it->second));
 
 	const auto deindex = [&id]
 	(auto &map, const auto &ent)
@@ -577,7 +577,7 @@ void Voting::worker_wait_init()
 }
 
 
-Vote::id_t Voting::get_next_id()
+id_t Voting::get_next_id()
 const
 {
 	id_t i(0);
@@ -696,7 +696,7 @@ catch(const std::out_of_range &e)
 }
 
 
-const Voting::id_t &Voting::get_id(const User &user)
+const id_t &Voting::get_id(const User &user)
 const
 {
 	if(count(user) > 1)
@@ -710,7 +710,7 @@ const
 }
 
 
-const Voting::id_t &Voting::get_id(const Chan &chan)
+const id_t &Voting::get_id(const Chan &chan)
 const
 {
 	if(count(chan) > 1)
@@ -724,8 +724,8 @@ const
 }
 
 
-std::vector<Voting::id_t> Voting::get_ids(const Chan &chan,
-                                          const User &user)
+std::vector<id_t> Voting::get_ids(const Chan &chan,
+                                  const User &user)
 const
 {
 	const auto cpit(chanidx.equal_range(chan.get_name()));

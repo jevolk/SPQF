@@ -6,12 +6,43 @@
  */
 
 
+enum class Ballot
+{
+	YEA,
+	NAY,
+};
+
+enum class Stat
+{
+	ADDED,
+	CHANGED,
+};
+
+using id_t = uint;
+using Tally = std::pair<uint,uint>;
+
+extern const std::set<std::string> ystr;
+extern const std::set<std::string> nstr;
+
+bool is_ballot(const std::string &str);
+Ballot ballot(const std::string &str);
+
+bool has_access(const Chan &chan, const User &user, const Mode &mode);
+bool has_mode(const Chan &chan, const User &user, const Mode &mode);
+
+bool enfranchised(const Adoc &cfg, const Chan &chan, const User &user, time_t began = 0);
+bool qualified(const Adoc &cfg, const Chan &chan, const User &user, time_t began = 0);
+bool intercession(const Adoc &cfg, const Chan &chan, const User &user);
+bool speaker(const Adoc &cfg, const Chan &chan, const User &user);
+
+uint calc_quorum(const Adoc &cfg, const Chan &chan, time_t began = 0);
+uint calc_plurality(const Adoc &cfg, const Tally &tally);
+uint calc_required(const Adoc &cfg, const Tally &tally);
+
 class Vote : protected Acct
 {
 	static const std::string ARG_KEYED;
 	static const std::string ARG_VALUED;
-	static const std::set<std::string> ystr;
-	static const std::set<std::string> nstr;
 
 	std::string id;                             // Index ID of vote (stored as string for Acct db)
 	std::string type;                           // Type name of this vote
@@ -32,10 +63,6 @@ class Vote : protected Acct
 	std::set<std::string> hosts;                // Hostnames that have voted
 
   public:
-	using id_t = uint;
-	enum Ballot                                 { YEA, NAY,                                         };
-	enum Stat                                   { ADDED, CHANGED,                                   };
-
 	auto get_id() const                         { return lex_cast<id_t>(id);                        }
 	auto &get_type() const                      { return type;                                      }
 	auto &get_chan_name() const                 { return chan;                                      }
@@ -55,24 +82,15 @@ class Vote : protected Acct
 	auto &get_hosts() const                     { return hosts;                                     }
 	auto &get_veto() const                      { return veto;                                      }
 	auto &get_quorum() const                    { return quorum;                                    }
-	auto num_vetoes() const                     { return veto.size();                               }
 	auto elapsed() const                        { return time(NULL) - get_began();                  }
 	auto remaining() const                      { return secs_cast(cfg["duration"]) - elapsed();    }
 	auto expires() const                        { return get_ended() + secs_cast(cfg["for"]);       }
-	auto tally() const -> std::pair<uint,uint>  { return {yea.size(),nay.size()};                   }
+	auto tally() const -> Tally                 { return { yea.size(), nay.size() };                }
 	auto total() const                          { return yea.size() + nay.size();                   }
 	bool disabled() const                       { return cfg.get<bool>("disable");                  }
 	bool interceded() const;
-	uint plurality() const;
-	uint required() const;
 	bool prejudiced() const;
-	uint calc_quorum() const;
 
-	operator Adoc() const;                                  // Serialize to Adoc/JSON
-	friend Locutor &operator<<(Locutor &l, const Vote &v);  // Appends formatted #ID to the stream
-
-	static bool is_ballot(const std::string &str);
-	static Ballot ballot(const std::string &str);
 	Ballot position(const std::string &acct) const;         // Throws if user hasn't taken a position
 	uint voted_host(const std::string &host) const;
 	bool voted_acct(const std::string &acct) const;
@@ -80,19 +98,9 @@ class Vote : protected Acct
 	Ballot position(const User &user) const     { return position(user.get_acct());                 }
 	bool voted_host(const User &user) const     { return voted_host(user.get_acct());               }
 	bool voted_acct(const User &user) const     { return voted_acct(user.get_acct());               }
-
-	bool has_access(const User &user, const Mode &flags) const;
-	bool has_mode(const User &user, const Mode &flags) const;
-
-	bool intercession(const User &user) const;
-	bool enfranchised(const User &user) const;
-	bool qualified(const User &user) const;
-	bool speaker(const User &user) const;
 	bool voted(const User &user) const;
 
   protected:
-	static constexpr auto flush = Locutor::flush;
-
 	void set_cfg(const Adoc &cfg)               { this->cfg = cfg;                                  }
 	void set_issue(const std::string &issue)    { this->issue = issue;                              }
 	void set_reason(const std::string &reason)  { this->reason = reason;                            }
@@ -121,16 +129,11 @@ class Vote : protected Acct
 	virtual void expired() {}                   // After cfg.for time expires
 
 	Stat cast(const Ballot &b, const User &u);
-
-	// Various events while this vote is active.
 	virtual void event_vote(User &u, const Ballot &b);
 	virtual void event_nick(User &u, const std::string &old) {}
 	virtual void event_notice(User &u, const std::string &text) {}
-	virtual void event_privmsg(User &u, const std::string &text) {}
-	virtual void event_chanmsg(User &u, const std::string &text) {}
-	virtual void event_chanmsg(User &u, Chan &c, const std::string &text) {}
-	virtual void event_cnotice(User &u, const std::string &text) {}
-	virtual void event_cnotice(User &u, Chan &c, const std::string &text) {}
+
+	operator Adoc() const;                      // Serialize to Adoc/JSON
 
 	// Main controls used by Voting / Praetor
 	void save()                                 { Acct::set(*this);                                 }
@@ -154,4 +157,6 @@ class Vote : protected Acct
 	     const Adoc &cfg = {});
 
 	virtual ~Vote() = default;
+
+	friend Locutor &operator<<(Locutor &l, const Vote &v);  // Appends formatted #ID to the stream
 };
