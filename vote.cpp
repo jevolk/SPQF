@@ -295,7 +295,7 @@ try
 }
 catch(const std::exception &e)
 {
-	set_reason(e.what());
+	set_reason("error");
 	save();
 
 	if(cfg.get("result.ack.chan",true))
