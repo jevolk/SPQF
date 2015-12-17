@@ -176,6 +176,7 @@ namespace vote
 	            public virtual ModeEffect
 	{
 		void passed() override;
+		void starting() override;
 		void effective() override;
 
 	  public:
@@ -204,6 +205,7 @@ namespace vote
 	              public virtual ModeEffect
 	{
 		void effective() override;
+		void starting() override;
 
 	  public:
 		template<class... Args> Quiet(Args&&... args):

@@ -100,6 +100,19 @@ void vote::UnQuiet::effective()
 //
 
 
+void vote::Quiet::starting()
+{
+	const auto &chan(get_chan());
+	const auto &excepts(chan.lists.excepts);
+	if(excepts.count(user.mask(Mask::HOST)) && excepts.count(user.mask(Mask::ACCT)))
+		throw Exception("User is protected by the [+e]xempt list and is immune.");
+
+	const irc::bot::Mode prots("er");
+	if(has_access(chan,user,prots))
+		throw Exception("User is protected by +e or +r flags and is immune.");
+}
+
+
 void vote::Quiet::effective()
 {
 	auto &chan(get_chan());
@@ -156,6 +169,19 @@ void vote::Voice::effective()
 //
 // Ban
 //
+
+
+void vote::Ban::starting()
+{
+	const auto &chan(get_chan());
+	const auto &excepts(chan.lists.excepts);
+	if(excepts.count(user.mask(Mask::HOST)) && excepts.count(user.mask(Mask::ACCT)))
+		throw Exception("User is protected by the [+e]xempt list and is immune.");
+
+	const irc::bot::Mode prots("er");
+	if(has_access(chan,user,prots))
+		throw Exception("User is protected by the +e or +r flag and is immune.");
+}
 
 
 void vote::Ban::effective()
