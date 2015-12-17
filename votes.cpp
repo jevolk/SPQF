@@ -16,6 +16,36 @@ using namespace irc::bot;
 #include "votes.h"
 
 
+decltype(vote::names) vote::names
+{{
+	"config",
+	"mode",
+	"appeal",
+	"trial",
+	"kick",
+	"invite",
+	"topic",
+	"opine",
+	"quote",
+	"ban",
+	"unban",
+	"quiet",
+	"unquiet",
+	"voice",
+	"devoice",
+	"op",
+	"deop",
+	"exempt",
+	"unexempt",
+	"flags",
+	"import",
+	"civis",
+	"censure",
+	"staff",
+	"destaff",
+}};
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //

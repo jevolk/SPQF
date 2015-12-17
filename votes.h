@@ -66,6 +66,8 @@ class ForNow : virtual Vote
 
 namespace vote
 {
+	extern std::set<std::string> names;
+
 	class Config : public virtual Vote,
 	               public virtual ForNow
 	{
