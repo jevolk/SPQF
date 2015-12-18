@@ -401,6 +401,10 @@ void Vote::announce_starting()
 	if(cfg.get("quorum.prejudice",false))
 		chan << "Effects applied with prejudice. ";
 
+	const auto vreq(cfg.get("veto.quorum",0));
+	if(vreq > 1)
+		chan << vreq << " vetoes are required to annul. ";
+
 	chan << "Type or PM: "
 	     << BOLD << FG::GREEN << "!vote y" << OFF << " " << BOLD << get_id() << OFF
 	     << " or "
