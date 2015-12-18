@@ -511,7 +511,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
 		return;
 	}
 
-	if(chan.get("config.vote.list")["ack.chan"] == "1")
+	if(chan.get_val("config.vote.list.ack.chan",true))
 		handle_vote_list(msg,chan,user,chan,toks);
 	else
 		handle_vote_list(msg,chan,user,user<<chan,toks);
@@ -524,7 +524,7 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   const Tokens &toks,
                                   const id_t &id)
 {
-	if(chan.get("config.vote.list")["ack.chan"] == "1")
+	if(chan.get_val("config.vote.list.ack.chan",true))
 		handle_vote_list(msg,user,chan,toks,id);
 	else
 		handle_vote_list(msg,user,user<<chan,toks,id);
@@ -547,7 +547,7 @@ void ResPublica::handle_vote_config(const Msg &msg,
 	const auto &key(*toks.at(0));
 	const auto &val(cfg[key]);
 
-	const bool ack_chan(cfg["config.config.ack.chan"] == "1");
+	const bool ack_chan(cfg.get("config.config.ack.chan",true));
 	Locutor &out(ack_chan? static_cast<Locutor &>(chan):
 	                       static_cast<Locutor &>(user << chan));   // CMSG
 	if(val.empty())
@@ -1303,7 +1303,7 @@ void ResPublica::handle_vote_info(const Msg &msg,
 	{
 		const auto &vetoes(vote.get_veto());
 		out << pfx << BOLD << "VETO" << OFF << "     : " << BOLD << FG::MAGENTA << vetoes.size() << OFF;
-		if(cfg["visible.veto"] == "1")
+		if(cfg.get("visible.veto",true))
 		{
 			out << " - ";
 			for(const auto &acct : vetoes)
@@ -1599,7 +1599,7 @@ void ResPublica::vote_access(Locutor &out,
 	{
 		Adoc cfg(ccfg);
 		cfg.merge(ccfg.get_child(type,Adoc{}));
-		if(cfg.get("disable",false))
+		if(!cfg.get("enable",false))
 			continue;
 
 		std::stringstream perm;
@@ -1630,10 +1630,10 @@ void ResPublica::handle_delta(const Msg &msg,
 
 	const auto cfg(chan.get("config.vote"));
 
-	if(!cfg.get("trial.disable",true))
+	if(cfg.get("trial.enable",false))
 		delta_trial(msg,chan,user,delta);
 
-	if(!cfg.get("appeal.disable",true))
+	if(cfg.get("appeal.enable",false))
 		delta_appeal(msg,chan,user,delta);
 }
 

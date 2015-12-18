@@ -88,7 +88,7 @@ class Vote : protected Acct
 	auto expires() const                        { return get_ended() + secs_cast(cfg["for"]);       }
 	auto tally() const -> Tally                 { return { yea.size(), nay.size() };                }
 	auto total() const                          { return yea.size() + nay.size();                   }
-	bool disabled() const                       { return cfg.get<bool>("disable");                  }
+	bool enabled() const                        { return cfg.get("enable",false);                   }
 	bool interceded() const;
 	bool prejudiced() const;
 

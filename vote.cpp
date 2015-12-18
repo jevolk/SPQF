@@ -40,47 +40,8 @@ cfg([&]
 {
 	// Default config
 	Adoc ret;
-	ret.put("disable",0);
 	ret.put("for",3600);
-	ret.put("audibles","");
-	ret.put("limit.active",16);
-	ret.put("limit.user",1);
-	ret.put("limit.age",0);
-	ret.put("limit.quorum.age",120);
-	ret.put("limit.plurality.age",1800);
-	ret.put("quorum.ballots",1);
-	ret.put("quorum.yea",1);
-	ret.put("quorum.age",0);
-	ret.put("quorum.lines",0);
-	ret.put("quorum.turnout",0.00);
-	ret.put("quorum.plurality",0.51);
-	ret.put("quorum.quick",0);
-	ret.put("quorum.prejudice",0);
 	ret.put("duration",30);
-	ret.put("speaker.access","");
-	ret.put("speaker.mode","");
-	ret.put("veto.access","");
-	ret.put("veto.mode","o");
-	ret.put("veto.quorum",1);
-	ret.put("veto.quick",1);
-	ret.put("enfranchise.age",1800);
-	ret.put("enfranchise.lines",0);
-	ret.put("enfranchise.access","");
-	ret.put("enfranchise.mode","");
-	ret.put("qualify.age",900);
-	ret.put("qualify.lines",0);
-	ret.put("qualify.access","");
-	ret.put("ballot.ack.chan",0);
-	ret.put("ballot.ack.priv",1);
-	ret.put("ballot.rej.chan",0);
-	ret.put("ballot.rej.priv",1);
-	ret.put("result.ack.chan",1);
-	ret.put("visible.motion",1);
-	ret.put("visible.ballots",0);
-	ret.put("visible.active",1);
-	ret.put("visible.veto",1);
-	ret.put("weight.yea",0);
-	ret.put("weight.nay",0);
 
 	ret.merge(chan.get("config.vote"));                      // Overwrite defaults with saved config
 	chan.set("config.vote",ret);                             // Write back combined result to db
@@ -105,7 +66,7 @@ ended(0),
 expiry(0),
 quorum(0)
 {
-	if(disabled())
+	if(!enabled())
 		throw Exception("Votes of this type are disabled by the configuration.");
 }
 
@@ -696,7 +657,7 @@ bool speaker(const Adoc &cfg,
              const Chan &chan,
              const User &user)
 {
-	if(cfg.get("disable",false))
+	if(!cfg.get("enable",false))
 		return false;
 
 	if(!user.is_logged_in())
@@ -711,7 +672,7 @@ bool intercession(const Adoc &cfg,
                   const Chan &chan,
                   const User &user)
 {
-	if(cfg.get("disable",false))
+	if(!cfg.get("enable",false))
 		return false;
 
 	if(!user.is_logged_in())
@@ -732,7 +693,7 @@ bool qualified(const Adoc &cfg,
                const User &user,
                time_t began)
 {
-	if(cfg.get("disable",false))
+	if(!cfg.get("enable",false))
 		return false;
 
 	if(!user.is_logged_in())
@@ -769,7 +730,7 @@ bool enfranchised(const Adoc &cfg,
                   const User &user,
                   time_t began)
 {
-	if(cfg.get("disable",false))
+	if(!cfg.get("enable",false))
 		return false;
 
 	if(!user.is_logged_in())
