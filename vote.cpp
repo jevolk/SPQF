@@ -702,8 +702,8 @@ bool speaker(const Adoc &cfg,
 	if(!user.is_logged_in())
 		return false;
 
-	return (!cfg.has("speaker.access") || has_access(chan,user,cfg["speaker.access"])) &&
-	       (!cfg.has("speaker.mode") || has_mode(chan,user,cfg["speaker.mode"]));
+	return (!cfg.has("speaker.access") || has_access(chan,user,cfg.get("speaker.access",Mode{}))) &&
+	       (!cfg.has("speaker.mode") || has_mode(chan,user,cfg.get("speaker.mode",Mode{})));
 }
 
 
@@ -717,10 +717,10 @@ bool intercession(const Adoc &cfg,
 	if(!user.is_logged_in())
 		return false;
 
-	if(cfg.has("veto.mode") && !has_mode(chan,user,cfg["veto.mode"]))
+	if(cfg.has("veto.mode") && !has_mode(chan,user,cfg.get("veto.mode",Mode{})))
 		return false;
 
-	if(cfg.has("veto.access") && !has_access(chan,user,cfg["veto.access"]))
+	if(cfg.has("veto.access") && !has_access(chan,user,cfg.get("veto.access",Mode{})))
 		return false;
 
 	return cfg.has("veto.access") || cfg.has("veto.mode");
@@ -738,7 +738,7 @@ bool qualified(const Adoc &cfg,
 	if(!user.is_logged_in())
 		return false;
 
-	if(has_access(chan,user,cfg["qualify.access"]))
+	if(has_access(chan,user,cfg.get("qualify.access",Mode{})))
 		return true;
 
 	if(!began)
@@ -775,8 +775,8 @@ bool enfranchised(const Adoc &cfg,
 	if(!user.is_logged_in())
 		return false;
 
-	const auto mode(cfg["enfranchise.mode"]);
-	const auto access(cfg["enfranchise.access"]);
+	const auto mode(cfg.get("enfranchise.mode",Mode{}));
+	const auto access(cfg.get("enfranchise.access",Mode{}));
 	if(!mode.empty() || !access.empty())
 		return has_mode(chan,user,mode) || has_access(chan,user,access);
 
