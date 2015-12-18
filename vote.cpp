@@ -202,6 +202,7 @@ void Vote::cancel()
 
 
 void Vote::start()
+try
 {
 	using namespace colors;
 
@@ -222,6 +223,13 @@ void Vote::start()
 
 	if(cfg.get("visible.motion",1U) == 1U)
 		announce_starting();
+}
+catch(...)
+{
+	if(!get_effect().empty())
+		expired();
+
+	throw;
 }
 
 
@@ -296,6 +304,9 @@ try
 catch(const std::exception &e)
 {
 	set_reason("error");
+	if(!get_effect().empty())
+		expired();
+
 	save();
 
 	if(cfg.get("result.ack.chan",true))
