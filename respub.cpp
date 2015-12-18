@@ -245,14 +245,11 @@ void ResPublica::handle_cmode(const Msg &msg,
 {
 	using namespace fmt::MODE;
 
-	if(msg.from("chanserv") || msg.from(sess.get_nick()) || msg.from_server())
-		return;
-
 	User &user(users.get(msg.get_nick()));
 	const auto &serv(sess.get_server());
 	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
 	for(const auto &delta : deltas)
-		handle_unilateral_delta(msg,chan,user,delta);
+		handle_delta(msg,chan,user,delta);
 }
 
 
@@ -1587,44 +1584,6 @@ void ResPublica::vote_stats_chan_user(Locutor &out,
 }
 
 
-void ResPublica::handle_unilateral_delta(const Msg &msg,
-                                         Chan &chan,
-                                         User &user,
-                                         const Delta &delta)
-{
-	const auto cfg(chan.get("config.vote"));
-	if(!cfg.get("trial.disable",true))
-	{
-		const Deltas cfgdelts(cfg.get("trial.deltas",std::string{}));
-		const auto match(std::any_of(cfgdelts.begin(),cfgdelts.end(),[&delta]
-		(const auto &cfgd)
-		{
-			return bool(cfgd) == bool(delta) && char(cfgd) == char(delta);
-		}));
-
-		if(match)
-			voting.motion<vote::Trial>(chan,user,std::string(delta));
-
-		return;
-	}
-
-	if(!cfg.get("appeal.disable",true))
-	{
-		const Deltas cfgdelts(cfg.get("appeal.deltas",std::string{}));
-		const auto match(std::any_of(cfgdelts.begin(),cfgdelts.end(),[&delta]
-		(const auto &cfgd)
-		{
-			return bool(cfgd) == bool(delta) && char(cfgd) == char(delta);
-		}));
-
-		if(match)
-			voting.motion<vote::Appeal>(chan,user,std::string(~delta));
-
-		return;
-	}
-}
-
-
 void ResPublica::vote_access(Locutor &out,
                              const Chan &chan,
                              const User &user,
@@ -1655,6 +1614,137 @@ void ResPublica::vote_access(Locutor &out,
 	}
 
 	out << out.flush;
+}
+
+
+void ResPublica::handle_delta(const Msg &msg,
+                              Chan &chan,
+                              User &user,
+                              const Delta &delta)
+{
+	if(msg.from("chanserv") || msg.from(sess.get_nick()) || msg.from_server())
+		return;
+
+	const auto cfg(chan.get("config.vote"));
+
+	if(!cfg.get("trial.disable",true))
+		delta_trial(msg,chan,user,delta);
+
+	if(!cfg.get("appeal.disable",true))
+		delta_appeal(msg,chan,user,delta);
+}
+
+
+void ResPublica::delta_appeal(const Msg &msg,
+                              Chan &chan,
+                              User &user,
+                              const Delta &delta)
+{
+	const Adoc cfg(chan.get("config.vote.appeal"));
+	const Deltas cfgdelts(cfg.get("deltas",std::string{}));
+	const auto match(std::any_of(cfgdelts.begin(),cfgdelts.end(),[&delta]
+	(const auto &cfgd)
+	{
+		return bool(cfgd) == bool(delta) && char(cfgd) == char(delta);
+	}));
+
+	if(!match)
+		return;
+
+	voting.motion<vote::Appeal>(chan,user,std::string(~delta));
+}
+
+
+void ResPublica::delta_trial(const Msg &msg,
+                             Chan &chan,
+                             User &user,
+                             const Delta &delta)
+{
+	const Adoc cfg(chan.get("config.vote.trial"));
+	const Deltas cfgdelts(cfg.get("deltas",std::string{}));
+	const auto match(std::any_of(cfgdelts.begin(),cfgdelts.end(),[&delta]
+	(const auto &cfgd)
+	{
+		return bool(cfgd) == bool(delta) && char(cfgd) == char(delta);
+	}));
+
+	if(!match)
+		return;
+
+	if(!delta_trial_jeopardy(msg,chan,user,delta))
+		return;
+
+	voting.motion<vote::Trial>(chan,user,std::string(delta));
+}
+
+
+bool ResPublica::delta_trial_jeopardy(const Msg &msg,
+                                      Chan &chan,
+                                      User &user,
+                                      const Delta &delta)
+{
+	const Adoc cfg(chan.get("config.vote.trial"));
+	const auto limit_quorum(secs_cast(cfg.get("limit.quorum.jeopardy","4h")));
+	if(limit_quorum)
+	{
+		const auto now(time(nullptr));
+		const Vdb::Terms quorum_query
+		{
+			Vdb::Term { "reason", "==", "quorum"                         },
+			Vdb::Term { "type",   "==", "trial"                          },
+			Vdb::Term { "ended",  ">=", lex_cast(now - limit_quorum)     },
+			Vdb::Term { "issue",  "==", string(delta)                    },
+			Vdb::Term { "chan",   "==", chan.get_name()                  },
+		};
+
+		const auto ids(vdb.query(quorum_query,1));
+		if(!ids.empty())
+		{
+			const auto id(ids.front());
+			const auto ended(lex_cast<time_t>(vdb.get_value(id,"ended")));
+			const auto ago(now - ended);
+			chan << user.get_nick() << ", the user can not be subjected to double jeopardy for "
+			     << secs_cast(limit_quorum)
+			     << ", however you lost a trial due to quorum "
+			     << secs_cast(ago) << " ago."
+			     << chan.flush;
+
+			chan(~delta);
+			return false;
+		}
+	}
+
+	const auto limit_plurality(secs_cast(cfg.get("limit.plurality.jeopardy","1d")));
+	if(limit_plurality)
+	{
+		const auto now(time(nullptr));
+		const Vdb::Terms plurality_query
+		{
+			Vdb::Term { "reason", "==", "plurality"                      },
+			Vdb::Term { "type",   "==", "trial"                          },
+			Vdb::Term { "issue",  "==", string(delta)                    },
+			Vdb::Term { "ended",  ">=", lex_cast(now - limit_plurality)  },
+			Vdb::Term { "chan",   "==", chan.get_name()                  },
+		};
+
+		const auto ids(vdb.query(plurality_query,1));
+		if(!ids.empty())
+		{
+			const auto id(ids.front());
+			const auto ended(lex_cast<time_t>(vdb.get_value(id,"ended")));
+			const auto ago(now - ended);
+			chan << user.get_nick() << ", the user can not be subjected to double jeopardy for "
+			     << secs_cast(limit_quorum)
+			     << ", however you lost a trial due to plurality "
+			     << secs_cast(ago) << " ago."
+			     << chan.flush;
+
+			chan(~delta);
+			return false;
+		}
+	}
+
+	return true;
 }
 
 
