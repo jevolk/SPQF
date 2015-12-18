@@ -245,6 +245,9 @@ void ResPublica::handle_cmode(const Msg &msg,
 {
 	using namespace fmt::MODE;
 
+	if(msg.from("chanserv") || msg.from_server())
+		return;
+
 	User &user(users.get(msg.get_nick()));
 	const auto &serv(sess.get_server());
 	const Deltas deltas(detok(msg.begin()+1,msg.end()),sess.get_server());
@@ -549,7 +552,7 @@ void ResPublica::handle_vote_config(const Msg &msg,
 	                       static_cast<Locutor &>(user << chan));   // CMSG
 	if(val.empty())
 	{
-		const Adoc &doc(cfg.get_child(key,Adoc()));
+		const Adoc &doc(cfg.get_child(key,Adoc{}));
 		out << doc << flush;
 	}
 	else out << key << " = " << val << flush;
@@ -711,7 +714,7 @@ try
 
 	if(val.empty())
 	{
-		const Adoc doc(cfg.get_child(key,Adoc()));
+		const Adoc doc(cfg.get_child(key,Adoc{}));
 		user << doc << flush;
 	}
 	else user << key << " = " << val << flush;
@@ -1473,8 +1476,8 @@ void ResPublica::vote_stats_chan(Locutor &out,
 		if(doc["chan"] != chan)
 			continue;
 
-		const Adoc &yeas(doc.get_child("yea",Adoc()));
-		const Adoc &nays(doc.get_child("nay",Adoc()));
+		const Adoc &yeas(doc.get_child("yea",Adoc{}));
+		const Adoc &nays(doc.get_child("nay",Adoc{}));
 		yeas.into(voters,voters.end());
 		nays.into(voters,voters.end());
 		speakers.insert(doc["acct"]);
@@ -1545,8 +1548,8 @@ void ResPublica::vote_stats_chan_user(Locutor &out,
 		if(doc["chan"] != chan)
 			continue;
 
-		const Adoc yd(doc.get_child("yea",Adoc()));
-		const Adoc nd(doc.get_child("nay",Adoc()));
+		const Adoc yd(doc.get_child("yea",Adoc{}));
+		const Adoc nd(doc.get_child("nay",Adoc{}));
 		const auto yeas(yd.into<std::set<std::string>>());
 		const auto nays(nd.into<std::set<std::string>>());
 		const auto &yc(yeas.count(user));
@@ -1595,7 +1598,7 @@ void ResPublica::vote_access(Locutor &out,
 	for(const auto &type : vote::names)
 	{
 		Adoc cfg(ccfg);
-		cfg.merge(ccfg.get_child(type,Adoc()));
+		cfg.merge(ccfg.get_child(type,Adoc{}));
 		if(cfg.get("disable",false))
 			continue;
 
@@ -1622,7 +1625,7 @@ void ResPublica::handle_delta(const Msg &msg,
                               User &user,
                               const Delta &delta)
 {
-	if(msg.from("chanserv") || msg.from(sess.get_nick()) || msg.from_server())
+	if(user.is_myself())
 		return;
 
 	const auto cfg(chan.get("config.vote"));

@@ -84,11 +84,11 @@ cfg([&]
 
 	ret.merge(chan.get("config.vote"));                      // Overwrite defaults with saved config
 	chan.set("config.vote",ret);                             // Write back combined result to db
-	ret.merge(ret.get_child(type,Adoc()));                   // Import type-specifc overrides up to main
+	ret.merge(ret.get_child(type,Adoc{}));                   // Import type-specifc overrides up to main
 
 	// Parse and validate any vote-time "audibles" from user.
 	const Adoc auds(Adoc::arg_ctor,issue,ARG_KEYED,ARG_VALUED);
-	const Adoc val_auds(ret.get_child("audibles",Adoc()));
+	const Adoc val_auds(ret.get_child("audibles",Adoc{}));
 	const auto val_auds_set(val_auds.into<std::set<std::string>>());
 	auds.for_each([&val_auds_set](const auto &key, const auto &val)
 	{

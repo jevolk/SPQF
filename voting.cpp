@@ -210,7 +210,7 @@ try
 	const auto age(secs_cast(civis["eligible.age"]));
 	const auto lines(civis.get<uint>("eligible.lines",0));
 	const auto automat(civis.get<bool>("eligible.automatic",0));
-	const Adoc excludes(civis.get_child("eligible.exclude",Adoc()));
+	const Adoc excludes(civis.get_child("eligible.exclude",Adoc{}));
 	const auto exclude(excludes.into<std::set<std::string>>());
 	if(!lines || !age || !automat)
 		return;

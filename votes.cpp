@@ -494,7 +494,7 @@ try
 	const auto &chan(get_chan());
 	const auto &cfg(get_cfg());
 
-	const Adoc excludes(cfg.get_child("civis.eligible.exclude",Adoc()));
+	const Adoc excludes(cfg.get_child("civis.eligible.exclude",Adoc{}));
 	const auto exclude(excludes.into<std::set<std::string>>());
 	if(exclude.count(user.get_acct()))
 		throw Exception("User at issue is excluded by the channel configuration");
@@ -932,7 +932,7 @@ void vote::Config::passed()
 	}
 	else if(oper == "+=" && !toks.empty())
 	{
-		Adoc val(cfg.get_child(key,Adoc()));
+		Adoc val(cfg.get_child(key,Adoc{}));
 		for(const auto &tok : toks)
 			val.push(tok);
 
@@ -941,7 +941,7 @@ void vote::Config::passed()
 	else if(oper == "-=" && !toks.empty())
 	{
 		Adoc dst;
-		const Adoc src(cfg.get_child(key,Adoc()));
+		const Adoc src(cfg.get_child(key,Adoc{}));
 		for(const auto &pair : src)
 		{
 			const auto &val(pair.second.get("",std::string{}));
