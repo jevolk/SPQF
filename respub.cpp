@@ -1443,8 +1443,10 @@ void ResPublica::opinion(const Chan &chan,
 		if(cfgfor > 0)
 			out << " in the last " << secs_cast(cfgfor);
 
-		out << "." << out.flush;
+		out << ".";
 	}
+
+	out << out.flush;
 }
 
 
