@@ -1,4 +1,3 @@
-
 # SENATVS POPVLVS QVE FREENODVS
 ###### The Senate & The People of Freenode - Democratic Channel Management System
 
@@ -36,13 +35,19 @@ or conduct takeovers.
 #### Additional types
 * **Config** - Vote to change the voting configuration itself.
 * **Import** - Vote to copy the voting configuration of another channel.
-* **Civis** - Configurable vote to enfranchise new users.
+* **Civis** - Configurable automated vote to enfranchise new users.
 * **Censure** - Configurable vote to disenfranchise users.
-* **Staff** - Configurable vote to add/remove flags for operators.
-* **Appeal** - Appeal an op's extrademocratic ban/quiet/mode, etc.
+* **Staff** - Configurable vote to add/remove custom flags for operators.
+* **Trial** - Auto vote to confirm an operator's manual action (else reverses it).
+* **Appeal** - Auto vote to reverse an operator's manual action.
 
 
 *(Any type can be disabled in the configuration)*
+
+
+
+![vote list screenshot](http://i.imgur.com/xf24L54.png)
+![vote info screenshot](http://i.imgur.com/NI5cxns.png)
 
 
 ----
@@ -72,6 +77,7 @@ or conduct takeovers.
     * The percentage that constitutes a passing majority.
     * Turnout percentage of your channel that must submit a ballot for a valid vote.
     * Ability for a vote to end early if quorum requirements met.
+    * Ability for prejudicial effects once a quorum is met, reversed if vote fails.
 
 
 * **Enfranchisement**
@@ -112,14 +118,15 @@ or conduct takeovers.
 * Offline configuration/database editing tool.
 * Automatic NickServ ghost and regain on (re)connect.
 * Vote modules can have independent configurations.
-* Active vote listing detailing open issues for a channel.
+* Active vote list detailing open issues for a channel.
 * Searchable database-records of all votes, ballots and outcomes.
 * Expiration management to undo effects of votes after some time.
 * Increment/Decrement effects-time based on number of yea and nay votes.
 * Vote-time options to set any config variable for a single vote.
-* Automatic appeals to unilateral operator actions.
+* Automatic appeals/trials regarding unilateral operator actions.
+* Prevent an operator from manually acting after losing a related vote.
 * Background jobs to nominate new eligible voters.
-* Prevention of other operators kick/banning or removing the bot.
+* Defense suite against other operators kick/banning or removing the bot.
 * Manual configuration override for channel +F or bot --owner.
 
 
