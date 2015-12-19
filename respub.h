@@ -78,6 +78,7 @@ class ResPublica
 
 	// Primary dispatch
 	void handle_mlock(const Msg &m, Chan &c);
+	void handle_inviting(const Msg &m, Chan &c);
 	void handle_knock(const Msg &m, Chan &c);
 	void handle_on_chan(const Msg &m, Chan &c, User &u);
 	void handle_not_op(const Msg &m, Chan &c);

@@ -755,7 +755,6 @@ void vote::Kick::passed()
 void vote::Invite::passed()
 {
 	auto &chan(get_chan());
-	chan << "An invite to " << get_issue() << " is being sent..." << chan.flush;
 	chan.invite(get_issue());
 }
 

@@ -88,6 +88,7 @@ voting(bot,vdb,praetor)
 	events.chan.add(ERR_CHANOPRIVSNEEDED,boost::bind(&ResPublica::handle_not_op,this,_1,_2),handler::RECURRING);
 	events.chan_user.add(ERR_USERONCHANNEL,boost::bind(&ResPublica::handle_on_chan,this,_1,_2,_3),handler::RECURRING);
 	events.chan.add(RPL_KNOCK,boost::bind(&ResPublica::handle_knock,this,_1,_2),handler::RECURRING);
+	events.chan.add(RPL_INVITING,boost::bind(&ResPublica::handle_inviting,this,_1,_2),handler::RECURRING);
 	events.chan.add(ERR_MLOCKRESTRICTED,boost::bind(&ResPublica::handle_mlock,this,_1,_2),handler::RECURRING);
 	events.chan.add("MODE",boost::bind(&ResPublica::handle_cmode,this,_1,_2),handler::RECURRING);
 }
@@ -294,6 +295,15 @@ void ResPublica::handle_knock(const Msg &msg,
 	using namespace fmt::KNOCK;
 
 	chan << "It seems " << msg[MASK] << " " << msg[REASON] << "." << chan.flush;
+}
+
+
+void ResPublica::handle_inviting(const Msg &msg,
+                                 Chan &chan)
+{
+	using namespace fmt::INVITING;
+
+	chan << "An invite to " << msg[TARGET] << " was sent..." << chan.flush;
 }
 
 
