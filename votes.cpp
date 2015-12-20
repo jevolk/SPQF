@@ -247,7 +247,7 @@ void vote::UnBan::starting()
 	const auto &chan(get_chan());
 	const Mask mask(get_issue());
 
-	if(mask.get_form() != mask.INVALID)
+	if(form(mask) != mask.INVALID)
 	{
 		if(!chan.lists.bans.count(mask))
 			throw Exception("Can't find this mask in the ban list");
@@ -270,7 +270,7 @@ try
 	auto &chan(get_chan());
 	const Mask mask(get_issue());
 
-	if(mask.get_form() == mask.INVALID)
+	if(form(mask) == mask.INVALID)
 	{
 		const auto &users(get_users());
 		const auto &user(users.get(mask));
@@ -369,7 +369,7 @@ void vote::UnExempt::starting()
 	const auto &chan(get_chan());
 	const Mask mask(get_issue());
 
-	if(mask.get_form() != mask.INVALID)
+	if(form(mask) != mask.INVALID)
 	{
 		if(!chan.lists.excepts.count(mask))
 			throw Exception("Can't find this mask in the except list");
@@ -392,7 +392,7 @@ try
 	auto &chan(get_chan());
 	const Mask mask(get_issue());
 
-	if(mask.get_form() == mask.INVALID)
+	if(form(mask) == mask.INVALID)
 	{
 		const auto &users(get_users());
 		const auto &user(users.get(mask));
@@ -784,10 +784,7 @@ void vote::Mode::starting()
 	const auto &users(get_users());
 	const auto &serv(sess.get_server());
 	const auto &myself(users.get(sess.get_nick()));
-
-	const Deltas deltas(get_issue(),serv);
-	deltas.validate_chan(serv);
-
+	const Deltas deltas(get_issue(),serv,true);
 	for(const auto &delta : deltas)
 		if(myself.is_myself(std::get<Delta::MASK>(delta)))
 			throw Exception("One of the mode deltas matches myself.");
@@ -817,9 +814,7 @@ void vote::Appeal::starting()
 {
 	const auto &sess(get_sess());
 	const auto &serv(sess.get_server());
-	const Deltas deltas(get_issue(),serv);
-	deltas.validate_chan(serv);
-
+	const Deltas deltas(get_issue(),serv,true);
 	const auto &user(get_user());
 	cast(Ballot::NAY,user);
 }
@@ -1017,12 +1012,18 @@ void AcctIssue::event_nick(User &user,
 
 void ModeEffect::expired()
 {
+	using std::get;
+
 	const auto &sess(get_sess());
 	const auto &serv(sess.get_server());
 	if(get_effect().empty())
 		return;
 
-	const Deltas deltas(get_effect(),serv);
 	auto &chan(get_chan());
-	chan(~deltas);
+	auto deltas(~Deltas(get_effect(),serv));
+	for(auto &d : deltas)
+		if(!serv.mode_has_arg(char(d),bool(d)) && !get<d.MASK>(d).empty())
+			get<d.MASK>(d).clear();
+
+	chan(deltas);
 }
