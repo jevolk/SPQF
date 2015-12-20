@@ -72,7 +72,7 @@ void Voting::cancel(Vote &vote,
 }
 
 
-void Voting::valid_motion(Vote &vote)
+void Voting::valid_motion(const Vote &vote)
 {
 	const auto &cfg(vote.get_cfg());
 	const auto &user(vote.get_user());
@@ -87,22 +87,6 @@ void Voting::valid_motion(Vote &vote)
 
 	if(!qualified(cfg,chan,user))
 		throw Exception("You have not been participating enough to start a vote.");
-
-	for_each(chan,[&vote](Vote &existing)
-	{
-		if(vote.get_id() == existing.get_id())
-			return;
-
-		if(vote.get_type() != existing.get_type())
-			return;
-
-		if(!boost::iequals(vote.get_issue(),existing.get_issue()))
-			return;
-
-		auto &user(vote.get_user());
-		existing.event_vote(user,Ballot::YEA);
-		throw Exception("Instead an attempt was made to cast a ballot for #") << existing.get_id() << ".";
-	});
 
 	const auto now(time(nullptr));
 	const auto limit_age(secs_cast(cfg["limit.age"]));
@@ -146,7 +130,7 @@ void Voting::valid_motion(Vote &vote)
 }
 
 
-void Voting::valid_limits(Vote &vote,
+void Voting::valid_limits(const Vote &vote,
                           const Chan &chan,
                           const User &user)
 {
@@ -345,7 +329,7 @@ id_t Voting::eligible_last_vote(const Chan &chan,
 	terms.emplace_front(Vdb::Term{"chan","==",chan.get_name()});
 
 	const auto res(vdb.query(terms,1));
-	return !res.empty()? res.front() : 0;   // note sentinel 0 is a valid vote id but ignored here
+	return !res.empty()? res.front() : 0;
 }
 
 
@@ -510,7 +494,7 @@ catch(const std::exception &e)
 
 std::unique_ptr<Vote> Voting::del(const id_t &id)
 {
-	const auto vit = votes.find(id);
+	const auto vit(votes.find(id));
 	if(vit == votes.end())
 		throw Exception("Could not delete any vote by this ID.");
 
@@ -523,20 +507,20 @@ std::unique_ptr<Vote> Voting::del(const decltype(votes.begin()) &it)
 	const id_t &id(it->first);
 	auto vote(std::move(it->second));
 
-	const auto deindex = [&id]
+	const auto deindex([&id]
 	(auto &map, const auto &ent)
 	{
-		const auto pit = map.equal_range(ent);
-		const auto it = std::find_if(pit.first,pit.second,[&id]
+		const auto pit(map.equal_range(ent));
+		const auto it(std::find_if(pit.first,pit.second,[&id]
 		(const auto &it)
 		{
 			const id_t &idx = it.second;
 			return idx == id;
-		});
+		}));
 
 		if(it != pit.second)
 			map.erase(it);
-	};
+	});
 
 	deindex(chanidx,vote->get_chan_name());
 	deindex(useridx,vote->get_user_acct());
@@ -580,11 +564,39 @@ void Voting::worker_wait_init()
 id_t Voting::get_next_id()
 const
 {
-	id_t i(0);
+	id_t i(1);
 	while(vdb.exists(i) || exists(i))
-		i++;
+		++i;
 
 	return i;
+}
+
+
+id_t Voting::duplicated(const Vote &vote)
+const
+{
+	const auto pit(chanidx.equal_range(vote.get_chan_name()));
+	for(auto it(pit.first); it != pit.second; ++it)
+	{
+		const auto id(it->second);
+		const auto vit(votes.find(id));
+		if(vit == votes.end())
+			continue;
+
+		const auto &existing(*vit->second);
+		if(vote.get_id() == existing.get_id())
+			continue;
+
+		if(vote.get_type() != existing.get_type())
+			continue;
+
+		if(!boost::iequals(vote.get_issue(),existing.get_issue()))
+			continue;
+
+		return existing.get_id();
+	};
+
+	return 0;
 }
 
 

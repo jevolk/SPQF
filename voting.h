@@ -52,6 +52,8 @@ class Voting
 	auto count(const User &user) const               { return useridx.count(user.get_acct());   }
 	auto count() const                               { return votes.size();                     }
 
+	id_t duplicated(const Vote &vote) const;
+
   private:
 	id_t get_next_id() const;
 	void worker_wait_init();
@@ -77,8 +79,8 @@ class Voting
 	void eligible_worker();
 	std::thread eligible_thread;
 
-	void valid_limits(Vote &vote, const Chan &chan, const User &user);
-	void valid_motion(Vote &vote);
+	void valid_limits(const Vote &vote, const Chan &chan, const User &user);
+	void valid_motion(const Vote &vote);
 
   public:
 	void cancel(Vote &vote, const Chan &chan, const User &user);
@@ -106,6 +108,18 @@ try
 	{
 		auto &ptr(iit.first->second);
 		auto &vote(dynamic_cast<Vote &>(*ptr));
+
+		// For duplicate, cast YEA ballot and remove this motion
+		const auto dup_id(duplicated(vote));
+		if(dup_id)
+		{
+			auto &existing(dynamic_cast<Vote &>(get(dup_id)));
+			auto &user(vote.get_user());
+			existing.event_vote(user,Ballot::YEA);
+			votes.erase(iit.first);
+			return existing;
+		}
+
 		chanidx.emplace(vote.get_chan_name(),id);
 		useridx.emplace(vote.get_user_acct(),id);
 		valid_motion(vote);
@@ -115,7 +129,7 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		del(id);
+		del(iit.first);
 		throw;
 	}
 	else throw Assertive("Failed to track this vote");
