@@ -15,7 +15,6 @@ struct Vdb : Adb
 	static const std::vector<std::string> operators;
 
 	bool exists(const id_t &id) const;
-	template<class T> T get(const id_t &id);
 	std::unique_ptr<Vote> get(const id_t &id);
 	std::string get_value(const id_t &id, const std::string &key);
 	std::string get_type(const id_t &id);
@@ -29,8 +28,6 @@ struct Vdb : Adb
 
 	Vdb(const std::string &dir);
 };
-
-template<> Vote Vdb::get<Vote>(const id_t &id);
 
 
 template<class It>
@@ -57,19 +54,4 @@ void Vdb::query(const Terms &terms,
 			++rets;
 		}
 	}
-}
-
-
-template<class T>
-T Vdb::get(const id_t &id)
-try
-{
-	return { id,*this };
-}
-catch(const Exception &e)
-{
-	if(exists(id))
-		throw;
-
-	throw Exception("Could not find a vote by that ID.");
 }

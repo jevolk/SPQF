@@ -445,15 +445,12 @@ void ResPublica::handle_vote_id(const Msg &msg,
                                 const Tokens &toks)
 try
 {
-	const Chan *const c(chan.is_op()? &chan : chans.find_cnotice(user));
 	const auto id(lex_cast<id_t>(*toks.at(0)));
 
-	if(c)
-	{
-		const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
-		handle_vote_info(msg,user,user<<(*c),subtok(toks),vote);
-	}
-	else handle_vote_list(msg,user,user,subtok(toks),id);
+	if(voting.exists(id))
+		handle_vote_info(msg,user,user,subtok(toks),voting.get(id));
+	else
+		handle_vote_info(msg,user,user,subtok(toks),*vdb.get(id));
 }
 catch(const boost::bad_lexical_cast &e)
 {
@@ -880,8 +877,10 @@ try
 		return;
 	}
 
-	const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
-	handle_vote_info(msg,user,user<<(*chan),subtok(toks),vote);
+	if(voting.exists(id))
+		handle_vote_info(msg,user,user<<(*chan),subtok(toks),voting.get(id));
+	else
+		handle_vote_info(msg,user,user<<(*chan),subtok(toks),*vdb.get(id));
 }
 catch(const boost::bad_lexical_cast &e)
 {
@@ -1138,13 +1137,27 @@ void ResPublica::handle_vote_list(const Msg &msg,
                                   const Tokens &toks,
                                   const id_t &id)
 {
+	if(voting.exists(id))
+		handle_vote_list(msg,user,out,toks,voting.get(id));
+	else
+		handle_vote_list(msg,user,out,toks,*vdb.get(id));
+
+
+}
+
+
+void ResPublica::handle_vote_list(const Msg &msg,
+                                  const User &user,
+                                  Locutor &out,
+                                  const Tokens &toks,
+                                  const Vote &vote)
+{
 	using namespace colors;
 	using std::setfill;
 	using std::setw;
 	using std::right;
 	using std::left;
 
-	const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
 	const auto cfg(vote.get_cfg());
 	const auto tally(vote.tally());
 	const scope f([&]
@@ -1371,36 +1384,45 @@ void ResPublica::vote_list_oneline(const Chan &c,
                                    Locutor &out,
                                    const std::list<id_t> &result)
 {
-	using namespace colors;
-
 	for(const auto &id : result)
-	{
-		const Vote &vote(voting.exists(id)? voting.get(id) : vdb.get<Vote>(id));
-		const auto &cfg(vote.get_cfg());
-
-		static const size_t truncmax(16);
-		const auto &issue(vote.get_issue());
-		const auto truncsz(std::min(issue.size(),truncmax));
-		const auto opine(vote.get_type() == "opine");
-		const auto &isout(opine? (issue.substr(0,truncsz) + "...") : issue);
-
-		const auto tally(vote.tally());
-		const auto quorum(vote.total() >= vote.get_quorum());
-		const auto majority(tally.first > tally.second);
-		const auto active(!vote.get_ended());
-
-		out << BOLD << "#" << vote.get_id() << OFF << " "
-		    << (active? FG::ORANGE : quorum && majority? FG::GREEN : quorum? FG::RED : FG::GRAY)
-		    << vote.get_type() << OFF << " "
-		    << UNDER2 << isout << OFF;
-
-		if(vote.get_ended() || cfg.get<bool>("visible.active",true))
-			out << " " << BOLD << FG::GREEN << tally.first << OFF << "v" << BOLD << FG::RED << tally.second << OFF;
-
-		out << ". ";
-	}
+		if(voting.exists(id))
+			vote_list_oneline(c,u,out,voting.get(id));
+		else
+			vote_list_oneline(c,u,out,*vdb.get(id));
 
 	out << flush;
+}
+
+
+void ResPublica::vote_list_oneline(const Chan &c,
+                                   const User &u,
+                                   Locutor &out,
+                                   const Vote &vote)
+{
+	using namespace colors;
+
+	const auto &cfg(vote.get_cfg());
+
+	static const size_t truncmax(16);
+	const auto &issue(vote.get_issue());
+	const auto truncsz(std::min(issue.size(),truncmax));
+	const auto opine(vote.get_type() == "opine");
+	const auto &isout(opine? (issue.substr(0,truncsz) + "...") : issue);
+
+	const auto tally(vote.tally());
+	const auto quorum(vote.total() >= vote.get_quorum());
+	const auto majority(tally.first > tally.second);
+	const auto active(!vote.get_ended());
+
+	out << BOLD << "#" << vote.get_id() << OFF << " "
+	    << (active? FG::ORANGE : quorum && majority? FG::GREEN : quorum? FG::RED : FG::GRAY)
+	    << vote.get_type() << OFF << " "
+	    << UNDER2 << isout << OFF;
+
+	if(vote.get_ended() || cfg.get<bool>("visible.active",true))
+		out << " " << BOLD << FG::GREEN << tally.first << OFF << "v" << BOLD << FG::RED << tally.second << OFF;
+
+	out << ". ";
 }
 
 
@@ -1429,15 +1451,15 @@ void ResPublica::opinion(const Chan &chan,
 	{
 		for(const auto &id : res)
 		{
-			const auto &vote(vdb.get<vote::Opine>(id));
-			if(cfgfor <= 0 && (vote.expires() < time(nullptr)))
+			const auto vote(vdb.get(id));
+			if(cfgfor <= 0 && (vote->expires() < time(nullptr)))
 				continue;
 
 			out << "#" << BOLD << id << OFF << ": ";
-			out << UNDER2 << vote.get_issue() << OFF << ". ";
-			out << BOLD << FG::GREEN << vote.tally().first << OFF << "v";
-			out << BOLD << FG::RED << vote.tally().second << OFF << ". ";
-			out << secs_cast(time(nullptr) - vote.get_ended()) << " ago.";
+			out << UNDER2 << vote->get_issue() << OFF << ". ";
+			out << BOLD << FG::GREEN << vote->tally().first << OFF << "v";
+			out << BOLD << FG::RED << vote->tally().second << OFF << ". ";
+			out << secs_cast(time(nullptr) - vote->get_ended()) << " ago.";
 
 			// without cfgfor the message count indicator won't be known accurately.
 			if(cfgfor > 0)

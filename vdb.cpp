@@ -148,21 +148,6 @@ catch(const Exception &e)
 }
 
 
-template<>
-Vote Vdb::get<Vote>(const id_t &id)
-try
-{
-	return { "", id, *this };
-}
-catch(const Exception &e)
-{
-	if(exists(id))
-		throw;
-
-	throw Exception("Could not find a vote by that ID.");
-}
-
-
 bool Vdb::exists(const id_t &id)
 const
 {

@@ -39,8 +39,10 @@ class ResPublica
 	void vote_stats_user(Locutor &out, const std::string &user, const Tokens &t);
 	void vote_stats_chan(Locutor &out, const std::string &chan, const Tokens &t);
 	void opinion(const Chan &c, const User &u, Locutor &out, const Tokens &t);
+	void vote_list_oneline(const Chan &c, const User &u, Locutor &out, const Vote &vote);
 	void vote_list_oneline(const Chan &c, const User &u, Locutor &out, const std::list<id_t> &result);
 	void handle_vote_info(const Msg &m, const User &u, Locutor &out, const Tokens &t, const Vote &vote);
+	void handle_vote_list(const Msg &m, const User &u, Locutor &out, const Tokens &t, const Vote &vote);
 	void handle_vote_list(const Msg &m, const User &u, Locutor &out, const Tokens &t, const id_t &id);
 	void handle_vote_list(const Msg &m, const Chan &c, const User &u, Locutor &out, const Tokens &t);
 	void handle_help(const Msg &m, Locutor &out, const Tokens &t);
