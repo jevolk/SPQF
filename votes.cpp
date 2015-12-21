@@ -256,11 +256,8 @@ void vote::UnBan::starting()
 	}
 
 	const auto &user(users.get(mask));
-	const auto &bans(chan.lists.bans);
-	if(!bans.count(user.mask(mask.NICK)) &&
-	   !bans.count(user.mask(mask.HOST)) &&
-	   !bans.count(user.mask(mask.ACCT)))
-		throw Exception("Can't find any trivial match to this user in the ban list. Try the exact ban mask.");
+	if(!chan::count(chan.lists.bans,user))
+		throw Exception("Can't find any masks matching this user in the ban list");
 }
 
 
@@ -378,11 +375,8 @@ void vote::UnExempt::starting()
 	}
 
 	const auto &user(users.get(mask));
-	const auto &excepts(chan.lists.excepts);
-	if(!excepts.count(user.mask(mask.NICK)) &&
-	   !excepts.count(user.mask(mask.HOST)) &&
-	   !excepts.count(user.mask(mask.ACCT)))
-		throw Exception("Can't find any trivial match to this user in the except list. Try the exact mask.");
+	if(!chan::count(chan.lists.excepts,user))
+		throw Exception("Can't find any masks matching this user in the except list");
 }
 
 
