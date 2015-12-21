@@ -95,11 +95,8 @@ class Vote : protected Acct
 	Ballot position(const std::string &acct) const;         // Throws if user hasn't taken a position
 	uint voted_host(const std::string &host) const;
 	bool voted_acct(const std::string &acct) const;
-
-	Ballot position(const User &user) const     { return position(user.get_acct());                 }
-	bool voted_host(const User &user) const     { return voted_host(user.get_acct());               }
-	bool voted_acct(const User &user) const     { return voted_acct(user.get_acct());               }
 	bool voted(const User &user) const;
+	Ballot position(const User &user) const     { return position(user.get_acct());                 }
 
   protected:
 	void set_cfg(const Adoc &cfg)               { this->cfg = cfg;                                  }
