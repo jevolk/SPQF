@@ -75,6 +75,9 @@ int main(int argc, char **argv) try
 	opts["logging"] = "true";
 	opts["database"] = "true";
 	opts["connect"] = "true";
+	opts["user"] = "SPQF";
+	opts["gecos"] = "Senate & People of Freenode (#SPQF)";
+	opts["quit-msg"] = "Alea iacta est";
 
 	// Parse command line
 	opts.parse({argv+1,argv+argc});
