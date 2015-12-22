@@ -28,6 +28,7 @@ or conduct takeovers.
 * **Mode** - Direct mode interface to the channel.
 * **Invite** - Invite users to the channel.
 * **Exempt** - Add/Remove users from the channel +e list.
+* **Invex** - Add/Remove users from the channel +I list.
 * **Topic** - Change the topic of the channel.
 * **Flags** - Direct flags interface to ChanServ.
 * **Opine** - Opinion polls that have no effects.

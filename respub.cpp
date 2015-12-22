@@ -425,6 +425,8 @@ void ResPublica::handle_vote(const Msg &msg,
 		case hash("unquiet"):  voting.motion<vote::UnQuiet>(chan,user,detok(subtok(toks)));  break;
 		case hash("exempt"):   voting.motion<vote::Exempt>(chan,user,detok(subtok(toks)));   break;
 		case hash("unexempt"): voting.motion<vote::UnExempt>(chan,user,detok(subtok(toks))); break;
+		case hash("invex"):    voting.motion<vote::Invex>(chan,user,detok(subtok(toks)));    break;
+		case hash("uninvex"):  voting.motion<vote::UnInvex>(chan,user,detok(subtok(toks)));  break;
 		case hash("voice"):    voting.motion<vote::Voice>(chan,user,detok(subtok(toks)));    break;
 		case hash("devoice"):  voting.motion<vote::DeVoice>(chan,user,detok(subtok(toks)));  break;
 		case hash("flags"):    voting.motion<vote::Flags>(chan,user,detok(subtok(toks)));    break;

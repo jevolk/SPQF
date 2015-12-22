@@ -124,6 +124,8 @@ try
 		case hash("quote"):     return std::make_unique<vote::Quote>(id,*this);
 		case hash("exempt"):    return std::make_unique<vote::Exempt>(id,*this);
 		case hash("unexempt"):  return std::make_unique<vote::UnExempt>(id,*this);
+		case hash("invex"):     return std::make_unique<vote::Invex>(id,*this);
+		case hash("uninvex"):   return std::make_unique<vote::UnInvex>(id,*this);
 		case hash("op"):        return std::make_unique<vote::Op>(id,*this);
 		case hash("deop"):      return std::make_unique<vote::DeOp>(id,*this);
 		case hash("ban"):       return std::make_unique<vote::Ban>(id,*this);

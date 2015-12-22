@@ -317,6 +317,34 @@ namespace vote
 		                                 ForNow("unexempt",std::forward<Args>(args)...) {}
 	};
 
+	class Invex : public virtual Vote,
+	              public virtual NickIssue,
+	              public virtual ModeEffect
+	{
+		void effective() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> Invex(Args&&... args):
+		                              Vote("invex",std::forward<Args>(args)...),
+		                              NickIssue("invex",std::forward<Args>(args)...),
+		                              ModeEffect("invex",std::forward<Args>(args)...) {}
+	};
+
+	class UnInvex : public virtual Vote,
+	                public virtual NickIssue,
+	                public virtual ForNow
+	{
+		void effective() override;
+		void starting() override;
+
+	  public:
+		template<class... Args> UnInvex(Args&&... args):
+		                                Vote("uninvex",std::forward<Args>(args)...),
+		                                NickIssue("uninvex",std::forward<Args>(args)...),
+		                                ForNow("uninvex",std::forward<Args>(args)...) {}
+	};
+
 	class Flags : public Vote
 	{
 		void passed() override;

@@ -37,6 +37,8 @@ decltype(vote::names) vote::names
 	"deop",
 	"exempt",
 	"unexempt",
+	"invex",
+	"uninvex",
 	"flags",
 	"import",
 	"civis",
@@ -341,8 +343,12 @@ void vote::Exempt::starting()
 {
 	const auto &chan(get_chan());
 	const auto &excepts(chan.lists.excepts);
-	if(excepts.count(user.mask(Mask::HOST)) && excepts.count(user.mask(Mask::ACCT)))
-		throw Exception("User already has entries in the except list");
+
+	if(user.is_logged_in() && excepts.count(user.mask(Mask::ACCT)))
+		throw Exception("User already has account entry in the except list");
+
+	if(!user.is_logged_in() && excepts.count(user.mask(Mask::HOST)))
+		throw Exception("User already has a host entry in the except list");
 }
 
 
@@ -394,14 +400,93 @@ try
 		return;
 	}
 
-	const Delta delta("-e",mask);
-	chan(delta);
-	set_effect(delta);
+	const auto deltas(chan::compose(chan.lists.invites,user,"-e"));
+	chan(deltas);
+	set_effect(deltas);
 }
 catch(const Exception &e)
 {
 	auto &chan(get_chan());
 	chan << "Error attempting to unexempt: " << e << chan.flush;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Invex
+//
+
+
+void vote::Invex::starting()
+{
+	const auto &chan(get_chan());
+	const auto &invites(chan.lists.invites);
+
+	if(user.is_logged_in() && invites.count(user.mask(Mask::ACCT)))
+		throw Exception("User already has account entry in the invex list");
+
+	if(!user.is_logged_in() && invites.count(user.mask(Mask::HOST)))
+		throw Exception("User already has host entry in the invex list");
+}
+
+
+void vote::Invex::effective()
+{
+	auto &chan(get_chan());
+	set_effect(chan.invex(user));
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// UnInvex
+//
+
+
+void vote::UnInvex::starting()
+{
+	const auto &users(get_users());
+	const auto &chan(get_chan());
+	const Mask mask(get_issue());
+
+	if(form(mask) != mask.INVALID)
+	{
+		if(!chan.lists.invites.count(mask))
+			throw Exception("Can't find this mask in the invex list");
+
+		return;
+	}
+
+	const auto &user(users.get(mask));
+	if(!chan::count(chan.lists.invites,user))
+		throw Exception("Can't find any masks matching this user in the invex list");
+}
+
+
+void vote::UnInvex::effective()
+try
+{
+	auto &chan(get_chan());
+	const Mask mask(get_issue());
+
+	if(form(mask) == mask.INVALID)
+	{
+		const auto &users(get_users());
+		const auto &user(users.get(mask));
+		set_effect(chan.uninvex(user));
+		return;
+	}
+
+	const auto deltas(chan::compose(chan.lists.invites,user,"-I"));
+	chan(deltas);
+	set_effect(deltas);
+}
+catch(const Exception &e)
+{
+	auto &chan(get_chan());
+	chan << "Error attempting to uninvex: " << e << chan.flush;
 }
 
 
