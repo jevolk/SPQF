@@ -1,17 +1,21 @@
 # SENATVS POPVLVS QVE FREENODVS
 ###### The Senate & The People of Freenode - Democratic Channel Management System
 
-**SPQF** is a robust democratic channel management system with the goal of 
-replacing the need for channel operators to be present, or even exist. 
-The primary design parameter is the resistance to sybil from botnets and 
-spam, in addition to various other noise and abuse seen regularly on IRC.
-A versatile configuration can be customized to statistically analyze a channel and
-its participants, ensuring any action by the bot reflects the true and fair
-intent of the channel's mission and community.
+**SPQF** is a robust **threshold-operator** replacing the need for individual operators to always agree, be present, or even exist.
+The primary design parameter is the resistance to sybil, botnets, spam and various other noise and abuse seen regularly on IRC.
+A versatile configuration can be customized for applications ranging from manually whitelisting users that would otherwise have
+full operator access, to automatically analyzing an entire channel to nominate or enfranchise all users.
+
+The wide range of applications posits **SPQF** as the essential channel management solution regardless of your community's authority structure.
+It facilitates the agreement of a team allowing a founder to empower a large, diverse set of operators to maintain coverage
+of a channel without the inevitable friction leading to op-wars, group-think, etc. **SPQF** yields greater consistency and curbs
+abuse as seen by your users: sampling from a larger set of opinions, nulling outliers and errors, and foremost: legitimizing the
+actions eventually taken by proving concurrence and support rather than appearing ad hoc.
+
 
 Join **irc.freenode.net/#SPQF** for feedback, suggestions and help.
 We are open to feature requests, but discourage features that undermine democratic
-ideals beyond those available already (Don't request features that make your vote worth more
+ideals beyond those available already (don't request features that make your vote worth more
 than others, etc). We actively seek reports of how attempts are made to abuse the bot
 or conduct takeovers.
 
