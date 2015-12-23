@@ -3,13 +3,13 @@
 
 **SPQF** is a robust **threshold-operator** replacing the need for individual operators to always agree, be present, or even exist.
 The primary design parameter is the resistance to sybil, botnets, spam and various other noise and abuse seen regularly on IRC.
-A versatile configuration can be customized for applications ranging from manually whitelisting users that may have
-full operator access, to automatically analyzing an entire channel to nominate or enfranchise users.
+A versatile configuration can be customized for applications ranging from whitelisting users that may have
+full operator access, to automatically analyzing an entire channel for nominating and enfranchising users.
 
 The wide range of applications posits **SPQF** as the essential channel management solution regardless of your community's authority structure.
-It facilitates the agreement of a team allowing a founder to empower a large, diverse set of operators to maintain coverage
-of a channel without typical friction leading to op-wars, group-think, etc. **SPQF** yields greater consistency and curbs
-abuse as seen by your users. It samples from a larger set of opinions, masks outliers and errors, and foremost: legitimizes decisions
+It facilitates agreement allowing a very large, diverse set of operators to maintain coverage
+of a channel without typical friction leading to op-wars, arguments and group-think, etc. **SPQF** yields greater consistency and curbs
+abuse seen by your users. It samples from a larger set of opinions, masks outliers and errors, and foremost: legitimizes decisions
 by presenting consensus rather than having one ad hoc operator appearing arbitrary.
 
 
@@ -193,8 +193,78 @@ channels.
 * **--join** &nbsp; Channels to join on connect *(multiple --join allowed)*.
 * **--ns-acct** &nbsp; NickServ account name to identify with.
 * **--ns-pass** &nbsp; NickServ account password to identify with.
-* **--owner** &nbsp; NickServ account of the user who can type */me proves* in #freenode for bot cloaks. Also has configuration maintenance access the same as founder-override.
+* **--cloaked** &nbsp; If you have a hostmask/cloak, this option will ensure it is applied before joining channels.
+* **--owner** &nbsp; NickServ account of the user who can type */me proves* in #freenode for bot cloaks. Also has configuration maintenance access.
 * **--prefix** &nbsp; Prefix for commands to not conflict with other bots.
 * **--invite** &nbsp; Allows the bot to be invited by request.
 * **--dbdir** &nbsp; The directory of the primary LevelDB database. *RESOURCE LOCK* error will result if two bots share this.
 * **--logdir** &nbsp; The directory where logfiles for channels will be stored. *Multiple bots in the same channel (by name) using the same logdir will cause double-appends to the same log file, skewing statistical analyses.*
+
+
+#### Configuration
+
+**All votes are disabled by default and must be enabled. You must read this.**
+Users with flags +F or +f (or --owner) can modify the configuration without using a vote by privmsg:
+
+	/msg <botnick> config <#channel> [path [= [value]]]
+
+The configuration is a JSON document.
+Without an equals sign, the document is read only.
+Assigning a value writes to the document.
+Omitting a value after the equals sign deletes a document.
+The following command fetches my channel's *config* document:
+
+	/msg SPQF config #spqf config
+
+In fact, the configuration is the document named *config* inside your full channel document in the database.
+Thus the following example command fetches the full channel document which may contain other stored data (it does not contain votes):
+
+	/msg SPQF config #spqf
+
+Within the *config* document the most relevant sub-document right now is *vote* and the following example will fetch that:
+
+	/msg SPQF config #spqf config.vote
+
+The *vote* document is made up of two levels. Items in the top level *config.vote* are applied to all vote types.
+Each vote type has its own document within *config.vote*, and all items within that document are applied for that vote type only.
+
+**The first thing you must do to begin using SPQF is the following** (swapping out your own bot and channel name):
+
+	/msg SPQF config #spqf config.vote.opine.enable = 1
+
+What we have done here is enabled the *opine* vote only.
+Now in channel try the command:
+
+	!vote opine test
+
+An opinion vote should start with default settings.
+Some of the essential defaults will be saved back to the configuration after the vote starts.
+You can view the state of the configuration now in channel or PM, respectively:
+
+	!vote config
+	/msg SPQF config #spqf config
+	/msg SPQF config #spqf config.vote
+	/msg SPQF config #spqf config.vote.opine
+
+Two essential variables that should have appeared in the top-level *config.vote* document are *for* and *duration*.
+*duration* sets the time the voting motion is open. *for* sets how long the effects of the vote are applied, depending on the type.
+For the opinion vote just enabled the effects are that it is available for viewing by using the !opinion command.
+Assuming the test vote passed, type the following in channel:
+
+	!opinion
+
+At this time the enfranchisement permissions for who is allowed to vote are wide-open by default.
+This is where things may become complicated, but can remain elegantly simple if you start with the following:
+
+	/msg SPQF config #spqf config.vote.enfranchise.mode = v
+
+This allows only users with voice (+v) to vote, applying to all vote types.
+While *enfranchise* is not a vote type, the family of variables has its own document,
+and each vote type can also have its own *enfranchise* document.
+To configure the *opine* vote's enfranchisement specifically, taking priority over the global:
+
+	/msg SPQF config #spqf config.vote.opine.enfranchise.mode = v
+
+With this simple configuration you can now fall back on other aspects of IRC to modify what is now shared-state for voting access.
+This includes using the existing ChanServ access lists (where ~200 people can have +V) or even using your own bot to conduct log analyses
+more complex than what SPQF offers, by toggling +v on users.
