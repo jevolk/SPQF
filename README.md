@@ -3,17 +3,19 @@
 
 **SPQF** is a robust **threshold-operator** replacing the need for individual operators to always agree, be present, or even exist.
 The primary design parameter is the resistance to sybil, botnets, spam and various other noise and abuse seen regularly on IRC.
-A versatile configuration can be customized for applications ranging from manually whitelisting users that would otherwise have
-full operator access, to automatically analyzing an entire channel to nominate or enfranchise all users.
+A versatile configuration can be customized for applications ranging from manually whitelisting users that may have
+full operator access, to automatically analyzing an entire channel to nominate or enfranchise users.
 
 The wide range of applications posits **SPQF** as the essential channel management solution regardless of your community's authority structure.
 It facilitates the agreement of a team allowing a founder to empower a large, diverse set of operators to maintain coverage
-of a channel without the inevitable friction leading to op-wars, group-think, etc. **SPQF** yields greater consistency and curbs
-abuse as seen by your users: sampling from a larger set of opinions, nulling outliers and errors, and foremost: legitimizing the
-actions eventually taken by proving concurrence and support rather than appearing ad hoc.
+of a channel without typical friction leading to op-wars, group-think, etc. **SPQF** yields greater consistency and curbs
+abuse as seen by your users. It samples from a larger set of opinions, masks outliers and errors, and foremost: legitimizes decisions
+by presenting consensus rather than having one ad hoc operator appearing arbitrary.
 
 
 Join **irc.freenode.net/#SPQF** for feedback, suggestions and help.
+Every community has different ideas for exactly what they want out of this system, and the complexity of the configuration reflects this;
+do not hesitate to consult us if you're planning a deployment in your channel.
 We are open to feature requests, but discourage features that undermine democratic
 ideals beyond those available already (don't request features that make your vote worth more
 than others, etc). We actively seek reports of how attempts are made to abuse the bot
