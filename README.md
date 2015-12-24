@@ -206,11 +206,13 @@ channels.
 **All votes are disabled by default and must be enabled. You must read this.**
 Users with flags +F or +f (or --owner) can modify the configuration without using a vote by privmsg:
 
-	/msg <botnick> config <#channel> [path [= [value]]]
+	/msg <botnick> config <#channel> [path.to.doc [= [value]]]
 
-The configuration is a JSON document.
-Without an equals sign, the document is read only.
-Assigning a value writes to the document.
+The configuration is stored as a JSON document tree.
+You don't have to worry about any actual JSON, just that keys are paths in a document tree separated by period characters;
+examples below will make this clear.
+When using the config command, without an equals sign, the document is fetched only.
+Assigning a value after an equals sign writes to the document.
 Omitting a value after the equals sign deletes a document.
 The following command fetches my channel's *config* document:
 
