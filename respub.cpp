@@ -994,18 +994,53 @@ void ResPublica::handle_vote_access(const Msg &msg,
 void ResPublica::handle_help(const Msg &msg,
                              Locutor &out,
                              const Tokens &toks)
+try
 {
-	const std::string topic = !toks.empty()? *toks.at(0) : "";
-	switch(hash(topic))
+	using namespace colors;
+
+	std::ifstream file("help.json");
+	file.exceptions(std::ios_base::badbit|std::ios_base::failbit);
+	const Adoc doc(std::string
 	{
-		case hash("config"):  out << "https://github.com/jevolk/SPQF/blob/master/help/config";  break;
-		case hash("mode"):    out << "https://github.com/jevolk/SPQF/blob/master/help/mode";    break;
-		case hash("kick"):    out << "https://github.com/jevolk/SPQF/blob/master/help/kick";    break;
-		default:
-		case hash("vote"):    out << "https://github.com/jevolk/SPQF/blob/master/help/vote";    break;
+		std::istreambuf_iterator<char>(file),
+		std::istreambuf_iterator<char>()
+	});
+
+	const auto topic(!toks.empty()? *toks.at(0) : std::string{});
+	if(topic.empty())
+	{
+		out << BOLD << "SENATVS POPVLVS QVE FREENODUS" << OFF
+		    << " - The Senate & The People of Freenode ( #SPQF ) " << SPQF_VERSION << "\n";
+
+		out << "This help is a document tree using the '.' character to find your topic. example: !help config.vote.duration\n";
 	}
 
+	const auto val(doc.get(topic,std::string{}));
+	if(val.empty())
+	{
+		const auto sub(doc.get_child(topic,Adoc{}));
+		if(!sub.empty())
+		{
+			out << UNDER2 << "Available documents";
+			if(!topic.empty())
+				out << " in " << topic;
+
+			out << OFF << ": ";
+			for(const auto &p : sub)
+			{
+				const auto &key(p.first);
+				out << key << " ";
+			}
+		}
+		else out << "Not found.";
+	}
+	else out << val;
+
 	out << flush;
+}
+catch(const std::ios_base::failure &e)
+{
+	throw Assertive(e.what());
 }
 
 

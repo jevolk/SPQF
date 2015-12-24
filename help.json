@@ -1,0 +1,10 @@
+{
+	"config":
+	{
+		"vote":
+		{
+			"duration": "The amount of time a voting motion is open.",
+			"for": "The amount of time the effects of a passed vote are applied for."
+		}
+	}
+}
