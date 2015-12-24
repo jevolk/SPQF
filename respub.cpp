@@ -843,7 +843,7 @@ void ResPublica::handle_vote(const Msg &msg,
 	if(toks.size() == 2 && isnumeric(*toks.at(0)) && is_ballot(*toks.at(1)))
 		std::reverse(toks.begin(),toks.end());
 
-	const std::string subcmd = !toks.empty()? *toks.at(0) : "help";
+	const std::string subcmd(!toks.empty()? *toks.at(0) : "help");
 
 	// Handle pattern for accessing vote by ID
 	if(isnumeric(subcmd))
@@ -1029,7 +1029,7 @@ try
 			for(const auto &p : sub)
 			{
 				const auto &key(p.first);
-				out << key << " ";
+				out << key << ", ";
 			}
 		}
 		else out << "Not found.";

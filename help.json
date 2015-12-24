@@ -3,8 +3,39 @@
 	{
 		"vote":
 		{
-			"duration": "The amount of time a voting motion is open.",
-			"for": "The amount of time the effects of a passed vote are applied for."
+
+"audibles":
+"
+A list of certain configuration values which may be passed as arguments when a vote starts. The values are applied to that vote only.
+The list must be keys within config.vote and the speaker (creator of the vote) can set any of them using --key=value syntax at vote time, but cannot set others.
+Example: 'config.vote.audibles = duration for' allows a vote to be started like '!vote ban --duration=5m --for=10h nickname'
+",
+
+"duration":
+"
+The amount of time a voting motion is open, accepting ballots.
+This value is a duration of time: an integer either in seconds or with a postfix. See: !help time.
+",
+
+"enable":
+"
+This boolean value toggles whether a vote type is enabled, or at the config.vote level whether all vote types are enabled.
+For example, to enable the ban vote type: config.vote.ban.enable = 1. This value defaults to false.
+",
+
+"for":
+"
+The amount of time the effects of a vote last if the motion passes. After this time an expiration event occurs. For example, if config.vote.quiet.for = 1h then when a user is quieted by a vote, they are unquieted after one hour.
+This variable is succinctly named so that it can be typed as an option at vote time, ex: !vote quiet --for=1h nickname. See !help config.vote.audibles for vote-time options.
+This value is a duration of time: an integer either in seconds or with a postfix. See: !help time.
+"
+
 		}
-	}
+	},
+
+"time":
+"
+The value is always a positive integer and may be followed by a unit postfix. A simple integer value represents seconds.
+Units available: s = seconds, m = minutes, h = hours, d = days, w = weeks, M = months, y = years. Example: 10m is ten minutes, 2y is two years.
+"
 }
