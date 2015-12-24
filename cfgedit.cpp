@@ -11,50 +11,60 @@
 using namespace irc::bot;
 
 
+static
+void wait_anykey()
+{
+	std::cout << "Press any key to continue or ctrl-c to quit..." << std::endl;
+	std::cin.get();
+}
+
+
 int main(int argc, char **argv) try
 {
 	Opts opts;
-	const int nargs = opts.parse({argv+1,argv+argc});
+	const int nargs(opts.parse({argv+1,argv+argc}));
 
 	if(argc - nargs < 2)
 	{
-		printf("Usage: %s [--dbdir=db --db=ircbot] <dbkey | *> [key] [= [val]]\n",argv[0]);
-		printf("\t- dbkey is the channel or account name, i.e \"#SPQF\" or foobar\n");
-		printf("\t- key is the fully qualified JSON key, i.e config.vote.duration\n");
-		printf("\t- omitting value after = is a deletion of this key.\n");
-		printf("\t- omitting key prints the whole document.\n");
-		printf("\t- using \"*\" as dbkey prints the whole database.\n");
+		std::cerr << "Usage: " << argv[0] << " [--dbdir=db --db=ircbot] <dbkey | *> [key] [= [val...]]\n"
+		          << "\t- dbkey is the channel or account name, i.e \"#SPQF\" or foobar.\n"
+		          << "\t- key is the fully qualified JSON key, i.e config.vote.duration\n"
+		          << "\t- Omitting value after = is a deletion of this key.\n"
+		          << "\t- Omitting key prints the whole document.\n"
+		          << "\t- Using \"*\" as dbkey prints the whole database.\n"
+		          << "\t- Multiple vals become a JSON array.\n"
+		          << "\t- Multiple vals in quotes become a single string.\n";
 		return -1;
 	}
 
-	std::cout << "NOTE : Using configuration: " << std::endl;
-	std::cout << opts << std::endl;
-	std::cout << std::endl;
+	std::cout << "Using configuration: " << std::endl << opts << std::endl << std::endl;
 
-	const std::string dockey = tolower(argv[nargs+1]);
-	const std::string key = argc > nargs+2? argv[nargs+2] : "";
-	const std::string eq = argc > nargs+3? argv[nargs+3] : "";
-	const std::string val = argc > nargs+4? argv[nargs+4] : "";
+	const std::string db      { opts.count("db")? opts["db"] : "ircbot"  };
+	const std::string dockey  { tolower(argv[nargs+1])                   };
+	const std::string key     { argc > nargs+2? argv[nargs+2] : ""       };
+	const std::string eq      { argc > nargs+3? argv[nargs+3] : ""       };
 
-	printf("doc[%s] key[%s] val[%s]\n",dockey.c_str(),key.c_str(),val.c_str());
+	const std::vector<std::string> vals
+	{
+		argv + (argc > nargs + 4? nargs + 4 : 0),
+		argv + (argc > nargs + 4? nargs + argc : 0)
+	};
+
+	std::cout << "db    [" << db       << "]" << std::endl;
+	std::cout << "doc   [" << dockey   << "]" << std::endl;
+	std::cout << "key   [" << key      << "]" << std::endl;
+
+	for(const auto &val : vals)
+		std::cout << "val    [" << val << "]" << std::endl;
 
 	if(!eq.empty() && eq != "=")
-	{
-		printf("Invalid syntax (missing equal sign)\n");
-		return -1;
-	}
+		throw Exception("Invalid syntax (missing equal sign)");
 
-	if(!eq.empty() && val.empty())
-	{
-		printf("DELETING THE KEY [%s] INSIDE [%s]\n",key.c_str(),dockey.c_str());
-		printf("Press any key to continue or ctrl-c to quit...\n");
-		std::cin.get();
-	}
-
-	const auto db = opts.count("db")? opts["db"] : "ircbot";
+	// Open database
 	Adb adb(opts["dbdir"] + "/" + db);
 	irc::bot::adb = &adb;
 
+	// Read Iteration
 	if(dockey == "*")
 	{
 		std::for_each(adb.begin(),adb.end(),[]
@@ -67,61 +77,72 @@ int main(int argc, char **argv) try
 		return 0;
 	}
 
+	// Creation warning
 	if(!adb.exists(dockey))
 	{
-		printf("Document not found in database.\n");
+		std::cout << "Document not found in database." << std::endl;
 		if(key.empty())
 			return -1;
 
-		printf("It will be created.\n");
-		printf("Press any key to continue or ctrl-c to quit...\n");
-		std::cin.get();
+		std::cout << "It will be created." << std::endl;
+		wait_anykey();
+	}
+
+	// Deletion warning
+	if(!eq.empty() && vals.empty())
+	{
+		std::cout << "DELETING THE KEY [" << key << "] INSIDE [" << dockey << "]" << std::endl;
+		wait_anykey();
 	}
 
 	Acct acct(&dockey);
 
-	if(key.empty() && eq.empty() && val.empty())
+	// Read whole document
+	if(key.empty() && eq.empty() && vals.empty())
 	{
-		Adoc doc = acct.get();
+		const Adoc doc(acct.get());
 		std::cout << doc << std::endl;
 		return 0;
 	}
 
-	if(eq.empty() && val.empty())
+	// Read document by key
+	if(eq.empty() && vals.empty())
 	{
-		Adoc doc = acct.get();
-		std::cout << key << " => [" << doc[key] << "]" << std::endl;
+		const Adoc doc(acct.get(key));
+		std::cout << doc << std::endl;
 		return 0;
 	}
 
-	if(val.empty())
+	// Delete document
+	if(vals.empty())
 	{
-		Adoc doc = acct.get();
+		Adoc doc(acct.get());
 		if(!doc.remove(key))
 			throw Exception("Failed to remove key: not found");
 
 		acct.set(doc);
-		printf("Removed.\n");
+		std::cout << "Removed." << std::endl;
 		return 0;
 	}
 
+	// Overwrite whole document (disabled)
 	if(key.empty())
-	{
-		printf("OVERWRITNG THE DOCUMENT [%s]\n",dockey.c_str());
-		printf("Press any key to continue or ctrl-c to quit...\n");
-		std::cin.get();
+		throw Exception("Specify a key");
 
-		acct.set(Adoc(val));
-		printf("Done.\n");
+	// Set key to value
+	if(vals.size() == 1)
+	{
+		acct.set_val(key,vals.at(0));
+		std::cout << "Done." << std::endl;
 		return 0;
 	}
 
-	acct.set_val(key,val);
-	printf("Done.\n");
+	// Set key to array
+	acct.set_val(key,vals.begin(),vals.end());
 	return 0;
 }
 catch(const Exception &e)
 {
-	std::cerr << "Exception: " << e << std::endl;
+	std::cerr << "Error: " << e << std::endl;
 	return -1;
 }
