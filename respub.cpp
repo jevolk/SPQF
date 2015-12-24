@@ -680,34 +680,40 @@ try
 {
 	auto &chan(chans.get(*toks.at(0)));
 
-	const auto &cfg(chan.get());
+	const auto doc(chan.get());
 	const auto has_flag(chan.lists.has_flag(user));
-	const Mode authority(cfg.get("config.access","Ff"));
+	const Mode authority(doc.get("config.access","Ff"));
 	const auto has_auth(has_flag && chan.lists.get_flag(user).get_flags().any(authority));
 	if(toks.size() >= 3 && *toks.at(2) == "=" && (user.is_owner() || has_auth)) try
 	{
-		auto cfg(chan.get());
+		auto doc(chan.get());
 		const auto &key(*toks.at(1));
 
 		if(toks.size() == 3)
 		{
-			if(!cfg.remove(key))
+			if(!doc.remove(key))
 				throw Exception("Failed to find and remove anything with key.");
 		}
-		else if(toks.size() == 4)
+		else // Reparse the value token(s) for string/array insertion
 		{
-			const auto &val(*toks.at(3));
-			cfg.put(key,val);
-		} else
-		{
-			Adoc val;
-			for(auto it(toks.begin()+3); it != toks.end(); ++it)
-				val.push(**it);
+			const Tokens valtoks(toks.begin()+3,toks.end());
+			const auto quoks(quokens(detok(valtoks)));
 
-			cfg.put_child(key,val);
+			if(quoks.empty())
+				throw Exception("Value string invalid");
+
+			if(quoks.size() > 1)
+			{
+				Adoc arr;
+				for(const auto &val : quoks)
+					arr.push(val);
+
+				doc.put_child(key,arr);
+			}
+			else doc.put(key,quoks.at(0));
 		}
 
-		chan.set(cfg);
+		chan.set(doc);
 		user << "Success." << user.flush;
 		return;
 	}
@@ -718,12 +724,12 @@ try
 	}
 
 	const auto &key(toks.size() > 1? *toks.at(1) : "");
-	const auto &val(cfg[key]);
+	const auto &val(doc[key]);
 
 	if(val.empty())
 	{
-		const Adoc doc(cfg.get_child(key,Adoc{}));
-		user << doc << flush;
+		const Adoc child(doc.get_child(key,Adoc{}));
+		user << child << flush;
 	}
 	else user << key << " = " << val << flush;
 }
