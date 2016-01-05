@@ -1,7 +1,7 @@
 # SENATVS POPVLVS QVE FREENODVS
 ###### The Senate & The People of Freenode - Democratic Channel Management System
 
-**SPQF** is a robust **threshold-operator** replacing the need for individual operators to always agree, be present, or even exist.
+**SPQF** is a robust **threshold-operator** replacing the need for individual operators to agree, be present, or even exist.
 The primary design parameter is the resistance to sybil, botnets, spam and various other noise and abuse seen regularly on IRC.
 A versatile configuration can be customized for applications ranging from whitelisting users that may have
 full operator access, to automatically analyzing an entire channel for nominating and enfranchising users.
@@ -67,8 +67,7 @@ or conduct takeovers.
 	* The duration of a voting motion.
 	* The duration of effects passed by a vote.
 	* The duration each yea or nay vote adds or subtracts from the effects, respectively.
-	* Effects are reserved asynchronously when they expire.
-	* All outputs to public channel and/or users in private configurable.
+	* All outputs to public channel and/or users in private are configurable.
 
 
 * **Limits**
