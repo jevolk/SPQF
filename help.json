@@ -28,8 +28,282 @@ For example, to enable the ban vote type: config.vote.ban.enable = 1. This value
 The amount of time the effects of a vote last if the motion passes. After this time an expiration event occurs. For example, if config.vote.quiet.for = 1h then when a user is quieted by a vote, they are unquieted after one hour.
 This variable is succinctly named so that it can be typed as an option at vote time, ex: !vote quiet --for=1h nickname. See !help config.vote.audibles for vote-time options.
 This value is a duration of time: an integer either in seconds or with a postfix. See: !help time.
+",
+			"limit":
+			{
+
+"active":
+"
+The maximum number of open votes for a channel at any given time.
+This value is a positive integer. The maximum is 255. Defaults to maximum when unset.
+",
+
+"user":
+"
+The maximum number of open votes for a user (account) in a channel at any given time.
+This value is a positive integer. The maximum is 255. Defaults to maximum when unset.
+",
+
+"type":
+"
+The maximum number of open votes for a specific type. This value should be specified within a type's config document to be effective. For example 'config.vote.opine.limit.type = 1' limits to one opine vote at a time.
+This value is a positive integer. The maximum is 255. Defaults to maximum when unset. Note: trial and appeal types ignore type limitations.
+",
+
+"motion":
+"
+The minimum amount of time between votes with a matching type and issue string. This prevents starting a similar vote multiple times too quickly.
+This value is a duration of time: an integer either in seconds or with a postfix. See: !help time.
+",
+
+"reason":
+"
+Any variable set under the config.vote.limit.reason document limits the time between votes (of similar type and issue) which have failed with the specified reason as the key, and the time duration as the value.
+The keys under this document specify a reason (see: !help reason) for example: 'config.vote.limit.reason.quorum = 1h' ensures 1 hour must pass after a vote with a matching type and issue failed because it did not have a quorum.
+The values for a key are durations of time: an integer either in seconds or with a postfix. See: !help time.
 "
 
+			},
+
+			"quorum":
+			{
+"ballots":
+"
+The minimum number of ballots that must be cast (i.e the sum of yea and nay ballots). If this value is not met a vote fails with reason 'quorum'. Other values in the quorum document may still cause failure with reason 'quorum' if this threshold is met.
+This value is a positive integer. The default is 1. By default, the speaker (user who creates the vote) automatically casts a yea ballot when motioning.
+",
+
+"yea":
+"
+The minimum number of affirmative ballots that must be cast to consider a vote as passed. If this value is not met a vote may fail with reason 'quorum' or 'plurality' (this will be simplified in a later release). Other values in the quorum document may still cause failure even if this threshold is met.
+This value is a positive integer. The default is 1. By default, the speaker (user who creates the vote) automatically casts a yea ballot when motioning.
+",
+
+"plurality":
+"
+The percentage that constitutes a passing majority.
+This value is decimal between 0.00 and 1.00. The default is 0.51.
+",
+
+"turnout":
+"
+The percentage used when dynamically calculating a quorum for votes. This is the percentage of active users who must participate to reach a quorum otherwise the vote fails. Active users are those who have said at least config.vote.quorum.lines within the last config.vote.quorum.age amount time.
+The calculated quorum of a vote will be the highest number of the following: quorum.yea, quorum.ballots, or this dynamic turnout calculation if non-zero.
+This value is decimal between 0.00 and 1.00. The default is 0.00, so quorum.yea and quorum.ballots are the default hard minimums for quorums.
+",
+
+"lines":
+"
+When config.vote.quorum.turnout is non-zero, this specifies the number of lines a user must have (in concert with config.vote.quorum.age) to be considered an active user for a quorum calculation.
+This is a positive integer that defaults to 0. See the help documents for the other aforementioned variables.
+",
+
+"age":
+"
+When config.vote.quorum.turnout is non-zero, this specifies the how long ago to start counting the number of lines (specified by config.vote.quorum.lines) a user has uttered to be considered active for a quorum calculation.
+This value is a duration of time: an integer either in seconds or with a postfix. See: !help time.
+",
+
+"prejudice":
+"
+This value specifies whether the effects of vote will be applied before the config.vote.duration has elapsed and the vote is still open. When set, the effects are applied once a passing quorum has been met (i.e if the vote were to end, it would pass). The effects are reversed if the vote ends with failure.
+This is a boolean value. The use-case here is silence spam quickly without waiting the full vote duration. Note: the ban vote type applies the +b but does not perform the kick until the vote has closed successfully.
+",
+
+"quick":
+"
+This value short-circuits the duration of a vote once a passing quorum has been met. As soon as a vote enters a state where it will pass, it is closed immediately and effects are applied.
+This is a boolean value. This was originally written for appeals. The appellant has the benefit of the doubt and does not have to wait once it is obvious the appeal will succeed; the effects being appealed are reversed, and the appeal can be cleared from the list.
+"
+			},
+
+			"enfranchise":
+			{
+"age":
+"
+The time window, which ends $age many seconds ago, that affects other config.vote.enfranchise rules, with the exception of the access/mode values. For example, if the age is set to '1d' or '86400' (one day), we analyze the history of this user BEFORE one day ago, and ignore everything from today. Thus, if the user first appeared in the channel today he will not be eligible to vote.
+The default is 30m, but is effectively 0 with enfranchise.lines defaulting to 0. It is recommended this be set to something like two weeks. Note that if you set this to two weeks when first installing the bot you won't be able to vote at all for two weeks; consider raising it later.
+",
+
+"lines":
+"
+The minimum number of lines sent to the channel in order to gain voting eligibility within the rest of the config.vote.enfranchisement ruleset. For example, if the enfranchisement.age is set to '1d' (one day), the user must have said at least this many lines at any time before one day ago.
+The default is 0. It is recommended this be set at a few dozen, or even a few thousand, or much greater to prevent sybil attacks by low-profile lurkers and idle plants.
+",
+
+"mode":
+"
+If set, any of these modes toggle enfranchisement of a user. Other config.vote.enfranchise rules are ignored except config.vote.enfranchise.access.
+This is unset by default, but this feature is not entirely discouraged. It is a safe and easy way to bootstrap a potentially large access list of regular/semi-trusted users or to censure abusive users. For example, if set to 'v' the existing enfranchised users can vote on voicing or devoicing other users to control enfranchisement.
+Note: Omit any leading '+' in the mode string.
+",
+
+"access":
+"
+If set, a user will never be enfranchised unless they have any of the ChanServ access flags specified in this string (or a mode specified in enfranchise.mode). To be clear, specifying access or mode based enfranchisement is mutually exclusive to line/age based enfranchisement.
+This feature is usually discouraged for most vote types. It is regressive and undemocratic. We advise leveraging the veto system instead.
+Note: Omit any leading '+' in the mode string.
+"
+			},
+
+			"qualify":
+			{
+"age":
+"
+The window of time starting back from the beginning of the vote for which config.vote.qualify rules apply. For example, if set to 300 (5 minutes) we analyze a user starting 5 minutes ago and stopping at the point the vote was initiated. The qualify ruleset is a short-term contrast to the long-term enfranchisement ruleset.
+The default is 10m, but is effectively 0 with qualify.lines defaulting to 0. It is recommended this be set to the conversational cadence of your channel; the goal is to prevent voting from people who aren't participating in the conversation, as well as attacks from sockpuppets who randomly show up once drama has started.
+",
+
+"lines":
+"
+The amount of lines a user must have transmitted as part of the qualify ruleset. For example, if the qualify.age is 300 and the qualify.lines is 3: a user must have said at least 3 things within the last 300 seconds to cast a ballot this time.
+The default is 0. It is recommended this be set to at least 1. See the qualify.age recommendation.
+",
+
+"access":
+"
+A user may bypass the config.vote.qualify rules if any of their ChanServ access flags match any of the flags in this string. If no match is found the user defaults to the config.vote.qualify ruleset as usual. This can prevent your trusted userbase from being locked out of votes for being afk.
+Note: Omit any leading '+' in the mode string.
+"
+			},
+
+			"speaker":
+			{
+"access":
+"
+Limits creation of votes to users who match any of the ChanServ access flags in this string. If unset, other config.vote.speaker restrictions may apply. The config.vote.enfranchise and config.vote.qualify rules may still limit the creation of votes.
+This is unset by default, which means anyone enfranchised for this vote can also start it. Note: Omit any leading '+' in the mode string.
+",
+
+"mode":
+"
+Limits creation of votes to users who currently have a channel mode matching any of the modes in this string. If set, toggling a user's mode in the channel will toggle their ability to start votes. Other config.vote.speaker or config.vote.enfranchise or config.vote.qualify restrictions may apply.
+This is unset by default, which means anyone enfranchised for this vote can also start it. Note: Omit any leading '+' in the mode string.
+",
+
+"ballot":
+"
+This value specifies what ballot a speaker automatically casts for a vote. The use-case here was for voting motions triggered by certain events, such as auto-civis, where the speaker is the bot itself.
+The value is any accepted string when voting such as 'y' or 'n'. Additionally, an 'a' can be used for not casting any ballot as speaker. The default is 'y'.
+"
+			},
+
+			"veto":
+			{
+"access":
+"
+The restriction for veto power based on ChanServ access flags. If set, a user must have any one of these flags to gain veto power. If set, other settings in config.vote.veto may still allow or restrict veto power and effectiveness.
+This unset by default. Note: Omit any leading '+' in the mode string.
+",
+
+"mode":
+"
+The restriction for a user's current mode in the channel (usually only +o, or +v is possible) for when their veto power will have effect. For example, if set to 'v' and the user is voiced in the channel, their nay vote becomes a veto vote. If they are devoiced it is only a normal nay vote.
+Note: This extra step of upgrading one's mode in order to veto and not having a specific veto ballot type is based on freenode's culture of only upgrading to authoritative powers when necessary.
+This is unset by default. Note: Omit any leading '+' in the mode string.
+",
+
+"quorum":
+"
+The minimum number of vetoes required to have an effective veto of the vote. This is a threshold useful for a channel with ubiquitous veto power.
+This is set to 1 by default. 0 is the same as 1.
+",
+
+"quick":
+"
+If set, a vote that has been effectively vetoed is ended immediately. If unset, the remaining roll is taken but the result will always be a veto.
+This is set to 1 by default.
+"
+			},
+
+			"ballot":
+			{
+				"ack":
+				{
+"chan":
+"
+If set, successful ballot submissions will be acknowleged to the channel.
+This is unset by default.
+",
+
+"priv":
+"
+If set, successful ballot submissions will be acknowleged to the user in private.
+This is set by default.
+"
+				},
+
+				"rej":
+				{
+"chan":
+"
+If set, rejected ballot submissions will be errored to the channel.
+This is unset by default.
+",
+
+"priv":
+"
+If set, rejected ballot submissions will be errored to the user in private.
+This is set by default.
+"
+				}
+			},
+
+			"result":
+			{
+				"ack":
+				{
+"chan":
+"
+If set, the result of a voting motion (pass or fail) will be output to the channel.
+Note: config.vote.visible.motion may still prevent results from being output to the channel.
+This is set by default.
+"
+				}
+			},
+
+			"visible":
+			{
+"motion":
+"
+The number of ballots (or duplicate motions which decay into yes ballots for the same vote) required to announce a vote as having started, ended, etc. A value of 2 for example hides the announcements until another user has seconded the motion.
+This feature can be leveraged to conduct votes by having users all type !vote quiet $nick, rather than referencing a vote number, etc.
+The default is 1, so the vote is announced when it actually starts. Larger values are intended for hot channels or simply to hide the noise of spurious motions that nobody agrees with, condemning them to a silent death likely with reason 'quorum'.
+",
+
+"active":
+"
+If unset, hides the tally of yea and nay ballots while a vote is open (active).
+This is a boolean value. It is set by default.
+",
+
+"ballots":
+"
+If set, the account names of users who have cast a ballot are visible in the vote's info. If unset, the names are hidden.
+This is a boolean value. It is set by default.
+",
+
+"veto":
+"
+If set, the account names of users who have vetoed the vote are visible in the vote's info. If unset, the vetoers are hidden.
+This is a boolean value. It is set by default.
+"
+			},
+
+			"weight":
+			{
+"yea":
+"
+A duration of time added to the 'for' value for each yea ballot, extending the effects of the vote based on how much support it had.
+This value is a duration of time: an integer either in seconds or with a postfix. See: !help time.
+",
+
+"nay":
+"
+A duration of time subtracted from the 'for' value for each nay ballot, shortening the effects of the vote based on how controversial it was.
+This value is a duration of time: an integer either in seconds or with a postfix. See: !help time.
+"
+			}
 		}
 	},
 
@@ -37,5 +311,14 @@ This value is a duration of time: an integer either in seconds or with a postfix
 "
 The value is always a positive integer and may be followed by a unit postfix. A simple integer value represents seconds.
 Units available: s = seconds, m = minutes, h = hours, d = days, w = weeks, M = months, y = years. Example: 10m is ten minutes, 2y is two years.
+",
+
+"reason":
+"
+A reason is an attribute of a voting motion (a vote) which indicates why it failed. When the reason field is empty a vote has either passed or is still open to ballots. When a reason field has a value: the vote is closed to ballots and did not pass. Some common reason values:
+quorum: A vote did not garner enough support to meet config.vote.quorum thresholds.
+plurality: A vote was voted down by a majority (or whatever percentage constitues a majority specified in config.vote.plurality). This is after a quorum was met.
+vetoed: A vote failed due to meeting config.vote.veto required thresholds.
+canceled: A vote was canceled by the initiating user if permitted.
 "
 }
