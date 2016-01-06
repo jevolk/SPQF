@@ -304,6 +304,54 @@ A duration of time subtracted from the 'for' value for each nay ballot, shorteni
 This value is a duration of time: an integer either in seconds or with a postfix. See: !help time.
 "
 			}
+		},
+
+		"event":
+		{
+			"part":
+			{
+"rejoin":
+"
+If set, the bot rejoins the channel automatically after any PART event.
+This boolean value is unset by default.
+",
+
+"rejoin_removed":
+"
+If set, the bot rejoins the channel automatically when it was PART'ed by force (removed) only.
+This boolean value is unset by default.
+"
+			},
+
+			"kick":
+			{
+"rejoin":
+"
+If set, the bot rejoins the channel automatically when kicked.
+This boolean value is set by default.
+"
+			},
+
+			"err_bannedfromchan":
+			{
+"unban":
+"
+If set, the bot attempts a chanserv unban command when banned from the channel.
+This boolean value is unset by default.
+",
+
+"recover":
+"
+If set, the bot attempts a chanserv recover command when banned from the channel.
+This boolean value is unset by default.
+",
+
+"clear":
+"
+If set, the bot attempts to clear the ban lists to brute back into the channel.
+This boolean value is unset by default.
+"
+			}
 		}
 	},
 
