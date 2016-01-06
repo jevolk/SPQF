@@ -79,6 +79,7 @@ class Voting
 	void eligible_worker();
 	std::thread eligible_thread;
 
+	void valid_limits_type(const Vote &vote, const Chan &chan, const User &user, const Adoc &cfg);
 	void valid_limits(const Vote &vote, const Chan &chan, const User &user);
 	void valid_motion(const Vote &vote);
 

@@ -89,44 +89,41 @@ void Voting::valid_motion(const Vote &vote)
 		throw Exception("You have not been participating enough to start a vote.");
 
 	const auto now(time(nullptr));
-	const auto limit_age(secs_cast(cfg["limit.age"]));
-	const auto limit_quorum(secs_cast(cfg["limit.quorum.age"]));
-	const auto limit_plurality(secs_cast(cfg["limit.plurality.age"]));
-
-	const Vdb::Terms age_query
+	if(cfg.has("limit.motion"))
 	{
-		Vdb::Term { "ended",  ">=", lex_cast(now - limit_age)        },
-		Vdb::Term { "issue",  "==", vote.get_issue()                 },
-		Vdb::Term { "type",   "==", vote.get_type()                  },
-		Vdb::Term { "chan",   "==", chan.get_name()                  },
-	};
+		const auto limit(secs_cast(cfg["limit.motion"]));
+		const Vdb::Terms query
+		{
+			Vdb::Term { "ended",  ">=", lex_cast(now - limit)  },
+			Vdb::Term { "issue",  "==", vote.get_issue()       },
+			Vdb::Term { "type",   "==", vote.get_type()        },
+			Vdb::Term { "chan",   "==", chan.get_name()        },
+		};
 
-	const Vdb::Terms quorum_query
+		if(!vdb.query(query,1).empty())
+			throw Exception("This vote was made within the last ") << secs_cast(limit) << ". Try again later.";
+	}
+
+	const Adoc reasons(cfg.get_child("limit.reason",Adoc{}));
+	reasons.for_each([this,&chan,&vote,&now]
+	(const std::string &reason, const std::string &limit_str)
 	{
-		Vdb::Term { "reason", "==", "quorum"                         },
-		Vdb::Term { "ended",  ">=", lex_cast(now - limit_quorum)     },
-		Vdb::Term { "issue",  "==", vote.get_issue()                 },
-		Vdb::Term { "type",   "==", vote.get_type()                  },
-		Vdb::Term { "chan",   "==", chan.get_name()                  },
-	};
+		if(reason.size() > 64 || !isalpha(reason))
+			throw Exception("Malformed reason key given in limit.reason");
 
-	const Vdb::Terms plurality_query
-	{
-		Vdb::Term { "reason", "==", "plurality"                      },
-		Vdb::Term { "ended",  ">=", lex_cast(now - limit_plurality)  },
-		Vdb::Term { "issue",  "==", vote.get_issue()                 },
-		Vdb::Term { "type",   "==", vote.get_type()                  },
-		Vdb::Term { "chan",   "==", chan.get_name()                  },
-	};
+		const auto limit(secs_cast(limit_str));
+		const Vdb::Terms query
+		{
+			Vdb::Term { "reason", "==", reason                 },
+			Vdb::Term { "ended",  ">=", lex_cast(now - limit)  },
+			Vdb::Term { "issue",  "==", vote.get_issue()       },
+			Vdb::Term { "type",   "==", vote.get_type()        },
+			Vdb::Term { "chan",   "==", chan.get_name()        },
+		};
 
-	if(limit_age && !vdb.query(age_query,1).empty())
-		throw Exception("This vote was made too recently. Try again later.");
-
-	if(limit_quorum && !vdb.query(quorum_query,1).empty())
-		throw Exception("This vote failed without a quorum too recently. Try again later.");
-
-	if(limit_plurality && !vdb.query(plurality_query,1).empty())
-		throw Exception("This vote failed with plurality too recently. Try again later.");
+		if(!vdb.query(query,1).empty())
+			throw Exception("This vote failed with the reason '") << reason << "' within the last " << secs_cast(limit) << ". Try again later.";
+	});
 }
 
 
@@ -134,29 +131,43 @@ void Voting::valid_limits(const Vote &vote,
                           const Chan &chan,
                           const User &user)
 {
-	using limits = std::numeric_limits<uint>;
+	using limits = std::numeric_limits<uint8_t>;
 
 	if(user.is_myself() || chan.users.mode(user).has('o'))
 		return;
 
 	const auto &cfg(vote.get_cfg());
-	if(count(chan) > cfg.get("limit.active",limits::max()))
+	if(count(chan) > cfg.get<uint8_t>("limit.active",limits::max()))
 		throw Exception("Too many active votes for this channel.");
 
-	if(count(chan,user) > cfg.get("limit.user",limits::max()))
+	if(count(chan,user) > cfg.get<uint8_t>("limit.user",limits::max()))
 		throw Exception("Too many active votes started by you on this channel.");
+
+	valid_limits_type(vote,chan,user,cfg);
+}
+
+
+void Voting::valid_limits_type(const Vote &vote,
+                               const Chan &chan,
+                               const User &user,
+                               const Adoc &cfg)
+{
+	using limits = std::numeric_limits<uint8_t>;
+
+	if(vote.get_type() == "appeal")
+		return;
+
+	if(vote.get_type() == "trial")
+		return;
 
 	auto typcnt(0);
 	for_each(chan,user,[&typcnt,&vote]
 	(const Vote &active)
 	{
-		if(vote.get_type() == "appeal")
-			return;
-
 		typcnt += active.get_type() == vote.get_type();
 	});
 
-	if(typcnt > cfg.get("limit.type",1))
+	if(typcnt > cfg.get<uint8_t>("limit.type",limits::max()))
 		throw Exception("Too many active votes of this type started by you on this channel.");
 }
 
