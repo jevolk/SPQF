@@ -858,6 +858,14 @@ void ResPublica::handle_vote(const Msg &msg,
 		return;
 	}
 
+	// /msg SPQF vote #channel <rest as if typed in channel>
+	if(!subcmd.empty() && subcmd.front() == '#')
+	{
+		auto &chan(chans.get(subcmd));
+		handle_vote(msg,chan,user,subtok(toks));
+		return;
+	}
+
 	switch(hash(subcmd))
 	{
 		case hash("count"):
