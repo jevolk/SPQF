@@ -774,7 +774,7 @@ bool has_mode(const Chan &chan,
               const Mode &mode)
 try
 {
-	return chan.users.mode(user).any(mode);
+	return chan.users.mode(user).any(mode) || chan.lists.has_mode(user,mode);
 }
 catch(const std::out_of_range &e)
 {
