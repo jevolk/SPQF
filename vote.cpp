@@ -152,7 +152,8 @@ void Vote::cancel()
 		save();
 	});
 
-	if(total() >= cfg.get("visible.motion",1U))
+	const auto vis(cfg.get("visible.motion",1U));
+	if(vis && total() >= vis)
 		announce_canceled();
 
 	if(!get_effect().empty())
@@ -221,7 +222,8 @@ try
 	if(total() < get_quorum())
 	{
 		set_reason("quorum");
-		if(total() >= cfg.get("visible.motion",1U))
+		const auto vis(cfg.get("visible.motion",1U));
+		if(vis && total() >= vis)
 			announce_failed_quorum();
 
 		if(!get_effect().empty())
@@ -234,7 +236,8 @@ try
 	if(yea.size() < calc_required(cfg,tally()))
 	{
 		set_reason("plurality");
-		if(total() >= cfg.get("visible.motion",1U))
+		const auto vis(cfg.get("visible.motion",1U));
+		if(vis && total() >= vis)
 			announce_failed_required();
 
 		if(!get_effect().empty())
@@ -255,7 +258,9 @@ try
 	}
 
 	set_reason("");
-	announce_passed();
+
+	if(cfg.get("visible.motion",1U) > 0)
+		announce_passed();
 
 	if(get_effect().empty())
 		effective();
