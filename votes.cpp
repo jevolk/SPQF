@@ -400,7 +400,7 @@ try
 		return;
 	}
 
-	const auto deltas(chan::compose(chan.lists.invites,user,"-e"));
+	const auto deltas(chan::compose(chan.lists.excepts,user,"-e"));
 	chan(deltas);
 	set_effect(deltas);
 }
