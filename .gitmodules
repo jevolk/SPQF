@@ -1,3 +1,4 @@
 [submodule "ircbot"]
 	path = ircbot
 	url = https://github.com/jevolk/libircbot.git
+	branch = master
